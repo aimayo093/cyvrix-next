@@ -1,0 +1,483 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  SUPPORT_AGENT
+  SALES_CRM_USER
+  CONTENT_MANAGER
+  FINANCE_VIEWER
+  CLIENT
+}
+
+enum PublishStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum TicketStatus {
+  NEW
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_CLIENT
+  ESCALATED
+  RESOLVED
+  CLOSED
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL_SENT
+  WON
+  LOST
+  ARCHIVED
+}
+
+enum ContentBlockType {
+  TEXT
+  RICH_TEXT
+  IMAGE
+  IMAGE_TEXT
+  FEATURE_GRID
+  CTA
+  FAQ
+  TESTIMONIAL
+  STATS
+  SERVICE_CARDS
+  INDUSTRY_CARDS
+  CASE_STUDY_CARDS
+}
+
+model User {
+  id              String         @id @default(uuid())
+  email           String         @unique
+  name            String?
+  passwordHash    String
+  role            UserRole       @default(CLIENT)
+  active          Boolean        @default(true)
+  emailVerified   DateTime?
+  twoFactorReady  Boolean        @default(false)
+  clientCompanyId String?
+  clientCompany   ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model ClientCompany {
+  id              String           @id @default(uuid())
+  name            String
+  industry        String?
+  status          String           @default("active")
+  billingContact  String?
+  securityContact String?
+  notes           String?
+  contacts        Contact[]
+  users           User[]
+  proposals       Proposal[]
+  tickets         Ticket[]
+  documents       ClientDocument[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+}
+
+model Contact {
+  id              String         @id @default(uuid())
+  clientCompanyId String?
+  clientCompany   ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  name            String
+  email           String
+  phone           String?
+  role            String?
+  createdAt       DateTime       @default(now())
+}
+
+model Service {
+  id        String           @id @default(uuid())
+  slug      String           @unique
+  title     String
+  summary   String
+  content   Json             @default("{}")
+  seo       Json             @default("{}")
+  published Boolean          @default(false)
+  packages  ServicePackage[]
+  sortOrder Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model ServicePackage {
+  id             String   @id @default(uuid())
+  serviceId      String?
+  service        Service? @relation(fields: [serviceId], references: [id])
+  name           String
+  cadence        String?
+  features       Json     @default("[]")
+  pricingVisible Boolean  @default(false)
+  monthlyPrice   Decimal?
+  annualPrice    Decimal?
+  featured       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
+
+model Industry {
+  id        String   @id @default(uuid())
+  slug      String   @unique
+  title     String
+  content   Json     @default("{}")
+  seo       Json     @default("{}")
+  published Boolean  @default(false)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CmsPage {
+  id             String         @id @default(uuid())
+  title          String
+  slug           String         @unique
+  heroTitle      String?
+  heroSubtitle   String?
+  featuredImage  String?
+  seoTitle       String?
+  seoDescription String?
+  openGraphImage String?
+  status         PublishStatus  @default(DRAFT)
+  visible        Boolean        @default(true)
+  sortOrder      Int            @default(0)
+  blocks         ContentBlock[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model ContentBlock {
+  id        String           @id @default(uuid())
+  pageId    String
+  page      CmsPage          @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      ContentBlockType
+  title     String?
+  content   Json             @default("{}")
+  visible   Boolean          @default(true)
+  sortOrder Int              @default(0)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+}
+
+model CaseStudy {
+  id           String   @id @default(uuid())
+  slug         String   @unique
+  title        String
+  clientType   String?
+  challenge    String?
+  solution     String?
+  outcome      String?
+  technologies Json     @default("[]")
+  services     Json     @default("[]")
+  timeline     String?
+  testimonial  String?
+  published    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model BlogPost {
+  id            String        @id @default(uuid())
+  slug          String        @unique
+  title         String
+  body          String?
+  category      String?
+  tags          Json          @default("[]")
+  author        String?
+  featuredImage String?
+  seo           Json          @default("{}")
+  status        PublishStatus @default(DRAFT)
+  publishAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model FAQ {
+  id        String   @id @default(uuid())
+  category  String
+  question  String
+  answer    String
+  sortOrder Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model LegalPage {
+  id           String        @id @default(uuid())
+  slug         String        @unique
+  title        String
+  body         String?
+  reviewNotice String        @default("Final legal documents should be reviewed by a qualified legal professional.")
+  status       PublishStatus @default(DRAFT)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Testimonial {
+  id         String   @id @default(uuid())
+  clientName String?
+  company    String?
+  quote      String
+  rating     Int?
+  featured   Boolean  @default(false)
+  approved   Boolean  @default(false)
+  createdAt  DateTime @default(now())
+}
+
+model Lead {
+  id               String     @id @default(uuid())
+  name             String?
+  email            String?
+  company          String?
+  source           String?
+  status           LeadStatus @default(NEW)
+  assignedStaff    String?
+  followUpDate     DateTime?
+  conversionStatus String?
+  payload          Json       @default("{}")
+  notes            LeadNote[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+model LeadNote {
+  id        String   @id @default(uuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model QuoteRequest {
+  id                        String     @id @default(uuid())
+  businessName              String
+  contactName               String
+  email                     String
+  phone                     String?
+  companySize               String?
+  industry                  String?
+  serviceRequired           String?
+  currentChallenge          String?
+  urgency                   String?
+  budgetRange               String?
+  preferredConsultationTime String?
+  gdprConsent               Boolean    @default(false)
+  status                    String     @default("new")
+  proposals                 Proposal[]
+  createdAt                 DateTime   @default(now())
+  updatedAt                 DateTime   @updatedAt
+}
+
+model Proposal {
+  id              String         @id @default(uuid())
+  quoteRequestId  String?
+  quoteRequest    QuoteRequest?  @relation(fields: [quoteRequestId], references: [id])
+  clientCompanyId String?
+  clientCompany   ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  title           String
+  status          String         @default("draft")
+  total           Decimal        @default(0)
+  acceptedAt      DateTime?
+  items           ProposalItem[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model ProposalItem {
+  id          String   @id @default(uuid())
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal  @default(1)
+  unitPrice   Decimal  @default(0)
+  createdAt   DateTime @default(now())
+}
+
+model Ticket {
+  id              String             @id @default(uuid())
+  ticketNumber    String             @unique
+  clientCompanyId String?
+  clientCompany   ClientCompany?     @relation(fields: [clientCompanyId], references: [id])
+  name            String?
+  email           String?
+  company         String?
+  priority        String
+  category        String
+  subject         String
+  description     String
+  existingClient  Boolean            @default(false)
+  status          TicketStatus       @default(NEW)
+  assignedTo      String?
+  slaDueAt        DateTime?
+  messages        TicketMessage[]
+  attachments     TicketAttachment[]
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+}
+
+model TicketMessage {
+  id         String   @id @default(uuid())
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId   String?
+  visibility String   @default("client")
+  body       String
+  createdAt  DateTime @default(now())
+}
+
+model TicketAttachment {
+  id           String   @id @default(uuid())
+  ticketId     String
+  ticket       Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  mediaAssetId String?
+  filename     String?
+  createdAt    DateTime @default(now())
+}
+
+model KnowledgeBaseArticle {
+  id              String        @id @default(uuid())
+  slug            String        @unique
+  title           String
+  body            String?
+  category        String?
+  visibility      String        @default("client")
+  status          PublishStatus @default(DRAFT)
+  relatedArticles Json          @default("[]")
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model NewsletterSubscriber {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  source        String?
+  status        String    @default("subscribed")
+  gdprConsentAt DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model MediaAsset {
+  id        String   @id @default(uuid())
+  filename  String
+  url       String
+  mimeType  String?
+  sizeBytes BigInt?
+  folder    String?
+  category  String?
+  caption   String?
+  altText   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model WebsiteSection {
+  id        String        @id @default(uuid())
+  area      String
+  key       String
+  title     String?
+  content   Json          @default("{}")
+  visible   Boolean       @default(true)
+  sortOrder Int           @default(0)
+  status    PublishStatus @default(PUBLISHED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@unique([area, key])
+}
+
+model NavigationItem {
+  id        String   @id @default(uuid())
+  label     String
+  href      String
+  parentId  String?
+  sortOrder Int      @default(0)
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String?
+  entityId   String?
+  ipAddress  String?
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String?
+  title     String
+  body      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model CareerJob {
+  id           String           @id @default(uuid())
+  title        String
+  location     String?
+  type         String?
+  description  String?
+  visible      Boolean          @default(false)
+  applications JobApplication[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model JobApplication {
+  id          String     @id @default(uuid())
+  careerJobId String?
+  careerJob   CareerJob? @relation(fields: [careerJobId], references: [id])
+  name        String
+  email       String
+  role        String?
+  message     String?
+  status      String     @default("new")
+  createdAt   DateTime   @default(now())
+}
+
+model LandingPage {
+  id        String        @id @default(uuid())
+  slug      String        @unique
+  title     String
+  template  String
+  content   Json          @default("{}")
+  seo       Json          @default("{}")
+  status    PublishStatus @default(DRAFT)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+}
+
+model ClientDocument {
+  id              String        @id @default(uuid())
+  clientCompanyId String
+  clientCompany   ClientCompany @relation(fields: [clientCompanyId], references: [id], onDelete: Cascade)
+  title           String
+  url             String
+  visibleToClient Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+}
