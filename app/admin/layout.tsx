@@ -22,10 +22,14 @@ export const metadata: Metadata = {
 
 const adminNav = [
   { name: "Overview", href: "/admin", icon: LayoutDashboard },
-  { name: "Clients", href: "/admin/clients", icon: Users },
-  { name: "Services", href: "/admin/services", icon: Database },
-  { name: "Security", href: "/admin/security", icon: ShieldCheck },
-  { name: "Settings", href: "/admin/settings", icon: Settings },
+  { name: "Website CMS", href: "/admin/website-cms", icon: Database },
+  { name: "Services CMS", href: "/admin/services-cms", icon: Database },
+  { name: "Industries CMS", href: "/admin/industries-cms", icon: Database },
+  { name: "Blog & Insights", href: "/admin/blog-and-insights", icon: Database },
+  { name: "Leads CRM", href: "/admin/leads-crm", icon: Users },
+  { name: "Ticket Queue", href: "/admin/ticket-management", icon: ShieldCheck },
+  { name: "Client Manager", href: "/admin/client-management", icon: Users },
+  { name: "System Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export default function AdminLayout({

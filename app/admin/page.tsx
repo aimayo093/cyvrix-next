@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { 
   Users, 
   Shield, 
@@ -102,14 +103,14 @@ export default async function AdminDashboard() {
             <div className="space-y-3">
               {[
                 { name: "Client Portal Settings", href: "/admin/settings" },
-                { name: "Service CMS", href: "/admin/services" },
-                { name: "Infrastructure Logs", href: "/admin/logs" },
-                { name: "Support Queue", href: "/admin/tickets" },
+                { name: "Service CMS", href: "/admin/services-cms" },
+                { name: "Infrastructure Logs", href: "/admin/audit-logs" },
+                { name: "Support Queue", href: "/admin/ticket-management" },
               ].map((link) => (
-                <button key={link.name} className="w-full text-left text-sm font-bold text-slate-600 hover:text-[#2691F0] py-2 transition-colors flex items-center justify-between group">
+                <Link key={link.name} href={link.href} className="w-full text-left text-sm font-bold text-slate-600 hover:text-[#2691F0] py-2 transition-colors flex items-center justify-between group">
                   {link.name}
                   <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
+                </Link>
               ))}
             </div>
           </div>

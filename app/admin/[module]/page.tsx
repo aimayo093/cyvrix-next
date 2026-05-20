@@ -1,6 +1,6 @@
 import * as React from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { 
   ArrowLeft, 
   Eye, 
@@ -37,6 +37,23 @@ export default async function AdminModulePage({ params }: { params: Promise<{ mo
   await requireAdmin();
 
   const { module } = await params;
+
+  // Robust slug aliases for resilient routing
+  const slugAliases: Record<string, string> = {
+    "clients": "client-management",
+    "services": "services-cms",
+    "tickets": "ticket-management",
+    "quotes": "quote-requests",
+    "media": "media-library",
+    "blogs": "blog-and-insights",
+    "blog": "blog-and-insights",
+    "security": "audit-logs",
+    "logs": "audit-logs",
+  };
+
+  if (slugAliases[module]) {
+    redirect(`/admin/${slugAliases[module]}`);
+  }
 
   // Find module details by checking slug matching
   const fallbackName = adminModules.find((item) => slugify(item) === module);
