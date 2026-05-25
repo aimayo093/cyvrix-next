@@ -7,6 +7,7 @@
   --color-brand-primary: #2691F0;
   --color-brand-navy: #041635;
   --color-brand-accent: #EAF4FF;
+  --color-brand-cyan: #06b6d4;
 
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
@@ -18,30 +19,58 @@
     @apply border-slate-200;
   }
   body {
-    @apply bg-white text-slate-900;
+    @apply bg-[#020817] text-slate-300 overflow-x-hidden selection:bg-[#2691F0]/30 selection:text-white;
   }
 }
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/70 backdrop-blur-md border border-white/20 shadow-xl;
+    @apply bg-[#041635]/80 backdrop-blur-xl border border-white/10 shadow-2xl shadow-black/50;
+  }
+  .glass-panel-subtle {
+    @apply bg-[#041635]/40 backdrop-blur-lg border border-white/5 shadow-sm;
   }
   
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#041635] to-[#2691F0];
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-white via-blue-100 to-[#2691F0];
   }
 
-  .bg-cyber-grid {
-    background-image: radial-gradient(circle at 2px 2px, rgba(38, 145, 240, 0.05) 1px, transparent 0);
-    background-size: 24px 24px;
+  .text-gradient-neon {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#2691F0] to-[#06b6d4];
+  }
+
+  .bg-corporate-grid {
+    background-image: 
+      linear-gradient(to right, rgba(38, 145, 240, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(38, 145, 240, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-position: center center;
+  }
+  
+  .bg-dot-pattern {
+    background-image: radial-gradient(rgba(38, 145, 240, 0.15) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 40px -10px rgba(38, 145, 240, 0.4);
   }
 
   .animate-float {
-    animation: float 6s ease-in-out infinite;
+    animation: float 8s ease-in-out infinite;
   }
-
+  
+  .animate-marquee {
+    animation: marquee 40s linear infinite;
+  }
+  
   @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-8px); }
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); }
   }
 }

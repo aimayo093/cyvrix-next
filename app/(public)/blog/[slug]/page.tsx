@@ -30,7 +30,7 @@ export default async function BlogPostDetailPage({ params }: BlogPostPageProps) 
   if (!post) notFound();
 
   return (
-    <div className="pt-24 pb-20 bg-slate-50 text-[#041635]">
+    <div className="pt-24 pb-20 bg-[#020817] text-white">
       {/* Article Header block */}
       <section className="bg-gradient-to-b from-[#041635] to-[#0a2a5e] py-20 text-white relative overflow-hidden">
         <div className="absolute right-0 top-0 w-80 h-80 bg-[#2691F0]/10 rounded-full blur-[100px]" />
@@ -45,7 +45,7 @@ export default async function BlogPostDetailPage({ params }: BlogPostPageProps) 
           </Link>
 
           <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#2691F0] bg-blue-500/10 px-3 py-1.5 rounded-md border border-[#2691F0]/20">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[#2691F0] bg-[#2691F0]/100/10 px-3 py-1.5 rounded-md border border-[#2691F0]/20">
               {post.category}
             </span>
             <h1 className="font-outfit text-3.5xl md:text-5xl font-black mt-6 tracking-tight leading-tight">
@@ -70,8 +70,8 @@ export default async function BlogPostDetailPage({ params }: BlogPostPageProps) 
       <main className="max-w-4xl mx-auto px-5 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12">
           {/* Main content body */}
-          <article className="bg-white p-8 md:p-12 rounded-3xl border border-slate-200/80 shadow-xl shadow-blue-500/5 leading-relaxed text-slate-600 text-md font-medium">
-            <p className="text-lg text-[#041635] font-semibold leading-relaxed mb-6">
+          <article className="bg-[#020817] p-8 md:p-12 rounded-3xl border border-slate-200/80 shadow-xl shadow-blue-500/5 leading-relaxed text-slate-400 text-md font-medium">
+            <p className="text-lg text-white font-semibold leading-relaxed mb-6">
               {post.excerpt}
             </p>
             
@@ -84,22 +84,22 @@ export default async function BlogPostDetailPage({ params }: BlogPostPageProps) 
             </p>
 
             {/* Simulated Section Content */}
-            <div className="my-8 p-6 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-sm leading-relaxed relative">
+            <div className="my-8 p-6 bg-[#020817] rounded-2xl border border-white/10 text-slate-500 text-sm leading-relaxed relative">
               <div className="absolute top-0 right-0 p-4 opacity-5">
-                <ShieldAlert className="h-20 w-20 text-[#041635]" />
+                <ShieldAlert className="h-20 w-20 text-white" />
               </div>
-              <h4 className="font-outfit text-lg font-black text-[#041635] mb-2">Technical Warning</h4>
+              <h4 className="font-outfit text-lg font-black text-white mb-2">Technical Warning</h4>
               <p>
                 Cyber threats targeting UK SMEs are increasing in operational sophistication. Maintain clear endpoints hardening plans, configure robust multi-factor validation, and routinely audit active admin privileges.
               </p>
             </div>
 
             {/* Tag List */}
-            <div className="flex flex-wrap gap-2 mt-12 pt-8 border-t border-slate-100">
+            <div className="flex flex-wrap gap-2 mt-12 pt-8 border-t border-white/5">
               {post.tags.map((tag) => (
                 <span 
                   key={tag} 
-                  className="rounded-lg bg-[#EAF4FF] border border-[#2691F0]/10 px-3 py-1.5 text-xs font-black text-[#2691F0]"
+                  className="rounded-lg bg-[#2691F0] border border-[#2691F0]/10 px-3 py-1.5 text-xs font-black text-[#2691F0]"
                 >
                   #{tag}
                 </span>
@@ -121,10 +121,10 @@ export default async function BlogPostDetailPage({ params }: BlogPostPageProps) 
               </Link>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-200 text-center">
+            <div className="bg-[#020817] p-6 rounded-3xl border border-white/10 text-center">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Share Article</p>
               <div className="flex justify-center gap-3">
-                <button className="p-3 bg-slate-50 hover:bg-[#EAF4FF] hover:text-[#2691F0] rounded-xl transition-all border border-slate-100 text-slate-400">
+                <button className="p-3 bg-[#020817] hover:bg-[#2691F0] hover:text-[#2691F0] rounded-xl transition-all border border-white/5 text-slate-400">
                   <Share2 className="h-4 w-4" />
                 </button>
               </div>

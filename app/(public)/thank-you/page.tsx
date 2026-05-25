@@ -19,8 +19,8 @@ export default async function ThankYouPage({ searchParams }: ThankYouProps) {
   const ticketRef = params.ticket;
 
   return (
-    <div className="pt-32 pb-40 min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-[#F8FAFC] to-[#EAF4FF]/30">
-      <div className="max-w-xl w-full mx-5 bg-white p-10 md:p-12 rounded-3xl border border-slate-200/80 shadow-xl shadow-blue-500/5 text-center relative overflow-hidden">
+    <div className="pt-32 pb-40 min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-[#020817] to-[#041635]">
+      <div className="max-w-xl w-full mx-5 bg-[#020817] p-10 md:p-12 rounded-3xl border border-slate-200/80 shadow-xl shadow-blue-500/5 text-center relative overflow-hidden">
         {/* Decorative subtle gradient spot */}
         <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#2691F0]/10 rounded-full blur-3xl" />
         
@@ -39,11 +39,11 @@ export default async function ThankYouPage({ searchParams }: ThankYouProps) {
             {isError ? "Action Required" : "Submission Received"}
           </p>
 
-          <h1 className="font-outfit text-3.5xl font-black text-[#041635] tracking-tight leading-tight mb-6">
+          <h1 className="font-outfit text-3.5xl font-black text-white tracking-tight leading-tight mb-6">
             {isError ? "Please Review Form" : "Operation Successful"}
           </h1>
 
-          <p className="text-slate-600 text-sm leading-relaxed mb-8">
+          <p className="text-slate-400 text-sm leading-relaxed mb-8">
             {isError 
               ? (params.message || "We could not process your submission. Please check your information and try again.")
               : `Thank you for contacting CYVRIX Technologies. Your ${type} request has been processed successfully, and our systems have scheduled the corresponding notifications.`
@@ -51,9 +51,9 @@ export default async function ThankYouPage({ searchParams }: ThankYouProps) {
           </p>
 
           {ticketRef && (
-            <div className="w-full bg-[#EAF4FF]/50 border border-[#2691F0]/20 rounded-2xl p-5 mb-8 text-center">
+            <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-5 mb-8 text-center">
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Support Reference</p>
-              <p className="font-mono text-lg font-black text-[#041635] tracking-wider">{ticketRef}</p>
+              <p className="font-mono text-lg font-black text-white tracking-wider">{ticketRef}</p>
               <p className="text-xs text-slate-500 mt-2">Please keep this reference for communication with our agents.</p>
             </div>
           )}

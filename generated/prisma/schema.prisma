@@ -627,6 +627,7 @@ model CmsPage {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime
   ContentBlock   ContentBlock[]
+  sections       PageSection[]
 
   @@schema("public")
 }
@@ -792,6 +793,10 @@ model MediaAsset {
   altText   String?
   createdAt DateTime @default(now())
   updatedAt DateTime
+  bucket    String?
+  filePath  String?
+  createdBy String?
+  updatedBy String?
 
   @@schema("public")
 }
@@ -1516,5 +1521,198 @@ enum user_role {
   sales_user
   client
 
+  @@schema("public")
+}
+
+model BrandAsset {
+  id           String   @id @default(uuid())
+  assetKey     String   @unique @map("asset_key")
+  name         String
+  mediaUrl     String   @map("media_url")
+  altText      String?  @map("alt_text")
+  usageContext String?  @map("usage_context")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdBy    String?  @map("created_by")
+  updatedBy    String?  @map("updated_by")
+
+  @@map("brand_assets")
+  @@schema("public")
+}
+
+model Menu {
+  id        String     @id @default(uuid())
+  name      String
+  location  String     @unique
+  isActive  Boolean    @default(true) @map("is_active")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+  items     MenuItem[]
+
+  @@map("menus")
+  @@schema("public")
+}
+
+model MenuItem {
+  id           String   @id @default(uuid())
+  menuId       String   @map("menu_id")
+  parentId     String?  @map("parent_id")
+  label        String
+  url          String
+  pageId       String?  @map("page_id")
+  iconKey      String?  @map("icon_key")
+  sortOrder    Int      @default(0) @map("sort_order")
+  isVisible    Boolean  @default(true) @map("is_visible")
+  openInNewTab Boolean  @default(false) @map("open_in_new_tab")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdBy    String?  @map("created_by")
+  updatedBy    String?  @map("updated_by")
+
+  menu     Menu       @relation(fields: [menuId], references: [id], onDelete: Cascade)
+  parent   MenuItem?  @relation("MenuHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children MenuItem[] @relation("MenuHierarchy")
+
+  @@map("menu_items")
+  @@schema("public")
+}
+
+model FooterSection {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  sortOrder   Int          @default(0) @map("sort_order")
+  isVisible   Boolean      @default(true) @map("is_visible")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+  createdBy   String?      @map("created_by")
+  updatedBy   String?      @map("updated_by")
+  links       FooterLink[]
+
+  @@map("footer_sections")
+  @@schema("public")
+}
+
+model FooterLink {
+  id              String   @id @default(uuid())
+  footerSectionId String   @map("footer_section_id")
+  label           String
+  url             String
+  pageId          String?  @map("page_id")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isVisible       Boolean  @default(true) @map("is_visible")
+  openInNewTab    Boolean  @default(false) @map("open_in_new_tab")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdBy       String?  @map("created_by")
+  updatedBy       String?  @map("updated_by")
+
+  section FooterSection @relation(fields: [footerSectionId], references: [id], onDelete: Cascade)
+
+  @@map("footer_links")
+  @@schema("public")
+}
+
+model PageSection {
+  id              String   @id @default(uuid())
+  pageId          String   @map("page_id")
+  sectionType     String   @map("section_type")
+  title           String?
+  subtitle        String?
+  body            String?
+  mediaId         String?  @map("media_id")
+  buttonLabel     String?  @map("button_label")
+  buttonUrl       String?  @map("button_url")
+  backgroundStyle String?  @map("background_style")
+  layoutStyle     String?  @map("layout_style")
+  settingsJson    Json     @default("{}") @map("settings_json")
+  sortOrder       Int      @default(0) @map("sort_order")
+  isVisible       Boolean  @default(true) @map("is_visible")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdBy       String?  @map("created_by")
+  updatedBy       String?  @map("updated_by")
+
+  page CmsPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("page_sections")
+  @@schema("public")
+}
+
+model PartnerLogo {
+  id          String   @id @default(uuid())
+  name        String
+  category    String
+  description String?
+  logoUrl     String   @map("logo_url")
+  altText     String?  @map("alt_text")
+  websiteUrl  String?  @map("website_url")
+  isFeatured  Boolean  @default(false) @map("is_featured")
+  isVisible   Boolean  @default(true) @map("is_visible")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdBy   String?  @map("created_by")
+  updatedBy   String?  @map("updated_by")
+
+  @@map("partner_logos")
+  @@schema("public")
+}
+
+model TrustedBusinessLogo {
+  id          String   @id @default(uuid())
+  companyName String   @map("company_name")
+  logoUrl     String   @map("logo_url")
+  altText     String?  @map("alt_text")
+  websiteUrl  String?  @map("website_url")
+  isFeatured  Boolean  @default(false) @map("is_featured")
+  isVisible   Boolean  @default(true) @map("is_visible")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdBy   String?  @map("created_by")
+  updatedBy   String?  @map("updated_by")
+
+  @@map("trusted_business_logos")
+  @@schema("public")
+}
+
+model ComplianceCard {
+  id              String   @id @default(uuid())
+  title           String
+  description     String
+  category        String
+  iconKey         String   @map("icon_key")
+  logoUrl         String?  @map("logo_url")
+  status          String
+  externalUrl     String?  @map("external_url")
+  displayLocation String   @map("display_location")
+  isVisible       Boolean  @default(true) @map("is_visible")
+  sortOrder       Int      @default(0) @map("sort_order")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdBy       String?  @map("created_by")
+  updatedBy       String?  @map("updated_by")
+
+  @@map("compliance_cards")
+  @@schema("public")
+}
+
+model SocialLink {
+  id           String   @id @default(uuid())
+  platform     String
+  url          String
+  label        String
+  iconKey      String   @map("icon_key")
+  isVisible    Boolean  @default(true) @map("is_visible")
+  openInNewTab Boolean  @default(true) @map("open_in_new_tab")
+  sortOrder    Int      @default(0) @map("sort_order")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdBy    String?  @map("created_by")
+  updatedBy    String?  @map("updated_by")
+
+  @@map("social_links")
   @@schema("public")
 }

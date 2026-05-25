@@ -646,7 +646,11 @@ exports.Prisma.MediaAssetScalarFieldEnum = {
   caption: 'caption',
   altText: 'altText',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  bucket: 'bucket',
+  filePath: 'filePath',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
 };
 
 exports.Prisma.NavigationItemScalarFieldEnum = {
@@ -1072,6 +1076,159 @@ exports.Prisma.Ticket_messagesScalarFieldEnum = {
   created_at: 'created_at'
 };
 
+exports.Prisma.BrandAssetScalarFieldEnum = {
+  id: 'id',
+  assetKey: 'assetKey',
+  name: 'name',
+  mediaUrl: 'mediaUrl',
+  altText: 'altText',
+  usageContext: 'usageContext',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.MenuScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  location: 'location',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MenuItemScalarFieldEnum = {
+  id: 'id',
+  menuId: 'menuId',
+  parentId: 'parentId',
+  label: 'label',
+  url: 'url',
+  pageId: 'pageId',
+  iconKey: 'iconKey',
+  sortOrder: 'sortOrder',
+  isVisible: 'isVisible',
+  openInNewTab: 'openInNewTab',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.FooterSectionScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  sortOrder: 'sortOrder',
+  isVisible: 'isVisible',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.FooterLinkScalarFieldEnum = {
+  id: 'id',
+  footerSectionId: 'footerSectionId',
+  label: 'label',
+  url: 'url',
+  pageId: 'pageId',
+  sortOrder: 'sortOrder',
+  isVisible: 'isVisible',
+  openInNewTab: 'openInNewTab',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.PageSectionScalarFieldEnum = {
+  id: 'id',
+  pageId: 'pageId',
+  sectionType: 'sectionType',
+  title: 'title',
+  subtitle: 'subtitle',
+  body: 'body',
+  mediaId: 'mediaId',
+  buttonLabel: 'buttonLabel',
+  buttonUrl: 'buttonUrl',
+  backgroundStyle: 'backgroundStyle',
+  layoutStyle: 'layoutStyle',
+  settingsJson: 'settingsJson',
+  sortOrder: 'sortOrder',
+  isVisible: 'isVisible',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.PartnerLogoScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  category: 'category',
+  description: 'description',
+  logoUrl: 'logoUrl',
+  altText: 'altText',
+  websiteUrl: 'websiteUrl',
+  isFeatured: 'isFeatured',
+  isVisible: 'isVisible',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.TrustedBusinessLogoScalarFieldEnum = {
+  id: 'id',
+  companyName: 'companyName',
+  logoUrl: 'logoUrl',
+  altText: 'altText',
+  websiteUrl: 'websiteUrl',
+  isFeatured: 'isFeatured',
+  isVisible: 'isVisible',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.ComplianceCardScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  description: 'description',
+  category: 'category',
+  iconKey: 'iconKey',
+  logoUrl: 'logoUrl',
+  status: 'status',
+  externalUrl: 'externalUrl',
+  displayLocation: 'displayLocation',
+  isVisible: 'isVisible',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.SocialLinkScalarFieldEnum = {
+  id: 'id',
+  platform: 'platform',
+  url: 'url',
+  label: 'label',
+  iconKey: 'iconKey',
+  isVisible: 'isVisible',
+  openInNewTab: 'openInNewTab',
+  sortOrder: 'sortOrder',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1290,7 +1447,17 @@ exports.Prisma.ModelName = {
   services: 'services',
   site_settings: 'site_settings',
   support_tickets: 'support_tickets',
-  ticket_messages: 'ticket_messages'
+  ticket_messages: 'ticket_messages',
+  BrandAsset: 'BrandAsset',
+  Menu: 'Menu',
+  MenuItem: 'MenuItem',
+  FooterSection: 'FooterSection',
+  FooterLink: 'FooterLink',
+  PageSection: 'PageSection',
+  PartnerLogo: 'PartnerLogo',
+  TrustedBusinessLogo: 'TrustedBusinessLogo',
+  ComplianceCard: 'ComplianceCard',
+  SocialLink: 'SocialLink'
 };
 
 /**

@@ -5,3 +5,8 @@ export async function GET() {
   await clearSession();
   redirect("/login");
 }
+
+export async function POST() {
+  await clearSession();
+  redirect("/login");
+}
