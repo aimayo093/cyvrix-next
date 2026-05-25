@@ -457,11 +457,11 @@ export function SectionRenderer({
                           <div key={`${partner.id}-${i}`} className="flex items-center gap-2 font-bold text-white text-lg group">
                             {partner.logoUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={partner.logoUrl} alt={partner.name} className="h-6 w-auto object-contain" />
+                              <img src={partner.logoUrl} alt={partner.name} className="h-10 md:h-12 w-auto object-contain" />
                             ) : (
                               <>
-                                <ShieldCheck className="h-6 w-6 text-[#2691F0]" />
-                                <span>{partner.name}</span>
+                                <ShieldCheck className="h-8 w-8 text-[#2691F0]" />
+                                <span className="text-xl">{partner.name}</span>
                               </>
                             )}
                           </div>
@@ -492,13 +492,13 @@ export function SectionRenderer({
                           <div key={`${client.id}-${i}`} className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-300">
                             {client.logoUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={client.logoUrl} alt={client.companyName} className="h-10 w-auto object-contain" />
+                              <img src={client.logoUrl} alt={client.companyName} className="h-12 md:h-14 w-auto object-contain" />
                             ) : (
                               <div className="flex flex-col items-center">
-                                <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#2691F0] font-black text-sm">
+                                <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-[#2691F0] font-black text-sm">
                                   {client.companyName.charAt(0)}
                                 </div>
-                                <span className="text-xs font-black text-white mt-1">{client.companyName}</span>
+                                <span className="text-xs font-black text-white mt-1.5">{client.companyName}</span>
                               </div>
                             )}
                           </div>
