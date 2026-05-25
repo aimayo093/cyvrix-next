@@ -10,6 +10,8 @@ import {
   ShieldCheck,
   MapPin,
   Phone,
+  LockKeyhole,
+  LifeBuoy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -178,6 +180,25 @@ export function Footer({
       card.displayLocation.toLowerCase() === "all" ||
       card.displayLocation.toLowerCase().includes("footer")
   );
+
+  function getSafeDisplayStatus(card: { title: string; status: string; logoUrl?: string | null }) {
+    if (card.status !== "Certified" || card.logoUrl) {
+      return card.status;
+    }
+    const title = card.title.toLowerCase();
+    if (title.includes("27001")) return "Framework aligned";
+    if (title.includes("essentials")) return "Advisory service";
+    if (title.includes("gdpr") || title.includes("dpa")) return "Compliance support";
+    if (title.includes("itil")) return "Service aligned";
+    return "Framework followed";
+  }
+
+  function getCardIcon(iconKey?: string | null) {
+    const key = iconKey?.toLowerCase() || "";
+    if (key.includes("lock") || key.includes("keyhole")) return LockKeyhole;
+    if (key.includes("buoy") || key.includes("life")) return LifeBuoy;
+    return ShieldCheck;
+  }
   return (
     <footer className="relative bg-[#041635] text-white pt-24 pb-12 overflow-hidden border-t-4 border-[#2691F0]">
       {/* Background design elements */}
@@ -292,10 +313,8 @@ export function Footer({
                   </div>
                   <div className="flex flex-wrap items-center gap-6">
                     {visibleComplianceCards.map((card) => {
-                      const isIso27001 = card.title.toLowerCase().includes("27001");
-                      const displayStatus = (isIso27001 && card.status === "Certified" && !card.logoUrl)
-                        ? "Framework followed"
-                        : card.status;
+                      const displayStatus = getSafeDisplayStatus(card);
+                      const CardIcon = getCardIcon(card.iconKey);
 
                       return (
                         <a
@@ -312,24 +331,17 @@ export function Footer({
                               alt={card.title}
                               className="h-8 w-auto object-contain filter brightness-75 opacity-70 group-hover:brightness-100 group-hover:opacity-100 transition-all duration-200"
                             />
-                          ) : isIso27001 ? (
+                          ) : (
                             <div className="flex items-center gap-1.5 bg-white/5 border border-[#2691F0]/20 rounded-xl px-2.5 py-1.5 opacity-80 group-hover:opacity-100 transition-all duration-200">
-                              <ShieldCheck className="h-4 w-4 text-[#2691F0]" />
+                              <CardIcon className="h-4 w-4 text-[#2691F0]" />
                               <div className="flex flex-col text-left">
                                 <span className="text-[10px] font-black text-slate-200 tracking-tight leading-none">
                                   {card.title}
                                 </span>
                                 <span className="text-[7px] text-slate-400 font-semibold uppercase tracking-wider leading-none mt-0.5">
-                                  {card.category || "ISMS"}
+                                  {card.category || "Compliance"}
                                 </span>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-all duration-200">
-                              <ShieldCheck className="h-4 w-4 text-[#2691F0]/80 group-hover:text-[#2691F0]" />
-                              <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-200">
-                                {card.title}
-                              </span>
                             </div>
                           )}
                         </a>

@@ -292,6 +292,8 @@ function ComplianceFormFields({ defaults }: { defaults?: any }) {
             <option value="Framework followed">Framework followed</option>
             <option value="Framework aligned">Framework aligned</option>
             <option value="Advisory service">Advisory service</option>
+            <option value="Compliance support">Compliance support</option>
+            <option value="Service aligned">Service aligned</option>
           </select>
         </label>
       </div>

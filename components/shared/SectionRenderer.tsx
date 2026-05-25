@@ -25,6 +25,8 @@ import {
   Mail,
   MapPin,
   Lock,
+  LockKeyhole,
+  LifeBuoy,
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
@@ -61,6 +63,25 @@ function getIcon(key: string) {
   if (k.includes("cpu")) return Cpu;
   if (k.includes("monitor")) return MonitorSmartphone;
   if (k.includes("lock")) return Lock;
+  return ShieldCheck;
+}
+
+function getSafeDisplayStatus(card: { title: string; status: string; logoUrl?: string | null }) {
+  if (card.status !== "Certified" || card.logoUrl) {
+    return card.status;
+  }
+  const title = card.title.toLowerCase();
+  if (title.includes("27001")) return "Framework aligned";
+  if (title.includes("essentials")) return "Advisory service";
+  if (title.includes("gdpr") || title.includes("dpa")) return "Compliance support";
+  if (title.includes("itil")) return "Service aligned";
+  return "Framework followed";
+}
+
+function getCardIcon(iconKey?: string | null) {
+  const key = iconKey?.toLowerCase() || "";
+  if (key.includes("lock") || key.includes("keyhole")) return LockKeyhole;
+  if (key.includes("buoy") || key.includes("life")) return LifeBuoy;
   return ShieldCheck;
 }
 
@@ -381,11 +402,8 @@ export function SectionRenderer({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {complianceCards.map((card) => {
-                      const CompIcon = getIcon(card.iconKey || "Shield");
-                      const isIso27001 = card.title.toLowerCase().includes("27001");
-                      const displayStatus = (isIso27001 && card.status === "Certified" && !card.logoUrl)
-                        ? "Framework followed"
-                        : card.status;
+                      const CompIcon = getCardIcon(card.iconKey);
+                      const displayStatus = getSafeDisplayStatus(card);
 
                       return (
                         <div key={card.id} className="glass-panel-subtle p-6 rounded-xl border-white/5 flex flex-col justify-between hover:border-[#2691F0]/40 transition-all group">
@@ -394,8 +412,6 @@ export function SectionRenderer({
                               <div className="w-10 h-10 rounded bg-[#2691F0]/10 border border-[#2691F0]/20 flex items-center justify-center text-[#2691F0] overflow-hidden">
                                 {card.logoUrl ? (
                                   <img src={card.logoUrl} alt={card.title} className="w-full h-full object-contain p-1" />
-                                ) : isIso27001 ? (
-                                  <ShieldCheck className="h-5 w-5" />
                                 ) : (
                                   <CompIcon className="h-5 w-5" />
                                 )}
