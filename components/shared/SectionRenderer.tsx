@@ -382,20 +382,31 @@ export function SectionRenderer({
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {complianceCards.map((card) => {
                       const CompIcon = getIcon(card.iconKey || "Shield");
+                      const isIso27001 = card.title.toLowerCase().includes("27001");
+                      const displayStatus = (isIso27001 && card.status === "Certified" && !card.logoUrl)
+                        ? "Framework followed"
+                        : card.status;
+
                       return (
                         <div key={card.id} className="glass-panel-subtle p-6 rounded-xl border-white/5 flex flex-col justify-between hover:border-[#2691F0]/40 transition-all group">
                           <div>
                             <div className="flex items-center justify-between mb-6">
-                              <div className="w-10 h-10 rounded bg-[#2691F0]/10 border border-[#2691F0]/20 flex items-center justify-center text-[#2691F0]">
-                                <CompIcon className="h-5 w-5" />
+                              <div className="w-10 h-10 rounded bg-[#2691F0]/10 border border-[#2691F0]/20 flex items-center justify-center text-[#2691F0] overflow-hidden">
+                                {card.logoUrl ? (
+                                  <img src={card.logoUrl} alt={card.title} className="w-full h-full object-contain p-1" />
+                                ) : isIso27001 ? (
+                                  <ShieldCheck className="h-5 w-5" />
+                                ) : (
+                                  <CompIcon className="h-5 w-5" />
+                                )}
                               </div>
                               <span className={cn(
                                 "text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border",
-                                card.status === "Certified" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
-                                card.status === "In progress" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
+                                displayStatus === "Certified" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" :
+                                displayStatus === "In progress" ? "bg-amber-500/10 border-amber-500/20 text-amber-400" :
                                 "bg-blue-500/10 border-blue-500/20 text-blue-400"
                               )}>
-                                {card.status}
+                                {displayStatus}
                               </span>
                             </div>
                             <h3 className="font-outfit text-lg font-bold text-white mb-2">{card.title}</h3>

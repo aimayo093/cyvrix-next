@@ -290,6 +290,8 @@ function ComplianceFormFields({ defaults }: { defaults?: any }) {
             <option value="Certified">Certified</option>
             <option value="In progress">In progress</option>
             <option value="Framework followed">Framework followed</option>
+            <option value="Framework aligned">Framework aligned</option>
+            <option value="Advisory service">Advisory service</option>
           </select>
         </label>
       </div>
