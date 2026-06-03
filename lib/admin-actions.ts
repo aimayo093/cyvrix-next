@@ -66,7 +66,7 @@ export async function updateService(formData: FormData) {
     data: {
       title,
       summary,
-      content: { ...(existing.content as object), body, image: image || (existing.content as any)?.image },
+      content: { ...(existing.content as object), body, image },
       seo: { title: seoTitle, description: seoDesc },
       updatedAt: new Date(),
     },
@@ -162,13 +162,23 @@ export async function updateBlogPost(formData: FormData) {
   const tags = (formData.get("tags") as string || "").split(",").map((t) => t.trim()).filter(Boolean);
   const seoTitle = sanitize(formData.get("seoTitle") as string || "");
   const seoDesc = sanitize(formData.get("seoDescription") as string || "");
+  const image = sanitize(formData.get("image") as string || "");
 
   const existing = await prisma.blogPost.findUnique({ where: { id } });
   if (!existing) return;
 
   await prisma.blogPost.update({
     where: { id },
-    data: { title, body, author, category, tags, seo: { title: seoTitle, description: seoDesc }, updatedAt: new Date() },
+    data: {
+      title,
+      body,
+      author,
+      category,
+      tags,
+      featuredImage: image || null,
+      seo: { title: seoTitle, description: seoDesc },
+      updatedAt: new Date(),
+    },
   });
 
   await prisma.auditLog.create({
@@ -255,7 +265,7 @@ export async function updateIndustry(formData: FormData) {
 
   await prisma.industry.update({
     where: { id },
-    data: { title, content: { ...(existing.content as object), summary, body, image: image || (existing.content as any)?.image }, updatedAt: new Date() },
+    data: { title, content: { ...(existing.content as object), summary, body, image }, updatedAt: new Date() },
   });
 
   revalidatePath("/admin/industries-cms");
@@ -327,6 +337,30 @@ export async function updateTicketStatus(formData: FormData) {
 
   await prisma.ticket.update({ where: { id }, data: { status: status as any, updatedAt: new Date() } });
 
+  // Trigger automatic survey if configured
+  try {
+    const t = await prisma.ticket.findUnique({ where: { id } });
+    if (t) {
+      let settings = await prisma.surveySetting.findFirst();
+      if (!settings) {
+        // Create default settings if they don't exist yet
+        const { triggerSurvey } = await import("./survey-actions");
+        // triggerSurvey handles settings creation automatically
+      }
+      settings = await prisma.surveySetting.findFirst();
+      const shouldTrigger =
+        (status === "CLOSED" && (settings?.triggerOnClosed !== false)) ||
+        (status === "RESOLVED" && (settings?.triggerOnResolved !== false));
+      
+      if (shouldTrigger && t.email) {
+        const { triggerSurvey } = await import("./survey-actions");
+        await triggerSurvey("support_ticket", id, t.email, t.name, t.clientCompanyId);
+      }
+    }
+  } catch (err) {
+    console.error("Survey trigger check failed:", err);
+  }
+
   await prisma.auditLog.create({
     data: { id: crypto.randomUUID(), action: "ticket_status_updated", entityType: "Ticket", entityId: id, metadata: { status } },
   });
@@ -360,6 +394,26 @@ export async function closeTicket(formData: FormData) {
   await requireAdmin();
   const id = formData.get("id") as string;
   await prisma.ticket.update({ where: { id }, data: { status: "CLOSED", updatedAt: new Date() } });
+
+  // Trigger automatic survey if configured
+  try {
+    const t = await prisma.ticket.findUnique({ where: { id } });
+    if (t) {
+      let settings = await prisma.surveySetting.findFirst();
+      if (!settings) {
+        const { triggerSurvey } = await import("./survey-actions");
+      }
+      settings = await prisma.surveySetting.findFirst();
+      const shouldTrigger = settings?.triggerOnClosed !== false;
+      
+      if (shouldTrigger && t.email) {
+        const { triggerSurvey } = await import("./survey-actions");
+        await triggerSurvey("support_ticket", id, t.email, t.name, t.clientCompanyId);
+      }
+    }
+  } catch (err) {
+    console.error("Survey trigger check failed on close ticket:", err);
+  }
 
   await prisma.auditLog.create({
     data: { id: crypto.randomUUID(), action: "ticket_closed", entityType: "Ticket", entityId: id },
@@ -721,7 +775,9 @@ export async function updateBrandAsset(formData: FormData) {
     data: { id: crypto.randomUUID(), action: "brand_asset_updated", entityType: "BrandAsset", entityId: id, metadata: { name } },
   });
 
+  revalidatePath("/admin/brand-assets");
   revalidatePath("/", "layout");
+  redirect("/admin/brand-assets");
 }
 
 // ─── NAV MENUS & ITEMS ────────────────────────────────────────────────────────
@@ -1342,10 +1398,21 @@ export async function createPageSection(formData: FormData) {
   const settingsJsonRaw = formData.get("settingsJson") as string || "{}";
   const isVisible = formData.get("isVisible") !== "false";
 
-  let settingsJson = {};
+  let settingsJson: Record<string, any> = {};
   try {
     settingsJson = JSON.parse(settingsJsonRaw);
   } catch (e) {}
+
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("settingsJson_") && typeof value === "string") {
+      const propName = key.slice("settingsJson_".length);
+      if (propName === "overlayOpacity") {
+        settingsJson[propName] = parseFloat(value) || 0.65;
+      } else {
+        settingsJson[propName] = sanitize(value);
+      }
+    }
+  }
 
   // Find max sort order for this page
   const maxSection = await prisma.pageSection.findFirst({
@@ -1394,10 +1461,21 @@ export async function updatePageSection(formData: FormData) {
   const settingsJsonRaw = formData.get("settingsJson") as string || "{}";
   const isVisible = formData.get("isVisible") !== "false";
 
-  let settingsJson = {};
+  let settingsJson: Record<string, any> = {};
   try {
     settingsJson = JSON.parse(settingsJsonRaw);
   } catch (e) {}
+
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("settingsJson_") && typeof value === "string") {
+      const propName = key.slice("settingsJson_".length);
+      if (propName === "overlayOpacity") {
+        settingsJson[propName] = parseFloat(value) || 0.65;
+      } else {
+        settingsJson[propName] = sanitize(value);
+      }
+    }
+  }
 
   const existing = await prisma.pageSection.findUnique({ where: { id } });
   if (!existing) return;
@@ -1458,4 +1536,299 @@ export async function reorderPageSections(formData: FormData) {
   }
   revalidatePath("/admin/pages-cms");
 }
+
+
+
+// ─── CAREER JOBS ─────────────────────────────────────────────────────────────
+
+export async function createCareerJob(formData: FormData) {
+  await requireAdmin();
+  const title = sanitize(formData.get("title") as string || "");
+  const location = sanitize(formData.get("location") as string || "Remote");
+  const type = sanitize(formData.get("type") as string || "Full-time");
+  const description = sanitize(formData.get("description") as string || "");
+
+  await prisma.careerJob.create({
+    data: {
+      id: crypto.randomUUID(),
+      title,
+      location,
+      type,
+      description,
+      visible: false,
+      updatedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/admin/careers");
+  revalidatePath("/careers");
+}
+
+export async function updateCareerJob(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+  const title = sanitize(formData.get("title") as string || "");
+  const location = sanitize(formData.get("location") as string || "");
+  const type = sanitize(formData.get("type") as string || "");
+  const description = sanitize(formData.get("description") as string || "");
+
+  await prisma.careerJob.update({
+    where: { id },
+    data: {
+      title,
+      location,
+      type,
+      description,
+      updatedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/admin/careers");
+  revalidatePath("/careers");
+}
+
+export async function toggleCareerJobPublish(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+  const existing = await prisma.careerJob.findUnique({ where: { id } });
+  if (!existing) return;
+
+  await prisma.careerJob.update({
+    where: { id },
+    data: {
+      visible: !existing.visible,
+      updatedAt: new Date(),
+    },
+  });
+
+  revalidatePath("/admin/careers");
+  revalidatePath("/careers");
+}
+
+export async function deleteCareerJob(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+  await prisma.careerJob.delete({ where: { id } });
+
+  revalidatePath("/admin/careers");
+  revalidatePath("/careers");
+}
+
+export async function createPortalUser(formData: FormData) {
+  await requireAdmin();
+  const name = sanitize(formData.get("name") as string || "");
+  const email = sanitize(formData.get("email") as string || "").toLowerCase();
+  const password = formData.get("password") as string || "";
+  const clientCompanyId = formData.get("clientCompanyId") as string || "";
+
+  if (!email || !password || !clientCompanyId) {
+    throw new Error("Missing required fields.");
+  }
+
+  const { hashPassword } = await import("./password");
+  const passwordHash = hashPassword(password);
+
+  await prisma.user.create({
+    data: {
+      id: crypto.randomUUID(),
+      name: name || undefined,
+      email,
+      passwordHash,
+      role: "CLIENT",
+      clientCompanyId,
+      active: true,
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: { 
+      id: crypto.randomUUID(), 
+      action: "portal_user_created", 
+      entityType: "User", 
+      metadata: { email, clientCompanyId } 
+    },
+  });
+
+  revalidatePath("/admin/client-management");
+}
+
+export async function changeAdminPassword(formData: FormData) {
+  const admin = await requireAdmin();
+  const currentPassword = formData.get("currentPassword") as string || "";
+  const newPassword = formData.get("newPassword") as string || "";
+  const confirmPassword = formData.get("confirmPassword") as string || "";
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    redirect("/admin/settings?status=error&message=All password fields are required.");
+  }
+
+  if (newPassword !== confirmPassword) {
+    redirect("/admin/settings?status=error&message=New passwords do not match.");
+  }
+
+  if (newPassword.length < 8) {
+    redirect("/admin/settings?status=error&message=New password must be at least 8 characters long.");
+  }
+
+  const userRecord = await prisma.user.findUnique({
+    where: { id: admin.id },
+  });
+
+  if (!userRecord || !userRecord.passwordHash) {
+    redirect("/admin/settings?status=error&message=User record not found.");
+  }
+
+  const { verifyPassword, hashPassword } = await import("./password");
+
+  const isOldPasswordCorrect = verifyPassword(currentPassword, userRecord.passwordHash);
+  if (!isOldPasswordCorrect) {
+    redirect("/admin/settings?status=error&message=The current password you entered is incorrect.");
+  }
+
+  const newPasswordHash = hashPassword(newPassword);
+
+  await prisma.user.update({
+    where: { id: admin.id },
+    data: {
+      passwordHash: newPasswordHash,
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "admin_password_changed",
+      entityType: "User",
+      metadata: { email: admin.email },
+    },
+  });
+
+  redirect("/admin/settings?status=success&message=Password changed successfully.");
+}
+
+export async function resetPortalUserPassword(formData: FormData) {
+  await requireAdmin();
+  const userId = formData.get("userId") as string;
+  const clientId = formData.get("clientId") as string;
+  const newPassword = formData.get("newPassword") as string || "";
+
+  if (!userId || !newPassword) {
+    throw new Error("User ID and new password are required.");
+  }
+
+  if (newPassword.length < 8) {
+    throw new Error("Password must be at least 8 characters long.");
+  }
+
+  const { hashPassword } = await import("./password");
+  const passwordHash = hashPassword(newPassword);
+
+  const user = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash,
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      action: "portal_user_password_reset_by_admin",
+      entityType: "User",
+      metadata: { email: user.email, userId },
+    },
+  });
+
+  revalidatePath(`/admin/client-management?edit=${clientId}`);
+}
+
+// ─── WORK ORDERS ─────────────────────────────────────────────────────────────
+
+export async function createWorkOrder(formData: FormData) {
+  await requireAdmin();
+  const clientCompanyId = formData.get("clientCompanyId") as string || null;
+  const title = sanitize(formData.get("title") as string || "");
+  const description = sanitize(formData.get("description") as string || "");
+  const serviceType = sanitize(formData.get("serviceType") as string || "On-site Support");
+  const assignedTo = sanitize(formData.get("assignedTo") as string || "");
+  const contactName = sanitize(formData.get("contactName") as string || "");
+  const contactEmail = sanitize(formData.get("contactEmail") as string || "");
+  const scheduledAtRaw = formData.get("scheduledAt") as string;
+  const scheduledAt = scheduledAtRaw ? new Date(scheduledAtRaw) : null;
+
+  await prisma.workOrder.create({
+    data: {
+      id: crypto.randomUUID(),
+      clientCompanyId: clientCompanyId || undefined,
+      title,
+      description,
+      serviceType,
+      assignedTo: assignedTo || undefined,
+      contactName: contactName || undefined,
+      contactEmail: contactEmail || undefined,
+      scheduledAt,
+      status: "New",
+    },
+  });
+
+  revalidatePath("/admin/work-orders");
+}
+
+export async function updateWorkOrderStatus(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+  const status = formData.get("status") as string;
+  const completionNotes = sanitize(formData.get("completionNotes") as string || "");
+
+  const updateData: any = {
+    status,
+    updatedAt: new Date(),
+  };
+
+  if (status === "Completed") {
+    updateData.completedAt = new Date();
+    if (completionNotes) {
+      updateData.completionNotes = completionNotes;
+    }
+  }
+
+  const wo = await prisma.workOrder.update({
+    where: { id },
+    data: updateData,
+  });
+
+  // Trigger survey if completed and triggerOnJobCompleted is true
+  if (status === "Completed" && wo.contactEmail) {
+    try {
+      let settings = await prisma.surveySetting.findFirst();
+      if (!settings) {
+        const { triggerSurvey } = await import("./survey-actions");
+      }
+      settings = await prisma.surveySetting.findFirst();
+      if (settings?.triggerOnJobCompleted !== false) {
+        const { triggerSurvey } = await import("./survey-actions");
+        await triggerSurvey("work_order", id, wo.contactEmail, wo.contactName, wo.clientCompanyId);
+      }
+    } catch (err) {
+      console.error("Survey work order trigger check failed:", err);
+    }
+  }
+
+  revalidatePath("/admin/work-orders");
+}
+
+export async function deleteWorkOrder(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+  await prisma.workOrder.delete({
+    where: { id },
+  });
+  revalidatePath("/admin/work-orders");
+}
+
+
 

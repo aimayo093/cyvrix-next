@@ -1,6 +1,6 @@
 import * as React from "react";
 import { prisma } from "@/lib/prisma";
-import { SectionRenderer } from "@/components/shared/SectionRenderer";
+import { ContactClient } from "./ContactClient";
 
 export const dynamic = "force-dynamic";
 
@@ -28,12 +28,13 @@ export default async function ContactPage() {
   ]);
 
   return (
-    <div className="pt-10 bg-[#020817] min-h-screen">
-      <SectionRenderer
-        sections={pageData?.sections || []}
+    <div className="bg-[#020817] min-h-screen">
+      <ContactClient
+        pageData={pageData}
         services={services}
         industries={industries}
       />
     </div>
   );
 }
+

@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import Link from "next/link";
 import {
@@ -27,6 +29,7 @@ import {
   Lock,
   LockKeyhole,
   LifeBuoy,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
@@ -42,6 +45,41 @@ interface SectionRendererProps {
   trustedLogos?: any[];
   complianceCards?: any[];
   pricingPackages?: any[];
+  careerJobs?: any[];
+  forceFullPageReload?: boolean;
+}
+
+function resolveColor(value?: string | null, defaultClass: string = "") {
+  if (!value || value === "default" || value === "") return { className: defaultClass, style: {} };
+  const trimmed = value.trim();
+  if (trimmed.startsWith("#") || trimmed.startsWith("rgb") || trimmed.startsWith("hsl") || trimmed.startsWith("var")) {
+    return { className: "", style: { color: trimmed } };
+  }
+  return { className: trimmed, style: {} };
+}
+
+function normalizeSectionType(type: string): string {
+  const t = type?.toLowerCase() || "";
+  if (t === "hero" || t === "pricing_hero" || t === "contact_hero" || t === "support_hero" || t === "faq_hero") return "Hero";
+  if (t === "text_block" || t === "text block" || t === "custom rich text" || t === "custom_rich_text") return "Text block";
+  if (t === "image_and_text" || t === "image and text") return "Image and text";
+  if (t === "features" || t === "feature_cards" || t === "feature cards") return "Feature cards";
+  if (t === "services_grid" || t === "service_cards" || t === "service cards") return "Service cards";
+  if (t === "industries" || t === "industry_cards" || t === "industry cards") return "Industry cards";
+  if (t === "compliance_cards" || t === "compliance_card" || t === "compliance cards") return "Compliance cards";
+  if (t === "accredited_partners" || t === "partner_logos" || t === "partner logos") return "Partner logos";
+  if (t === "trusted_businesses" || t === "trusted_logos" || t === "trusted logos") return "Trusted logos";
+  if (t === "testimonials" || t === "testimonial") return "Testimonials";
+  if (t === "faq" || t === "faq_preview" || t === "faq preview") return "FAQ preview";
+  if (t === "case_study_preview" || t === "case study preview") return "Case study preview";
+  if (t === "cta_section" || t === "cta section") return "CTA section";
+  if (t === "contact_form" || t === "contact_section" || t === "contact section") return "Contact section";
+  if (t === "pricing" || t === "pricing_cards" || t === "pricing cards") return "Pricing cards";
+  if (t === "statistics" || t === "stats") return "Statistics";
+  if (t === "process/timeline" || t === "process" || t === "timeline") return "Process/timeline";
+  if (t === "media_gallery" || t === "media gallery") return "Media gallery";
+  if (t === "career_openings" || t === "career openings" || t === "careers" || t === "jobs") return "Career openings";
+  return type; // Fall back to original
 }
 
 function getIcon(key: string) {
@@ -96,10 +134,32 @@ export function SectionRenderer({
   trustedLogos = [],
   complianceCards = [],
   pricingPackages = [],
+  careerJobs = [],
+  forceFullPageReload = true,
 }: SectionRendererProps) {
   const visibleSections = sections
     .filter((s) => s.isVisible !== false)
     .sort((a, b) => a.sortOrder - b.sortOrder);
+
+  const CustomLink = React.forwardRef<HTMLAnchorElement, React.ComponentPropsWithoutRef<typeof Link> & { forceReload?: boolean }>(
+    ({ href, children, forceReload = forceFullPageReload, ...props }, ref) => {
+      const hrefStr = href ? href.toString() : "";
+      const isInternal = hrefStr && !hrefStr.startsWith("#") && !hrefStr.startsWith("tel:") && !hrefStr.startsWith("mailto:") && !hrefStr.startsWith("http");
+      if (forceReload && isInternal) {
+        return (
+          <a href={hrefStr} ref={ref} {...props}>
+            {children}
+          </a>
+        );
+      }
+      return (
+        <Link href={href} ref={ref} {...props}>
+          {children}
+        </Link>
+      );
+    }
+  );
+  CustomLink.displayName = "CustomLink";
 
   return (
     <div className="space-y-0">
@@ -108,61 +168,122 @@ export function SectionRenderer({
         const bgStyle = sec.backgroundStyle || "dark";
         const layout = sec.layoutStyle || "left";
 
+        const isLightTheme = bgStyle === "light" || bgStyle === "silver";
+
         const bgClass =
           bgStyle === "light"
             ? "bg-slate-50 text-slate-900 border-b border-slate-200"
-            : bgStyle === "brand"
-              ? "bg-[#041635] text-white border-b border-white/5"
-              : "bg-[#020817] text-slate-300 border-b border-white/5";
+            : bgStyle === "silver"
+              ? "bg-slate-100 text-slate-900 border-b border-slate-200"
+              : bgStyle === "brand"
+                ? "bg-[#041635] text-white border-b border-white/5"
+                : bgStyle === "azure"
+                  ? "bg-[#2691F0] text-white border-b border-white/5"
+                  : bgStyle === "royal"
+                    ? "bg-[#1E40AF] text-white border-b border-white/5"
+                    : bgStyle === "teal"
+                      ? "bg-[#0D9488] text-white border-b border-white/5"
+                      : bgStyle === "glassmorphic"
+                        ? "bg-[#041635]/85 backdrop-blur-md text-white border-b border-white/5"
+                        : "bg-[#020817] text-slate-300 border-b border-white/5";
 
-        const titleClass = bgStyle === "light" ? "text-[#041635]" : "text-white";
+        const titleClass = isLightTheme ? "text-[#041635]" : "text-white";
         const subtitleClass = bgStyle === "light" ? "text-[#2691F0]" : "text-[#2691F0]";
-        const descClass = bgStyle === "light" ? "text-slate-600" : "text-slate-400";
+        const descClass = isLightTheme ? "text-slate-600" : "text-slate-400";
 
-        switch (sec.sectionType) {
+        // Dynamic custom color resolvers mapping
+        const titleColorRes = resolveColor(settings.titleColor || settings.customTitleColor, titleClass);
+        const subtitleColorRes = resolveColor(settings.eyebrowColor || settings.subtitleColor || settings.customSubtitleColor, subtitleClass);
+        const descColorRes = resolveColor(settings.bodyColor || settings.customBodyColor, descClass);
+
+        switch (normalizeSectionType(sec.sectionType)) {
           // ─── 1. HERO SECTION ───────────────────────────────────────────────
           case "Hero":
+            const overlayOpacity = settings.overlayOpacity ?? 0.65;
+            const focalPosition = settings.focalPosition ?? "center";
+            const cardTitle = settings.cardTitle ?? "Premium UK Operations Center";
+            const focalClass = 
+              focalPosition === "top" ? "bg-top" :
+              focalPosition === "bottom" ? "bg-bottom" :
+              focalPosition === "left" ? "bg-left" :
+              focalPosition === "right" ? "bg-right" : "bg-center";
+
+            const maskClass = isLightTheme 
+              ? (bgStyle === "silver" ? "from-slate-100" : "from-slate-50")
+              : "from-[#020817]";
+
             return (
               <section key={sec.id} className={cn("relative pt-24 pb-20 lg:pt-36 lg:pb-32 overflow-hidden", bgClass)}>
                 {sec.mediaId ? (
                   <div
-                    className="absolute inset-0 z-0 bg-cover bg-center opacity-25"
-                    style={{ backgroundImage: `url(${sec.mediaId})` }}
+                    className={cn(
+                      "absolute inset-0 z-0 bg-cover transition-opacity duration-500",
+                      isLightTheme ? "mix-blend-normal" : "mix-blend-multiply",
+                      focalClass
+                    )}
+                    style={{ 
+                      backgroundImage: `url(${sec.mediaId})`,
+                      opacity: overlayOpacity
+                    }}
                   />
                 ) : (
-                  <div className="absolute inset-0 z-0 bg-corporate-grid opacity-40" />
+                  <>
+                    <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_30%_20%,_rgba(38,145,240,0.15),_transparent_45%)]" />
+                    <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_70%_80%,_rgba(6,182,212,0.12),_transparent_50%)]" />
+                    <div className="absolute inset-0 z-0 bg-corporate-grid opacity-35" />
+                  </>
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-transparent to-transparent pointer-events-none z-0" />
+                <div className={cn("absolute inset-0 bg-gradient-to-t via-transparent to-transparent pointer-events-none z-0", maskClass)} />
                 
                 <div className="max-w-7xl mx-auto px-5 lg:px-8 relative z-10">
                   <div className={cn("grid grid-cols-1 gap-16 items-center", layout === "center" ? "text-center" : "lg:grid-cols-2")}>
                     <div className={cn("max-w-2xl", layout === "center" && "mx-auto")}>
-                      {sec.subtitle && (
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded glass-panel-subtle text-[#2691F0] text-xs font-bold uppercase tracking-widest mb-6">
+                       {(settings.eyebrow || sec.subtitle) && (
+                        <div
+                          className={cn("inline-flex items-center gap-2 px-3 py-1.5 rounded glass-panel-subtle text-xs font-bold uppercase tracking-widest mb-6", subtitleColorRes.className)}
+                          style={subtitleColorRes.style}
+                        >
                           <ShieldCheck className="h-4 w-4" />
-                          <span>{sec.subtitle}</span>
+                          <span>{settings.eyebrow || sec.subtitle}</span>
                         </div>
                       )}
-                      <h1 className="font-outfit text-5xl md:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-6 text-balance">
+                      <h1
+                        className={cn("font-outfit text-5xl md:text-6xl lg:text-7xl font-black leading-[1.05] tracking-tight mb-6 text-balance", titleColorRes.className)}
+                        style={titleColorRes.style}
+                      >
                         {sec.title}
                       </h1>
                       {sec.body && (
-                        <p className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed mb-10 text-balance">
+                        <p
+                          className={cn("text-lg md:text-xl font-medium leading-relaxed mb-10 text-balance", descColorRes.className)}
+                          style={descColorRes.style}
+                        >
                           {sec.body}
                         </p>
                       )}
                       <div className={cn("flex flex-col sm:flex-row gap-4", layout === "center" && "justify-center")}>
                         {sec.buttonLabel && sec.buttonUrl && (
                           <Button size="lg" className="bg-[#2691F0] text-white hover:bg-white hover:text-[#041635] px-8 h-14 rounded font-bold shadow-lg shadow-[#2691F0]/20 transition-all group" asChild>
-                            <Link href={sec.buttonUrl}>
-                              {sec.buttonLabel}
-                              <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </Link>
+                            {sec.buttonUrl.startsWith("#") ? (
+                              <a href={sec.buttonUrl}>
+                                {sec.buttonLabel}
+                                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                              </a>
+                            ) : (
+                              <CustomLink href={sec.buttonUrl}>
+                                {sec.buttonLabel}
+                                <ArrowRight className="h-5 w-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                              </CustomLink>
+                            )}
                           </Button>
                         )}
-                        {settings.secondaryBtnLabel && settings.secondaryBtnUrl && (
+                        {((settings.secondaryCtaLabel || settings.secondaryBtnLabel) && (settings.secondaryCtaUrl || settings.secondaryBtnUrl)) && (
                           <Button size="lg" variant="outline" className="px-8 h-14 rounded font-bold border-white/20 text-white hover:bg-white/10 transition-colors" asChild>
-                            <Link href={settings.secondaryBtnUrl}>{settings.secondaryBtnLabel}</Link>
+                            {(settings.secondaryCtaUrl || settings.secondaryBtnUrl || "").startsWith("#") ? (
+                              <a href={settings.secondaryCtaUrl || settings.secondaryBtnUrl}>{settings.secondaryCtaLabel || settings.secondaryBtnLabel}</a>
+                            ) : (
+                              <CustomLink href={settings.secondaryCtaUrl || settings.secondaryBtnUrl}>{settings.secondaryCtaLabel || settings.secondaryBtnLabel}</CustomLink>
+                            )}
                           </Button>
                         )}
                       </div>
@@ -171,14 +292,50 @@ export function SectionRenderer({
                     {layout !== "center" && (
                       <div className="relative hidden lg:block">
                         <div className="aspect-[4/3] rounded-lg glass-panel overflow-hidden relative border border-white/10">
-                          <div className="absolute inset-0 bg-[#041635]/5 mix-blend-multiply" />
-                          <div className="absolute inset-0 flex items-center justify-center text-slate-300 flex-col gap-4">
-                            <MonitorSmartphone className="h-24 w-24 opacity-20" />
-                            <p className="font-bold text-lg opacity-40 uppercase tracking-widest text-center">
-                              Premium UK <br /> Operations Center
-                            </p>
-                          </div>
+                          {settings.cardImage ? (
+                            <img
+                              src={settings.cardImage}
+                              alt={cardTitle || "Hero panel image"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <>
+                              <div className="absolute inset-0 bg-[#041635]/5 mix-blend-multiply" />
+                              <div className="absolute inset-0 flex items-center justify-center text-slate-300 flex-col gap-4">
+                                <MonitorSmartphone className="h-24 w-24 opacity-20" />
+                                <p className="font-bold text-lg opacity-40 uppercase tracking-widest text-center">
+                                  {cardTitle.split('\n').map((line: string, i: number) => (
+                                    <React.Fragment key={i}>
+                                      {line}
+                                      <br />
+                                    </React.Fragment>
+                                  ))}
+                                </p>
+                              </div>
+                            </>
+                          )}
                         </div>
+
+                        {/* Floating Response Stat Card */}
+                        {settings.showStatCard !== false && (
+                          <div className="absolute -bottom-6 -left-6 glass-panel p-6 rounded-lg border border-white/10 w-64 animate-float">
+                            <p className="text-sm font-bold text-slate-400 mb-1">
+                              {settings.statLabel || "Average Response Time"}
+                            </p>
+                            <p className="text-4xl font-black text-white flex items-end gap-2">
+                              {settings.statValue || "12"}{" "}
+                              <span className="text-lg text-slate-500 font-bold mb-1">
+                                {settings.statUnit || "Mins"}
+                              </span>
+                            </p>
+                            {(settings.statBadge || "SLA Exceeded") && (
+                              <div className="mt-3 flex items-center gap-2 text-xs font-bold text-[#06b6d4] bg-[#06b6d4]/10 px-2 py-1 rounded w-fit border border-[#06b6d4]/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-[#06b6d4]" />
+                                {settings.statBadge || "SLA Exceeded"}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -192,15 +349,15 @@ export function SectionRenderer({
               <section key={sec.id} className={cn("py-20", bgClass)}>
                 <div className="max-w-4xl mx-auto px-5 text-center">
                   {sec.subtitle && (
-                    <p className={cn("text-xs font-black uppercase tracking-widest mb-4", subtitleClass)}>
+                    <p className={cn("text-xs font-black uppercase tracking-widest mb-4", subtitleColorRes.className)} style={subtitleColorRes.style}>
                       {sec.subtitle}
                     </p>
                   )}
-                  <h2 className={cn("font-outfit text-3xl md:text-4xl font-black mb-6", titleClass)}>
+                  <h2 className={cn("font-outfit text-3xl md:text-4xl font-black mb-6", titleColorRes.className)} style={titleColorRes.style}>
                     {sec.title}
                   </h2>
                   {sec.body && (
-                    <p className={cn("text-lg leading-relaxed", descClass)}>
+                    <p className={cn("text-lg leading-relaxed", descColorRes.className)} style={descColorRes.style}>
                       {sec.body}
                     </p>
                   )}
@@ -216,15 +373,15 @@ export function SectionRenderer({
                   <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-16 items-center", layout === "right" && "lg:flex-row-reverse")}>
                     <div className={cn(layout === "right" && "lg:order-2")}>
                       {sec.subtitle && (
-                        <p className={cn("text-xs font-black uppercase tracking-widest mb-4", subtitleClass)}>
+                        <p className={cn("text-xs font-black uppercase tracking-widest mb-4", subtitleColorRes.className)} style={subtitleColorRes.style}>
                           {sec.subtitle}
                         </p>
                       )}
-                      <h2 className={cn("font-outfit text-4xl md:text-5xl font-black mb-8 leading-tight", titleClass)}>
+                      <h2 className={cn("font-outfit text-4xl md:text-5xl font-black mb-8 leading-tight", titleColorRes.className)} style={titleColorRes.style}>
                         {sec.title}
                       </h2>
                       {sec.body && (
-                        <p className={cn("text-lg mb-8 leading-relaxed", descClass)}>
+                        <p className={cn("text-lg mb-8 leading-relaxed", descColorRes.className)} style={descColorRes.style}>
                           {sec.body}
                         </p>
                       )}
@@ -242,7 +399,11 @@ export function SectionRenderer({
                       )}
                       {sec.buttonLabel && sec.buttonUrl && (
                         <Button size="lg" className="mt-10 bg-[#2691F0] hover:bg-white hover:text-[#041635] transition-all font-bold" asChild>
-                          <Link href={sec.buttonUrl}>{sec.buttonLabel}</Link>
+                          {sec.buttonUrl.startsWith("#") ? (
+                            <a href={sec.buttonUrl}>{sec.buttonLabel}</a>
+                          ) : (
+                            <CustomLink href={sec.buttonUrl}>{sec.buttonLabel}</CustomLink>
+                          )}
                         </Button>
                       )}
                     </div>
@@ -273,14 +434,14 @@ export function SectionRenderer({
                 <div className="max-w-7xl mx-auto px-5 lg:px-8">
                   <div className="text-center max-w-3xl mx-auto mb-16">
                     {sec.subtitle && (
-                      <p className={cn("text-xs font-black uppercase tracking-widest mb-4", subtitleClass)}>
+                      <p className={cn("text-xs font-black uppercase tracking-widest mb-4", subtitleColorRes.className)} style={subtitleColorRes.style}>
                         {sec.subtitle}
                       </p>
                     )}
-                    <h2 className={cn("font-outfit text-4xl md:text-5xl font-black mb-6", titleClass)}>
+                    <h2 className={cn("font-outfit text-4xl md:text-5xl font-black mb-6", titleColorRes.className)} style={titleColorRes.style}>
                       {sec.title}
                     </h2>
-                    {sec.body && <p className={cn("text-lg", descClass)}>{sec.body}</p>}
+                    {sec.body && <p className={cn("text-lg", descColorRes.className)} style={descColorRes.style}>{sec.body}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -310,34 +471,45 @@ export function SectionRenderer({
                 <div className="max-w-7xl mx-auto px-5 lg:px-8 relative z-10">
                   <div className="text-center max-w-3xl mx-auto mb-16">
                     {sec.subtitle && (
-                      <p className={cn("text-xs font-black uppercase tracking-widest mb-4", subtitleClass)}>
+                      <p className={cn("text-xs font-black uppercase tracking-widest mb-4", subtitleColorRes.className)} style={subtitleColorRes.style}>
                         {sec.subtitle}
                       </p>
                     )}
-                    <h2 className={cn("font-outfit text-4xl md:text-5xl font-black mb-6", titleClass)}>
+                    <h2 className={cn("font-outfit text-4xl md:text-5xl font-black mb-6", titleColorRes.className)} style={titleColorRes.style}>
                       {sec.title}
                     </h2>
-                    {sec.body && <p className={cn("text-lg", descClass)}>{sec.body}</p>}
+                    {sec.body && <p className={cn("text-lg", descColorRes.className)} style={descColorRes.style}>{sec.body}</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {services.slice(0, limitSvc).map((service) => {
                       const IconComponent = getIcon(service.icon_name || "Headphones");
+                      const imageUrl = (service.content as any)?.image;
                       return (
                         <div
                           key={service.slug}
                           className="glass-panel-subtle rounded-xl border-white/5 hover:border-[#2691F0]/50 shadow-sm hover:shadow-2xl transition-all group relative overflow-hidden flex flex-col min-h-[320px]"
                         >
-                          <div className="relative p-8 flex flex-col h-full z-10">
-                            <div className="w-12 h-12 rounded flex items-center justify-center mb-auto text-[#2691F0] bg-white/5 border border-white/10 group-hover:bg-[#2691F0] group-hover:text-white transition-all">
+                          {imageUrl && (
+                            <div className="absolute inset-0 z-0 overflow-hidden">
+                              <img
+                                src={imageUrl}
+                                alt=""
+                                className="w-full h-full object-cover opacity-10 group-hover:opacity-25 transition-all duration-500 scale-100 group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#041635] via-[#041635]/90 to-transparent" />
+                            </div>
+                          )}
+                          <div className="relative p-8 flex flex-col h-full z-10 flex-1 justify-between">
+                            <div className="w-12 h-12 rounded flex items-center justify-center mb-auto text-[#2691F0] bg-white/5 border border-white/10 group-hover:bg-[#2691F0] group-hover:text-white transition-all shrink-0">
                               <IconComponent className="h-6 w-6" />
                             </div>
                             <div className="mt-8">
                               <h3 className="font-outfit text-2xl font-bold mb-4 text-white">{service.title}</h3>
                               <p className="leading-relaxed mb-6 line-clamp-3 text-slate-400">{service.summary}</p>
-                              <Link href={`/services/${service.slug}`} className="inline-flex items-center text-sm font-bold text-[#2691F0] hover:text-white transition-colors">
+                              <CustomLink href={`/services/${service.slug}`} className="inline-flex items-center text-sm font-bold text-[#2691F0] hover:text-white transition-colors">
                                 Read more <ChevronRight className="h-4 w-4 ml-1" />
-                              </Link>
+                              </CustomLink>
                             </div>
                           </div>
                         </div>
@@ -348,7 +520,11 @@ export function SectionRenderer({
                   {sec.buttonLabel && sec.buttonUrl && (
                     <div className="mt-12 text-center">
                       <Button variant="outline" className="border-white/20 text-white hover:bg-white/10" asChild>
-                        <Link href={sec.buttonUrl}>{sec.buttonLabel}</Link>
+                        {sec.buttonUrl.startsWith("#") ? (
+                          <a href={sec.buttonUrl}>{sec.buttonLabel}</a>
+                        ) : (
+                          <CustomLink href={sec.buttonUrl}>{sec.buttonLabel}</CustomLink>
+                        )}
                       </Button>
                     </div>
                   )}
@@ -369,22 +545,40 @@ export function SectionRenderer({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {industries.map((ind) => (
-                      <div key={ind.slug} className="glass-panel-subtle p-8 rounded-xl border-white/5 hover:border-[#2691F0]/30 transition-all flex flex-col justify-between group">
-                        <div>
-                          <div className="w-12 h-12 rounded bg-white/5 border border-white/10 flex items-center justify-center text-[#2691F0] mb-6">
-                            <MonitorSmartphone className="h-6 w-6" />
+                    {industries.map((ind) => {
+                      const imageUrl = (ind.content as any)?.image;
+                      return (
+                        <div
+                          key={ind.slug}
+                          className="glass-panel-subtle p-8 rounded-xl border-white/5 hover:border-[#2691F0]/30 transition-all flex flex-col justify-between group relative overflow-hidden min-h-[320px]"
+                        >
+                          {imageUrl && (
+                            <div className="absolute inset-0 z-0 overflow-hidden">
+                              <img
+                                src={imageUrl}
+                                alt=""
+                                className="w-full h-full object-cover opacity-10 group-hover:opacity-25 transition-all duration-500 scale-100 group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-[#041635] via-[#041635]/90 to-transparent" />
+                            </div>
+                          )}
+                          <div className="relative z-10 flex flex-col h-full justify-between flex-1">
+                            <div>
+                              <div className="w-12 h-12 rounded bg-white/5 border border-white/10 flex items-center justify-center text-[#2691F0] mb-6 group-hover:bg-[#2691F0] group-hover:text-white transition-all shrink-0">
+                                <MonitorSmartphone className="h-6 w-6" />
+                              </div>
+                              <h3 className="font-outfit text-xl font-bold text-white mb-3">{ind.title}</h3>
+                              <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3">
+                                {(ind.content as any)?.help || "Reliable and high performing systems integration."}
+                              </p>
+                            </div>
+                            <CustomLink href={`/industries/${ind.slug}`} className="inline-flex items-center text-sm font-bold text-[#2691F0] hover:text-white transition-colors mt-4">
+                              Learn more <ChevronRight className="h-4 w-4 ml-1" />
+                            </CustomLink>
                           </div>
-                          <h3 className="font-outfit text-xl font-bold text-white mb-3">{ind.title}</h3>
-                          <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3">
-                            {(ind.content as any)?.help || "Reliable and high performing systems integration."}
-                          </p>
                         </div>
-                        <Link href={`/industries/${ind.slug}`} className="inline-flex items-center text-sm font-bold text-[#2691F0] hover:text-white transition-colors">
-                          Learn more <ChevronRight className="h-4 w-4 ml-1" />
-                        </Link>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               </section>
@@ -429,9 +623,9 @@ export function SectionRenderer({
                             <p className="text-slate-400 text-xs leading-relaxed mb-6">{card.description}</p>
                           </div>
                           {card.externalUrl && (
-                            <Link href={card.externalUrl} target="_blank" className="inline-flex items-center text-xs font-black uppercase tracking-wider text-[#2691F0] hover:text-white transition-colors mt-auto">
+                            <CustomLink href={card.externalUrl} target="_blank" className="inline-flex items-center text-xs font-black uppercase tracking-wider text-[#2691F0] hover:text-white transition-colors mt-auto">
                               Verify Status <ChevronRight className="h-3 w-3 ml-0.5" />
-                            </Link>
+                            </CustomLink>
                           )}
                         </div>
                       );
@@ -515,45 +709,81 @@ export function SectionRenderer({
             if (testimonials.length === 0) return null;
             return (
               <section key={sec.id} className={cn("py-24 border-y border-white/5 relative overflow-hidden", bgClass)}>
-                <div className="absolute inset-0 bg-dot-pattern opacity-30" />
-                <div className="max-w-4xl mx-auto px-5 text-center relative z-10">
-                  <p className="text-gradient-neon font-bold uppercase tracking-widest text-xs mb-6 inline-block">
-                    {sec.title}
+                <div className="absolute inset-0 bg-dot-pattern opacity-30 pointer-events-none" />
+                <div className="max-w-5xl mx-auto px-5 text-center relative z-10">
+                  <p className="inline-flex items-center gap-2 px-3 py-1 rounded bg-[#2691F0]/10 text-[#2691F0] text-[10px] font-black uppercase tracking-widest mb-6 border border-[#2691F0]/20">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    <span>{sec.title || "Client Testimonials"}</span>
                   </p>
-                  <h2 className="text-3xl md:text-4xl font-outfit font-black text-white leading-tight mb-10 text-balance">
-                    "{testimonials[0]?.quote || "CYVRIX is an exceptional technological partner."}"
-                  </h2>
-                  <div className="flex flex-col items-center">
-                    <p className="font-black text-white text-lg">{testimonials[0]?.clientName}</p>
-                    <p className="text-sm text-slate-400 font-bold mt-1">{testimonials[0]?.company}</p>
-                  </div>
+                  <TestimonialsSlider testimonials={testimonials} />
                 </div>
               </section>
             );
 
           // ─── 11. FAQ PREVIEW ───────────────────────────────────────────────
           case "FAQ preview":
+            // Group FAQs by category
+            const groupedFaqs: Record<string, typeof faqs> = {};
+            faqs.forEach((faq) => {
+              const cat = faq.category || "General";
+              if (!groupedFaqs[cat]) {
+                groupedFaqs[cat] = [];
+              }
+              groupedFaqs[cat].push(faq);
+            });
+
+            const categories = Object.keys(groupedFaqs).sort();
+
             return (
               <section key={sec.id} className={cn("py-24", bgClass)}>
-                <div className="max-w-4xl mx-auto px-5">
-                  <div className="text-center mb-16">
-                    <h2 className={cn("font-outfit text-4xl font-black", titleClass)}>{sec.title}</h2>
-                    {sec.subtitle && <p className="text-slate-400 mt-2">{sec.subtitle}</p>}
+                <div className="max-w-7xl mx-auto px-5 lg:px-8">
+                  <div className="text-center max-w-3xl mx-auto mb-20">
+                    <h2 className={cn("font-outfit text-4xl md:text-5xl font-black", titleClass)}>{sec.title}</h2>
+                    {sec.subtitle && <p className="text-slate-400 mt-3 text-lg">{sec.subtitle}</p>}
                   </div>
 
-                  <div className="space-y-4">
-                    {faqs.slice(0, 5).map((faq) => (
-                      <details key={faq.id} className="glass-panel-subtle p-6 rounded-xl border-white/5 group [&_summary::-webkit-details-marker]:hidden">
-                        <summary className="flex items-center justify-between cursor-pointer focus:outline-none">
-                          <h3 className="font-bold text-white text-base md:text-lg pr-4">{faq.question}</h3>
-                          <span className="shrink-0 ml-1.5 p-1 rounded-lg bg-white/5 border border-white/10 text-slate-400 group-open:rotate-180 transition-transform">
-                            <ChevronDown className="h-4 w-4" />
-                          </span>
-                        </summary>
-                        <p className="mt-4 text-slate-400 text-sm leading-relaxed">{faq.answer}</p>
-                      </details>
-                    ))}
-                  </div>
+                  {settings.limit ? (
+                    // Homepage Preview style (un-grouped grid)
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start max-w-6xl mx-auto">
+                      {faqs.slice(0, settings.limit).map((faq) => (
+                        <details key={faq.id} className="glass-panel-subtle p-6 rounded-xl border-white/5 group [&_summary::-webkit-details-marker]:hidden transition-all duration-300 hover:border-[#2691F0]/20">
+                          <summary className="flex items-center justify-between cursor-pointer focus:outline-none select-none">
+                            <h3 className="font-bold text-white text-base md:text-lg pr-4 group-hover:text-[#2691F0] transition-colors">{faq.question}</h3>
+                            <span className="shrink-0 ml-1.5 p-1 rounded-lg bg-white/5 border border-white/10 text-slate-400 group-open:rotate-180 group-open:text-[#2691F0] group-open:border-[#2691F0]/20 group-open:bg-[#2691F0]/10 transition-all">
+                              <ChevronDown className="h-4 w-4" />
+                            </span>
+                          </summary>
+                          <p className="mt-4 text-slate-400 text-sm leading-relaxed border-t border-white/5 pt-4">{faq.answer}</p>
+                        </details>
+                      ))}
+                    </div>
+                  ) : (
+                    // Full FAQ page style (grouped by category)
+                    <div className="space-y-16">
+                      {categories.map((category) => (
+                        <div key={category} className="space-y-6">
+                          <div className="flex items-center gap-3 border-b border-white/5 pb-4">
+                            <span className="w-3 h-3 rounded-full bg-[#2691F0] animate-pulse" />
+                            <h3 className="font-outfit text-2xl font-black text-white tracking-tight">{category}</h3>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                            {groupedFaqs[category].map((faq) => (
+                              <details key={faq.id} className="glass-panel-subtle p-6 rounded-xl border-white/5 group [&_summary::-webkit-details-marker]:hidden transition-all duration-300 hover:border-[#2691F0]/20">
+                                <summary className="flex items-center justify-between cursor-pointer focus:outline-none select-none">
+                                  <h3 className="font-bold text-white text-base md:text-lg pr-4 group-hover:text-[#2691F0] transition-colors">{faq.question}</h3>
+                                  <span className="shrink-0 ml-1.5 p-1 rounded-lg bg-white/5 border border-white/10 text-slate-400 group-open:rotate-180 group-open:text-[#2691F0] group-open:border-[#2691F0]/20 group-open:bg-[#2691F0]/10 transition-all">
+                                    <ChevronDown className="h-4 w-4" />
+                                  </span>
+                                </summary>
+                                <p className="mt-4 text-slate-400 text-sm leading-relaxed border-t border-white/5 pt-4">{faq.answer}</p>
+                              </details>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </section>
             );
@@ -576,9 +806,9 @@ export function SectionRenderer({
                           <h3 className="font-outfit text-xl font-bold text-white mt-2 mb-4 leading-tight">{study.title}</h3>
                           <p className="text-slate-400 text-xs leading-relaxed mb-6 line-clamp-3">{study.challenge}</p>
                         </div>
-                        <Link href={`/case-studies/${study.slug}`} className="inline-flex items-center text-sm font-bold text-[#2691F0] hover:text-white transition-colors">
+                        <CustomLink href={`/case-studies/${study.slug}`} className="inline-flex items-center text-sm font-bold text-[#2691F0] hover:text-white transition-colors">
                           Read Case Study <ChevronRight className="h-4 w-4 ml-0.5" />
-                        </Link>
+                        </CustomLink>
                       </div>
                     ))}
                   </div>
@@ -606,12 +836,20 @@ export function SectionRenderer({
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     {sec.buttonLabel && sec.buttonUrl && (
                       <Button size="lg" className="bg-[#2691F0] text-white hover:bg-white hover:text-[#041635] rounded font-bold h-14 px-8 shadow-lg shadow-[#2691F0]/20 transition-all cursor-pointer" asChild>
-                        <Link href={sec.buttonUrl}>{sec.buttonLabel}</Link>
+                        {sec.buttonUrl.startsWith("#") ? (
+                          <a href={sec.buttonUrl}>{sec.buttonLabel}</a>
+                        ) : (
+                          <CustomLink href={sec.buttonUrl}>{sec.buttonLabel}</CustomLink>
+                        )}
                       </Button>
                     )}
                     {settings.secondaryBtnLabel && settings.secondaryBtnUrl && (
                       <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded font-bold h-14 px-8 transition-colors cursor-pointer" asChild>
-                        <Link href={settings.secondaryBtnUrl}>{settings.secondaryBtnLabel}</Link>
+                        {settings.secondaryBtnUrl.startsWith("#") ? (
+                          <a href={settings.secondaryBtnUrl}>{settings.secondaryBtnLabel}</a>
+                        ) : (
+                          <CustomLink href={settings.secondaryBtnUrl}>{settings.secondaryBtnLabel}</CustomLink>
+                        )}
                       </Button>
                     )}
                   </div>
@@ -621,8 +859,13 @@ export function SectionRenderer({
 
           // ─── 14. CONTACT SECTION ───────────────────────────────────────────
           case "Contact section":
+            const isCareersForm = sec.title?.toLowerCase().includes("opening") || sec.title?.toLowerCase().includes("career") || sec.title?.toLowerCase().includes("job");
             return (
-              <section key={sec.id} className={cn("py-24 bg-[#020817]", bgClass)}>
+              <section 
+                key={sec.id} 
+                id={isCareersForm ? "apply-form" : undefined}
+                className={cn("py-24 bg-[#020817]", bgClass)}
+              >
                 <div className="max-w-4xl mx-auto px-5">
                   <div className="text-center mb-16">
                     <h2 className="font-outfit text-4xl font-black text-white">{sec.title}</h2>
@@ -630,7 +873,7 @@ export function SectionRenderer({
                   </div>
 
                   <div className="glass-panel p-8 rounded-2xl border-white/10">
-                    <form action="/api/submit-contact" method="POST" className="space-y-6">
+                    <form action="/api/submit-contact" method="POST" encType="multipart/form-data" className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <label className="block text-sm font-bold text-slate-300">
                           Your Name
@@ -641,15 +884,111 @@ export function SectionRenderer({
                           <input required type="email" name="email" className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0]" />
                         </label>
                       </div>
+
+                      {isCareersForm && (
+                        <label className="block text-sm font-bold text-slate-300">
+                          Select the Role / Opening you are applying for
+                          <select 
+                            name="role" 
+                            required 
+                            className="mt-2 w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0]"
+                          >
+                            <option value="Future opening / General application" className="bg-[#020817] text-white">General Application / Future opening</option>
+                            {(careerJobs || []).map((job: any) => (
+                              <option key={job.id} value={job.title} className="bg-[#020817] text-white">
+                                {job.title} ({job.location || "Remote"})
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
+
                       <label className="block text-sm font-bold text-slate-300">
                         Message
                         <textarea required name="message" rows={5} className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0] resize-none" />
                       </label>
+                      
+                      {/* Optional File Attachment field */}
+                      <label className="block text-sm font-bold text-slate-300">
+                        {isCareersForm ? "Attach CV (Optional, PDF/DOC/DOCX up to 10MB)" : "Attach Specifications or Document (Optional, PDF/DOC/DOCX up to 10MB)"}
+                        <input 
+                          type="file" 
+                          name="cv" 
+                          accept=".pdf,.doc,.docx"
+                          className="mt-2 block w-full text-xs text-slate-400
+                            file:mr-4 file:py-2.5 file:px-4
+                            file:rounded-xl file:border-0
+                            file:text-xs file:font-semibold
+                            file:bg-white/10 file:text-white
+                            hover:file:bg-white/20
+                            focus:outline-none cursor-pointer"
+                        />
+                      </label>
+
                       <Button type="submit" className="w-full justify-center bg-[#2691F0] text-white rounded font-bold py-3.5 shadow-lg shadow-[#2691F0]/20 hover:bg-[#041635] transition-all">
-                        Send Enquiry
+                        {isCareersForm ? "Submit Application" : "Send Enquiry"}
                       </Button>
                     </form>
                   </div>
+                </div>
+              </section>
+            );
+
+          // ─── 14.5 CAREER OPENINGS ───────────────────────────────────────────
+          case "Career openings":
+            const activeJobs = careerJobs || [];
+            return (
+              <section key={sec.id} id="openings" className={cn("py-24 bg-[#020817]", bgClass)}>
+                <div className="max-w-7xl mx-auto px-5 lg:px-8">
+                  <div className="text-center max-w-3xl mx-auto mb-16">
+                    <h2 className="font-outfit text-4xl font-black text-white">{sec.title || "Active Opportunities"}</h2>
+                    {sec.body && <p className="text-slate-400 mt-2">{sec.body}</p>}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {activeJobs.map((job: any) => (
+                      <div key={job.id} className="glass-panel p-8 rounded-2xl border-white/10 flex flex-col justify-between hover:border-[#2691F0]/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300">
+                        <div>
+                          <div className="flex items-start justify-between gap-4 mb-4">
+                            <h3 className="font-outfit text-2xl font-bold text-white leading-tight">{job.title}</h3>
+                            <span className="shrink-0 inline-flex px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider bg-[#2691F0]/10 text-[#2691F0] border border-[#2691F0]/20">
+                              {job.type || "Full-time"}
+                            </span>
+                          </div>
+                          <p className="text-xs text-[#2691F0] font-bold flex items-center gap-1 mb-6">
+                            <MapPin className="h-4 w-4" /> {job.location || "Remote, UK"}
+                          </p>
+                          <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-line mb-8">
+                            {job.description}
+                          </p>
+                        </div>
+                        <Button 
+                          className="w-full justify-center bg-white/5 border border-white/10 text-white hover:bg-[#2691F0] hover:text-white hover:border-[#2691F0] font-bold py-3.5 transition-all cursor-pointer animate-pulse-subtle"
+                          onClick={() => {
+                            const selectElement = document.querySelector('select[name="role"]') as HTMLSelectElement;
+                            if (selectElement) {
+                              selectElement.value = job.title;
+                              const event = new Event('change', { bubbles: true });
+                              selectElement.dispatchEvent(event);
+                            }
+                            const formSection = document.getElementById('apply-form');
+                            if (formSection) {
+                              formSection.scrollIntoView({ behavior: 'smooth' });
+                            }
+                          }}
+                        >
+                          Apply For This Role
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {activeJobs.length === 0 && (
+                    <div className="glass-panel p-12 rounded-2xl border-white/10 text-center max-w-xl mx-auto">
+                      <p className="text-slate-400 font-semibold mb-2">No active job openings at the moment.</p>
+                      <p className="text-xs text-slate-500">You can still submit a speculative application below and our recruitment desk will keep your details on file.</p>
+                    </div>
+                  )}
                 </div>
               </section>
             );
@@ -681,7 +1020,7 @@ export function SectionRenderer({
                           </ul>
                         </div>
                         <Button className="w-full justify-center bg-[#2691F0] text-white font-bold" asChild>
-                          <Link href="/book-consultation">{pack.cta || "Get Started"}</Link>
+                          <CustomLink href="/book-consultation">{pack.cta || "Get Started"}</CustomLink>
                         </Button>
                       </div>
                     ))}
@@ -776,6 +1115,51 @@ export function SectionRenderer({
             return null;
         }
       })}
+    </div>
+  );
+}
+
+// ─── Helper client-side testimonials slider ─────────────────────────────────
+function TestimonialsSlider({ testimonials }: { testimonials: any[] }) {
+  const [index, setIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    if (testimonials.length <= 1) return;
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [testimonials.length]);
+
+  const active = testimonials[index];
+  if (!active) return null;
+
+  return (
+    <div className="relative">
+      <div className="transition-all duration-700 ease-in-out transform opacity-100 scale-100">
+        <h2 className="text-2xl md:text-3xl lg:text-4xl font-outfit font-black text-white leading-relaxed mb-8 max-w-3xl mx-auto italic">
+          "{active.quote || "CYVRIX is an exceptional technological partner."}"
+        </h2>
+        <div className="flex flex-col items-center">
+          <p className="font-black text-white text-lg">{active.clientName || "Client Specialist"}</p>
+          <p className="text-xs text-[#2691F0] font-black uppercase tracking-widest mt-1.5">{active.company || "CYVRIX Partner"}</p>
+        </div>
+      </div>
+
+      {testimonials.length > 1 && (
+        <div className="flex justify-center gap-2 mt-8">
+          {testimonials.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setIndex(i)}
+              className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
+                i === index ? "bg-[#2691F0] w-6" : "bg-white/20 hover:bg-white/40"
+              }`}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -12,8 +12,75 @@ import {
   Phone,
   LockKeyhole,
   LifeBuoy,
+  Send,
+  CheckCircle2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+/* ── Newsletter form (inline, client-side) ─────────────────────────────── */
+function NewsletterForm() {
+  const [email, setEmail] = React.useState("");
+  const [state, setState] = React.useState<"idle" | "loading" | "done" | "error">("idle");
+  const [msg, setMsg] = React.useState("");
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setState("loading");
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, source: "footer", consent: "on" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Subscription failed.");
+      setState("done");
+      setEmail("");
+    } catch (err: any) {
+      setState("error");
+      setMsg(err?.message ?? "Something went wrong.");
+    }
+  }
+
+  if (state === "done") {
+    return (
+      <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold">
+        <CheckCircle2 className="h-4 w-4 shrink-0" />
+        You&apos;re subscribed — thank you!
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-2">
+      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Stay informed</p>
+      <div className="flex gap-2">
+        {/* honeypot */}
+        <input name="_hp" type="text" className="hidden" tabIndex={-1} autoComplete="off" />
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          className="flex-1 min-w-0 rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#2691F0] transition-colors"
+        />
+        <button
+          type="submit"
+          disabled={state === "loading"}
+          className="shrink-0 w-9 h-9 rounded-lg bg-[#2691F0] hover:bg-[#1a7ad4] flex items-center justify-center transition-colors disabled:opacity-50"
+          aria-label="Subscribe"
+        >
+          <Send className="h-3.5 w-3.5 text-white" />
+        </button>
+      </div>
+      {state === "error" && <p className="text-rose-400 text-[10px] font-bold">{msg}</p>}
+      <p className="text-[9px] text-slate-600 leading-relaxed">
+        No spam. Unsubscribe anytime via <Link href="/api/unsubscribe" className="underline hover:text-slate-400">this link</Link>.
+      </p>
+    </form>
+  );
+}
 
 function Linkedin(props: React.SVGProps<SVGSVGElement>) {
   return (
@@ -147,6 +214,7 @@ interface FooterProps {
   address?: string;
   copyright?: string;
   complianceCards?: any[];
+  forceFullPageReload?: boolean;
 }
 
 function getSocialIcon(platform: string) {
@@ -173,6 +241,7 @@ export function Footer({
   address,
   copyright,
   complianceCards = [],
+  forceFullPageReload = true,
 }: FooterProps) {
   const visibleComplianceCards = complianceCards.filter(
     (card) =>
@@ -180,6 +249,26 @@ export function Footer({
       card.displayLocation.toLowerCase() === "all" ||
       card.displayLocation.toLowerCase().includes("footer")
   );
+
+  const CustomLink = React.forwardRef<HTMLAnchorElement, React.ComponentPropsWithoutRef<typeof Link> & { forceReload?: boolean }>(
+    ({ href, children, forceReload = forceFullPageReload, ...props }, ref) => {
+      const hrefStr = href ? href.toString() : "";
+      const isInternal = hrefStr && !hrefStr.startsWith("#") && !hrefStr.startsWith("tel:") && !hrefStr.startsWith("mailto:") && !hrefStr.startsWith("http");
+      if (forceReload && isInternal) {
+        return (
+          <a href={hrefStr} ref={ref} {...props}>
+            {children}
+          </a>
+        );
+      }
+      return (
+        <Link href={href} ref={ref} {...props}>
+          {children}
+        </Link>
+      );
+    }
+  );
+  CustomLink.displayName = "CustomLink";
 
   function getSafeDisplayStatus(card: { title: string; status: string; logoUrl?: string | null }) {
     if (card.status !== "Certified" || card.logoUrl) {
@@ -212,7 +301,6 @@ export function Footer({
           <div className="lg:col-span-4 space-y-6">
             <Logo
               logoDefault={logoUrl}
-              logoWhite={logoUrl}
               logoAlt={logoAlt}
               theme="dark"
               className="mb-4"
@@ -232,17 +320,17 @@ export function Footer({
               {phone && (
                 <div className="flex items-center gap-2.5">
                   <Phone className="h-4 w-4 text-[#2691F0] shrink-0" />
-                  <Link href={`tel:${phone.replace(/\s/g, "")}`} className="hover:text-white transition-colors">
+                  <CustomLink href={`tel:${phone.replace(/\s/g, "")}`} className="hover:text-white transition-colors">
                     {phone}
-                  </Link>
+                  </CustomLink>
                 </div>
               )}
               {email && (
                 <div className="flex items-center gap-2.5">
                   <Mail className="h-4 w-4 text-[#2691F0] shrink-0" />
-                  <Link href={`mailto:${email}`} className="hover:text-white transition-colors">
+                  <CustomLink href={`mailto:${email}`} className="hover:text-white transition-colors">
                     {email}
-                  </Link>
+                  </CustomLink>
                 </div>
               )}
             </div>
@@ -253,7 +341,7 @@ export function Footer({
                 {socialLinks.map((social) => {
                   const Icon = getSocialIcon(social.platform);
                   return (
-                    <Link
+                    <CustomLink
                       key={social.id}
                       href={social.url}
                       target={social.openInNewTab ? "_blank" : undefined}
@@ -261,11 +349,16 @@ export function Footer({
                       className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#2691F0] hover:border-[#2691F0] transition-all hover:scale-105"
                     >
                       <Icon className="h-4.5 w-4.5" />
-                    </Link>
+                    </CustomLink>
                   );
                 })}
               </div>
             )}
+
+            {/* Newsletter */}
+            <div className="pt-2">
+              <NewsletterForm />
+            </div>
           </div>
 
           {/* Dynamic Footer Columns & Compliance Trust Section */}
@@ -281,19 +374,19 @@ export function Footer({
                   )}
                   <ul className="space-y-3">
                     {section.links &&
-                      section.links
+                       section.links
                         .filter((l: any) => l.isVisible !== false)
                         .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
                         .map((link: any) => (
                           <li key={link.id}>
-                            <Link
+                            <CustomLink
                               href={link.url}
                               target={link.openInNewTab ? "_blank" : undefined}
                               className="group flex items-center text-slate-300 hover:text-white transition-colors text-sm font-semibold"
                             >
                               <ArrowRight className="h-3 w-3 mr-1.5 opacity-0 -ml-4 text-[#2691F0] group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
                               {link.label}
-                            </Link>
+                            </CustomLink>
                           </li>
                         ))}
                   </ul>
@@ -311,7 +404,7 @@ export function Footer({
                       Compliance & Trust
                     </span>
                   </div>
-                  <div className="flex flex-wrap items-center gap-6">
+                  <div className="flex flex-wrap lg:flex-nowrap items-center gap-3">
                     {visibleComplianceCards.map((card) => {
                       const displayStatus = getSafeDisplayStatus(card);
                       const CardIcon = getCardIcon(card.iconKey);
@@ -323,7 +416,7 @@ export function Footer({
                           target={card.externalUrl ? "_blank" : undefined}
                           rel="noopener noreferrer"
                           title={`${card.title} (${displayStatus}) — ${card.description || ""}`}
-                          className="group flex items-center justify-center transition-all duration-200"
+                          className="group flex items-center justify-center transition-all duration-200 shrink-0"
                         >
                           {card.logoUrl ? (
                             <img
@@ -332,8 +425,8 @@ export function Footer({
                               className="h-11 w-auto object-contain filter brightness-75 opacity-70 group-hover:brightness-100 group-hover:opacity-100 transition-all duration-200"
                             />
                           ) : (
-                            <div className="flex items-center gap-3 bg-white/5 border border-[#2691F0]/20 rounded-2xl px-4 py-3 opacity-80 group-hover:opacity-100 transition-all duration-200 shadow-sm">
-                              <CardIcon className="h-5.5 w-5.5 text-[#2691F0]" />
+                            <div className="flex items-center gap-2.5 bg-white/5 border border-[#2691F0]/20 rounded-xl px-3 py-2 opacity-80 group-hover:opacity-100 transition-all duration-200 shadow-sm shrink-0">
+                              <CardIcon className="h-5 w-5 text-[#2691F0]" />
                               <div className="flex flex-col text-left">
                                 <span className="text-xs font-black text-slate-200 tracking-wide leading-none">
                                   {card.title}
@@ -362,19 +455,19 @@ export function Footer({
             <span className="hidden sm:inline">All rights reserved. Registered in England &amp; Wales.</span>
           </p>
           <div className="flex items-center gap-6">
-            <Link
+            <CustomLink
               href="/book-consultation"
-              className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors"
+              className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer"
             >
               Security Audit
-            </Link>
-            <Link
-              href="#"
-              className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-2"
+            </CustomLink>
+            <CustomLink
+              href="/admin/status"
+              className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-2 cursor-pointer"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
               System Status
-            </Link>
+            </CustomLink>
           </div>
         </div>
       </div>

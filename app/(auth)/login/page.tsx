@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Shield, ArrowLeft, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/shared/Button";
+import { PasswordInput } from "@/components/shared/PasswordInput";
 import { login } from "./actions";
 
 function LoginForm() {
@@ -101,16 +102,13 @@ function LoginForm() {
                   Forgot?
                 </Link>
               </div>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-500" />
-                <input 
-                  type="password" 
-                  name="password"
-                  required
-                  placeholder="••••••••••••"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-[#2691F0] focus:border-transparent transition-all outline-none"
-                />
-              </div>
+              <PasswordInput 
+                name="password"
+                required
+                hasLeftIcon
+                placeholder="••••••••••••"
+                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-[#2691F0] focus:border-transparent outline-none py-3.5"
+              />
             </div>
 
             <Button 

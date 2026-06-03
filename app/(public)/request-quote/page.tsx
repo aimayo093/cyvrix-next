@@ -29,7 +29,7 @@ export default function RequestQuotePage() {
         </div>
 
         {/* Form Container */}
-        <div className="bg-[#020817] p-8 md:p-12 rounded-3xl border border-slate-200/80 shadow-xl shadow-blue-500/5">
+        <div className="bg-[#041635]/80 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 shadow-2xl shadow-blue-500/5">
           <form action={submitQuote} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Field name="businessName" label="Registered Company Name" required placeholder="Innovate UK Ltd" />
@@ -79,11 +79,11 @@ export default function RequestQuotePage() {
                 required 
                 rows={5} 
                 placeholder="Detail what technical limitations, outages, slow response times, or compliance deadlines you're trying to solve..."
-                className="w-full rounded-2xl border border-white/10 bg-slate-50/50 p-4 text-sm outline-none focus:border-[#2691F0] transition-colors"
+                className="w-full rounded-2xl border border-white/10 bg-[#020817] p-4 text-sm text-white placeholder-slate-500 outline-none focus:border-[#2691F0] focus:ring-2 focus:ring-[#2691F0]/20 transition-all font-semibold resize-none"
               />
             </div>
 
-            <div className="p-4 bg-[#020817] rounded-2xl border border-slate-200/50 flex gap-3 items-start text-xs text-slate-500">
+            <div className="p-4 bg-[#041635]/50 rounded-2xl border border-white/5 flex gap-3 items-start text-xs text-slate-400">
               <Info className="h-4.5 w-4.5 text-[#2691F0] shrink-0 mt-0.5" />
               <p>
                 By submitting this proposal draft, you authorize CYVRIX Technologies to create a secure Lead profile in our CRM, queue custom notifications, and follow up regarding scoped parameters.
@@ -135,7 +135,7 @@ function Field({
         type={type} 
         required={required} 
         placeholder={placeholder}
-        className="w-full rounded-xl border border-white/10 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:border-[#2691F0] transition-colors"
+        className="w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-sm text-white placeholder-slate-500 outline-none focus:border-[#2691F0] focus:ring-2 focus:ring-[#2691F0]/20 transition-all font-semibold"
       />
     </div>
   );
@@ -160,10 +160,10 @@ function Select({
       <select 
         name={name} 
         required={required} 
-        className="w-full rounded-xl border border-white/10 bg-slate-50/50 px-4 py-3 text-sm outline-none focus:border-[#2691F0] transition-colors"
+        className="w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-sm text-white outline-none focus:border-[#2691F0] focus:ring-2 focus:ring-[#2691F0]/20 transition-all font-semibold cursor-pointer"
       >
         {options.map((option) => (
-          <option key={option} value={option}>
+          <option key={option} value={option} className="bg-[#020817] text-white">
             {option}
           </option>
         ))}

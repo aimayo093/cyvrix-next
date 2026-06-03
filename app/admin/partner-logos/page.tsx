@@ -76,12 +76,16 @@ export default async function PartnerLogosCMSPage({
                 >
                   <div className="flex gap-3">
                     <div className="w-14 h-14 bg-[#041635] rounded-xl flex items-center justify-center p-2 shrink-0 border border-slate-250/30 overflow-hidden shadow-inner">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={partner.logoUrl}
-                        alt={partner.altText || ""}
-                        className="object-contain w-full h-full"
-                      />
+                      {partner.logoUrl ? (
+                        /* eslint-disable-next-line @next/next/no-img-element */
+                        <img
+                          src={partner.logoUrl}
+                          alt={partner.altText || ""}
+                          className="object-contain w-full h-full"
+                        />
+                      ) : (
+                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest text-center">No Logo</span>
+                      )}
                     </div>
                     <div className="space-y-1 min-w-0">
                       <span className="font-outfit font-black text-slate-800 text-sm block truncate">

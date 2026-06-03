@@ -31,7 +31,7 @@ export default function BlogListPage() {
         {/* Featured Post Hero (if any, otherwise standard grids styled beautifully) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {blogPosts.map((post) => (
-            <Link
+            <a
               key={post.slug}
               href={`/blog/${post.slug}`}
               className="group flex flex-col bg-[#020817] rounded-3xl border border-white/10 shadow-sm hover:shadow-xl hover:border-[#2691F0] transition-all overflow-hidden"
@@ -62,7 +62,7 @@ export default function BlogListPage() {
                   </span>
                 </div>
               </div>
-            </Link>
+            </a>
           ))}
         </div>
       </div>

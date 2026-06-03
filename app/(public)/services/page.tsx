@@ -36,7 +36,7 @@ export default async function ServicesPage() {
             const Icon = icons[idx % icons.length] || Shield;
             const imageUrl = (service.content as any)?.image;
             return (
-              <Link
+              <a
                 key={service.slug}
                 href={`/services/${service.slug}`}
                 className="group rounded-2xl border border-white/10 shadow-sm hover:shadow-xl transition-all relative overflow-hidden flex flex-col min-h-[320px]"
@@ -65,7 +65,7 @@ export default async function ServicesPage() {
                     </div>
                   </div>
                 </div>
-              </Link>
+              </a>
             );
           })}
         </div>

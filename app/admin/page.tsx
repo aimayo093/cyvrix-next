@@ -8,9 +8,9 @@ import {
   ArrowDownRight,
   Clock,
 } from "lucide-react";
-import { Button } from "@/components/shared/Button";
 import { getAdminStats, getRecentActivities } from "@/lib/data-fetchers";
 import { formatDistanceToNow } from "date-fns";
+import { SecurityScanCard } from "@/components/admin/SecurityScanCard";
 
 export default async function AdminDashboard() {
   const [statsData, activities] = await Promise.all([
@@ -58,7 +58,7 @@ export default async function AdminDashboard() {
         <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-outfit font-black text-[#041635]">Recent Operations</h3>
-            <button className="text-xs font-bold text-[#2691F0] hover:underline">View all</button>
+            <Link href="/admin/audit-logs" className="text-xs font-bold text-[#2691F0] hover:underline">View all</Link>
           </div>
           <div className="divide-y divide-slate-50">
             {activities.length > 0 ? (
@@ -89,14 +89,8 @@ export default async function AdminDashboard() {
 
         {/* Quick Actions */}
         <div className="space-y-6">
-          <div className="bg-[#041635] text-white p-8 rounded-2xl relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform">
-              <Shield className="h-24 w-24" />
-            </div>
-            <h3 className="font-outfit text-xl font-bold mb-4 relative z-10">Security Scan</h3>
-            <p className="text-slate-400 text-sm mb-6 relative z-10">Initialize a full environment security audit and compliance check.</p>
-            <Button variant="premium" size="sm" className="w-full relative z-10">Run Scan Now</Button>
-          </div>
+          {/* Security Scan — fully interactive client component */}
+          <SecurityScanCard />
 
           <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <h3 className="font-outfit font-black text-[#041635] mb-4">Quick Links</h3>
@@ -123,4 +117,3 @@ export default async function AdminDashboard() {
 const ChevronRight = ({ className }: { className?: string }) => (
   <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
 );
-

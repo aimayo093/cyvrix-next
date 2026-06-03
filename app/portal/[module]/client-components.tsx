@@ -15,6 +15,7 @@ import {
   ChevronRight,
   ShieldCheck
 } from "lucide-react";
+import { PasswordInput } from "@/components/shared/PasswordInput";
 import { createPortalTicket, replyPortalTicket, acceptPortalProposal, updatePortalProfile } from "@/lib/portal-actions";
 
 // Generic Submit Button with Loading State
@@ -70,15 +71,12 @@ export function ProfileUpdateForm({ initialName }: { initialName: string }) {
 
       <div className="space-y-2">
         <label className="text-xs font-black text-[#041635] uppercase tracking-wider block">Change Password (Optional)</label>
-        <div className="relative">
-          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
-          <input
-            type="password"
-            name="password"
-            className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2691F0] focus:bg-white transition-all text-sm"
-            placeholder="Leave blank to keep current"
-          />
-        </div>
+        <PasswordInput
+          name="password"
+          hasLeftIcon
+          className="w-full bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2691F0] focus:bg-white transition-all text-sm py-3"
+          placeholder="Leave blank to keep current"
+        />
         <p className="text-[10px] font-bold text-slate-400">Must be at least 8 characters long if provided.</p>
       </div>
 

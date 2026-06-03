@@ -133,12 +133,21 @@ export default async function LeadsCRMPage({
                 {viewing.payload && Object.keys(viewing.payload as object).length > 0 && (
                   <div className="bg-slate-50 rounded-xl p-4 text-xs space-y-1">
                     <p className="font-black text-slate-500 uppercase tracking-wider text-[10px] mb-2">Submission Data</p>
-                    {Object.entries(viewing.payload as Record<string, string>).map(([k, v]) => (
-                      <div key={k} className="flex gap-2">
-                        <span className="font-bold text-slate-500 capitalize">{k.replace(/([A-Z])/g, " $1")}:</span>
-                        <span className="text-slate-700">{v}</span>
-                      </div>
-                    ))}
+                    {Object.entries(viewing.payload as Record<string, string>).map(([k, v]) => {
+                      const isFile = typeof v === "string" && (v.startsWith("/uploads/") || v.startsWith("http"));
+                      return (
+                        <div key={k} className="flex gap-2 items-center">
+                          <span className="font-bold text-slate-500 capitalize">{k.replace(/([A-Z])/g, " $1")}:</span>
+                          {isFile ? (
+                            <a href={v} target="_blank" rel="noopener noreferrer" className="text-[#2691F0] hover:underline font-bold">
+                              Download / View File
+                            </a>
+                          ) : (
+                            <span className="text-slate-700">{v}</span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
 

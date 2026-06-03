@@ -1229,6 +1229,79 @@ exports.Prisma.SocialLinkScalarFieldEnum = {
   updatedBy: 'updatedBy'
 };
 
+exports.Prisma.SurveySettingScalarFieldEnum = {
+  id: 'id',
+  autoSendEnabled: 'autoSendEnabled',
+  triggerOnResolved: 'triggerOnResolved',
+  triggerOnClosed: 'triggerOnClosed',
+  triggerOnJobCompleted: 'triggerOnJobCompleted',
+  sendDelayMinutes: 'sendDelayMinutes',
+  emailSubject: 'emailSubject',
+  emailBody: 'emailBody',
+  ratingType: 'ratingType',
+  lowRatingThreshold: 'lowRatingThreshold',
+  adminNotificationEmail: 'adminNotificationEmail',
+  surveyExpiryDays: 'surveyExpiryDays',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  updatedBy: 'updatedBy'
+};
+
+exports.Prisma.SurveyRequestScalarFieldEnum = {
+  id: 'id',
+  relatedType: 'relatedType',
+  relatedId: 'relatedId',
+  clientCompanyId: 'clientCompanyId',
+  contactEmail: 'contactEmail',
+  contactName: 'contactName',
+  token: 'token',
+  status: 'status',
+  sentAt: 'sentAt',
+  expiresAt: 'expiresAt',
+  submittedAt: 'submittedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SurveyResponseScalarFieldEnum = {
+  id: 'id',
+  surveyRequestId: 'surveyRequestId',
+  rating: 'rating',
+  npsScore: 'npsScore',
+  responseTimeRating: 'responseTimeRating',
+  resolutionRating: 'resolutionRating',
+  professionalismRating: 'professionalismRating',
+  comments: 'comments',
+  allowFollowUp: 'allowFollowUp',
+  submittedAt: 'submittedAt',
+  ipAddress: 'ipAddress',
+  userAgent: 'userAgent',
+  reviewedAt: 'reviewedAt',
+  reviewedBy: 'reviewedBy',
+  internalNotes: 'internalNotes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.WorkOrderScalarFieldEnum = {
+  id: 'id',
+  clientCompanyId: 'clientCompanyId',
+  title: 'title',
+  description: 'description',
+  serviceType: 'serviceType',
+  status: 'status',
+  assignedTo: 'assignedTo',
+  scheduledAt: 'scheduledAt',
+  completedAt: 'completedAt',
+  completionNotes: 'completionNotes',
+  contactName: 'contactName',
+  contactEmail: 'contactEmail',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  createdBy: 'createdBy',
+  updatedBy: 'updatedBy'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1457,7 +1530,11 @@ exports.Prisma.ModelName = {
   PartnerLogo: 'PartnerLogo',
   TrustedBusinessLogo: 'TrustedBusinessLogo',
   ComplianceCard: 'ComplianceCard',
-  SocialLink: 'SocialLink'
+  SocialLink: 'SocialLink',
+  SurveySetting: 'SurveySetting',
+  SurveyRequest: 'SurveyRequest',
+  SurveyResponse: 'SurveyResponse',
+  WorkOrder: 'WorkOrder'
 };
 
 /**

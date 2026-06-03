@@ -18,6 +18,7 @@ interface NavbarProps {
   logoAlt?: string;
   phone?: string;
   email?: string;
+  forceFullPageReload?: boolean;
 }
 
 export function Navbar({
@@ -29,6 +30,7 @@ export function Navbar({
   logoAlt,
   phone = "0800 123 4567",
   email = "support@cyvrix.co.uk",
+  forceFullPageReload = true,
 }: NavbarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
@@ -41,12 +43,51 @@ export function Navbar({
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Global safety fallback for scroll restoration and top scrolls
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.history.scrollRestoration = "manual";
+      window.scrollTo(0, 0);
+    }
+  }, []);
+
   // Close menus on path changes
   React.useEffect(() => {
     setIsOpen(false);
     setActiveDropdown(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (typeof window !== "undefined") {
+      window.scrollTo(0, 0);
+    }
   }, [pathname]);
+
+  const CustomLink = React.forwardRef<HTMLAnchorElement, React.ComponentPropsWithoutRef<typeof Link> & { forceReload?: boolean }>(
+    ({ href, children, forceReload = forceFullPageReload, onClick, ...props }, ref) => {
+      const hrefStr = href ? href.toString() : "";
+      const isInternal = hrefStr && !hrefStr.startsWith("#") && !hrefStr.startsWith("tel:") && !hrefStr.startsWith("mailto:");
+      if (forceReload && isInternal) {
+        return (
+          <a
+            href={hrefStr}
+            ref={ref}
+            onClick={(e) => {
+              setIsOpen(false);
+              setActiveDropdown(null);
+              if (onClick) onClick(e);
+            }}
+            {...props}
+          >
+            {children}
+          </a>
+        );
+      }
+      return (
+        <Link href={href} ref={ref} onClick={onClick} {...props}>
+          {children}
+        </Link>
+      );
+    }
+  );
+  CustomLink.displayName = "CustomLink";
 
   // Build hierarchical menu items
   const menuTree = React.useMemo(() => {
@@ -84,14 +125,14 @@ export function Navbar({
       {/* Corporate Top Bar (Static Light Navy) */}
       <div className="hidden lg:flex bg-[#041635] text-slate-300 py-2.5 px-5 lg:px-8 text-xs font-semibold justify-between items-center relative z-50 border-b border-white/5">
         <div className="flex items-center gap-6">
-          <Link href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-white transition-colors">
+          <CustomLink href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-white transition-colors">
             <Phone className="h-3.5 w-3.5 text-[#2691F0]" />
             {phone}
-          </Link>
-          <Link href={`mailto:${email}`} className="flex items-center gap-2 hover:text-white transition-colors">
+          </CustomLink>
+          <CustomLink href={`mailto:${email}`} className="flex items-center gap-2 hover:text-white transition-colors">
             <Mail className="h-3.5 w-3.5 text-[#2691F0]" />
             {email}
-          </Link>
+          </CustomLink>
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
@@ -99,10 +140,10 @@ export function Navbar({
             <span>ISO 27001 Certified &amp; ITIL Aligned</span>
           </div>
           <div className="w-px h-3 bg-slate-700" />
-          <Link href="/login" className="flex items-center gap-2 hover:text-white transition-colors">
+          <CustomLink href="/login" className="flex items-center gap-2 hover:text-white transition-colors">
             <User className="h-3.5 w-3.5" />
             Client Portal Login
-          </Link>
+          </CustomLink>
         </div>
       </div>
 
@@ -146,7 +187,7 @@ export function Navbar({
                           <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:rotate-180" />
                         </button>
                       ) : (
-                        <Link
+                        <CustomLink
                           href={item.url}
                           target={item.openInNewTab ? "_blank" : undefined}
                           className={cn(
@@ -156,7 +197,7 @@ export function Navbar({
                           )}
                         >
                           {item.label}
-                        </Link>
+                        </CustomLink>
                       )}
 
                       {/* Dropdown Menu */}
@@ -166,7 +207,7 @@ export function Navbar({
                           scrolled ? "bg-[#041635] border-white/10" : "bg-white border-slate-100"
                         )}>
                           {item.children.map((child: any) => (
-                            <Link
+                            <CustomLink
                               key={child.id}
                               href={child.url}
                               target={child.openInNewTab ? "_blank" : undefined}
@@ -178,7 +219,7 @@ export function Navbar({
                               )}
                             >
                               {child.label}
-                            </Link>
+                            </CustomLink>
                           ))}
                         </div>
                       )}
@@ -198,9 +239,9 @@ export function Navbar({
                         className="bg-[#2691F0] text-white hover:bg-[#041635] hover:text-white rounded font-bold shadow-lg shadow-[#2691F0]/20 transition-all cursor-pointer"
                         asChild
                       >
-                        <Link href={cta.url} target={cta.openInNewTab ? "_blank" : undefined}>
+                        <CustomLink href={cta.url} target={cta.openInNewTab ? "_blank" : undefined}>
                           {cta.label}
-                        </Link>
+                        </CustomLink>
                       </Button>
                     );
                   })()}
@@ -238,18 +279,18 @@ export function Navbar({
 
                   return (
                     <div key={item.id} className="border-b border-white/5 pb-2">
-                      <Link
+                      <CustomLink
                         href={item.url}
                         target={item.openInNewTab ? "_blank" : undefined}
                         className="block py-2.5 text-lg font-bold text-white"
                         onClick={() => setIsOpen(false)}
                       >
                         {item.label}
-                      </Link>
+                      </CustomLink>
                       {hasChildren && (
                         <div className="pl-4 space-y-1.5 mt-1 pb-2">
                           {item.children.map((child: any) => (
-                            <Link
+                            <CustomLink
                               key={child.id}
                               href={child.url}
                               target={child.openInNewTab ? "_blank" : undefined}
@@ -257,7 +298,7 @@ export function Navbar({
                               onClick={() => setIsOpen(false)}
                             >
                               {child.label}
-                            </Link>
+                            </CustomLink>
                           ))}
                         </div>
                       )}
@@ -266,27 +307,27 @@ export function Navbar({
                 })}
 
                 <div className="pt-6 pb-2 space-y-4">
-                  <Link
+                  <CustomLink
                     href="/login"
                     className="flex items-center gap-2 text-slate-300 hover:text-white font-bold"
                     onClick={() => setIsOpen(false)}
                   >
                     <User className="h-5 w-5 text-[#2691F0]" />
                     Client Portal Login
-                  </Link>
+                  </CustomLink>
 
                   {menuTree.find((i) => i.iconKey === "button-cta") && (
                     <Button className="w-full justify-center bg-[#2691F0] text-white rounded font-bold py-3.5" asChild>
                       {(() => {
                         const cta = menuTree.find((i) => i.iconKey === "button-cta");
                         return (
-                          <Link
+                          <CustomLink
                             href={cta.url}
                             target={cta.openInNewTab ? "_blank" : undefined}
                             onClick={() => setIsOpen(false)}
                           >
                             {cta.label}
-                          </Link>
+                          </CustomLink>
                         );
                       })()}
                     </Button>

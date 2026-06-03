@@ -1,16 +1,25 @@
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { updateSiteSetting } from "@/lib/admin-actions";
+import { updateSiteSetting, changeAdminPassword } from "@/lib/admin-actions";
 import { Button } from "@/components/shared/Button";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Save, Settings } from "lucide-react";
+import { PasswordInput } from "@/components/shared/PasswordInput";
+import { Save, Settings, KeyRound, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export const metadata = { title: "System Settings | CYVRIX Admin" };
 export const dynamic = "force-dynamic";
 
-export default async function SettingsPage() {
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    status?: string;
+    message?: string;
+  }>;
+}) {
   await requireAdmin();
+  const sp = await searchParams;
 
   const allSettings = await prisma.siteSetting.findMany({
     orderBy: { key: "asc" },
@@ -21,6 +30,26 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-8 pb-16 max-w-3xl">
+      {sp.status && (
+        <div className={`p-4 rounded-xl border flex items-start gap-3 ${
+          sp.status === "success" 
+            ? "bg-emerald-50 border-emerald-250 text-emerald-800" 
+            : "bg-rose-50 border-rose-250 text-rose-800"
+        }`}>
+          {sp.status === "success" ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+          )}
+          <div>
+            <h4 className="font-outfit font-black text-sm uppercase tracking-wide">
+              {sp.status === "success" ? "Operation Successful" : "Validation Error"}
+            </h4>
+            <p className="text-xs font-semibold mt-0.5 leading-relaxed">{sp.message}</p>
+          </div>
+        </div>
+      )}
+
       <div>
         <h1 className="font-outfit text-3xl font-black text-[#041635]">System Settings</h1>
         <p className="text-slate-500 text-sm mt-1">Manage company profile, brand, SEO, email, and operational settings.</p>
@@ -133,6 +162,56 @@ export default async function SettingsPage() {
 
           <Button type="submit" className="bg-[#041635] text-white hover:bg-[#2691F0] px-6 py-2.5 rounded-xl font-bold flex items-center gap-2">
             <Save className="h-4 w-4" /> Save Brand & Logo
+          </Button>
+        </form>
+      </div>
+
+
+      {/* Admin Password Change */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+          <KeyRound className="h-4 w-4 text-[#2691F0]" />
+          <h2 className="font-outfit font-black text-[#041635]">Change Admin Password</h2>
+        </div>
+        <form action={changeAdminPassword} className="p-6 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <label className="block text-sm font-bold text-slate-700">
+              Current Password
+              <PasswordInput
+                name="currentPassword"
+                placeholder="••••••••"
+                required
+                className="mt-1.5 w-full rounded-xl border border-slate-200 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+
+            <label className="block text-sm font-bold text-slate-700">
+              New Password
+              <PasswordInput
+                name="newPassword"
+                placeholder="•••••••• (Min 8 chars)"
+                required
+                className="mt-1.5 w-full rounded-xl border border-slate-200 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+
+            <label className="block text-sm font-bold text-slate-700">
+              Confirm New Password
+              <PasswordInput
+                name="confirmPassword"
+                placeholder="••••••••"
+                required
+                className="mt-1.5 w-full rounded-xl border border-slate-200 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+          </div>
+          
+          <p className="text-[10px] text-slate-400 font-semibold">
+            Note: Changing your password will log you out from other active sessions. Make sure you document your new password.
+          </p>
+
+          <Button type="submit" className="bg-[#041635] text-white hover:bg-[#2691F0] px-6 py-2.5 rounded-xl font-bold flex items-center gap-2">
+            <KeyRound className="h-4 w-4" /> Update Password
           </Button>
         </form>
       </div>

@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import { SectionTypeSelect } from "@/components/admin/SectionTypeSelect";
 import { Plus, Pencil, ArrowUp, ArrowDown, Layers, FileText, Settings, Sparkles, AlertTriangle } from "lucide-react";
 
 export const metadata = { title: "Pages & Core Sections Builder | CYVRIX Admin" };
@@ -26,10 +27,12 @@ export default async function PagesCMSPage({
     tab?: string;
     sectionId?: string;
     newSection?: string;
+    type?: string;
   }>;
 }) {
   await requireAdmin();
   const sp = await searchParams;
+  const currentType = sp.type || "hero";
 
   const pages = await prisma.cmsPage.findMany({
     orderBy: [{ slug: "asc" }],
@@ -367,22 +370,17 @@ export default async function PagesCMSPage({
                             Add Dynamic Section Block
                           </h4>
 
-                          <label className="block text-xs font-bold text-slate-700">
+                           <label className="block text-xs font-bold text-slate-700">
                             Section Category/Type
-                            <select
-                              name="sectionType"
-                              required
+                            <SectionTypeSelect
+                              pageId={editingPage.id}
+                              defaultValue={currentType}
+                              options={sectionTypes}
                               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white font-semibold"
-                            >
-                              {sectionTypes.map((st) => (
-                                <option key={st.type} value={st.type}>
-                                  {st.name} ({st.type})
-                                </option>
-                              ))}
-                            </select>
+                            />
                           </label>
 
-                          <SectionFormFields />
+                          <SectionFormFields sectionType={currentType} />
 
                           <div className="flex gap-2 pt-2 border-t border-slate-200">
                             <Button type="submit" className="flex-1 bg-[#041635] text-white hover:bg-[#2691F0] py-2 rounded-xl text-xs font-bold">
@@ -405,7 +403,7 @@ export default async function PagesCMSPage({
                             Edit Block: <code className="font-mono text-xs bg-slate-100 px-1 py-0.5 rounded text-[#2691F0]">{selectedSection.sectionType}</code>
                           </h4>
 
-                          <SectionFormFields defaults={selectedSection} />
+                          <SectionFormFields defaults={selectedSection} sectionType={selectedSection?.sectionType} />
 
                           <div className="flex gap-2 pt-2 border-t border-slate-200">
                             <Button type="submit" className="flex-1 bg-[#041635] text-white hover:bg-[#2691F0] py-2 rounded-xl text-xs font-bold">
@@ -450,7 +448,320 @@ export default async function PagesCMSPage({
   );
 }
 
-function SectionFormFields({ defaults }: { defaults?: any }) {
+function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionType?: string }) {
+  const normalized = (sectionType || defaults?.sectionType || "").toLowerCase();
+  const isHero = normalized === "hero" || normalized === "pricing_hero" || normalized === "contact_hero" || normalized === "support_hero" || normalized === "faq_hero";
+
+  const settings = defaults?.settingsJson || {};
+
+  if (isHero) {
+    return (
+      <div className="space-y-4">
+        <div className="p-3 bg-[#e0f2fe] border border-[#bae6fd] rounded-xl mb-4">
+          <p className="text-[10px] text-[#0369a1] font-bold uppercase tracking-wider flex items-center gap-1.5">
+            <Sparkles className="h-3 w-3 text-[#0284c7]" /> Dedicated Hero Settings Form
+          </p>
+          <p className="text-[9px] text-[#0369a1] font-medium mt-0.5">
+            This module controls the main landing banner. Complete all elements to build a premium background.
+          </p>
+        </div>
+
+        <label className="block text-xs font-bold text-slate-700">
+          Hero Headline (Title)
+          <input
+            name="title"
+            defaultValue={defaults?.title}
+            placeholder="e.g. Next-Gen Security Auditing"
+            required
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+          />
+        </label>
+
+        <label className="block text-xs font-bold text-slate-700">
+          Subheadline (Body paragraph text)
+          <textarea
+            name="body"
+            rows={3}
+            defaultValue={defaults?.body}
+            placeholder="Main paragraph introducing CYVRIX value..."
+            required
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none resize-none"
+          />
+        </label>
+
+        <div className="grid grid-cols-2 gap-4">
+          <label className="block text-xs font-bold text-slate-700">
+            Badge / Eyebrow Text
+            <input
+              name="settingsJson_eyebrow"
+              defaultValue={settings.eyebrow}
+              placeholder="e.g. ISO 27001 Certified Operations"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+            />
+          </label>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="block text-xs font-bold text-slate-700">
+              Right Panel Card Title (Placeholder Text)
+              <input
+                name="settingsJson_cardTitle"
+                defaultValue={settings.cardTitle}
+                placeholder="e.g. Premium UK Operations Center"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+
+            <div className="block text-xs font-bold text-slate-700">
+              Right Panel Card Custom Image (Replaces Placeholder)
+              <div className="mt-1">
+                <ImageUpload name="settingsJson_cardImage" defaultValue={settings.cardImage || ""} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-4 bg-slate-100 rounded-xl space-y-4 border border-slate-200">
+          <p className="text-xs font-bold text-slate-800 border-b border-slate-200 pb-1.5">Floating Stat Card Badge</p>
+          
+          <div className="flex items-center justify-between gap-4">
+            <span className="text-xs font-bold text-slate-700">Display Floating Stat Badge</span>
+            <select
+              name="settingsJson_showStatCard"
+              defaultValue={settings.showStatCard !== false && settings.showStatCard !== "false" ? "true" : "false"}
+              className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-[#041635] bg-white font-semibold cursor-pointer focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+            >
+              <option value="true">Show Badge</option>
+              <option value="false">Hide Badge</option>
+            </select>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="block text-xs font-bold text-slate-700">
+              Stat Label
+              <input
+                name="settingsJson_statLabel"
+                defaultValue={settings.statLabel || "Average Response Time"}
+                placeholder="e.g. Average Response Time"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block text-xs font-bold text-slate-700">
+                Stat Value
+                <input
+                  name="settingsJson_statValue"
+                  defaultValue={settings.statValue || "12"}
+                  placeholder="e.g. 12"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+                />
+              </label>
+
+              <label className="block text-xs font-bold text-slate-700">
+                Stat Unit
+                <input
+                  name="settingsJson_statUnit"
+                  defaultValue={settings.statUnit || "Mins"}
+                  placeholder="e.g. Mins"
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+                />
+              </label>
+            </div>
+          </div>
+
+          <label className="block text-xs font-bold text-slate-700">
+            Stat Warnings / Subtext Badge
+            <input
+              name="settingsJson_statBadge"
+              defaultValue={settings.statBadge || "SLA Exceeded"}
+              placeholder="e.g. SLA Exceeded"
+              className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+            />
+          </label>
+        </div>
+
+        <div className="p-4 bg-slate-100 rounded-xl space-y-4 border border-slate-200">
+          <p className="text-xs font-bold text-slate-800 border-b border-slate-200 pb-1.5">Background Media Settings</p>
+          
+          <div className="block text-xs font-bold text-slate-700">
+            Hero Background Image
+            <div className="mt-1.5">
+              <ImageUpload name="mediaId" defaultValue={defaults?.mediaId || ""} />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block text-xs font-bold text-slate-700">
+              Background Alt Text
+              <input
+                name="settingsJson_altText"
+                defaultValue={settings.altText}
+                placeholder="e.g. CYVRIX Secure Network Operations Room"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+
+            <label className="block text-xs font-bold text-slate-700">
+              Focal Position / Center Bias
+              <select
+                name="settingsJson_focalPosition"
+                defaultValue={settings.focalPosition || "center"}
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white font-semibold"
+              >
+                <option value="center">Centered (Default)</option>
+                <option value="top">Top Anchored</option>
+                <option value="bottom">Bottom Anchored</option>
+                <option value="left">Left Anchored</option>
+                <option value="right">Right Anchored</option>
+              </select>
+            </label>
+          </div>
+
+          <label className="block text-xs font-bold text-slate-700">
+            Background Overlay Opacity
+            <div className="flex items-center gap-3 mt-1">
+              <input
+                type="range"
+                name="settingsJson_overlayOpacity"
+                min="0"
+                max="1"
+                step="0.05"
+                defaultValue={settings.overlayOpacity ?? 0.65}
+                className="flex-1 accent-[#2691F0]"
+              />
+            </div>
+          </label>
+        </div>
+
+        <div className="p-4 bg-slate-100 rounded-xl space-y-4 border border-slate-200">
+          <p className="text-xs font-bold text-slate-800 border-b border-slate-200 pb-1.5">Action Buttons (CTAs)</p>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block text-xs font-bold text-slate-700">
+              Primary Button Label
+              <input
+                name="buttonLabel"
+                defaultValue={defaults?.buttonLabel}
+                placeholder="e.g. Schedule Call"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+
+            <label className="block text-xs font-bold text-slate-700">
+              Primary Button URL
+              <input
+                name="buttonUrl"
+                defaultValue={defaults?.buttonUrl}
+                placeholder="e.g. /contact"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block text-xs font-bold text-slate-700">
+              Secondary Button Label
+              <input
+                name="settingsJson_secondaryCtaLabel"
+                defaultValue={settings.secondaryCtaLabel}
+                placeholder="e.g. View Services"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+
+            <label className="block text-xs font-bold text-slate-700">
+              Secondary Button URL
+              <input
+                name="settingsJson_secondaryCtaUrl"
+                defaultValue={settings.secondaryCtaUrl}
+                placeholder="e.g. /services"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <label className="block text-xs font-bold text-slate-700">
+            Background Style Theme
+            <select
+              name="backgroundStyle"
+              defaultValue={defaults?.backgroundStyle || "dark"}
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white font-semibold"
+            >
+              <option value="dark">Dark Deep Navy (#020817)</option>
+              <option value="light">Premium Pure Light</option>
+              <option value="silver">Corporate Bright Silver (#F1F5F9)</option>
+              <option value="azure">Vibrant Electric Azure (#2691F0)</option>
+              <option value="royal">Executive Royal Blue (#1E40AF)</option>
+              <option value="teal">Vibrant Ocean Teal (#0D9488)</option>
+              <option value="brand">Sleek Gradient Brand Accent</option>
+              <option value="glassmorphic">Glassmorphic Navy Overlay</option>
+            </select>
+          </label>
+
+          <label className="block text-xs font-bold text-slate-700">
+            Layout Orientation
+            <select
+              name="layoutStyle"
+              defaultValue={defaults?.layoutStyle || "split"}
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white font-semibold"
+            >
+              <option value="split">Split layout (Left Text, Right Card)</option>
+              <option value="center">Centered Headline Only</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="border-t border-slate-100 pt-4 mt-4 space-y-4">
+          <p className="text-[10px] font-black uppercase tracking-widest text-[#2691F0]">Custom Typography & Colors (Optional)</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <label className="block text-xs font-bold text-slate-700">
+              Title Text Color
+              <input
+                name="settingsJson_titleColor"
+                defaultValue={settings.titleColor || ""}
+                placeholder="e.g. #FFFFFF or text-[#2691F0]"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+            <label className="block text-xs font-bold text-slate-700">
+              Eyebrow Text Color
+              <input
+                name="settingsJson_eyebrowColor"
+                defaultValue={settings.eyebrowColor || settings.subtitleColor || ""}
+                placeholder="e.g. #2691F0 or text-white"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+            <label className="block text-xs font-bold text-slate-700">
+              Body Text Color
+              <input
+                name="settingsJson_bodyColor"
+                defaultValue={settings.bodyColor || ""}
+                placeholder="e.g. #94A3B8 or text-slate-300"
+                className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+              />
+            </label>
+          </div>
+          <p className="text-[9px] text-slate-400 mt-1">Supports standard hex codes (e.g. <code>#BA2382</code>) OR modern Tailwind utility classes (e.g. <code>text-rose-500</code>).</p>
+        </div>
+
+        <label className="block text-xs font-bold text-slate-700">
+          Visibility State
+          <select
+            name="isVisible"
+            defaultValue={defaults?.isVisible !== false ? "true" : "false"}
+            className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-[#041635] bg-white font-semibold"
+          >
+            <option value="true">Active & Visible</option>
+            <option value="false">Hidden Block</option>
+          </select>
+        </label>
+      </div>
+    );
+  }
+
   return (
     <>
       <label className="block text-xs font-bold text-slate-700">
@@ -522,6 +833,10 @@ function SectionFormFields({ defaults }: { defaults?: any }) {
           >
             <option value="dark">Dark Deep Navy (#020817)</option>
             <option value="light">Premium Pure Light</option>
+            <option value="silver">Corporate Bright Silver (#F1F5F9)</option>
+            <option value="azure">Vibrant Electric Azure (#2691F0)</option>
+            <option value="royal">Executive Royal Blue (#1E40AF)</option>
+            <option value="teal">Vibrant Ocean Teal (#0D9488)</option>
             <option value="brand">Sleek Gradient Brand Accent</option>
             <option value="glassmorphic">Glassmorphic Navy Overlay</option>
           </select>
@@ -540,6 +855,40 @@ function SectionFormFields({ defaults }: { defaults?: any }) {
             <option value="media_right">Media on Right, Text on Left</option>
           </select>
         </label>
+      </div>
+
+      <div className="border-t border-slate-100 pt-4 mt-4 space-y-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-[#2691F0]">Custom Typography & Colors (Optional)</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <label className="block text-xs font-bold text-slate-700">
+            Title Text Color
+            <input
+              name="settingsJson_titleColor"
+              defaultValue={settings.titleColor || ""}
+              placeholder="e.g. #FFFFFF or text-[#2691F0]"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+            />
+          </label>
+          <label className="block text-xs font-bold text-slate-700">
+            Eyebrow/Subtitle Text Color
+            <input
+              name="settingsJson_eyebrowColor"
+              defaultValue={settings.eyebrowColor || settings.subtitleColor || ""}
+              placeholder="e.g. #2691F0 or text-white"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+            />
+          </label>
+          <label className="block text-xs font-bold text-slate-700">
+            Body Text Color
+            <input
+              name="settingsJson_bodyColor"
+              defaultValue={settings.bodyColor || ""}
+              placeholder="e.g. #94A3B8 or text-slate-300"
+              className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
+            />
+          </label>
+        </div>
+        <p className="text-[9px] text-slate-400 mt-1">Supports standard hex codes (e.g. <code>#BA2382</code>) OR modern Tailwind utility classes (e.g. <code>text-rose-500</code>).</p>
       </div>
 
       <label className="block text-xs font-bold text-slate-700">

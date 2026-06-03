@@ -34,7 +34,7 @@ export function Logo({
   }
 
   return (
-    <Link href="/" className={cn("flex items-center gap-2 group relative block", className)}>
+    <a href="/" className={cn("flex items-center gap-2 group relative block", className)}>
       {activeLogo ? (
         <div className="relative h-10 w-44 transition-opacity duration-300">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -69,6 +69,6 @@ export function Logo({
           )}
         </>
       )}
-    </Link>
+    </a>
   );
 }

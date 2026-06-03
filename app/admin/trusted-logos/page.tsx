@@ -75,12 +75,16 @@ export default async function TrustedLogosCMSPage({
                   }`}
                 >
                   <div className="w-full h-16 bg-[#041635] rounded-xl flex items-center justify-center p-2 border border-slate-250/20 overflow-hidden shadow-inner">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={client.logoUrl}
-                      alt={client.altText || ""}
-                      className="object-contain w-full h-full brightness-0 invert"
-                    />
+                    {client.logoUrl ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={client.logoUrl}
+                        alt={client.altText || ""}
+                        className="object-contain w-full h-full brightness-0 invert"
+                      />
+                    ) : (
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">No Logo</span>
+                    )}
                   </div>
 
                   <div className="text-center w-full min-w-0">

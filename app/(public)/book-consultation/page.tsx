@@ -153,11 +153,11 @@ export default function BookConsultationPage() {
                     required
                     className="mt-2 w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0] focus:border-transparent transition-all font-semibold"
                   >
-                    <option value="Managed IT support">Managed IT support</option>
-                    <option value="Cybersecurity and hardening">Cybersecurity & CE hardening</option>
-                    <option value="Cloud migration and setup">Cloud migration & M365/Google</option>
-                    <option value="Infrastructure audit and planning">Infrastructure audit</option>
-                    <option value="Compliance and risk consultancy">Compliance & risk advisory</option>
+                    <option value="Managed IT support" className="bg-[#020817] text-white">Managed IT support</option>
+                    <option value="Cybersecurity and hardening" className="bg-[#020817] text-white">Cybersecurity & CE hardening</option>
+                    <option value="Cloud migration and setup" className="bg-[#020817] text-white">Cloud migration & M365/Google</option>
+                    <option value="Infrastructure audit and planning" className="bg-[#020817] text-white">Infrastructure audit</option>
+                    <option value="Compliance and risk consultancy" className="bg-[#020817] text-white">Compliance & risk advisory</option>
                   </select>
                 </label>
               </div>
@@ -170,9 +170,9 @@ export default function BookConsultationPage() {
                     required
                     className="mt-2 w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0] focus:border-transparent transition-all font-semibold"
                   >
-                    <option value="Standard planning">Standard Planning (Within 30 days)</option>
-                    <option value="Active migration or change">Active Change (Within 14 days)</option>
-                    <option value="Critical issue / breach readiness">Critical Security Audit (Immediate)</option>
+                    <option value="Standard planning" className="bg-[#020817] text-white">Standard Planning (Within 30 days)</option>
+                    <option value="Active migration or change" className="bg-[#020817] text-white">Active Change (Within 14 days)</option>
+                    <option value="Critical issue / breach readiness" className="bg-[#020817] text-white">Critical Security Audit (Immediate)</option>
                   </select>
                 </label>
 
@@ -183,9 +183,9 @@ export default function BookConsultationPage() {
                     required
                     className="mt-2 w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0] focus:border-transparent transition-all font-semibold"
                   >
-                    <option value="Morning (09:00 - 12:00)">Morning (09:00 - 12:00)</option>
-                    <option value="Afternoon (12:00 - 15:00)">Afternoon (12:00 - 15:00)</option>
-                    <option value="Late Afternoon (15:00 - 17:00)">Late Afternoon (15:00 - 17:00)</option>
+                    <option value="Morning (09:00 - 12:00)" className="bg-[#020817] text-white">Morning (09:00 - 12:00)</option>
+                    <option value="Afternoon (12:00 - 15:00)" className="bg-[#020817] text-white">Afternoon (12:00 - 15:00)</option>
+                    <option value="Late Afternoon (15:00 - 17:00)" className="bg-[#020817] text-white">Late Afternoon (15:00 - 17:00)</option>
                   </select>
                 </label>
               </div>

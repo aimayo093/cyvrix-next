@@ -21,6 +21,21 @@
   body {
     @apply bg-[#020817] text-slate-300 overflow-x-hidden selection:bg-[#2691F0]/30 selection:text-white;
   }
+  select option {
+    background-color: #020817;
+    color: #ffffff;
+  }
+
+  /* High-priority overrides for any select elements inside light/white-background forms (like admin pages) */
+  select.bg-white option,
+  select.bg-slate-50 option,
+  select.bg-slate-100 option,
+  .bg-white select option,
+  .bg-slate-50 select option,
+  .bg-slate-100 select option {
+    background-color: #ffffff !important;
+    color: #041635 !important;
+  }
 }
 
 @layer utilities {

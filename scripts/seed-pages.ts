@@ -157,11 +157,20 @@ async function main() {
       {
         id: crypto.randomUUID(),
         pageId: careersPage.id,
+        sectionType: "Career openings",
+        title: "Active Opportunities",
+        body: "Join our calm, remote-first team of specialized architects and engineers.",
+        backgroundStyle: "dark",
+        sortOrder: 3,
+      },
+      {
+        id: crypto.randomUUID(),
+        pageId: careersPage.id,
         sectionType: "Contact section",
         title: "Apply for a future opening",
         body: "Submit your details and CV here. Our recruitment desk will align you with planned engineering and operations slots.",
         backgroundStyle: "dark",
-        sortOrder: 3,
+        sortOrder: 4,
       },
     ],
   });

@@ -75,7 +75,7 @@ export default function CaseStudiesPage() {
               variants={fadeInUp}
               className="group"
             >
-              <Link 
+              <a 
                 href={`/case-studies/${study.slug}`}
                 className="block p-10 rounded-3xl bg-[#020817] border border-white/10 hover:border-[#2691F0]/50 hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500"
               >
@@ -112,7 +112,7 @@ export default function CaseStudiesPage() {
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </div>
                 </div>
-              </Link>
+              </a>
             </motion.div>
           ))}
         </motion.div>

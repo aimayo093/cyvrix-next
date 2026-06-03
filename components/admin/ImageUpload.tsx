@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
+import { useState } from "react";
+import { Upload, X, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 interface ImageUploadProps {
@@ -14,7 +14,6 @@ export function ImageUpload({ name, defaultValue, className = "" }: ImageUploadP
   const [url, setUrl] = useState<string | undefined>(defaultValue);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -55,12 +54,11 @@ export function ImageUpload({ name, defaultValue, className = "" }: ImageUploadP
     }
   };
 
-  const handleRemove = () => {
+  const handleRemove = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setUrl(undefined);
     setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   return (
@@ -86,10 +84,18 @@ export function ImageUpload({ name, defaultValue, className = "" }: ImageUploadP
           </div>
         </div>
       ) : (
-        <div
-          onClick={() => !isUploading && fileInputRef.current?.click()}
-          className={`border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors w-full sm:w-80 aspect-video ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+        <label
+          className={`border-2 border-dashed border-slate-200 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-50 transition-colors w-full sm:w-80 aspect-video relative ${
+            isUploading ? "opacity-50 pointer-events-none" : ""
+          }`}
         >
+          <input
+            type="file"
+            disabled={isUploading}
+            onChange={handleFileChange}
+            accept="image/*"
+            className="sr-only"
+          />
           {isUploading ? (
             <>
               <Loader2 className="h-8 w-8 text-[#2691F0] animate-spin mb-3" />
@@ -100,22 +106,18 @@ export function ImageUpload({ name, defaultValue, className = "" }: ImageUploadP
               <div className="h-12 w-12 rounded-full bg-slate-100 flex items-center justify-center mb-3 text-slate-400">
                 <Upload className="h-5 w-5" />
               </div>
-              <p className="text-sm font-bold text-slate-700 mb-1">Click to upload image</p>
-              <p className="text-xs text-slate-400">PNG, JPG, WebP up to 5MB</p>
+              <p className="text-sm font-bold text-[#041635] mb-1">Click to upload image</p>
+              <p className="text-xs text-slate-400 font-semibold">PNG, JPG, WebP up to 5MB</p>
             </>
           )}
-        </div>
+        </label>
       )}
 
-      {error && <p className="text-sm text-rose-500 font-bold flex items-center gap-1"><X className="h-4 w-4" /> {error}</p>}
-
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*"
-        className="hidden"
-      />
+      {error && (
+        <p className="text-sm text-rose-500 font-bold flex items-center gap-1">
+          <X className="h-4 w-4" /> {error}
+        </p>
+      )}
     </div>
   );
 }

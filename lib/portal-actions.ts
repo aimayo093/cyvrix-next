@@ -2,6 +2,7 @@
 
 import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
@@ -185,3 +186,49 @@ export async function updatePortalProfile(prevState: any, formData: FormData) {
     return { success: false, message: error instanceof z.ZodError ? error.issues[0].message : error.message || "Could not update profile." };
   }
 }
+
+export async function submitPortalTestimonial(formData: FormData) {
+  try {
+    const user = await requireUser();
+    const quote = formData.get("quote") as string || "";
+    const ratingRaw = formData.get("rating") as string || "5";
+    const rating = parseInt(ratingRaw, 10) || 5;
+
+    if (!quote.trim()) {
+      redirect("/portal?status=error&message=Testimonial quote cannot be empty.");
+    }
+
+    let companyName = "Independent Client";
+    if (user.clientCompanyId) {
+      const company = await prisma.clientCompany.findUnique({
+        where: { id: user.clientCompanyId },
+        select: { name: true }
+      });
+      if (company) {
+        companyName = company.name;
+      }
+    }
+
+    await prisma.testimonial.create({
+      data: {
+        id: crypto.randomUUID(),
+        clientName: user.name || "Client User",
+        company: companyName,
+        quote: sanitize(quote),
+        rating,
+        approved: true,
+        featured: true,
+        createdAt: new Date(),
+      }
+    });
+
+    revalidatePath("/");
+    revalidatePath("/portal");
+    redirect("/portal?status=success&message=Thank you! Your testimonial has been submitted and is now active on our public website.");
+  } catch (error: any) {
+    if (error.digest?.startsWith("NEXT_REDIRECT")) throw error;
+    console.error("Portal testimonial error:", error);
+    redirect(`/portal?status=error&message=${encodeURIComponent(error.message || "Could not submit testimonial.")}`);
+  }
+}
+

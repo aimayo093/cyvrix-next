@@ -5,20 +5,53 @@ import {
   Clock, 
   ArrowRight,
   ExternalLink,
-  Plus
+  Plus,
+  Star,
+  Sparkles,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { requireUser } from "@/lib/auth";
 import { getPortalStats } from "@/lib/data-fetchers";
+import { submitPortalTestimonial } from "@/lib/portal-actions";
 import { redirect } from "next/navigation";
 
-export default async function PortalOverview() {
+export default async function PortalOverview({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    status?: string;
+    message?: string;
+  }>;
+}) {
   const session = await requireUser();
+  const sp = await searchParams;
   
   const stats = await getPortalStats(session.clientCompanyId || undefined);
 
   return (
     <div className="space-y-10 pb-12">
+      {/* Testimonial Submission Alert */}
+      {sp.status && (
+        <div className={`p-4 rounded-3xl border flex items-start gap-3 relative z-10 ${
+          sp.status === "success" 
+            ? "bg-emerald-50 border-emerald-250 text-emerald-800" 
+            : "bg-rose-50 border-rose-250 text-rose-800"
+        }`}>
+          {sp.status === "success" ? (
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+          ) : (
+            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+          )}
+          <div>
+            <h4 className="font-outfit font-black text-sm uppercase tracking-wide">
+              {sp.status === "success" ? "Feedback Received" : "Error"}
+            </h4>
+            <p className="text-xs font-semibold mt-0.5 leading-relaxed">{sp.message}</p>
+          </div>
+        </div>
+      )}
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-[#041635] to-[#0a2a5e] rounded-3xl p-10 text-white relative overflow-hidden">
         <div className="relative z-10 max-w-2xl">
@@ -123,6 +156,44 @@ export default async function PortalOverview() {
               Our support team is available 24/7 to assist with any technical issues.
             </p>
             <Button variant="premium" className="w-full">Open Support Ticket</Button>
+          </div>
+
+          {/* Share Testimonial Card */}
+          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-left space-y-5">
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="font-outfit text-sm font-black text-[#041635]">Share Your Experience</h4>
+                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Your quote will appear on our homepage!</p>
+              </div>
+            </div>
+            <form action={submitPortalTestimonial} className="space-y-4">
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                Rating
+                <select name="rating" required className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-[#041635] font-semibold focus:ring-2 focus:ring-[#2691F0] focus:outline-none">
+                  <option value="5">⭐⭐⭐⭐⭐ Excellent (5 Stars)</option>
+                  <option value="4">⭐⭐⭐⭐ Good (4 Stars)</option>
+                  <option value="3">⭐⭐⭐ Neutral (3 Stars)</option>
+                </select>
+              </label>
+
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                Your Review / Testimonial Quote
+                <textarea
+                  name="quote"
+                  required
+                  rows={4}
+                  placeholder="e.g. CYVRIX has transformed our operations center security. Highly recommended!"
+                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none resize-none"
+                />
+              </label>
+
+              <Button type="submit" className="w-full bg-[#041635] hover:bg-[#2691F0] text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+                <Sparkles className="h-4 w-4 text-amber-400" /> Submit Testimonial
+              </Button>
+            </form>
           </div>
 
           <div className="bg-slate-900 text-white p-8 rounded-3xl relative overflow-hidden">

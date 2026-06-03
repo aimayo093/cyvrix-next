@@ -16,6 +16,8 @@ import {
   Globe,
   Layers,
   Building2,
+  Briefcase,
+  Activity,
 } from "lucide-react";
 import { Logo } from "@/components/nav-main/Logo";
 import { requireAdmin } from "@/lib/auth";
@@ -42,15 +44,18 @@ const adminNav = [
     { name: "Industries CMS", href: "/admin/industries-cms", icon: Globe },
     { name: "Blog & Insights", href: "/admin/blog-and-insights", icon: FileText },
     { name: "FAQ CMS", href: "/admin/faqs", icon: HelpCircle },
+    { name: "Careers CMS", href: "/admin/careers", icon: Briefcase },
     { name: "Testimonials", href: "/admin/testimonials", icon: Star },
   ]},
   { group: "Operations", items: [
     { name: "Leads CRM", href: "/admin/leads-crm", icon: Users },
     { name: "Ticket Queue", href: "/admin/ticket-management", icon: MessageSquare },
     { name: "Client Companies", href: "/admin/client-management", icon: Building2 },
+    { name: "Satisfaction Surveys", href: "/admin/surveys", icon: Star },
   ]},
   { group: "System", items: [
     { name: "Audit Logs", href: "/admin/audit-logs", icon: ShieldCheck },
+    { name: "System Status", href: "/admin/status", icon: Activity },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ]},
 ];

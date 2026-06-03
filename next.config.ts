@@ -9,7 +9,6 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  distDir: '.next_new',
   async headers() {
     return [
       {

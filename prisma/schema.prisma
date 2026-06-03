@@ -593,6 +593,8 @@ model ClientCompany {
   Proposal        Proposal[]
   Ticket          Ticket[]
   User            User[]
+  WorkOrder       WorkOrder[]
+  SurveyRequest   SurveyRequest[]
 
   @@schema("public")
 }
@@ -1716,3 +1718,96 @@ model SocialLink {
   @@schema("public")
   @@map("social_links")
 }
+
+model SurveySetting {
+  id                     String   @id @default(uuid())
+  autoSendEnabled        Boolean  @default(true) @map("auto_send_enabled")
+  triggerOnResolved      Boolean  @default(true) @map("trigger_on_resolved")
+  triggerOnClosed        Boolean  @default(true) @map("trigger_on_closed")
+  triggerOnJobCompleted  Boolean  @default(true) @map("trigger_on_job_completed")
+  sendDelayMinutes       Int      @default(0) @map("send_delay_minutes")
+  emailSubject           String   @default("How did we do? Your feedback matters") @map("email_subject")
+  emailBody              String   @default("Hello {{client_name}},\n\nYour recent support request/job has been marked as completed.\n\nWe would appreciate your feedback so we can continue improving the service we provide.\n\nTicket/Job Reference: {{reference_number}}\nService: {{service_name}}\n\nPlease take a moment to complete this short survey:\n{{survey_link}}\n\nThank you,\nCYVRIX Technologies") @map("email_body")
+  ratingType             String   @default("stars_5") @map("rating_type")
+  lowRatingThreshold     Int      @default(3) @map("low_rating_threshold")
+  adminNotificationEmail String?  @map("admin_notification_email")
+  surveyExpiryDays       Int      @default(7) @map("survey_expiry_days")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+  updatedBy              String?  @map("updated_by")
+
+  @@schema("public")
+  @@map("survey_settings")
+}
+
+model SurveyRequest {
+  id              String   @id @default(uuid())
+  relatedType     String   @map("related_type")
+  relatedId       String   @map("related_id")
+  clientCompanyId String?  @map("client_company_id")
+  contactEmail    String   @map("contact_email")
+  contactName     String?  @map("contact_name")
+  token           String   @unique
+  status          String   @default("pending")
+  sentAt          DateTime? @map("sent_at")
+  expiresAt       DateTime? @map("expires_at")
+  submittedAt     DateTime? @map("submitted_at")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  ClientCompany   ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  SurveyResponse  SurveyResponse?
+
+  @@schema("public")
+  @@map("survey_requests")
+}
+
+model SurveyResponse {
+  id                    String   @id @default(uuid())
+  surveyRequestId       String   @unique @map("survey_request_id")
+  rating                Int?
+  npsScore              Int?     @map("nps_score")
+  responseTimeRating    Int?     @map("response_time_rating")
+  resolutionRating      Int?     @map("resolution_rating")
+  professionalismRating Int?     @map("professionalism_rating")
+  comments              String?
+  allowFollowUp         Boolean  @default(false) @map("allow_follow_up")
+  submittedAt           DateTime @default(now()) @map("submitted_at")
+  ipAddress             String?  @map("ip_address")
+  userAgent             String?  @map("user_agent")
+  reviewedAt            DateTime? @map("reviewed_at")
+  reviewedBy            String?  @map("reviewed_by")
+  internalNotes         String?  @map("internal_notes")
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
+
+  SurveyRequest         SurveyRequest @relation(fields: [surveyRequestId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+  @@map("survey_responses")
+}
+
+model WorkOrder {
+  id              String   @id @default(uuid())
+  clientCompanyId String?  @map("client_company_id")
+  title           String
+  description     String
+  serviceType     String   @map("service_type")
+  status          String   @default("New")
+  assignedTo      String?  @map("assigned_to")
+  scheduledAt     DateTime? @map("scheduled_at")
+  completedAt     DateTime? @map("completed_at")
+  completionNotes String?  @map("completion_notes")
+  contactName     String?  @map("contact_name")
+  contactEmail    String?  @map("contact_email")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdBy       String?  @map("created_by")
+  updatedBy       String?  @map("updated_by")
+
+  ClientCompany   ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+
+  @@schema("public")
+  @@map("work_orders")
+}
+

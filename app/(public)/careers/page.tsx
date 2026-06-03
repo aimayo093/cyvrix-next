@@ -33,7 +33,7 @@ export default async function CareersPage() {
     <div className="pt-10 bg-[#020817] min-h-screen">
       <SectionRenderer
         sections={pageData?.sections || []}
-        pricingPackages={activeJobs} // Pass activeJobs into section renderer if needed
+        careerJobs={activeJobs}
       />
     </div>
   );
