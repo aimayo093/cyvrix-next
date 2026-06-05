@@ -26,7 +26,14 @@ type SessionPayload = {
 };
 
 function secret() {
-  return process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "development-only-change-me";
+  const s = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (!s) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("CRITICAL SECURITY ERROR: AUTH_SECRET environment variable is missing in production.");
+    }
+    return "development-only-change-me";
+  }
+  return s;
 }
 
 function base64url(input: string) {
