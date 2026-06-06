@@ -1,6 +1,11 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { updateSession } from "@/utils/supabase/middleware";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 import { verifySessionToken } from "@/lib/auth-edge";
+
+// Basic in-memory rate limiter.
+const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+const MAX_REQUESTS = 60; // 60 requests per minute
 
 // Routes that require authentication (any role)
 const PROTECTED_ROUTES = ["/portal", "/admin"];
@@ -18,11 +23,29 @@ const ADMIN_ROLES = [
   "FINANCE_VIEWER",
 ];
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  let response = NextResponse.next();
 
-  // ── 1. Refresh Supabase session cookie on every request ──────────────
-  const response = await updateSession(request);
+  // ── 1. Rate Limiting for API routes ────────────────────────────────────
+  if (pathname.startsWith("/api")) {
+    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const now = Date.now();
+    const windowStart = now - RATE_LIMIT_WINDOW;
+
+    const record = rateLimitMap.get(ip);
+    if (!record || record.lastReset < windowStart) {
+      rateLimitMap.set(ip, { count: 1, lastReset: now });
+    } else {
+      record.count += 1;
+      if (record.count > MAX_REQUESTS) {
+        return new NextResponse(
+          JSON.stringify({ error: "Too many requests. Please try again later." }),
+          { status: 429, headers: { "Content-Type": "application/json" } }
+        );
+      }
+    }
+  }
 
   // ── 2. Route protection ───────────────────────────────────────────────
   const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
@@ -35,26 +58,13 @@ export async function proxy(request: NextRequest) {
     if (!session) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", pathname);
-      const redirectResponse = NextResponse.redirect(loginUrl);
-      // Copy Supabase cookies from the initial response to the redirect
-      response.headers.forEach((value, key) => {
-        if (key.toLowerCase() === 'set-cookie') {
-          redirectResponse.headers.append(key, value);
-        }
-      });
-      return redirectResponse;
+      return NextResponse.redirect(loginUrl);
     }
 
     // Admin routes require an internal role
     const isAdminRoute = ADMIN_ROUTES.some((r) => pathname.startsWith(r));
     if (isAdminRoute && !ADMIN_ROLES.includes(session.role)) {
-      const portalRedirect = NextResponse.redirect(new URL("/portal", request.url));
-      response.headers.forEach((value, key) => {
-        if (key.toLowerCase() === 'set-cookie') {
-          portalRedirect.headers.append(key, value);
-        }
-      });
-      return portalRedirect;
+      return NextResponse.redirect(new URL("/portal", request.url));
     }
   }
 
@@ -64,16 +74,9 @@ export async function proxy(request: NextRequest) {
     const session = await verifySessionToken(token);
     if (session) {
       const dest = ADMIN_ROLES.includes(session.role) ? "/admin" : "/portal";
-      const authenticatedRedirect = NextResponse.redirect(new URL(dest, request.url));
-      response.headers.forEach((value, key) => {
-        if (key.toLowerCase() === 'set-cookie') {
-          authenticatedRedirect.headers.append(key, value);
-        }
-      });
-      return authenticatedRedirect;
+      return NextResponse.redirect(new URL(dest, request.url));
     }
   }
-
 
   return response;
 }

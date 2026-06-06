@@ -5,9 +5,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import xss from "xss";
+import { z } from "zod";
 
+// Robust XSS protection using the 'xss' library
 function sanitize(v: string) {
-  return v.replace(/[<>]/g, "").trim().slice(0, 20000);
+  return xss(v.trim()).slice(0, 20000);
 }
 
 function slug(v: string) {
