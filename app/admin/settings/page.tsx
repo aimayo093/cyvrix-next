@@ -201,6 +201,10 @@ export default async function SettingsPage({
               Default From Email
               <input name="value.defaultFromEmail" defaultValue={emailConfig.defaultFromEmail ?? ""} placeholder="noreply@cyvrix.co.uk" className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
             </label>
+            <label className="block text-sm font-bold text-slate-700 md:col-span-2">
+              Admin Notification Inbox (Leads & Tickets)
+              <input name="value.adminNotificationEmail" defaultValue={emailConfig.adminNotificationEmail ?? ""} placeholder="alerts@cyvrix.co.uk" className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
+            </label>
           </div>
           <p className="text-[10px] text-slate-400 font-semibold">
             Note: Your SMTP password is masked for security. Leaving it as ******** will preserve your existing password.

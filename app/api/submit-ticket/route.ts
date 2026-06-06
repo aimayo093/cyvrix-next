@@ -32,10 +32,15 @@ function ticketNumber() {
 }
 
 async function notify(to: string, subject: string, body: string) {
+  const siteSettings = await prisma.siteSetting.findUnique({ where: { key: "emailConfig" } });
+  const emailConfig = (siteSettings?.value as Record<string, string>) || {};
+
   const key = process.env.RESEND_API_KEY;
   if (!key) return;
-  const from = process.env.MAIL_FROM ?? "CYVRIX Technologies <noreply@cyvrix.co.uk>";
-  const admin = process.env.ADMIN_NOTIFICATION_EMAIL;
+  const from = emailConfig.defaultFromEmail 
+    ? `${emailConfig.defaultFromName || "CYVRIX Support"} <${emailConfig.defaultFromEmail}>`
+    : process.env.MAIL_FROM ?? "CYVRIX Technologies <noreply@cyvrix.co.uk>";
+  const admin = emailConfig.adminNotificationEmail || process.env.ADMIN_NOTIFICATION_EMAIL;
   await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
