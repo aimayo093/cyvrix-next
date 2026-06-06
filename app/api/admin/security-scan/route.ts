@@ -4,7 +4,7 @@ import { requireAdmin } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export async function POST() {
+export async function POST(req: Request) {
   const session = await requireAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -76,7 +76,7 @@ export async function POST() {
   }
 
   // ── 6. Environment variables ───────────────────────────────────────────────
-  const requiredEnv = ["DATABASE_URL", "NEXTAUTH_SECRET", "NEXT_PUBLIC_SUPABASE_URL"];
+  const requiredEnv = ["DATABASE_URL", "AUTH_SECRET", "NEXT_PUBLIC_SUPABASE_URL"];
   const missingEnv = requiredEnv.filter((key) => !process.env[key]);
   checks.push({
     id: "env",
@@ -128,7 +128,8 @@ export async function POST() {
 
   // 8c. Security Headers
   try {
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const url = new URL(req.url);
+    const siteUrl = `${url.protocol}//${url.host}`;
     const res = await fetch(`${siteUrl}/api/health`, { method: "HEAD", headers: { "X-Loopback": "true" } });
     const csp = res.headers.get("Content-Security-Policy");
     const hsts = res.headers.get("Strict-Transport-Security");
