@@ -18,6 +18,7 @@ import {
   Building2,
   Briefcase,
   Activity,
+  Mail,
 } from "lucide-react";
 import { Logo } from "@/components/nav-main/Logo";
 import { requireAdmin } from "@/lib/auth";
@@ -52,6 +53,7 @@ const adminNav = [
     { name: "Ticket Queue", href: "/admin/ticket-management", icon: MessageSquare },
     { name: "Client Companies", href: "/admin/client-management", icon: Building2 },
     { name: "Satisfaction Surveys", href: "/admin/surveys", icon: Star },
+    { name: "Email Broadcasts", href: "/admin/email", icon: Mail },
   ]},
   { group: "System", items: [
     { name: "Audit Logs", href: "/admin/audit-logs", icon: ShieldCheck },

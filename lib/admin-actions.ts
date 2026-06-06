@@ -502,7 +502,9 @@ export async function updateSiteSetting(formData: FormData) {
     const incoming: Record<string, string> = {};
     for (const [k, v] of formData.entries()) {
       if (k.startsWith("value.") && typeof v === "string") {
-        incoming[k.slice(6)] = sanitize(v);
+        const sanitizedVal = sanitize(v);
+        if (sanitizedVal === "********") continue;
+        incoming[k.slice(6)] = sanitizedVal;
       }
     }
     value = { ...existingObj, ...incoming };
@@ -1831,4 +1833,53 @@ export async function deleteWorkOrder(formData: FormData) {
 }
 
 
+// ─── ADMIN EMAIL DISPATCH ─────────────────────────────────────────────────────
 
+export async function sendAdminEmail(formData: FormData) {
+  await requireAdmin();
+  const to = formData.get("to") as string;
+  const subject = formData.get("subject") as string;
+  const messageBody = formData.get("body") as string;
+
+  if (!to || !subject || !messageBody) {
+    throw new Error("Missing required fields");
+  }
+
+  const emailSettings = await prisma.siteSetting.findUnique({ where: { key: "emailConfig" } });
+  if (!emailSettings || !emailSettings.value) {
+    throw new Error("Email configuration not found. Please configure it in System Settings.");
+  }
+
+  const config = emailSettings.value as Record<string, string>;
+
+  if (!config.smtpHost || !config.smtpPort || !config.smtpUser || !config.smtpPassword) {
+    throw new Error("Incomplete SMTP configuration. Please check your System Settings.");
+  }
+
+  const nodemailer = (await import("nodemailer")).default;
+
+  const transporter = nodemailer.createTransport({
+    host: config.smtpHost,
+    port: parseInt(config.smtpPort, 10),
+    secure: parseInt(config.smtpPort, 10) === 465,
+    auth: {
+      user: config.smtpUser,
+      pass: config.smtpPassword,
+    },
+  });
+
+  const fromAddress = config.defaultFromEmail
+    ? `"${config.defaultFromName || 'CYVRIX Admin'}" <${config.defaultFromEmail}>`
+    : config.smtpUser;
+
+  await transporter.sendMail({
+    from: fromAddress,
+    to,
+    subject,
+    text: messageBody,
+  });
+
+  await prisma.auditLog.create({
+    data: { id: crypto.randomUUID(), action: "admin_email_sent", entityType: "Email", metadata: { to, subject } },
+  });
+}

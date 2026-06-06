@@ -5,7 +5,7 @@ import { updateSiteSetting, changeAdminPassword } from "@/lib/admin-actions";
 import { Button } from "@/components/shared/Button";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { PasswordInput } from "@/components/shared/PasswordInput";
-import { Save, Settings, KeyRound, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Save, Settings, KeyRound, AlertCircle, CheckCircle2, Mail } from "lucide-react";
 
 export const metadata = { title: "System Settings | CYVRIX Admin" };
 export const dynamic = "force-dynamic";
@@ -27,6 +27,7 @@ export default async function SettingsPage({
 
   const company = allSettings.find((s) => s.key === "company")?.value as Record<string, string> ?? {};
   const brand = allSettings.find((s) => s.key === "brand")?.value as Record<string, string> ?? {};
+  const emailConfig = allSettings.find((s) => s.key === "emailConfig")?.value as Record<string, string> ?? {};
 
   return (
     <div className="space-y-8 pb-16 max-w-3xl">
@@ -166,6 +167,49 @@ export default async function SettingsPage({
         </form>
       </div>
 
+
+      {/* Email Configuration */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-2">
+          <Mail className="h-4 w-4 text-[#2691F0]" />
+          <h2 className="font-outfit font-black text-[#041635]">Email Configuration (SMTP)</h2>
+        </div>
+        <form action={updateSiteSetting} className="p-6 space-y-4">
+          <input type="hidden" name="key" value="emailConfig" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <label className="block text-sm font-bold text-slate-700">
+              SMTP Host
+              <input name="value.smtpHost" defaultValue={emailConfig.smtpHost ?? ""} placeholder="smtp.mailgun.org" className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              SMTP Port
+              <input name="value.smtpPort" defaultValue={emailConfig.smtpPort ?? ""} placeholder="587" className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              SMTP Username
+              <input name="value.smtpUser" defaultValue={emailConfig.smtpUser ?? ""} placeholder="postmaster@yourdomain.com" className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              SMTP Password
+              <PasswordInput name="value.smtpPassword" defaultValue={emailConfig.smtpPassword ? "********" : ""} placeholder="••••••••" className="mt-1.5 w-full rounded-xl border border-slate-200 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              Default From Name
+              <input name="value.defaultFromName" defaultValue={emailConfig.defaultFromName ?? ""} placeholder="CYVRIX Support" className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
+            </label>
+            <label className="block text-sm font-bold text-slate-700">
+              Default From Email
+              <input name="value.defaultFromEmail" defaultValue={emailConfig.defaultFromEmail ?? ""} placeholder="noreply@cyvrix.co.uk" className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
+            </label>
+          </div>
+          <p className="text-[10px] text-slate-400 font-semibold">
+            Note: Your SMTP password is masked for security. Leaving it as ******** will preserve your existing password.
+          </p>
+          <Button type="submit" className="bg-[#041635] text-white hover:bg-[#2691F0] px-6 py-2.5 rounded-xl font-bold flex items-center gap-2">
+            <Save className="h-4 w-4" /> Save Email Configuration
+          </Button>
+        </form>
+      </div>
 
       {/* Admin Password Change */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
