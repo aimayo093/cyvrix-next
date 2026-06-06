@@ -594,23 +594,23 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-outfit font-bold text-white text-lg mb-2">Our Performance Service Levels</h3>
+                  <h3 className="font-outfit font-bold text-white text-lg mb-2">{contactSettings?.slaWidgetTitle || 'Our Performance Service Levels'}</h3>
                   <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                    CYVRIX maintains contractual uptime and support SLAs. For general inquiries, we ensure rapid senior availability:
+                    {contactSettings?.slaWidgetSubtitle || 'CYVRIX maintains contractual uptime and support SLAs. For general inquiries, we ensure rapid senior availability:'}
                   </p>
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-center text-xs border-b border-white/5 pb-2">
-                      <span className="text-slate-400 font-semibold">Virtual CIO Consultations</span>
-                      <span className="text-[#2691F0] font-black uppercase tracking-wider">Same Business Day</span>
+                      <span className="text-slate-400 font-semibold">{contactSettings?.slaItem1Name || 'Virtual CIO Consultations'}</span>
+                      <span className="text-[#2691F0] font-black uppercase tracking-wider">{contactSettings?.slaItem1Value || 'Same Business Day'}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs border-b border-white/5 pb-2">
-                      <span className="text-slate-400 font-semibold">Critical Cybersecurity Escapes</span>
-                      <span className="text-emerald-400 font-black uppercase tracking-wider">&lt; 15 Minutes SLA</span>
+                      <span className="text-slate-400 font-semibold">{contactSettings?.slaItem2Name || 'Critical Cybersecurity Escapes'}</span>
+                      <span className="text-emerald-400 font-black uppercase tracking-wider">{contactSettings?.slaItem2Value || '< 15 Minutes SLA'}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400 font-semibold">UK Engineering Dispatch</span>
-                      <span className="text-[#06b6d4] font-black uppercase tracking-wider">Under 4 Hours</span>
+                      <span className="text-slate-400 font-semibold">{contactSettings?.slaItem3Name || 'UK Engineering Dispatch'}</span>
+                      <span className="text-[#06b6d4] font-black uppercase tracking-wider">{contactSettings?.slaItem3Value || 'Under 4 Hours'}</span>
                     </div>
                   </div>
                 </div>
@@ -621,35 +621,35 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
             <div className="p-6 rounded-3xl glass-panel-subtle border-white/5 space-y-4">
               <div className="flex items-center gap-2 mb-2">
                 <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                <h4 className="font-outfit font-bold text-white text-base">Standard Security & Compliance</h4>
+                <h4 className="font-outfit font-bold text-white text-base">{contactSettings?.securityTitle || 'Standard Security & Compliance'}</h4>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-start gap-2 text-xs">
                   <Lock className="h-4 w-4 text-[#2691F0] shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-300">ISO 27001</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">Framework Aligned</p>
+                    <p className="font-bold text-slate-300">{contactSettings?.securityItem1Name || 'ISO 27001'}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">{contactSettings?.securityItem1Value || 'Framework Aligned'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2 text-xs">
                   <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-300">Cyber Essentials</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">Consultancy Certified</p>
+                    <p className="font-bold text-slate-300">{contactSettings?.securityItem2Name || 'Cyber Essentials'}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">{contactSettings?.securityItem2Value || 'Consultancy Certified'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2 text-xs">
                   <Server className="h-4 w-4 text-[#06b6d4] shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-300">GDPR Compliant</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">Document Vault Protected</p>
+                    <p className="font-bold text-slate-300">{contactSettings?.securityItem3Name || 'GDPR Compliant'}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">{contactSettings?.securityItem3Value || 'Document Vault Protected'}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2 text-xs">
                   <Building className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-300">UK Registered</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">Incorporated in London</p>
+                    <p className="font-bold text-slate-300">{contactSettings?.securityItem4Name || 'UK Registered'}</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">{contactSettings?.securityItem4Value || 'Incorporated in London'}</p>
                   </div>
                 </div>
               </div>
