@@ -98,6 +98,77 @@ export async function POST() {
     checks.push({ id: "newsletter", label: "Newsletter Subscribers", status: "warn", detail: "Could not fetch subscriber count." });
   }
 
+  // ── 8. System Security Audit ───────────────────────────────────────────────
+  // 8a. Authentication Secret Strength
+  const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "";
+  if (!authSecret || authSecret === "development-only-change-me") {
+    checks.push({ id: "sec_auth_weak", label: "Auth Secret Strength", status: "fail", detail: "Authentication secret is missing or using default insecure value." });
+  } else if (authSecret.length < 32) {
+    checks.push({ id: "sec_auth_weak", label: "Auth Secret Strength", status: "warn", detail: "Authentication secret is weak (less than 32 characters)." });
+  } else {
+    checks.push({ id: "sec_auth_weak", label: "Auth Secret Strength", status: "pass", detail: "Strong authentication secret detected." });
+  }
+
+  // 8b. Database Row-Level Security (RLS)
+  try {
+    const rlsDisabledTables: { relname: string }[] = await prisma.$queryRaw`
+      SELECT relname FROM pg_class 
+      JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace 
+      WHERE nspname = 'public' AND relkind = 'r' AND relrowsecurity = false;
+    `;
+    if (rlsDisabledTables.length > 0) {
+      const names = rlsDisabledTables.map(t => t.relname).join(", ");
+      checks.push({ id: "sec_rls", label: "Row-Level Security", status: "warn", detail: `RLS is disabled on ${rlsDisabledTables.length} public table(s): ${names.slice(0, 30)}${names.length > 30 ? "..." : ""}` });
+    } else {
+      checks.push({ id: "sec_rls", label: "Row-Level Security", status: "pass", detail: "All public tables have RLS enabled." });
+    }
+  } catch (err) {
+    checks.push({ id: "sec_rls", label: "Row-Level Security", status: "warn", detail: "Could not verify RLS policies." });
+  }
+
+  // 8c. Security Headers
+  try {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const res = await fetch(`${siteUrl}/api/health`, { method: "HEAD", headers: { "X-Loopback": "true" } });
+    const csp = res.headers.get("Content-Security-Policy");
+    const hsts = res.headers.get("Strict-Transport-Security");
+    if (!csp || !hsts) {
+      checks.push({ id: "sec_headers", label: "HTTP Security Headers", status: "fail", detail: "Missing CSP or HSTS headers." });
+    } else {
+      checks.push({ id: "sec_headers", label: "HTTP Security Headers", status: "pass", detail: "Strict CSP and HSTS headers are active." });
+    }
+  } catch (err) {
+    checks.push({ id: "sec_headers", label: "HTTP Security Headers", status: "warn", detail: "Could not verify security headers loopback." });
+  }
+
+  // 8d. Framework Vulnerability Check
+  try {
+    const fs = require("fs");
+    const path = require("path");
+    const pkgPath = path.join(process.cwd(), "package.json");
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    const nextVer = pkg.dependencies?.next || "";
+    if (nextVer.includes("16.2.7") || nextVer.includes("16.3") || nextVer.includes("17.")) {
+      checks.push({ id: "sec_framework", label: "Framework Vulnerability", status: "pass", detail: `Next.js version is secure (${nextVer}).` });
+    } else {
+      checks.push({ id: "sec_framework", label: "Framework Vulnerability", status: "warn", detail: `Next.js version (${nextVer}) may be vulnerable.` });
+    }
+  } catch (err) {
+    checks.push({ id: "sec_framework", label: "Framework Vulnerability", status: "warn", detail: "Could not verify framework version." });
+  }
+
+  // 8e. Privileged Account Audit
+  try {
+    const superAdmins = await prisma.user.count({ where: { role: "SUPER_ADMIN" } });
+    if (superAdmins > 3) {
+      checks.push({ id: "sec_privilege", label: "Privileged Account Audit", status: "warn", detail: `High number of SUPER_ADMIN accounts (${superAdmins}). Principle of least privilege violation.` });
+    } else {
+      checks.push({ id: "sec_privilege", label: "Privileged Account Audit", status: "pass", detail: `Healthy number of SUPER_ADMIN accounts (${superAdmins}).` });
+    }
+  } catch (err) {
+    checks.push({ id: "sec_privilege", label: "Privileged Account Audit", status: "warn", detail: "Could not audit privileged accounts." });
+  }
+
   // ── Compute overall score ──────────────────────────────────────────────────
   const passCount = checks.filter((c) => c.status === "pass").length;
   const failCount = checks.filter((c) => c.status === "fail").length;
