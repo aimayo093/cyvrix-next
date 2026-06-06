@@ -15,6 +15,7 @@ const outfit = Outfit({
 });
 
 import { prisma } from "@/lib/prisma";
+import { Analytics } from "@vercel/analytics/react";
 
 export const viewport: Viewport = {
   themeColor: "#041635",
@@ -35,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       template: "%s | CYVRIX Technologies",
     },
     description: "Secure, dependable IT support and cybersecurity consultancy for growing UK businesses. Managed IT, cloud infrastructure, and digital transformation.",
-    metadataBase: new URL("https://cyvrix.com"),
+    metadataBase: new URL("https://cyvrix.co.uk"),
     keywords: ["Managed IT UK", "Cybersecurity Consultancy", "IT Support London", "Cloud Infrastructure", "CYVRIX"],
     authors: [{ name: "CYVRIX Technologies" }],
     icons: {
@@ -46,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       type: "website",
       locale: "en_GB",
-      url: "https://cyvrix.com",
+      url: "https://cyvrix.co.uk",
       siteName: "CYVRIX Technologies",
       title: "CYVRIX Technologies | Premium Managed IT & Cybersecurity",
       description: "Secure, dependable IT support and cybersecurity consultancy for growing UK businesses.",
@@ -81,6 +82,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} scroll-smooth`}>
       <body suppressHydrationWarning className="antialiased font-inter text-slate-900 bg-white min-h-screen flex flex-col">
         {children}
+        <Analytics />
       </body>
     </html>
   );
