@@ -40,9 +40,10 @@ interface ContactClientProps {
   services: Service[];
   industries?: any[];
   faqs?: FAQItem[];
+  contactSettings?: Record<string, string>;
 }
 
-export function ContactClient({ pageData, services = [], faqs: dbFaqs = [] }: ContactClientProps) {
+export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], contactSettings }: ContactClientProps) {
   const [formData, setFormData] = React.useState({
     name: "",
     email: "",
@@ -530,11 +531,11 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [] }: Co
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <h3 className="font-outfit font-bold text-white text-base mb-1">Sales & Consulting</h3>
-                <a href="mailto:sales@cyvrix.co.uk" className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
-                  sales@cyvrix.co.uk
+                <a href={`mailto:${contactSettings?.salesEmail || 'sales@cyvrix.co.uk'}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
+                  {contactSettings?.salesEmail || 'sales@cyvrix.co.uk'}
                 </a>
                 <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">
-                  Response SLA: &lt; 1hr
+                  {contactSettings?.salesSla || 'Response SLA: < 1hr'}
                 </span>
               </div>
 
@@ -545,11 +546,11 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [] }: Co
                   <Headphones className="h-5 w-5" />
                 </div>
                 <h3 className="font-outfit font-bold text-white text-base mb-1">Technical Support Desk</h3>
-                <a href="mailto:support@cyvrix.co.uk" className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
-                  support@cyvrix.co.uk
+                <a href={`mailto:${contactSettings?.supportEmail || 'support@cyvrix.co.uk'}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
+                  {contactSettings?.supportEmail || 'support@cyvrix.co.uk'}
                 </a>
                 <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">
-                  15-min Critical SLA
+                  {contactSettings?.supportSla || '15-min Critical SLA'}
                 </span>
               </div>
 
@@ -560,11 +561,11 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [] }: Co
                   <Phone className="h-5 w-5" />
                 </div>
                 <h3 className="font-outfit font-bold text-white text-base mb-1">Corporate Phone Line</h3>
-                <a href="tel:+442080808080" className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
-                  +44 (0) 20 8080 8080
+                <a href={`tel:${(contactSettings?.phone || '+44 (0) 20 8080 8080').replace(/[^0-9+]/g, '')}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
+                  {contactSettings?.phone || '+44 (0) 20 8080 8080'}
                 </a>
                 <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">
-                  Mon-Fri: 8am - 6pm
+                  {contactSettings?.phoneHours || 'Mon-Fri: 8am - 6pm'}
                 </span>
               </div>
 
@@ -576,10 +577,10 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [] }: Co
                 </div>
                 <h3 className="font-outfit font-bold text-white text-base mb-1">London Headquarters</h3>
                 <span className="text-slate-400 text-sm font-medium mb-3 block">
-                  City of London, UK
+                  {contactSettings?.hqAddress || 'City of London, UK'}
                 </span>
                 <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">
-                  Secure Site Operations
+                  {contactSettings?.hqDetails || 'Secure Site Operations'}
                 </span>
               </div>
 

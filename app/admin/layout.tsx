@@ -19,6 +19,7 @@ import {
   Briefcase,
   Activity,
   Mail,
+  PhoneCall,
 } from "lucide-react";
 import { Logo } from "@/components/nav-main/Logo";
 import { requireAdmin } from "@/lib/auth";
@@ -46,6 +47,7 @@ const adminNav = [
     { name: "Blog & Insights", href: "/admin/blog-and-insights", icon: FileText },
     { name: "FAQ CMS", href: "/admin/faqs", icon: HelpCircle },
     { name: "Careers CMS", href: "/admin/careers", icon: Briefcase },
+    { name: "Contact Us CMS", href: "/admin/contact-cms", icon: PhoneCall },
     { name: "Testimonials", href: "/admin/testimonials", icon: Star },
   ]},
   { group: "Operations", items: [

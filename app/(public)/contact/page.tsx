@@ -13,7 +13,7 @@ export async function generateMetadata() {
 }
 
 export default async function ContactPage() {
-  const [pageData, services, industries] = await Promise.all([
+  const [pageData, services, industries, contactSettingsRecord] = await Promise.all([
     prisma.cmsPage.findUnique({
       where: { slug: "contact" },
       include: {
@@ -25,7 +25,19 @@ export default async function ContactPage() {
     }),
     prisma.service.findMany({ where: { published: true }, orderBy: { sortOrder: "asc" } }),
     prisma.industry.findMany({ where: { published: true }, orderBy: { sortOrder: "asc" } }),
+    prisma.siteSetting.findUnique({ where: { key: "contact_settings" } }),
   ]);
+
+  const contactSettings = (contactSettingsRecord?.value as Record<string, string>) || {
+    salesEmail: "sales@cyvrix.co.uk",
+    supportEmail: "support@cyvrix.co.uk",
+    phone: "+44 (0) 20 8080 8080",
+    hqAddress: "City of London, UK",
+    salesSla: "< 1hr",
+    supportSla: "15-min Critical SLA",
+    phoneHours: "Mon-Fri: 8am - 6pm",
+    hqDetails: "Secure Site Operations"
+  };
 
   return (
     <div className="bg-[#020817] min-h-screen">
@@ -33,6 +45,7 @@ export default async function ContactPage() {
         pageData={pageData}
         services={services}
         industries={industries}
+        contactSettings={contactSettings}
       />
     </div>
   );
