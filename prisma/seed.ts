@@ -222,10 +222,10 @@ async function main() {
 
   // Seeding Compliance Cards
   const complianceFrameworks = [
-    { title: "ISO 27001", desc: "International standard for information security management systems (ISMS).", cat: "Security Management", icon: "Shield", status: "Framework followed", location: "homepage,services,about,compliance_page", order: 1 },
+    { title: "ISO 27001", desc: "International standard for information security management systems (ISMS).", cat: "Security Management", icon: "Shield", status: "Framework followed", location: "homepage,services,about,compliance_page,footer", order: 1 },
     { title: "Cyber Essentials Plus", desc: "UK government-backed scheme demonstrating robust technical cyber controls.", cat: "Technical Security", icon: "CheckCircle", status: "In progress", location: "homepage,services,cybersecurity,about,footer", order: 2 },
-    { title: "UK GDPR & DPA 2018", desc: "Full alignment with data protection regulations for secure, compliant records.", cat: "Data Privacy", icon: "Lock", status: "Certified", location: "homepage,about,compliance_page", order: 3 },
-    { title: "ITIL-aligned Support", desc: "Service delivery routines aligned with best practices in service management.", cat: "IT Service Management", icon: "Settings", status: "Framework followed", location: "services,about,compliance_page", order: 4 },
+    { title: "UK GDPR & DPA 2018", desc: "Full alignment with data protection regulations for secure, compliant records.", cat: "Data Privacy", icon: "Lock", status: "Certified", location: "homepage,about,compliance_page,footer", order: 3 },
+    { title: "ITIL-aligned Support", desc: "Service delivery routines aligned with best practices in service management.", cat: "IT Service Management", icon: "Settings", status: "Framework followed", location: "services,about,compliance_page,footer", order: 4 },
   ];
 
   for (const comp of complianceFrameworks) {
