@@ -4,6 +4,18 @@ import { hashPassword } from "../lib/password";
 import { prisma } from "../lib/prisma";
 
 async function main() {
+  console.log("Cleaning existing records to prevent duplication...");
+  await prisma.menuItem.deleteMany({});
+  await prisma.footerLink.deleteMany({});
+  await prisma.footerSection.deleteMany({});
+  await prisma.socialLink.deleteMany({});
+  await prisma.complianceCard.deleteMany({});
+  await prisma.partnerLogo.deleteMany({});
+  await prisma.trustedBusinessLogo.deleteMany({});
+  await prisma.fAQ.deleteMany({});
+  await prisma.testimonial.deleteMany({});
+  console.log("Cleanup complete. Starting seed...");
+
   const admin = await prisma.user.upsert({
     where: { email: "admin@cyvrix.co.uk" },
     update: { role: "SUPER_ADMIN", active: true, updatedAt: new Date() },
@@ -364,6 +376,9 @@ async function main() {
   });
 
   if (homePage) {
+    // Delete existing sections for the homepage to prevent duplicates
+    await prisma.pageSection.deleteMany({ where: { pageId: homePage.id } });
+
     const homeSections = [
       {
         type: "Hero",
