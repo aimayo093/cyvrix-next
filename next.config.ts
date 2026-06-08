@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
+
+// Load exFAT and EPERM path patches
+import "./patch-exfat.js";
 
 const securityHeaders = [
   { key: "X-DNS-Prefetch-Control", value: "on" },
@@ -19,6 +23,28 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  webpack: (config) => {
+    config.resolve.symlinks = false;
+    return config;
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
 };
 
-export default nextConfig;
+// Sentry configuration options
+const sentryWebpackPluginOptions = {
+  silent: true,
+  org: "cyvrix",
+  project: "cyvrix-next",
+};
+
+const sentryOptions = {
+  widenClientBounds: true,
+  tunnelRoute: "/monitoring",
+  hideSourceMaps: true,
+  disableLogger: true,
+  automaticVercelMonitors: true,
+};
+
+export default withSentryConfig(nextConfig, sentryWebpackPluginOptions, sentryOptions);

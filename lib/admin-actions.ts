@@ -1886,3 +1886,149 @@ export async function sendAdminEmail(formData: FormData) {
     data: { id: crypto.randomUUID(), action: "admin_email_sent", entityType: "Email", metadata: { to, subject } },
   });
 }
+
+// ─── HOME PAGE CMS ────────────────────────────────────────────────────────────
+
+export async function updateHomePageCMS(formData: FormData) {
+  await requireAdmin();
+
+  const homePage = await prisma.cmsPage.findUnique({
+    where: { slug: "home" },
+  });
+  if (!homePage) {
+    throw new Error("Homepage page record not found in database.");
+  }
+
+  // 1. Hero
+  const heroSection = await prisma.pageSection.findFirst({
+    where: { pageId: homePage.id, sectionType: "Hero" },
+  });
+  if (heroSection) {
+    const heroTitle = sanitize(formData.get("hero.title") as string || "");
+    const heroSubtitle = sanitize(formData.get("hero.subtitle") as string || "");
+    const heroBtnLabel = sanitize(formData.get("hero.buttonLabel") as string || "");
+    const heroBtnUrl = sanitize(formData.get("hero.buttonUrl") as string || "");
+    const heroMediaId = sanitize(formData.get("hero.mediaId") as string || "");
+    const heroSecondaryCtaLabel = sanitize(formData.get("hero.secondaryCtaLabel") as string || "");
+    const heroSecondaryCtaUrl = sanitize(formData.get("hero.secondaryCtaUrl") as string || "");
+
+    const existingSettings = (heroSection.settingsJson as Record<string, any>) || {};
+
+    await prisma.pageSection.update({
+      where: { id: heroSection.id },
+      data: {
+        title: heroTitle,
+        body: heroSubtitle,
+        buttonLabel: heroBtnLabel,
+        buttonUrl: heroBtnUrl,
+        mediaId: heroMediaId || null,
+        settingsJson: {
+          ...existingSettings,
+          secondaryCtaLabel: heroSecondaryCtaLabel,
+          secondaryCtaUrl: heroSecondaryCtaUrl,
+        },
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  // 2. Service cards
+  const servicesSection = await prisma.pageSection.findFirst({
+    where: { pageId: homePage.id, sectionType: "Service cards" },
+  });
+  if (servicesSection) {
+    const servicesTitle = sanitize(formData.get("services.title") as string || "");
+    const servicesSubtitle = sanitize(formData.get("services.subtitle") as string || "");
+    const servicesBtnLabel = sanitize(formData.get("services.buttonLabel") as string || "");
+    const servicesBtnUrl = sanitize(formData.get("services.buttonUrl") as string || "");
+
+    await prisma.pageSection.update({
+      where: { id: servicesSection.id },
+      data: {
+        title: servicesTitle,
+        subtitle: servicesSubtitle,
+        buttonLabel: servicesBtnLabel,
+        buttonUrl: servicesBtnUrl,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  // 3. Image and text (Why Choose Us)
+  const whySection = await prisma.pageSection.findFirst({
+    where: { pageId: homePage.id, sectionType: "Image and text" },
+  });
+  if (whySection) {
+    const whyTitle = sanitize(formData.get("why.title") as string || "");
+    const whySubtitle = sanitize(formData.get("why.subtitle") as string || "");
+    const whyBody = sanitize(formData.get("why.body") as string || "");
+    const whyBtnLabel = sanitize(formData.get("why.buttonLabel") as string || "");
+    const whyBtnUrl = sanitize(formData.get("why.buttonUrl") as string || "");
+    const whyMediaId = sanitize(formData.get("why.mediaId") as string || "");
+    const whyPointsRaw = sanitize(formData.get("why.points") as string || "");
+    const whyPoints = whyPointsRaw.split("\n").map(p => p.trim()).filter(Boolean);
+
+    await prisma.pageSection.update({
+      where: { id: whySection.id },
+      data: {
+        title: whyTitle,
+        subtitle: whySubtitle,
+        body: whyBody,
+        buttonLabel: whyBtnLabel,
+        buttonUrl: whyBtnUrl,
+        mediaId: whyMediaId || null,
+        settingsJson: {
+          points: whyPoints,
+        },
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  // 4. Testimonials
+  const testimonialsSection = await prisma.pageSection.findFirst({
+    where: { pageId: homePage.id, sectionType: "Testimonials" },
+  });
+  if (testimonialsSection) {
+    const testTitle = sanitize(formData.get("testimonials.title") as string || "");
+    const testSubtitle = sanitize(formData.get("testimonials.subtitle") as string || "");
+
+    await prisma.pageSection.update({
+      where: { id: testimonialsSection.id },
+      data: {
+        title: testTitle,
+        subtitle: testSubtitle,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  // 5. CTA section
+  const ctaSection = await prisma.pageSection.findFirst({
+    where: { pageId: homePage.id, sectionType: "CTA section" },
+  });
+  if (ctaSection) {
+    const ctaTitle = sanitize(formData.get("cta.title") as string || "");
+    const ctaBody = sanitize(formData.get("cta.body") as string || "");
+    const ctaBtnLabel = sanitize(formData.get("cta.buttonLabel") as string || "");
+    const ctaBtnUrl = sanitize(formData.get("cta.buttonUrl") as string || "");
+
+    await prisma.pageSection.update({
+      where: { id: ctaSection.id },
+      data: {
+        title: ctaTitle,
+        body: ctaBody,
+        buttonLabel: ctaBtnLabel,
+        buttonUrl: ctaBtnUrl,
+        updatedAt: new Date(),
+      },
+    });
+  }
+
+  await prisma.auditLog.create({
+    data: { id: crypto.randomUUID(), action: "home_page_cms_updated", entityType: "CmsPage", entityId: homePage.id },
+  });
+
+  revalidatePath("/");
+  redirect("/admin/home-cms?status=success&message=Home+page+content+updated+successfully!");
+}

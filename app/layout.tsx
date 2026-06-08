@@ -1,18 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
-
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-});
 
 import { prisma } from "@/lib/prisma";
 import { Analytics } from "@vercel/analytics/react";
@@ -79,7 +66,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${outfit.variable} scroll-smooth`}>
+    <html lang="en" suppressHydrationWarning className="scroll-smooth">
       <body suppressHydrationWarning className="antialiased font-inter text-slate-900 bg-white min-h-screen flex flex-col">
         {children}
         <Analytics />

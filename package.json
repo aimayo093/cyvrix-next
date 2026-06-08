@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
@@ -16,6 +16,7 @@
   "dependencies": {
     "@prisma/client": "^6.19.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sentry/nextjs": "^10.56.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
     "@vercel/analytics": "^2.0.1",
