@@ -1906,6 +1906,7 @@ export async function updateHomePageCMS(formData: FormData) {
   if (heroSection) {
     const heroTitle = sanitize(formData.get("hero.title") as string || "");
     const heroSubtitle = sanitize(formData.get("hero.subtitle") as string || "");
+    const heroSubtitleDesc = sanitize(formData.get("hero.subtitle-desc") as string || "");
     const heroBtnLabel = sanitize(formData.get("hero.buttonLabel") as string || "");
     const heroBtnUrl = sanitize(formData.get("hero.buttonUrl") as string || "");
     const heroMediaId = sanitize(formData.get("hero.mediaId") as string || "");
@@ -1918,7 +1919,8 @@ export async function updateHomePageCMS(formData: FormData) {
       where: { id: heroSection.id },
       data: {
         title: heroTitle,
-        body: heroSubtitle,
+        subtitle: heroSubtitle,
+        body: heroSubtitleDesc,
         buttonLabel: heroBtnLabel,
         buttonUrl: heroBtnUrl,
         mediaId: heroMediaId || null,

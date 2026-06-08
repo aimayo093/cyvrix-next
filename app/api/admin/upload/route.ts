@@ -57,13 +57,34 @@ export async function POST(req: Request) {
         });
 
         const bucketName = "public-media";
-        const { data, error } = await supabase.storage
+        let uploadResult = await supabase.storage
           .from(bucketName)
           .upload(filename, buffer, {
             contentType: file.type,
             cacheControl: "3600",
             upsert: true,
           });
+
+        if (uploadResult.error && (uploadResult.error.message?.toLowerCase().includes("bucket") || uploadResult.error.message?.toLowerCase().includes("not found"))) {
+          console.log(`Bucket "${bucketName}" not found. Creating bucket...`);
+          const { error: createError } = await supabase.storage.createBucket(bucketName, {
+            public: true,
+          });
+          if (!createError) {
+            console.log(`Bucket "${bucketName}" created. Retrying upload...`);
+            uploadResult = await supabase.storage
+              .from(bucketName)
+              .upload(filename, buffer, {
+                contentType: file.type,
+                cacheControl: "3600",
+                upsert: true,
+              });
+          } else {
+            console.error("Failed to create bucket:", createError);
+          }
+        }
+
+        const { data, error } = uploadResult;
 
         if (error) {
           console.error("Supabase Storage upload error, falling back to local:", error);

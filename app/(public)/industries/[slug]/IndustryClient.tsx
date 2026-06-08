@@ -31,6 +31,15 @@ export function IndustryClient({ industry }: IndustryClientProps) {
 
   return (
     <div className="min-h-screen bg-[#020817] pt-24 pb-24 text-white">
+      {industry.image && (
+        <div className="relative h-64 md:h-80 overflow-hidden mb-12 border-b border-white/10">
+          <div 
+            className="absolute inset-0 bg-cover bg-center mix-blend-multiply opacity-40"
+            style={{ backgroundImage: `url(${industry.image})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-transparent to-[#041635]/50" />
+        </div>
+      )}
       <div className="max-w-7xl mx-auto px-5 lg:px-8">
         <Link 
           href="/industries" 

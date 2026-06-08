@@ -39,6 +39,7 @@ export default async function IndustryDetailPage({ params }: IndustryPageProps) 
     help: content?.summary || staticInd?.help || "",
     solutions: content?.solutions?.length ? content.solutions : (staticInd?.solutions || []),
     services: content?.services?.length ? content.services : (staticInd?.services || []),
+    image: content?.image || "",
   };
 
   return <IndustryClient industry={mergedIndustry} />;
