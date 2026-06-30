@@ -201,7 +201,7 @@ async function main() {
   for (const asset of brandAssets) {
     await prisma.brandAsset.upsert({
       where: { assetKey: asset.key },
-      update: { name: asset.name, mediaUrl: asset.url, altText: asset.alt, usageContext: asset.usage },
+      update: { name: asset.name, altText: asset.alt, usageContext: asset.usage },
       create: { id: crypto.randomUUID(), assetKey: asset.key, name: asset.name, mediaUrl: asset.url, altText: asset.alt, usageContext: asset.usage },
     });
   }
