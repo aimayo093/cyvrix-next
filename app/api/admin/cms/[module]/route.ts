@@ -9,7 +9,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
 import crypto from "node:crypto";
 
-export const dynamic = "force-dynamic";
 
 /* ── Module → Prisma model map (exact PascalCase from schema) ──────────── */
 const MODULE_MAP: Record<string, string> = {

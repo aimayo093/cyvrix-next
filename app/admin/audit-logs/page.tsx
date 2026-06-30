@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -5,7 +7,6 @@ import { formatDistanceToNow } from "date-fns";
 import { ShieldCheck } from "lucide-react";
 
 export const metadata = { title: "Audit Logs | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
 const ACTION_COLORS: Record<string, string> = {
   seed_completed: "bg-slate-50 text-slate-500 border-slate-100",
@@ -26,11 +27,20 @@ const ACTION_COLORS: Record<string, string> = {
   site_setting_updated: "bg-purple-50 text-purple-600 border-purple-100",
 };
 
-export default async function AuditLogsPage({
+export default function AuditLogsPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <AuditLogsPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function AuditLogsPageContent({
   searchParams,
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
   const page = Math.max(1, parseInt(sp.page ?? "1", 10));

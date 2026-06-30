@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { findService as findStaticService, services as staticServices } from "@/lib/cyvrix-data";
-import { prisma } from "@/lib/prisma";
+import { getPublicServiceDetail } from "@/lib/public-cache";
 
 interface ServicePageProps {
   params: Promise<{
@@ -23,23 +23,26 @@ interface ServicePageProps {
   }>;
 }
 
-export async function generateStaticParams() {
-  const services = await prisma.service.findMany({ select: { slug: true } });
-  return services.map((service) => ({ slug: service.slug }));
-}
-
 export async function generateMetadata({ params }: ServicePageProps) {
   const { slug } = await params;
-  const service = await prisma.service.findUnique({ where: { slug } });
+  const { service } = await getPublicServiceDetail(slug);
   return {
     title: service ? `${service.title} | CYVRIX Technologies` : "Service Detail",
     description: service ? service.summary : "Cybersecurity & Technology Services",
   };
 }
 
-export default async function ServiceDetailPage({ params }: ServicePageProps) {
+export default function ServiceDetailPage(props: ServicePageProps) {
+  return (
+    <React.Suspense fallback={<ServiceDetailFallback />}>
+      <ServiceDetailContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function ServiceDetailContent({ params }: ServicePageProps) {
   const { slug } = await params;
-  const service = await prisma.service.findUnique({ where: { slug } });
+  const { service, related: relatedDb } = await getPublicServiceDetail(slug);
   if (!service) notFound();
 
   // Load fallback content arrays (features, process, faqs, includes) if they exist
@@ -50,10 +53,6 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
   const includes = content?.includes?.length ? content.includes : (staticSvc?.includes || []);
   const faqs = content?.faqs?.length ? content.faqs : (staticSvc?.faqs || []);
 
-  const relatedDb = await prisma.service.findMany({
-    where: { slug: { not: service.slug }, published: true },
-    take: 3
-  });
   const related = relatedDb.map(r => {
     const s = findStaticService(r.slug);
     return { ...r, icon: s?.icon };
@@ -279,6 +278,18 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
             </Link>
           ))}
         </div>
+      </section>
+    </div>
+  );
+}
+
+function ServiceDetailFallback() {
+  return (
+    <div className="min-h-screen bg-[#020817] pt-24 text-white">
+      <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+        <div className="h-4 w-36 rounded bg-white/10" />
+        <div className="mt-8 h-16 max-w-3xl rounded bg-white/10" />
+        <div className="mt-6 h-6 max-w-2xl rounded bg-white/10" />
       </section>
     </div>
   );

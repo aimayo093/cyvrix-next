@@ -30,7 +30,7 @@ export function Navbar({
   logoAlt,
   phone = "0800 123 4567",
   email = "support@cyvrix.co.uk",
-  forceFullPageReload = true,
+  forceFullPageReload = false,
 }: NavbarProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);

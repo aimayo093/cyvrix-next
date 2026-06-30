@@ -241,7 +241,7 @@ export function Footer({
   address,
   copyright,
   complianceCards = [],
-  forceFullPageReload = true,
+  forceFullPageReload = false,
 }: FooterProps) {
   const visibleComplianceCards = complianceCards.filter(
     (card) =>
@@ -451,7 +451,7 @@ export function Footer({
         {/* Footer Bottom bar */}
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-slate-500 text-xs font-bold uppercase tracking-wide text-center md:text-left">
-            {copyright || `© ${new Date().getFullYear()} CYVRIX Technologies Ltd.`}{" "}
+            {copyright || "CYVRIX Technologies Ltd."}{" "}
             <span className="hidden sm:inline">All rights reserved. Registered in England &amp; Wales.</span>
           </p>
           <div className="flex items-center gap-6">

@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -6,9 +8,17 @@ import { Button } from "@/components/shared/Button";
 import { PhoneCall, Mail, MapPin, Clock, Headphones, Sparkles, Building, Briefcase } from "lucide-react";
 
 export const metadata = { title: "Contact Us CMS | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function ContactCMSPage() {
+export default function ContactCMSPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <ContactCMSPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function ContactCMSPageContent() {
+  await connection();
   await requireAdmin();
 
   const settingsRecord = await prisma.siteSetting.findUnique({

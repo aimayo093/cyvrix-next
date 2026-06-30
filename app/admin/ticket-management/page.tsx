@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +9,6 @@ import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { MessageSquare } from "lucide-react";
 
 export const metadata = { title: "Ticket Management | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
 const PRIORITY_COLORS: Record<string, string> = {
   LOW: "bg-slate-50 text-slate-500 border-slate-100",
@@ -25,11 +26,20 @@ const STATUS_COLORS: Record<string, string> = {
   CLOSED: "bg-slate-50 text-slate-400 border-slate-100",
 };
 
-export default async function TicketManagementPage({
+export default function TicketManagementPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <TicketManagementPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function TicketManagementPageContent({
   searchParams,
 }: {
   searchParams: Promise<{ view?: string; filter?: string }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
   const filter = sp.filter ?? "all";

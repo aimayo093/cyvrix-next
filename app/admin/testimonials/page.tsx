@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,9 +9,17 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import { Star, Trash2, CheckCircle, XCircle, Bookmark } from "lucide-react";
 
 export const metadata = { title: "Testimonials | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function TestimonialsPage() {
+export default function TestimonialsPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <TestimonialsPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function TestimonialsPageContent() {
+  await connection();
   await requireAdmin();
 
   const testimonials = await prisma.testimonial.findMany({

@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { 
   Zap, 
@@ -17,7 +19,15 @@ import { getPortalStats } from "@/lib/data-fetchers";
 import { submitPortalTestimonial } from "@/lib/portal-actions";
 import { redirect } from "next/navigation";
 
-export default async function PortalOverview({
+export default function PortalOverview(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <PortalOverviewContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function PortalOverviewContent({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -25,6 +35,7 @@ export default async function PortalOverview({
     message?: string;
   }>;
 }) {
+  await connection();
   const session = await requireUser();
   const sp = await searchParams;
   

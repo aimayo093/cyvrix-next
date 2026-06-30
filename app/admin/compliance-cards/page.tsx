@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -14,13 +16,21 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { Plus, Pencil, ShieldCheck, ArrowUp, ArrowDown } from "lucide-react";
 
 export const metadata = { title: "Compliance Framework Cards CMS | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function ComplianceCardsCMSPage({
+export default function ComplianceCardsCMSPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <ComplianceCardsCMSPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function ComplianceCardsCMSPageContent({
   searchParams,
 }: {
   searchParams: Promise<{ edit?: string; newItem?: string }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
 

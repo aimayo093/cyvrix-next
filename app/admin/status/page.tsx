@@ -1,11 +1,21 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { StatusClient } from "./StatusClient";
 
 export const metadata = { title: "System Status | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function AdminStatusPage() {
+export default function AdminStatusPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <AdminStatusPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function AdminStatusPageContent() {
+  await connection();
   await requireAdmin();
   
   return (

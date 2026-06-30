@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,7 +10,6 @@ import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { Trash2, StickyNote } from "lucide-react";
 
 export const metadata = { title: "Leads CRM | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
 const STATUS_OPTIONS = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST", "ARCHIVED"];
 
@@ -22,11 +23,20 @@ const STATUS_COLORS: Record<string, string> = {
   ARCHIVED: "bg-slate-50 text-slate-400 border-slate-100",
 };
 
-export default async function LeadsCRMPage({
+export default function LeadsCRMPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <LeadsCRMPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function LeadsCRMPageContent({
   searchParams,
 }: {
   searchParams: Promise<{ view?: string }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
 

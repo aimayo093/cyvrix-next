@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -8,9 +10,16 @@ import { PasswordInput } from "@/components/shared/PasswordInput";
 import { Save, Settings, KeyRound, AlertCircle, CheckCircle2, Mail } from "lucide-react";
 
 export const metadata = { title: "System Settings | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function SettingsPage({
+export default function SettingsPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <SettingsPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function SettingsPageContent({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -18,6 +27,7 @@ export default async function SettingsPage({
     message?: string;
   }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
 

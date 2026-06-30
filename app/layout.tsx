@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-import { prisma } from "@/lib/prisma";
+import { getFaviconMetadata } from "@/lib/public-cache";
 import { Analytics } from "@vercel/analytics/react";
 
 export const viewport: Viewport = {
@@ -11,8 +11,9 @@ export const viewport: Viewport = {
 };
 
 export async function generateMetadata(): Promise<Metadata> {
-  const faviconAsset = await prisma.brandAsset.findFirst({
-    where: { assetKey: "favicon", isActive: true },
+  const faviconAsset = await getFaviconMetadata().catch((error) => {
+    console.error("[metadata] failed to load favicon asset", error);
+    return null;
   });
   
   const faviconUrl = faviconAsset?.mediaUrl || "/favicon.ico";

@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,13 +9,21 @@ import { PasswordInput } from "@/components/shared/PasswordInput";
 import { Plus, Pencil, Power, UserPlus, Users, KeyRound } from "lucide-react";
 
 export const metadata = { title: "Client Management | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function ClientManagementPage({
+export default function ClientManagementPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <ClientManagementPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function ClientManagementPageContent({
   searchParams,
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
 

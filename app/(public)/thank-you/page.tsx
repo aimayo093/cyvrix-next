@@ -12,7 +12,15 @@ interface ThankYouProps {
   }>;
 }
 
-export default async function ThankYouPage({ searchParams }: ThankYouProps) {
+export default function ThankYouPage(props: ThankYouProps) {
+  return (
+    <React.Suspense fallback={<ThankYouFallback />}>
+      <ThankYouContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function ThankYouContent({ searchParams }: ThankYouProps) {
   const params = await searchParams;
   const isError = params.status === "error";
   const type = params.type || "general";
@@ -74,6 +82,14 @@ export default async function ThankYouPage({ searchParams }: ThankYouProps) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ThankYouFallback() {
+  return (
+    <div className="flex min-h-[80vh] items-center justify-center bg-gradient-to-b from-[#020817] to-[#041635] pb-40 pt-32">
+      <div className="mx-5 h-96 w-full max-w-xl animate-pulse rounded-3xl border border-slate-200/80 bg-[#020817]" />
     </div>
   );
 }

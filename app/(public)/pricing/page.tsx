@@ -1,12 +1,11 @@
 import * as React from "react";
-import { prisma } from "@/lib/prisma";
 import { SectionRenderer } from "@/components/shared/SectionRenderer";
 import { pricingPackages as staticPackages } from "@/lib/cyvrix-data";
+import { getPublicPageData, getPublicPageSeoMetadata } from "@/lib/public-cache";
 
-export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
-  const page = await prisma.cmsPage.findUnique({ where: { slug: "pricing" } });
+  const page = await getPublicPageSeoMetadata("pricing");
   return {
     title: page?.seoTitle || "Pricing | CYVRIX Technologies",
     description: page?.seoDescription || "Explore our predictable IT support and cybersecurity plans.",
@@ -14,17 +13,7 @@ export async function generateMetadata() {
 }
 
 export default async function PricingPage() {
-  const [pageData] = await Promise.all([
-    prisma.cmsPage.findUnique({
-      where: { slug: "pricing" },
-      include: {
-        sections: {
-          where: { isVisible: true },
-          orderBy: { sortOrder: "asc" },
-        },
-      },
-    }),
-  ]);
+  const { pageData } = await getPublicPageData("pricing");
 
   return (
     <div className="pt-10 bg-[#020817] min-h-screen">

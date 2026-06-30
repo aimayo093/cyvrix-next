@@ -1,3 +1,6 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import * as React from "react";
+import { connection } from "next/server";
 import Link from "next/link";
 import { 
   Users, 
@@ -12,7 +15,16 @@ import { getAdminStats, getRecentActivities } from "@/lib/data-fetchers";
 import { formatDistanceToNow } from "date-fns";
 import { SecurityScanCard } from "@/components/admin/SecurityScanCard";
 
-export default async function AdminDashboard() {
+export default function AdminDashboard(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <AdminDashboardContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function AdminDashboardContent() {
+  await connection();
   const [statsData, activities] = await Promise.all([
     getAdminStats(),
     getRecentActivities(6)
@@ -96,6 +108,7 @@ export default async function AdminDashboard() {
             <h3 className="font-outfit font-black text-[#041635] mb-4">Quick Links</h3>
             <div className="space-y-3">
               {[
+                { name: "Security Center", href: "/admin/security-center" },
                 { name: "Client Portal Settings", href: "/admin/settings" },
                 { name: "Service CMS", href: "/admin/services-cms" },
                 { name: "Infrastructure Logs", href: "/admin/audit-logs" },

@@ -3,7 +3,6 @@ import crypto from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 
-export const dynamic = "force-dynamic";
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
 function rateLimit(key: string, limit = 5) {

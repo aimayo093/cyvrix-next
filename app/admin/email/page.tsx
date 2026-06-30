@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { sendAdminEmail } from "@/lib/admin-actions";
@@ -6,9 +8,16 @@ import { Mail, AlertCircle, CheckCircle2, Send } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export const metadata = { title: "Email Broadcasts | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function EmailBroadcastPage({
+export default function EmailBroadcastPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <EmailBroadcastPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function EmailBroadcastPageContent({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -16,6 +25,7 @@ export default async function EmailBroadcastPage({
     message?: string;
   }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
 

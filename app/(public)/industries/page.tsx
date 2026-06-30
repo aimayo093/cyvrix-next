@@ -1,7 +1,7 @@
-import { prisma } from "@/lib/prisma";
 import { industries as staticIndustries } from "@/lib/cyvrix-data";
 import { IndustriesClient } from "./IndustriesClient";
 import { Metadata } from "next";
+import { getPublicIndustriesData } from "@/lib/public-cache";
 
 export const metadata: Metadata = {
   title: "Industries | CYVRIX Technologies",
@@ -9,10 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function IndustriesPage() {
-  const dbIndustries = await prisma.industry.findMany({
-    where: { published: true },
-    orderBy: { sortOrder: "asc" }
-  });
+  const dbIndustries = await getPublicIndustriesData();
 
   // Merge DB industries with static ones to preserve icons/challenges if missing
   const mergedIndustries = dbIndustries.map(dbInd => {

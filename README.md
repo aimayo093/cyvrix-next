@@ -26,6 +26,7 @@ AUTH_SECRET="generate-a-long-random-secret"
 RESEND_API_KEY=optional_resend_api_key
 MAIL_FROM="CYVRIX Technologies <noreply@cyvrix.co.uk>"
 ADMIN_NOTIFICATION_EMAIL=admin@example.co.uk
+CRON_SECRET="generate-a-long-random-cron-secret"
 ```
 
 Do not expose service-role keys to the browser.
@@ -70,5 +71,6 @@ Set `DATABASE_URL` to the Supabase PostgreSQL connection string with `sslmode=re
 - Admin role redirects use the custom CYVRIX session cookie and Prisma user role.
 - Form submissions validate with Zod, sanitize angle brackets, rate-limit in process, save through Prisma, and queue email notifications.
 - Security headers are configured in `next.config.ts`.
+- The Security Center runs a daily Vercel Cron scan at `/api/cron/security-scan`; set `CRON_SECRET` in production so only Vercel can trigger it.
 - Rich legal and policy content includes a legal review notice.
 - Upload UI is present; production storage should enforce MIME, size, antivirus scanning where appropriate, and signed access policies.

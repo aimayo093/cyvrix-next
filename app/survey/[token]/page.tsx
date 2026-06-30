@@ -1,5 +1,6 @@
 import * as React from "react";
 import { notFound, redirect } from "next/navigation";
+import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SurveyForm } from "./SurveyForm";
 import Image from "next/image";
@@ -9,13 +10,23 @@ export const metadata = {
   description: "Share your experience with CYVRIX Technologies. We value your feedback to continuously elevate our services.",
 };
 
-export const dynamic = "force-dynamic";
 
-export default async function SurveyPage({
+export default function SurveyPage(props: {
+  params: Promise<{ token: string }>;
+}) {
+  return (
+    <React.Suspense fallback={<SurveyFallback />}>
+      <SurveyContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function SurveyContent({
   params,
 }: {
   params: Promise<{ token: string }>;
 }) {
+  await connection();
   const { token } = await params;
 
   if (!token) {
@@ -131,6 +142,14 @@ export default async function SurveyPage({
           </p>
         </div>
       </div>
+    </main>
+  );
+}
+
+function SurveyFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-4">
+      <div className="h-[520px] w-full max-w-xl animate-pulse rounded-3xl border border-slate-800 bg-slate-900/40" />
     </main>
   );
 }

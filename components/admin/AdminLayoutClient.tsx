@@ -56,6 +56,7 @@ const adminNav = [
     { name: "Email Broadcasts", href: "/admin/email", icon: Mail },
   ]},
   { group: "System", items: [
+    { name: "Security Center", href: "/admin/security-center", icon: ShieldCheck },
     { name: "Audit Logs", href: "/admin/audit-logs", icon: ShieldCheck },
     { name: "System Status", href: "/admin/status", icon: Activity },
     { name: "Settings", href: "/admin/settings", icon: Settings },

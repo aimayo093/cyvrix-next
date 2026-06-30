@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 import { 
   Home, 
   FileText, 
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { Logo } from "@/components/nav-main/Logo";
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -31,11 +33,24 @@ const portalNav = [
   { name: "Profile & Company", href: "/portal/profile-and-company", icon: User },
 ];
 
-export default async function PortalLayout({
+export default function PortalLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <PortalLayoutContent>{children}</PortalLayoutContent>
+    </React.Suspense>
+  );
+}
+
+async function PortalLayoutContent({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  await connection();
   const user = await requireUser();
   
   let companyName = "Independent Client";
@@ -119,7 +134,7 @@ export default async function PortalLayout({
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-8">
           <div className="max-w-6xl mx-auto">
-            {children}
+            <React.Suspense fallback={<PrivateRouteFallback />}>{children}</React.Suspense>
           </div>
         </div>
       </main>

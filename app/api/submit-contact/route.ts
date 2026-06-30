@@ -5,7 +5,6 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { join } from "path";
 
-export const dynamic = "force-dynamic";
 
 // ─── In-memory rate limiter (per IP / email) ──────────────────────────────────
 const buckets = new Map<string, { count: number; resetAt: number }>();

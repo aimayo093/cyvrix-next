@@ -135,7 +135,7 @@ export function SectionRenderer({
   complianceCards = [],
   pricingPackages = [],
   careerJobs = [],
-  forceFullPageReload = true,
+  forceFullPageReload = false,
 }: SectionRendererProps) {
   const visibleSections = sections
     .filter((s) => s.isVisible !== false)

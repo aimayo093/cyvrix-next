@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -31,24 +33,21 @@ import {
   PortalTicketChat 
 } from "./client-components";
 
-// Generate Static Params for the App Router to pre-build routes
-export function generateStaticParams() {
-  return [
-    { module: "profile-and-company" },
-    { module: "support-tickets" },
-    { module: "quotes-and-proposals" },
-    { module: "services" },
-    { module: "documents" },
-    { module: "notifications" }
-  ];
-}
-
 interface PageProps {
   params: Promise<{ module: string }>;
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function PortalModulePage({ params, searchParams }: PageProps) {
+export default function PortalModulePage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <PortalModulePageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function PortalModulePageContent({ params, searchParams }: PageProps) {
+  await connection();
   const { module } = await params;
   const { id } = await searchParams;
   const user = await requireUser();

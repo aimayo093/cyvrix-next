@@ -1,7 +1,7 @@
 import * as React from "react";
 import { ShieldAlert, Info, FileText } from "lucide-react";
 import { legalPages } from "@/lib/cyvrix-data";
-import { prisma } from "@/lib/prisma";
+import { getPublicLegalPage } from "@/lib/public-cache";
 
 export const metadata = {
   title: "Cookie Policy | CYVRIX Technologies",
@@ -10,15 +10,7 @@ export const metadata = {
 
 export default async function CookiePolicyPage() {
   const slug = "cookie-policy";
-  let dbPage = null;
-
-  try {
-    dbPage = await prisma.legalPage.findUnique({
-      where: { slug },
-    });
-  } catch (error) {
-    console.error("Error loading cookie-policy from database:", error);
-  }
+  const dbPage = await getPublicLegalPage(slug);
 
   const staticPage = legalPages.find((item) => item.slug === slug);
   const title = dbPage?.title || staticPage?.title || "Cookie Policy";

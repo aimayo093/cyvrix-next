@@ -2,6 +2,7 @@ import "server-only";
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import { createHmac } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import type { User, UserRole } from "@/generated/prisma";
@@ -81,6 +82,7 @@ export async function clearSession() {
 }
 
 export async function getSession() {
+  await connection();
   const cookieStore = await cookies();
   const payload = verifySessionToken(cookieStore.get(SESSION_COOKIE)?.value);
   if (!payload) return null;

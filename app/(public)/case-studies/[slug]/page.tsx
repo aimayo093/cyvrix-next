@@ -1,9 +1,6 @@
-"use client";
-
 import * as React from "react";
-import { notFound, useParams } from "next/navigation";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { 
   ArrowLeft, 
   CheckCircle2, 
@@ -16,9 +13,16 @@ import {
 import { Button } from "@/components/shared/Button";
 import { caseStudies } from "@/lib/cyvrix-data";
 
-export default function CaseStudyDetailPage() {
-  const params = useParams();
-  const slug = params.slug as string;
+export function generateStaticParams() {
+  return caseStudies.map((study) => ({ slug: study.slug }));
+}
+
+export default async function CaseStudyDetailPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
   const study = caseStudies.find(s => s.slug === slug);
 
   if (!study) {
@@ -37,10 +41,7 @@ export default function CaseStudyDetailPage() {
         </Link>
 
         <div className="max-w-4xl">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+          <div
           >
             <span className="inline-block px-3 py-1 rounded-lg bg-[#2691F0]/10 text-[#2691F0] text-[10px] font-black uppercase tracking-widest mb-6">
               {study.clientType} Success Story
@@ -65,7 +66,7 @@ export default function CaseStudyDetailPage() {
                 </div>
               </div>
             </div>
-          </motion.div>
+          </div>
 
           <div className="grid gap-16">
             <section>

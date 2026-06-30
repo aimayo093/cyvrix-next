@@ -1,10 +1,11 @@
 "use server";
 
 import crypto from "node:crypto";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/auth";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import xss from "xss";
 import { z } from "zod";
 
@@ -15,6 +16,32 @@ function sanitize(v: string) {
 
 function slug(v: string) {
   return v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+type PublicCacheTag = (typeof PUBLIC_CACHE_TAGS)[keyof typeof PUBLIC_CACHE_TAGS];
+
+function updatePublicCacheTags(...tags: PublicCacheTag[]) {
+  for (const tag of new Set(tags)) {
+    updateTag(tag);
+  }
+}
+
+function updatePublicShellCache() {
+  updatePublicCacheTags(
+    PUBLIC_CACHE_TAGS.shell,
+    PUBLIC_CACHE_TAGS.brandAssets,
+    PUBLIC_CACHE_TAGS.navigation,
+    PUBLIC_CACHE_TAGS.footer,
+    PUBLIC_CACHE_TAGS.complianceCards,
+  );
+}
+
+function updateHomeCache(...extraTags: PublicCacheTag[]) {
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.home, PUBLIC_CACHE_TAGS.seo, ...extraTags);
+}
+
+function updateCmsPageCache() {
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.cmsPages, PUBLIC_CACHE_TAGS.seo);
 }
 
 // ─── SERVICES ────────────────────────────────────────────────────────────────
@@ -49,6 +76,7 @@ export async function createService(formData: FormData) {
 
   revalidatePath("/admin/services-cms");
   revalidatePath("/services");
+  updateHomeCache(PUBLIC_CACHE_TAGS.services);
 }
 
 export async function updateService(formData: FormData) {
@@ -82,6 +110,7 @@ export async function updateService(formData: FormData) {
   revalidatePath("/admin/services-cms");
   revalidatePath("/services");
   revalidatePath(`/services/${existing.slug}`);
+  updateHomeCache(PUBLIC_CACHE_TAGS.services);
 }
 
 export async function toggleServicePublish(formData: FormData) {
@@ -99,6 +128,7 @@ export async function toggleServicePublish(formData: FormData) {
 
   revalidatePath("/admin/services-cms");
   revalidatePath("/services");
+  updateHomeCache(PUBLIC_CACHE_TAGS.services);
 }
 
 export async function deleteService(formData: FormData) {
@@ -115,6 +145,7 @@ export async function deleteService(formData: FormData) {
 
   revalidatePath("/admin/services-cms");
   revalidatePath("/services");
+  updateHomeCache(PUBLIC_CACHE_TAGS.services);
 }
 
 // ─── BLOG POSTS ──────────────────────────────────────────────────────────────
@@ -253,6 +284,7 @@ export async function createIndustry(formData: FormData) {
 
   revalidatePath("/admin/industries-cms");
   revalidatePath("/industries");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.industries, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 export async function updateIndustry(formData: FormData) {
@@ -274,6 +306,7 @@ export async function updateIndustry(formData: FormData) {
   revalidatePath("/admin/industries-cms");
   revalidatePath("/industries");
   revalidatePath(`/industries/${existing.slug}`);
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.industries, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 export async function toggleIndustryPublish(formData: FormData) {
@@ -286,6 +319,7 @@ export async function toggleIndustryPublish(formData: FormData) {
 
   revalidatePath("/admin/industries-cms");
   revalidatePath("/industries");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.industries, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 export async function deleteIndustry(formData: FormData) {
@@ -294,6 +328,7 @@ export async function deleteIndustry(formData: FormData) {
   await prisma.industry.delete({ where: { id } });
   revalidatePath("/admin/industries-cms");
   revalidatePath("/industries");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.industries, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 // ─── LEADS ────────────────────────────────────────────────────────────────────
@@ -531,7 +566,11 @@ export async function updateSiteSetting(formData: FormData) {
   });
 
   revalidatePath("/admin/settings");
+  revalidatePath("/admin/security-center");
   revalidatePath("/", "layout");
+  updatePublicShellCache();
+  updateHomeCache(PUBLIC_CACHE_TAGS.contactSettings);
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.contactSettings, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 // ─── TESTIMONIALS ─────────────────────────────────────────────────────────────
@@ -549,6 +588,7 @@ export async function approveTestimonial(formData: FormData) {
 
   revalidatePath("/admin/testimonials");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.testimonials);
 }
 
 export async function toggleFeaturedTestimonial(formData: FormData) {
@@ -559,6 +599,7 @@ export async function toggleFeaturedTestimonial(formData: FormData) {
 
   await prisma.testimonial.update({ where: { id }, data: { featured: !existing.featured } });
   revalidatePath("/admin/testimonials");
+  updateHomeCache(PUBLIC_CACHE_TAGS.testimonials);
 }
 
 export async function deleteTestimonial(formData: FormData) {
@@ -566,6 +607,7 @@ export async function deleteTestimonial(formData: FormData) {
   const id = formData.get("id") as string;
   await prisma.testimonial.delete({ where: { id } });
   revalidatePath("/admin/testimonials");
+  updateHomeCache(PUBLIC_CACHE_TAGS.testimonials);
 }
 
 export async function createTestimonial(formData: FormData) {
@@ -580,6 +622,7 @@ export async function createTestimonial(formData: FormData) {
   });
 
   revalidatePath("/admin/testimonials");
+  updateHomeCache(PUBLIC_CACHE_TAGS.testimonials);
 }
 
 // ─── FAQS ─────────────────────────────────────────────────────────────────────
@@ -596,6 +639,7 @@ export async function createFAQ(formData: FormData) {
 
   revalidatePath("/admin/faqs");
   revalidatePath("/faq");
+  updateHomeCache(PUBLIC_CACHE_TAGS.faqs);
 }
 
 export async function updateFAQ(formData: FormData) {
@@ -609,6 +653,7 @@ export async function updateFAQ(formData: FormData) {
 
   revalidatePath("/admin/faqs");
   revalidatePath("/faq");
+  updateHomeCache(PUBLIC_CACHE_TAGS.faqs);
 }
 
 export async function toggleFAQPublish(formData: FormData) {
@@ -620,6 +665,7 @@ export async function toggleFAQPublish(formData: FormData) {
   await prisma.fAQ.update({ where: { id }, data: { published: !existing.published } });
   revalidatePath("/admin/faqs");
   revalidatePath("/faq");
+  updateHomeCache(PUBLIC_CACHE_TAGS.faqs);
 }
 
 export async function deleteFAQ(formData: FormData) {
@@ -628,6 +674,7 @@ export async function deleteFAQ(formData: FormData) {
   await prisma.fAQ.delete({ where: { id } });
   revalidatePath("/admin/faqs");
   revalidatePath("/faq");
+  updateHomeCache(PUBLIC_CACHE_TAGS.faqs);
 }
 
 // ─── CMS PAGES ───────────────────────────────────────────────────────────────
@@ -736,6 +783,11 @@ export async function updateCmsPage(formData: FormData) {
 
   revalidatePath("/admin/pages-cms");
   revalidatePath(`/${existing.slug === "home" ? "" : existing.slug}`);
+  if (existing.slug === "home") {
+    updateHomeCache();
+  } else {
+    updateCmsPageCache();
+  }
 }
 
 export async function deleteCmsPage(formData: FormData) {
@@ -751,6 +803,7 @@ export async function deleteCmsPage(formData: FormData) {
 
   await prisma.cmsPage.delete({ where: { id } });
   revalidatePath("/admin/pages-cms");
+  updateCmsPageCache();
 }
 
 // ─── BRAND ASSETS ─────────────────────────────────────────────────────────────
@@ -782,6 +835,8 @@ export async function updateBrandAsset(formData: FormData) {
 
   revalidatePath("/admin/brand-assets");
   revalidatePath("/", "layout");
+  updatePublicShellCache();
+  updateHomeCache(PUBLIC_CACHE_TAGS.brandAssets);
   redirect("/admin/brand-assets");
 }
 
@@ -803,6 +858,7 @@ export async function createMenu(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.navigation);
 }
 
 export async function updateMenu(formData: FormData) {
@@ -818,6 +874,7 @@ export async function updateMenu(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.navigation);
 }
 
 export async function deleteMenu(formData: FormData) {
@@ -825,6 +882,7 @@ export async function deleteMenu(formData: FormData) {
   const id = formData.get("id") as string;
   await prisma.menu.delete({ where: { id } });
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.navigation);
 }
 
 export async function createMenuItem(formData: FormData) {
@@ -855,6 +913,7 @@ export async function createMenuItem(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.navigation);
 }
 
 export async function updateMenuItem(formData: FormData) {
@@ -882,6 +941,7 @@ export async function updateMenuItem(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.navigation);
 }
 
 export async function deleteMenuItem(formData: FormData) {
@@ -889,6 +949,7 @@ export async function deleteMenuItem(formData: FormData) {
   const id = formData.get("id") as string;
   await prisma.menuItem.delete({ where: { id } });
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.navigation);
 }
 
 export async function reorderMenuItems(formData: FormData) {
@@ -901,6 +962,7 @@ export async function reorderMenuItems(formData: FormData) {
     });
   }
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.navigation);
 }
 
 // ─── FOOTER BUILDER ──────────────────────────────────────────────────────────
@@ -923,6 +985,7 @@ export async function createFooterSection(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function updateFooterSection(formData: FormData) {
@@ -938,6 +1001,7 @@ export async function updateFooterSection(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function deleteFooterSection(formData: FormData) {
@@ -945,6 +1009,7 @@ export async function deleteFooterSection(formData: FormData) {
   const id = formData.get("id") as string;
   await prisma.footerSection.delete({ where: { id } });
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function reorderFooterSections(formData: FormData) {
@@ -957,6 +1022,7 @@ export async function reorderFooterSections(formData: FormData) {
     });
   }
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function createFooterLink(formData: FormData) {
@@ -983,6 +1049,7 @@ export async function createFooterLink(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function updateFooterLink(formData: FormData) {
@@ -1006,6 +1073,7 @@ export async function updateFooterLink(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function deleteFooterLink(formData: FormData) {
@@ -1013,6 +1081,7 @@ export async function deleteFooterLink(formData: FormData) {
   const id = formData.get("id") as string;
   await prisma.footerLink.delete({ where: { id } });
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function reorderFooterLinks(formData: FormData) {
@@ -1025,6 +1094,7 @@ export async function reorderFooterLinks(formData: FormData) {
     });
   }
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 // ─── PARTNER LOGOS ────────────────────────────────────────────────────────────
@@ -1056,6 +1126,7 @@ export async function createPartnerLogo(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.partners);
 }
 
 export async function updatePartnerLogo(formData: FormData) {
@@ -1086,6 +1157,7 @@ export async function updatePartnerLogo(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.partners);
 }
 
 export async function deletePartnerLogo(formData: FormData) {
@@ -1094,6 +1166,7 @@ export async function deletePartnerLogo(formData: FormData) {
   await prisma.partnerLogo.delete({ where: { id } });
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.partners);
 }
 
 export async function reorderPartnerLogos(formData: FormData) {
@@ -1107,6 +1180,7 @@ export async function reorderPartnerLogos(formData: FormData) {
   }
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.partners);
 }
 
 // ─── TRUSTED LOGOS ────────────────────────────────────────────────────────────
@@ -1134,6 +1208,7 @@ export async function createTrustedLogo(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.trustedLogos);
 }
 
 export async function updateTrustedLogo(formData: FormData) {
@@ -1160,6 +1235,7 @@ export async function updateTrustedLogo(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.trustedLogos);
 }
 
 export async function deleteTrustedLogo(formData: FormData) {
@@ -1168,6 +1244,7 @@ export async function deleteTrustedLogo(formData: FormData) {
   await prisma.trustedBusinessLogo.delete({ where: { id } });
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.trustedLogos);
 }
 
 export async function reorderTrustedLogos(formData: FormData) {
@@ -1181,6 +1258,7 @@ export async function reorderTrustedLogos(formData: FormData) {
   }
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updateHomeCache(PUBLIC_CACHE_TAGS.trustedLogos);
 }
 
 // ─── COMPLIANCE CARDS ─────────────────────────────────────────────────────────
@@ -1224,6 +1302,8 @@ export async function createComplianceCard(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updatePublicShellCache();
+  updateHomeCache(PUBLIC_CACHE_TAGS.complianceCards);
 }
 
 export async function updateComplianceCard(formData: FormData) {
@@ -1266,6 +1346,8 @@ export async function updateComplianceCard(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updatePublicShellCache();
+  updateHomeCache(PUBLIC_CACHE_TAGS.complianceCards);
 }
 
 export async function deleteComplianceCard(formData: FormData) {
@@ -1274,6 +1356,8 @@ export async function deleteComplianceCard(formData: FormData) {
   await prisma.complianceCard.delete({ where: { id } });
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updatePublicShellCache();
+  updateHomeCache(PUBLIC_CACHE_TAGS.complianceCards);
 }
 
 export async function toggleComplianceCardFooter(formData: FormData) {
@@ -1301,6 +1385,8 @@ export async function toggleComplianceCardFooter(formData: FormData) {
 
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updatePublicShellCache();
+  updateHomeCache(PUBLIC_CACHE_TAGS.complianceCards);
 }
 
 export async function reorderComplianceCards(formData: FormData) {
@@ -1314,6 +1400,8 @@ export async function reorderComplianceCards(formData: FormData) {
   }
   revalidatePath("/", "layout");
   revalidatePath("/");
+  updatePublicShellCache();
+  updateHomeCache(PUBLIC_CACHE_TAGS.complianceCards);
 }
 
 // ─── SOCIAL LINKS ────────────────────────────────────────────────────────────
@@ -1340,6 +1428,7 @@ export async function createSocialLink(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function updateSocialLink(formData: FormData) {
@@ -1365,6 +1454,7 @@ export async function updateSocialLink(formData: FormData) {
   });
 
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function deleteSocialLink(formData: FormData) {
@@ -1372,6 +1462,7 @@ export async function deleteSocialLink(formData: FormData) {
   const id = formData.get("id") as string;
   await prisma.socialLink.delete({ where: { id } });
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 export async function reorderSocialLinks(formData: FormData) {
@@ -1384,6 +1475,7 @@ export async function reorderSocialLinks(formData: FormData) {
     });
   }
   revalidatePath("/", "layout");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.shell, PUBLIC_CACHE_TAGS.footer);
 }
 
 // ─── PAGE SECTIONS ───────────────────────────────────────────────────────────
@@ -1448,6 +1540,11 @@ export async function createPageSection(formData: FormData) {
   const page = await prisma.cmsPage.findUnique({ where: { id: pageId } });
   if (page) {
     revalidatePath(`/${page.slug === "home" ? "" : page.slug}`);
+    if (page.slug === "home") {
+      updateHomeCache();
+    } else {
+      updateCmsPageCache();
+    }
   }
   revalidatePath("/admin/pages-cms");
 }
@@ -1504,6 +1601,11 @@ export async function updatePageSection(formData: FormData) {
   const page = await prisma.cmsPage.findUnique({ where: { id: existing.pageId } });
   if (page) {
     revalidatePath(`/${page.slug === "home" ? "" : page.slug}`);
+    if (page.slug === "home") {
+      updateHomeCache();
+    } else {
+      updateCmsPageCache();
+    }
   }
   revalidatePath("/admin/pages-cms");
 }
@@ -1519,6 +1621,11 @@ export async function deletePageSection(formData: FormData) {
   const page = await prisma.cmsPage.findUnique({ where: { id: existing.pageId } });
   if (page) {
     revalidatePath(`/${page.slug === "home" ? "" : page.slug}`);
+    if (page.slug === "home") {
+      updateHomeCache();
+    } else {
+      updateCmsPageCache();
+    }
   }
   revalidatePath("/admin/pages-cms");
 }
@@ -1538,6 +1645,11 @@ export async function reorderPageSections(formData: FormData) {
   const page = await prisma.cmsPage.findUnique({ where: { id: pageId } });
   if (page) {
     revalidatePath(`/${page.slug === "home" ? "" : page.slug}`);
+    if (page.slug === "home") {
+      updateHomeCache();
+    } else {
+      updateCmsPageCache();
+    }
   }
   revalidatePath("/admin/pages-cms");
 }
@@ -1567,6 +1679,7 @@ export async function createCareerJob(formData: FormData) {
 
   revalidatePath("/admin/careers");
   revalidatePath("/careers");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.careers, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 export async function updateCareerJob(formData: FormData) {
@@ -1590,6 +1703,7 @@ export async function updateCareerJob(formData: FormData) {
 
   revalidatePath("/admin/careers");
   revalidatePath("/careers");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.careers, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 export async function toggleCareerJobPublish(formData: FormData) {
@@ -1608,6 +1722,7 @@ export async function toggleCareerJobPublish(formData: FormData) {
 
   revalidatePath("/admin/careers");
   revalidatePath("/careers");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.careers, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 export async function deleteCareerJob(formData: FormData) {
@@ -1617,6 +1732,7 @@ export async function deleteCareerJob(formData: FormData) {
 
   revalidatePath("/admin/careers");
   revalidatePath("/careers");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.careers, PUBLIC_CACHE_TAGS.cmsPages);
 }
 
 export async function createPortalUser(formData: FormData) {
@@ -2032,5 +2148,6 @@ export async function updateHomePageCMS(formData: FormData) {
   });
 
   revalidatePath("/");
+  updateHomeCache();
   redirect("/admin/home-cms?status=success&message=Home+page+content+updated+successfully!");
 }

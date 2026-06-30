@@ -7,7 +7,17 @@ export const metadata = {
   description: "Secure survey request error validation page.",
 };
 
-export default async function SurveyErrorPage({
+export default function SurveyErrorPage(props: {
+  searchParams: Promise<{ message?: string }>;
+}) {
+  return (
+    <React.Suspense fallback={<SurveyErrorFallback />}>
+      <SurveyErrorContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function SurveyErrorContent({
   searchParams,
 }: {
   searchParams: Promise<{ message?: string }>;
@@ -68,6 +78,14 @@ export default async function SurveyErrorPage({
           CYVRIX Technologies Support
         </div>
       </div>
+    </main>
+  );
+}
+
+function SurveyErrorFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-slate-950 p-4 text-slate-100">
+      <div className="h-32 w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900/40" />
     </main>
   );
 }

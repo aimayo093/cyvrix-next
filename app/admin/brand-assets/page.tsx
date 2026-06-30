@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,13 +9,21 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { Settings, AlertTriangle, ShieldCheck, Image as ImageIcon } from "lucide-react";
 
 export const metadata = { title: "Brand Assets CMS | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function BrandAssetsCMSPage({
+export default function BrandAssetsCMSPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <BrandAssetsCMSPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function BrandAssetsCMSPageContent({
   searchParams,
 }: {
   searchParams: Promise<{ edit?: string }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
 

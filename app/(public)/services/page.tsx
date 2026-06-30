@@ -3,7 +3,7 @@ import { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Shield, Zap, Globe, Cpu, Cloud, Code, BarChart } from "lucide-react";
 import { Button } from "@/components/shared/Button";
-import { prisma } from "@/lib/prisma";
+import { getPublicServicesData } from "@/lib/public-cache";
 
 export const metadata: Metadata = {
   title: "Services | CYVRIX Technologies",
@@ -13,10 +13,7 @@ export const metadata: Metadata = {
 const icons = [Shield, Zap, Globe, Cpu, Cloud, Code, BarChart];
 
 export default async function ServicesPage() {
-  const services = await prisma.service.findMany({
-    where: { published: true },
-    orderBy: { sortOrder: "asc" }
-  });
+  const services = await getPublicServicesData();
 
   return (
     <div className="min-h-screen bg-[#020817] pt-24 pb-32 text-white">

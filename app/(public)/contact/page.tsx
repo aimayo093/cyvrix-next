@@ -1,11 +1,10 @@
 import * as React from "react";
-import { prisma } from "@/lib/prisma";
 import { ContactClient } from "./ContactClient";
+import { getPublicPageData, getPublicPageSeoMetadata } from "@/lib/public-cache";
 
-export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
-  const page = await prisma.cmsPage.findUnique({ where: { slug: "contact" } });
+  const page = await getPublicPageSeoMetadata("contact");
   return {
     title: page?.seoTitle || "Contact Us | CYVRIX Technologies",
     description: page?.seoDescription || "Speak to CYVRIX Technologies about IT support, cybersecurity, and cloud configurations.",
@@ -13,20 +12,8 @@ export async function generateMetadata() {
 }
 
 export default async function ContactPage() {
-  const [pageData, services, industries, contactSettingsRecord] = await Promise.all([
-    prisma.cmsPage.findUnique({
-      where: { slug: "contact" },
-      include: {
-        sections: {
-          where: { isVisible: true },
-          orderBy: { sortOrder: "asc" },
-        },
-      },
-    }),
-    prisma.service.findMany({ where: { published: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.industry.findMany({ where: { published: true }, orderBy: { sortOrder: "asc" } }),
-    prisma.siteSetting.findUnique({ where: { key: "contact_settings" } }),
-  ]);
+  const { pageData, services, industries, contactSettingsRecord } =
+    await getPublicPageData("contact");
 
   const contactSettings = (contactSettingsRecord?.value as Record<string, string>) || {
     salesEmail: "sales@cyvrix.co.uk",

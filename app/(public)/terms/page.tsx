@@ -1,7 +1,7 @@
 import * as React from "react";
 import { FileText, Info, Scale } from "lucide-react";
 import { legalPages } from "@/lib/cyvrix-data";
-import { prisma } from "@/lib/prisma";
+import { getPublicLegalPage } from "@/lib/public-cache";
 
 export const metadata = {
   title: "Terms of Service | CYVRIX Technologies",
@@ -10,15 +10,7 @@ export const metadata = {
 
 export default async function TermsOfServicePage() {
   const slug = "terms-of-service";
-  let dbPage = null;
-
-  try {
-    dbPage = await prisma.legalPage.findUnique({
-      where: { slug },
-    });
-  } catch (error) {
-    console.error("Error loading terms-of-service from database:", error);
-  }
+  const dbPage = await getPublicLegalPage(slug);
 
   const staticPage = legalPages.find((item) => item.slug === slug);
   const title = dbPage?.title || staticPage?.title || "Terms of Service";

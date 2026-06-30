@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -16,9 +18,16 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import { Plus, Pencil, Layers, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
 
 export const metadata = { title: "Footer Builder CMS | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function FooterBuilderCMSPage({
+export default function FooterBuilderCMSPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <FooterBuilderCMSPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function FooterBuilderCMSPageContent({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -29,6 +38,7 @@ export default async function FooterBuilderCMSPage({
     newSection?: string;
   }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
 

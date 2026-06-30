@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,9 +9,16 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { Save, Home, Layout, MessageSquare, Megaphone, AlertCircle, CheckCircle2 } from "lucide-react";
 
 export const metadata = { title: "Home Page CMS | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function HomeCmsPage({
+export default function HomeCmsPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <HomeCmsPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function HomeCmsPageContent({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -17,6 +26,7 @@ export default async function HomeCmsPage({
     message?: string;
   }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
 

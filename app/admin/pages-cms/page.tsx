@@ -1,3 +1,5 @@
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -17,9 +19,16 @@ import { SectionTypeSelect } from "@/components/admin/SectionTypeSelect";
 import { Plus, Pencil, ArrowUp, ArrowDown, Layers, FileText, Settings, Sparkles, AlertTriangle } from "lucide-react";
 
 export const metadata = { title: "Pages & Core Sections Builder | CYVRIX Admin" };
-export const dynamic = "force-dynamic";
 
-export default async function PagesCMSPage({
+export default function PagesCMSPage(props: any) {
+  return (
+    <React.Suspense fallback={<PrivateRouteFallback />}>
+      <PagesCMSPageContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function PagesCMSPageContent({
   searchParams,
 }: {
   searchParams: Promise<{
@@ -30,6 +39,7 @@ export default async function PagesCMSPage({
     type?: string;
   }>;
 }) {
+  await connection();
   await requireAdmin();
   const sp = await searchParams;
   const currentType = sp.type || "hero";
