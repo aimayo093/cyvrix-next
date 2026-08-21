@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ClipboardCheck, FileText, LockKeyhole, ShieldCheck } from "lucide-react";
+import { certificationStatus, companyFacts } from "@/lib/company-facts";
+import { ArrowRight, BadgeCheck, ClipboardCheck, FileText, Hourglass, LockKeyhole, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Trust Centre",
@@ -89,7 +90,72 @@ export default function TrustCentrePage() {
         </div>
       </section>
 
+      {/* Current status: stated plainly, including what is not held. */}
       <section className="py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">Where we currently stand</p>
+            <h2 className="mt-4 font-outfit text-3xl font-black tracking-tight sm:text-4xl">
+              What we hold, and what we are working towards.
+            </h2>
+            <p className="mt-5 text-base leading-8 text-slate-300">
+              We would rather tell you exactly where we are than leave an impression that flatters us. This
+              is the current position.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 lg:grid-cols-2">
+            <article className="rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-7">
+              <div className="flex items-center gap-2">
+                <BadgeCheck className="h-5 w-5 text-emerald-300" />
+                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-300">In place</p>
+              </div>
+              <h3 className="mt-6 font-outfit text-xl font-black text-white">
+                Registered with the Information Commissioner&rsquo;s Office
+              </h3>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                {companyFacts.registeredName} is registered with the ICO as a data protection fee payer
+                {companyFacts.icoRegistrationNumber
+                  ? `, registration reference ${companyFacts.icoRegistrationNumber}.`
+                  : ". The registration reference will be published here once added to our records."}
+              </p>
+              <p className="mt-4 text-sm leading-7 text-slate-400">
+                Our{" "}
+                <Link href="/privacy-policy" className="font-black text-sky-300 underline underline-offset-4 hover:text-white">
+                  Privacy Policy
+                </Link>{" "}
+                sets out how personal information is handled and how to exercise your rights.
+              </p>
+            </article>
+
+            {certificationStatus.inProgress.map((item) => (
+              <article key={item.name} className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.06] p-7">
+                <div className="flex items-center gap-2">
+                  <Hourglass className="h-5 w-5 text-amber-300" />
+                  <p className="text-xs font-black uppercase tracking-[0.14em] text-amber-300">In progress</p>
+                </div>
+                <h3 className="mt-6 font-outfit text-xl font-black text-white">{item.name}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-300">{item.issuer}</p>
+                <p className="mt-4 rounded-xl border border-white/10 bg-[#020817]/60 px-4 py-3 text-sm leading-6 text-slate-300">
+                  {item.note}
+                </p>
+                <p className="mt-4 text-sm leading-7 text-slate-400">
+                  We will publish the certificate details here once certification is awarded, and not
+                  before.
+                </p>
+              </article>
+            ))}
+          </div>
+
+          <p className="mt-8 max-w-3xl text-sm leading-7 text-slate-400">
+            We hold no other certification or accreditation at present. Where a service page describes
+            readiness work for a standard such as Cyber Essentials, that means helping you prepare and
+            remediate; the certification decision rests with the certification body.
+          </p>
+        </div>
+      </section>
+
+      <section className="border-t border-white/10 py-20 sm:py-24">
         <div className="mx-auto max-w-4xl px-5 text-center lg:px-8">
           <h2 className="font-outfit text-4xl font-black tracking-tight sm:text-5xl">Need to discuss a technology or security concern?</h2>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-400">

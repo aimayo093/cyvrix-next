@@ -33,6 +33,11 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
       paragraphs: [
         registeredCompanyLine(),
         `We are the data controller for personal information collected through this website and the CYVRIX client portal. In this policy, "we", "us" and "our" mean ${companyFacts.registeredName}, trading as ${companyFacts.tradingName}.`,
+        companyFacts.icoRegistered
+          ? `We are registered with the Information Commissioner's Office as a data protection fee payer${
+              companyFacts.icoRegistrationNumber ? `, registration reference ${companyFacts.icoRegistrationNumber}` : ""
+            }.`
+          : "",
         "If you have a question about how your information is handled, or you want to exercise any of the rights set out below, contact us through the contact page on this website and mark your message for the attention of the data protection contact.",
       ],
     },

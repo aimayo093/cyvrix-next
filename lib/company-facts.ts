@@ -25,6 +25,34 @@ export const companyFacts = {
     "62020 — Information technology consultancy activities",
     "62090 — Other information technology service activities",
   ],
+  /**
+   * Registration with the Information Commissioner's Office as a data protection
+   * fee payer. Confirmed by CYVRIX on 21 August 2026. The public register entry
+   * could not be retrieved automatically, so the reference below must be supplied
+   * before it is cited; the registration itself is stated without a number until
+   * then.
+   */
+  icoRegistered: true,
+  icoRegistrationNumber: null as string | null,
+} as const;
+
+/**
+ * Certification and accreditation status.
+ *
+ * `held` items may be described as held. `inProgress` items may only be
+ * described as work in progress and must never be presented as achieved,
+ * "aligned", "compliant" or "certified" — the certification decision rests with
+ * the certification body, not with CYVRIX.
+ */
+export const certificationStatus = {
+  held: [] as Array<{ name: string; issuer: string; reference: string }>,
+  inProgress: [
+    {
+      name: "ISO/IEC 27001",
+      issuer: "Information security management system certification",
+      note: "Implementation is underway. CYVRIX is not certified to ISO/IEC 27001 and does not claim to be.",
+    },
+  ],
 } as const;
 
 /**
@@ -35,7 +63,7 @@ export const companyFacts = {
  * substituting a plausible-looking placeholder.
  */
 export const unverifiedDetails = [
-  "ICO data protection fee registration number",
+  "ICO data protection fee registration reference (registration confirmed; number still required)",
   "VAT registration number",
   "Named data protection contact or Data Protection Officer",
   "Professional indemnity and cyber insurance details",

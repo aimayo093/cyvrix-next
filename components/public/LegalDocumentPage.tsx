@@ -65,7 +65,7 @@ export function LegalDocumentPage({ title, eyebrow, summary, icon: Icon, documen
                     <section key={section.heading} id={sectionId(section.heading)} className="scroll-mt-28">
                       <h2 className="font-outfit text-2xl font-black tracking-tight text-white">{section.heading}</h2>
                       <div className="mt-4 space-y-4 text-base font-medium leading-8 text-slate-300">
-                        {section.paragraphs.map((paragraph, index) => (
+                        {section.paragraphs.filter(Boolean).map((paragraph, index) => (
                           <p key={`${index}-${paragraph.slice(0, 32)}`}>{paragraph}</p>
                         ))}
                       </div>
@@ -75,7 +75,7 @@ export function LegalDocumentPage({ title, eyebrow, summary, icon: Icon, documen
               </>
             ) : (
               <div className="space-y-6 text-base font-medium leading-8 text-slate-200 md:text-lg">
-                {document.paragraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`}>{paragraph}</p>)}
+                {document.paragraphs.filter(Boolean).map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`}>{paragraph}</p>)}
               </div>
             )}
             {document.reviewNotice && (
