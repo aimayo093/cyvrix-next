@@ -1,4 +1,4 @@
-import { companyFacts, registeredCompanyLine } from "@/lib/company-facts";
+import { companyFacts, isIcoRegistrationCurrent, registeredCompanyLine } from "@/lib/company-facts";
 import type { PublicLegalDocument } from "@/lib/public-legal";
 
 /**
@@ -33,12 +33,10 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
       paragraphs: [
         registeredCompanyLine(),
         `We are the data controller for personal information collected through this website and the CYVRIX client portal. In this policy, "we", "us" and "our" mean ${companyFacts.registeredName}, trading as ${companyFacts.tradingName}.`,
-        companyFacts.icoRegistered
-          ? `We are registered with the Information Commissioner's Office as a data protection fee payer${
-              companyFacts.icoRegistrationNumber ? `, registration reference ${companyFacts.icoRegistrationNumber}` : ""
-            }.`
+        companyFacts.icoRegistered && isIcoRegistrationCurrent()
+          ? `We are registered with the Information Commissioner's Office as a data protection fee payer, registration reference ${companyFacts.icoRegistrationNumber}. The registration runs to ${companyFacts.icoRegistrationExpires} and is renewed annually.`
           : "",
-        "If you have a question about how your information is handled, or you want to exercise any of the rights set out below, contact us through the contact page on this website and mark your message for the attention of the data protection contact.",
+        `Our Data Protection Officer can be contacted at ${companyFacts.dataProtectionOfficerEmail}. Please use that address for any question about how your information is handled, or to exercise any of the rights set out below. You can also reach us through the contact page on this website.`,
       ],
     },
     {
@@ -93,7 +91,7 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
         "You may ask us to correct information that is inaccurate or incomplete, and to erase information where there is no continuing reason for us to hold it.",
         "You may ask us to restrict how we use your information, object to processing carried out on the basis of our legitimate interests, and request that information you provided to us is transferred to another organisation where that right applies.",
         "Where we rely on consent, you can withdraw it at any time.",
-        "To exercise any of these rights, contact us through this website. We will respond within one month, and will tell you if we need longer because the request is complex.",
+        `To exercise any of these rights, contact our Data Protection Officer at ${companyFacts.dataProtectionOfficerEmail}. We will respond within one month, and will tell you if we need longer because the request is complex.`,
       ],
     },
     {

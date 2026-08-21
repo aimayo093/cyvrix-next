@@ -27,14 +27,49 @@ export const companyFacts = {
   ],
   /**
    * Registration with the Information Commissioner's Office as a data protection
-   * fee payer. Confirmed by CYVRIX on 21 August 2026. The public register entry
-   * could not be retrieved automatically, so the reference below must be supplied
-   * before it is cited; the registration itself is stated without a number until
-   * then.
+   * fee payer.
+   *
+   * Source: the ICO public register entry at
+   * https://ico.org.uk/ESDWebPages/Entry/ZC075683. The ICO returns 403 to
+   * automated requests, so this was taken from the register entry supplied by
+   * CYVRIX; the organisation name and address match the Companies House record.
+   *
+   * A data protection fee registration must be renewed annually. Do not publish
+   * the reference once it has lapsed -- use `isIcoRegistrationCurrent()`.
    */
   icoRegistered: true,
-  icoRegistrationNumber: null as string | null,
+  icoRegistrationNumber: "ZC075683",
+  icoRegisteredOn: "7 January 2026",
+  icoRegistrationExpires: "6 January 2027",
+  /** ISO date used for the expiry check. */
+  icoRegistrationExpiresIso: "2027-01-06",
+  icoPaymentTier: "Tier 1",
+  /**
+   * Data Protection Officer contact, as published on the ICO register entry.
+   * UK GDPR requires the DPO's contact details to be published where one is
+   * appointed, and this address is already public on the register, so it is
+   * safe to state. It is a role contact, not a personal address.
+   */
+  dataProtectionOfficerEmail: "paul.iyangbe@cyvrix.co.uk",
+  /** Other names recorded against the ICO registration. */
+  otherNames: ["CYVhub"] as readonly string[],
 } as const;
+
+/**
+ * Whether the ICO registration is still current.
+ *
+ * The registration reference is only published while this returns true, so a
+ * lapsed registration is never presented as an active credential.
+ */
+export function isIcoRegistrationCurrent(now: Date = new Date()): boolean {
+  return new Date(companyFacts.icoRegistrationExpiresIso).getTime() > now.getTime();
+}
+
+/** Days until the ICO registration expires. Negative once it has lapsed. */
+export function daysUntilIcoExpiry(now: Date = new Date()): number {
+  const expiry = new Date(companyFacts.icoRegistrationExpiresIso).getTime();
+  return Math.ceil((expiry - now.getTime()) / (24 * 60 * 60 * 1000));
+}
 
 /**
  * Certification and accreditation status.
@@ -63,9 +98,7 @@ export const certificationStatus = {
  * substituting a plausible-looking placeholder.
  */
 export const unverifiedDetails = [
-  "ICO data protection fee registration reference (registration confirmed; number still required)",
   "VAT registration number",
-  "Named data protection contact or Data Protection Officer",
   "Professional indemnity and cyber insurance details",
 ] as const;
 

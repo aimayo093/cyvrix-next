@@ -1,6 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/prisma";
+import { companyFacts, daysUntilIcoExpiry } from "@/lib/company-facts";
 import { getAuthActivity, type AuthActivitySummary } from "@/lib/security-events";
 import type { SecurityScanCheck, SecurityScanResult } from "@/lib/security-scan";
 
@@ -258,6 +259,39 @@ function authFindings(activity: AuthActivitySummary): { findings: AnalystFinding
   };
 }
 
+/**
+ * The ICO data protection fee registration must be renewed annually. A lapsed
+ * registration is a compliance breach and would also force the reference to be
+ * withdrawn from the privacy policy and Trust Centre, so it is worth surfacing
+ * well before the date.
+ */
+function icoRegistrationFinding(): AnalystFinding {
+  const days = daysUntilIcoExpiry();
+  const expires = companyFacts.icoRegistrationExpires;
+
+  let severity: Severity = "info";
+  if (days < 0) severity = "high";
+  else if (days <= 30) severity = "medium";
+  else if (days <= 60) severity = "low";
+
+  return {
+    id: "ico_registration",
+    title: "ICO data protection fee registration",
+    severity,
+    category: "compliance",
+    observation:
+      days < 0
+        ? `The registration (${companyFacts.icoRegistrationNumber}) lapsed on ${expires}.`
+        : `Registration ${companyFacts.icoRegistrationNumber} is current and renews by ${expires}, ${days} day${days === 1 ? "" : "s"} from now.`,
+    impact:
+      "Paying the data protection fee is a legal requirement for organisations processing personal data. A lapsed registration is a compliance breach, and the reference must be withdrawn from the privacy policy and Trust Centre until it is renewed.",
+    remediation:
+      days < 0
+        ? "Renew the registration with the ICO immediately, then confirm the reference and new expiry in lib/company-facts.ts."
+        : `Renew before ${expires} and update icoRegistrationExpiresIso in lib/company-facts.ts once the new period is confirmed.`,
+  };
+}
+
 function bandFor(highest: Severity | null, blindSpots: number): PostureBand {
   if (highest === "critical" || highest === "high") return "at-risk";
   if (highest === "medium") return "attention";
@@ -275,7 +309,7 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
   const [hygiene, activity] = await Promise.all([accountHygieneFindings(), getAuthActivity(24)]);
   const auth = authFindings(activity);
 
-  const findings = [...scanFindings, ...hygiene.findings, ...auth.findings];
+  const findings = [...scanFindings, ...hygiene.findings, ...auth.findings, icoRegistrationFinding()];
   const blindSpots = [...hygiene.blindSpots, ...auth.blindSpots];
 
   const counts = SEVERITY_ORDER.reduce(

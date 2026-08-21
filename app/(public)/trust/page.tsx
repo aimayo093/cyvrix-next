@@ -1,6 +1,8 @@
+import * as React from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { certificationStatus, companyFacts } from "@/lib/company-facts";
+import { connection } from "next/server";
+import { certificationStatus, companyFacts, isIcoRegistrationCurrent } from "@/lib/company-facts";
 import { ArrowRight, BadgeCheck, ClipboardCheck, FileText, Hourglass, LockKeyhole, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -105,28 +107,9 @@ export default function TrustCentrePage() {
           </div>
 
           <div className="mt-12 grid gap-5 lg:grid-cols-2">
-            <article className="rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-7">
-              <div className="flex items-center gap-2">
-                <BadgeCheck className="h-5 w-5 text-emerald-300" />
-                <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-300">In place</p>
-              </div>
-              <h3 className="mt-6 font-outfit text-xl font-black text-white">
-                Registered with the Information Commissioner&rsquo;s Office
-              </h3>
-              <p className="mt-3 text-sm leading-7 text-slate-300">
-                {companyFacts.registeredName} is registered with the ICO as a data protection fee payer
-                {companyFacts.icoRegistrationNumber
-                  ? `, registration reference ${companyFacts.icoRegistrationNumber}.`
-                  : ". The registration reference will be published here once added to our records."}
-              </p>
-              <p className="mt-4 text-sm leading-7 text-slate-400">
-                Our{" "}
-                <Link href="/privacy-policy" className="font-black text-sky-300 underline underline-offset-4 hover:text-white">
-                  Privacy Policy
-                </Link>{" "}
-                sets out how personal information is handled and how to exercise your rights.
-              </p>
-            </article>
+            <React.Suspense fallback={<IcoCardFallback />}>
+              <IcoRegistrationCard />
+            </React.Suspense>
 
             {certificationStatus.inProgress.map((item) => (
               <article key={item.name} className="rounded-2xl border border-amber-400/25 bg-amber-400/[0.06] p-7">
@@ -180,6 +163,77 @@ export default function TrustCentrePage() {
           </Link>
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * The registration reference is only published while the registration is
+ * current, which needs the actual request time rather than build time. Kept in
+ * its own dynamic boundary so the rest of the page stays prerendered.
+ */
+async function IcoRegistrationCard() {
+  await connection();
+  const current = isIcoRegistrationCurrent();
+
+  return (
+    <article className="rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-7">
+      <div className="flex items-center gap-2">
+        <BadgeCheck className="h-5 w-5 text-emerald-300" />
+        <p className="text-xs font-black uppercase tracking-[0.14em] text-emerald-300">In place</p>
+      </div>
+      <h3 className="mt-6 font-outfit text-xl font-black text-white">
+        Registered with the Information Commissioner&rsquo;s Office
+      </h3>
+      <p className="mt-3 text-sm leading-7 text-slate-300">
+        {companyFacts.registeredName} is registered with the ICO as a data protection fee payer.
+      </p>
+
+      {current ? (
+        <dl className="mt-5 grid gap-3 border-t border-white/10 pt-5 text-sm sm:grid-cols-2">
+          <div>
+            <dt className="text-[11px] font-black uppercase tracking-wider text-slate-500">Reference</dt>
+            <dd className="mt-1 font-mono font-bold tracking-wide text-white">{companyFacts.icoRegistrationNumber}</dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-black uppercase tracking-wider text-slate-500">Payment tier</dt>
+            <dd className="mt-1 font-semibold text-slate-200">{companyFacts.icoPaymentTier}</dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-black uppercase tracking-wider text-slate-500">Registered</dt>
+            <dd className="mt-1 font-semibold text-slate-200">{companyFacts.icoRegisteredOn}</dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-black uppercase tracking-wider text-slate-500">Renews by</dt>
+            <dd className="mt-1 font-semibold text-slate-200">{companyFacts.icoRegistrationExpires}</dd>
+          </div>
+        </dl>
+      ) : (
+        <p className="mt-5 rounded-xl border border-white/10 bg-[#020817]/60 px-4 py-3 text-sm leading-6 text-slate-300">
+          The registration reference is withheld pending annual renewal.
+        </p>
+      )}
+
+      <p className="mt-4 text-xs leading-6 text-slate-400">
+        Verifiable on the ICO register of fee payers. Our Data Protection Officer can be contacted at{" "}
+        <a
+          href={`mailto:${companyFacts.dataProtectionOfficerEmail}`}
+          className="font-bold text-sky-300 underline underline-offset-4 hover:text-white"
+        >
+          {companyFacts.dataProtectionOfficerEmail}
+        </a>
+        .
+      </p>
+    </article>
+  );
+}
+
+function IcoCardFallback() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-7">
+      <div className="h-5 w-24 rounded bg-white/10" />
+      <div className="mt-6 h-6 w-3/4 rounded bg-white/10" />
+      <div className="mt-4 h-4 w-full rounded bg-white/5" />
     </div>
   );
 }
