@@ -2,7 +2,9 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowRight, CircleHelp } from "lucide-react";
 import { SectionRenderer } from "@/components/shared/SectionRenderer";
-import { getPublicPageData, getPublicPageSeoMetadata } from "@/lib/public-cache";
+import { getPublicPageData, getPublicPageSeoMetadata, getSiteImages, type SiteImages } from "@/lib/public-cache";
+import { PageHeroImage } from "@/components/public/PageHeroImage";
+import { getPageHero } from "@/lib/page-heroes";
 import { faqs as staticFaqs } from "@/lib/cyvrix-data";
 import { stripBrandSuffix } from "@/lib/utils";
 
@@ -16,28 +18,36 @@ export async function generateMetadata() {
 }
 
 export default async function FAQPage() {
-  const { pageData, faqs } = await getPublicPageData("faq");
+  const [{ pageData, faqs }, siteImages] = await Promise.all([
+    getPublicPageData("faq"),
+    getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} })),
+  ]);
   const sections = pageData?.sections || [];
   const activeFaqs = faqs.length > 0 ? faqs : staticFaqs;
 
   return (
     <div className="min-h-screen bg-[#020817]">
-      {sections.length > 0 ? <SectionRenderer sections={sections} faqs={faqs} /> : <FaqFallback faqs={activeFaqs} />}
+      {sections.length > 0 ? <SectionRenderer sections={sections} faqs={faqs} /> : <FaqFallback faqs={activeFaqs} heroImage={siteImages.pages?.faq} />}
     </div>
   );
 }
 
-function FaqFallback({ faqs }: { faqs: Array<{ question: string; answer: string; category?: string | null }> }) {
+function FaqFallback({ faqs, heroImage }: { faqs: Array<{ question: string; answer: string; category?: string | null }>; heroImage?: string }) {
+  const hero = getPageHero("faq", heroImage);
+
   return (
     <div className="pb-24 pt-24 text-white">
-      <section className="border-b border-white/10 bg-[radial-gradient(ellipse_at_top_right,_rgba(38,145,240,0.2),transparent_48%),linear-gradient(180deg,#071b3d_0%,#020817_100%)] py-20 md:py-28">
-        <div className="mx-auto max-w-5xl px-5">
-          <span className="inline-flex items-center gap-2 rounded-full border border-[#2691F0]/30 bg-[#2691F0]/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-[#7ab8f4]">
-            <CircleHelp className="h-3.5 w-3.5" />
-            Frequently asked questions
-          </span>
-          <h1 className="mt-6 font-outfit text-4xl font-black leading-tight tracking-tight md:text-6xl">Straight answers about technology support and delivery.</h1>
-          <p className="mt-6 max-w-3xl text-lg font-medium leading-relaxed text-slate-200">A starting point for common questions. The right approach always depends on the systems, people and outcome involved.</p>
+      <section className="border-b border-white/10 bg-[radial-gradient(ellipse_at_top_right,_rgba(38,145,240,0.2),transparent_48%),linear-gradient(180deg,#071b3d_0%,#020817_100%)] py-20 md:py-24">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#2691F0]/30 bg-[#2691F0]/10 px-3 py-1.5 text-xs font-black uppercase tracking-[0.18em] text-[#7ab8f4]">
+              <CircleHelp className="h-3.5 w-3.5" />
+              Frequently asked questions
+            </span>
+            <h1 className="mt-6 font-outfit text-4xl font-black leading-tight tracking-tight md:text-5xl">Straight answers about technology support and delivery.</h1>
+            <p className="mt-6 text-lg font-medium leading-relaxed text-slate-200">A starting point for common questions. The right approach always depends on the systems, people and outcome involved, so treat these as orientation rather than a quote.</p>
+          </div>
+          <PageHeroImage src={hero.image} alt={hero.imageAlt} priority />
         </div>
       </section>
 

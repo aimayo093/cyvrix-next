@@ -2,18 +2,29 @@ import Link from "next/link";
 import { ArrowRight, Building2 } from "lucide-react";
 import { industries as staticIndustries } from "@/lib/cyvrix-data";
 import type { PublicIndustry } from "@/lib/public-industry";
+import { PageHeroImage } from "@/components/public/PageHeroImage";
 
-export function IndustriesClient({ industries }: { industries: PublicIndustry[] }) {
+export function IndustriesClient({
+  industries,
+  heroImage,
+  heroImageAlt,
+}: {
+  industries: PublicIndustry[];
+  heroImage: string;
+  heroImageAlt: string;
+}) {
   return (
     <div className="min-h-screen bg-[#020817] pb-28 pt-20 text-white lg:pt-32">
       <section className="relative border-b border-white/10 bg-[#041635] py-20 sm:py-28">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(38,145,240,0.2),transparent_36%),radial-gradient(circle_at_82%_80%,rgba(6,182,212,0.12),transparent_36%)]" />
-        <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
-          <div className="max-w-3xl">
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+          <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3.5 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-sky-200"><Building2 className="h-4 w-4" />Industry technology support</p>
-            <h1 className="mt-6 font-outfit text-5xl font-black leading-[0.98] tracking-tight sm:text-6xl">Technology shaped by the realities of your sector.</h1>
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300">CYVRIX focuses on the operational pressures behind technology decisions: people, access, connectivity, resilience and the work that cannot stop.</p>
+            <h1 className="mt-6 font-outfit text-4xl font-black leading-[1.02] tracking-tight sm:text-5xl">Technology shaped by the realities of your sector.</h1>
+            <p className="mt-7 text-lg leading-8 text-slate-300">CYVRIX focuses on the operational pressures behind technology decisions: people, access, connectivity, resilience and the work that cannot stop.</p>
+            <p className="mt-4 text-base leading-8 text-slate-400">Every sector below sets out what it actually contends with, the priorities we would look at first, and the services most often relevant. If yours is not listed, the approach still applies.</p>
           </div>
+          <PageHeroImage src={heroImage} alt={heroImageAlt} priority />
         </div>
       </section>
 

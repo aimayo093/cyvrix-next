@@ -585,6 +585,8 @@ export type SiteImages = {
   hero?: string;
   /** Industry slug -> image URL. */
   industries: Record<string, string | undefined>;
+  /** Page key -> hero image URL, for pages that are not services or industries. */
+  pages?: Record<string, string | undefined>;
 };
 
 function readImageMap(value: unknown): Record<string, string> {
@@ -613,7 +615,12 @@ export async function getSiteImages(): Promise<SiteImages> {
 
     const root = value as Record<string, unknown>;
     const hero = typeof root.hero === "string" && root.hero.trim().length > 0 ? root.hero.trim() : undefined;
-    return { engines: readImageMap(root.engines), industries: readImageMap(root.industries), hero };
+    return {
+      engines: readImageMap(root.engines),
+      industries: readImageMap(root.industries),
+      pages: readImageMap(root.pages),
+      hero,
+    };
   } catch (error) {
     console.warn("[public-cache] failed to load site images", error);
     return { engines: {}, industries: {} };

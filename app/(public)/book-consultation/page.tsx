@@ -4,6 +4,8 @@ import { Calendar, ShieldCheck, CheckCircle2, Clock, MapPin, Send, HelpCircle } 
 import { Button } from "@/components/shared/Button";
 import { submitContact } from "@/lib/actions";
 import { BookingServiceSelect } from "./BookingServiceSelect";
+import { PageHeroImage } from "@/components/public/PageHeroImage";
+import { getPageHero } from "@/lib/page-heroes";
 
 export const metadata = {
   title: "Book a Free Review",
@@ -11,6 +13,8 @@ export const metadata = {
 };
 
 export default function BookConsultationPage() {
+  const hero = getPageHero("book-consultation");
+
   const benefits = [
     {
       title: "Focused discovery",
@@ -33,17 +37,26 @@ export default function BookConsultationPage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/40 via-[#041635]/90 to-[#041635]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:4rem_4rem]" />
 
-        <div className="relative max-w-5xl mx-auto px-6 text-center">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2691F0]/100/10 border border-[#2691F0]/20 text-[#2691F0] text-xs font-black tracking-widest uppercase mb-6 animate-pulse">
-            <Calendar className="h-3.5 w-3.5" />
-            Start a conversation
-          </span>
-          <h1 className="font-outfit text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6">
-            Book a Technology <span className="text-[#2691F0]">Review</span>
-          </h1>
-          <p className="max-w-2xl mx-auto text-slate-300 font-medium text-lg md:text-xl leading-relaxed">
-            Start a practical conversation about managed services, cloud and cybersecurity, field engineering or professional technology work.
-          </p>
+        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2691F0]/10 border border-[#2691F0]/20 text-[#2691F0] text-xs font-black tracking-widest uppercase mb-6">
+              <Calendar className="h-3.5 w-3.5" />
+              Start a conversation
+            </span>
+            <h1 className="font-outfit text-4xl sm:text-5xl font-black tracking-tight mb-6">
+              Book a Free <span className="text-[#2691F0]">Review</span>
+            </h1>
+            <p className="text-slate-300 font-medium text-lg leading-8">
+              A practical conversation about managed services, cloud and cybersecurity, field engineering
+              or a technology project. No charge, no obligation, and no attempt to sell you something you
+              do not need.
+            </p>
+            <p className="mt-4 text-sm text-slate-400 leading-7">
+              Tell us what is on your mind and we will come back with the most useful next step, whether
+              that is a scoped assessment, a project conversation or simply an answer.
+            </p>
+          </div>
+          <PageHeroImage src={hero.image} alt={hero.imageAlt} priority />
         </div>
       </section>
 

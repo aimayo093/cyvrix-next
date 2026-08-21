@@ -20,6 +20,7 @@ import {
   Headphones
 } from "lucide-react";
 import { publicContactValue } from "@/lib/contact-settings";
+import { PageHeroImage } from "@/components/public/PageHeroImage";
 
 interface Service {
   id: string;
@@ -42,6 +43,9 @@ interface ContactPageData {
 }
 
 interface ContactClientProps {
+  /** Reviewed default hero image; the CMS featured image still takes precedence. */
+  heroImage?: string;
+  heroImageAlt?: string;
   pageData?: ContactPageData | null;
   services: Service[];
   contactSettings?: Record<string, string>;
@@ -56,7 +60,7 @@ const fallbackServices: Service[] = [
   { id: "professional-services", slug: "professional-services", title: "Professional Services", summary: "" },
 ];
 
-export function ContactClient({ pageData, services = [], contactSettings }: ContactClientProps) {
+export function ContactClient({ pageData, services = [], contactSettings, heroImage, heroImageAlt }: ContactClientProps) {
   const salesEmail = publicContactValue(contactSettings?.salesEmail);
   const supportEmail = publicContactValue(contactSettings?.supportEmail);
   const phone = publicContactValue(contactSettings?.phone);
@@ -249,34 +253,44 @@ export function ContactClient({ pageData, services = [], contactSettings }: Cont
       <div className="max-w-7xl mx-auto px-5 lg:px-8 relative z-10">
         
         {/* Header Block */}
-        <div className="text-center max-w-3xl mx-auto mb-20">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel-subtle text-[#2691F0] text-xs font-black uppercase tracking-widest mb-6"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            <span>{heroTag}</span>
-          </motion.div>
+        <div className="grid items-center gap-12 mb-20 lg:grid-cols-[1.05fr_0.95fr]">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4 }}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full glass-panel-subtle text-[#2691F0] text-xs font-black uppercase tracking-widest mb-6"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>{heroTag}</span>
+            </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            className="font-outfit text-5xl md:text-6xl lg:text-7xl font-black text-white leading-none tracking-tight mb-6"
-          >
-            {renderTitle(heroTitleText)}
-          </motion.h1>
+            <motion.h1
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="font-outfit text-4xl md:text-5xl font-black text-white leading-tight tracking-tight mb-6"
+            >
+              {renderTitle(heroTitleText)}
+            </motion.h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="text-lg md:text-xl text-slate-400 font-medium leading-relaxed max-w-2xl mx-auto"
-          >
-            {heroDescriptionText}
-          </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-lg text-slate-300 font-medium leading-8"
+            >
+              {heroDescriptionText}
+            </motion.p>
+            <p className="mt-4 text-sm leading-7 text-slate-400">
+              Whatever you send reaches a person rather than a queue. If your enquiry would be better served
+              by a different route, we will say so and point you to it.
+            </p>
+          </div>
+
+          {!heroBackgroundImage && heroImage ? (
+            <PageHeroImage src={heroImage} alt={heroImageAlt ?? "The CYVRIX team at work"} priority />
+          ) : null}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">

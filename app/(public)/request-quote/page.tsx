@@ -5,6 +5,8 @@ import { Info } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { submitQuote } from "@/lib/actions";
 import { industries, services } from "@/lib/cyvrix-data";
+import { PageHeroImage } from "@/components/public/PageHeroImage";
+import { getPageHero } from "@/lib/page-heroes";
 
 export const metadata: Metadata = {
   title: "Request a Quote",
@@ -12,22 +14,32 @@ export const metadata: Metadata = {
 };
 
 export default function RequestQuotePage() {
+  const hero = getPageHero("request-quote");
+
   return (
     <div className="pt-24 pb-32 bg-[#020817] text-white">
-      <div className="max-w-4xl mx-auto px-5">
-        
-        {/* Header Block */}
-        <div className="text-center mb-16">
-          <span className="text-xs font-black uppercase tracking-widest text-[#2691F0] bg-[#2691F0]/100/10 px-3 py-1.5 rounded-md border border-[#2691F0]/20">
+      <section className="mx-auto mb-16 grid max-w-7xl items-center gap-12 px-5 lg:grid-cols-[1.05fr_0.95fr] lg:px-8">
+        <div>
+          <span className="text-xs font-black uppercase tracking-widest text-[#2691F0] bg-[#2691F0]/10 px-3 py-1.5 rounded-md border border-[#2691F0]/20">
             Formal Quotation
           </span>
-          <h1 className="font-outfit text-4xl md:text-5.5xl font-black text-white mt-6 mb-6 leading-tight tracking-tight">
+          <h1 className="font-outfit text-4xl md:text-5xl font-black text-white mt-6 mb-6 leading-tight tracking-tight">
             Scope a custom <span className="text-[#2691F0]">technical review.</span>
           </h1>
-          <p className="text-md text-slate-400 leading-relaxed font-medium max-w-2xl mx-auto">
-            Give us brief details about your endpoints, core operational challenges, and preferred timeline. We will deliver a clear, structured technical scope.
+          <p className="text-base text-slate-300 leading-8 font-medium">
+            Tell us about your estate, the operational challenges you are dealing with and the timeline you
+            are working to. We will come back with a clear, structured technical scope rather than a
+            generic price list.
+          </p>
+          <p className="mt-4 text-sm text-slate-400 leading-7">
+            The more context you give, the more specific the response. If you would rather talk it through
+            first, book a free review instead and we will scope it together.
           </p>
         </div>
+        <PageHeroImage src={hero.image} alt={hero.imageAlt} priority />
+      </section>
+
+      <div className="max-w-4xl mx-auto px-5">
 
         {/* Form Container */}
         <div className="bg-[#041635]/80 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 shadow-2xl shadow-blue-500/5">
