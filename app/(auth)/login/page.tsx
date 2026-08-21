@@ -104,7 +104,8 @@ function LoginForm() {
                   name="email"
                   required
                   placeholder="name@company.co.uk"
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-[#2691F0] focus:border-transparent transition-all outline-none"
+                  autoComplete="username"
+                  className="autofill-dark w-full bg-white/5 border border-white/10 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder-slate-500 caret-white focus:ring-2 focus:ring-[#2691F0] focus:border-transparent transition-all outline-none"
                 />
               </div>
             </div>
@@ -116,12 +117,14 @@ function LoginForm() {
                   Need help?
                 </Link>
               </div>
-              <PasswordInput 
+              <PasswordInput
                 name="password"
                 required
                 hasLeftIcon
-                placeholder="••••••••••••"
-                className="bg-white/5 border-white/10 text-white placeholder:text-slate-600 focus:ring-2 focus:ring-[#2691F0] focus:border-transparent outline-none py-3.5"
+                tone="dark"
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                className="py-3.5"
               />
             </div>
 
