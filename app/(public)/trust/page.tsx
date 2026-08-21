@@ -3,13 +3,80 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { certificationStatus, companyFacts, isIcoRegistrationCurrent } from "@/lib/company-facts";
-import { ArrowRight, BadgeCheck, ClipboardCheck, FileText, Hourglass, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ArrowRight, BadgeCheck, ClipboardCheck, Database, FileText, Hourglass, KeyRound, LockKeyhole, Radar, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Trust Centre",
   description:
     "Learn how CYVRIX approaches evidence-led credentials, responsible security delivery and clear data-handling practices.",
 };
+
+/**
+ * Technical security measures implemented on this platform. Each entry
+ * corresponds to code in this repository; do not add an aspirational item here.
+ */
+const securityMeasures = [
+  {
+    title: "Transport and browser protection",
+    icon: LockKeyhole,
+    items: [
+      "HTTPS enforced with HSTS, including subdomains and preload",
+      "Content Security Policy restricting scripts, styles, frames and form targets",
+      "Clickjacking blocked by frame-ancestors none and X-Frame-Options DENY",
+      "MIME sniffing disabled and a restrictive Permissions-Policy applied",
+    ],
+  },
+  {
+    title: "Authentication and access",
+    icon: KeyRound,
+    items: [
+      "Sessions carried in a signed, HTTP-only cookie with an eight-hour expiry",
+      "Passwords stored as salted hashes, never in recoverable form",
+      "Role-based access enforced in middleware and again on the server",
+      "Failed, throttled and successful sign-ins recorded for review",
+    ],
+  },
+  {
+    title: "Abuse and input handling",
+    icon: ShieldCheck,
+    items: [
+      "Rate limiting on sign-in and on every public form, by address and by email",
+      "Server-side schema validation on all submitted data",
+      "Uploaded documents scanned for macros, active content and unsafe structure before acceptance",
+      "Output encoded, and CMS content never rendered as raw markup",
+    ],
+  },
+  {
+    title: "Monitoring and audit",
+    icon: Radar,
+    items: [
+      "Administrative actions written to an append-only audit log",
+      "Security Centre checks headers, dependencies, database reachability and privileged accounts",
+      "Findings classified by severity with the remediation step recorded",
+      "Application errors captured for investigation",
+    ],
+  },
+  {
+    title: "Data handling",
+    icon: Database,
+    items: [
+      "Data hosted on managed UK-accessible infrastructure with encryption in transit",
+      "Optional analytics loaded only after explicit consent",
+      "Secrets held in the server environment, never in the repository or the browser",
+      "Newsletter unsubscribe links signed so they cannot be forged",
+    ],
+  },
+  {
+    title: "Change control",
+    icon: ClipboardCheck,
+    items: [
+      "Type checking and linting run before a release is built",
+      "Database changes applied through reviewed migrations, never ad hoc",
+      "Public credentials gated behind verification, permission and expiry checks",
+      "Dependencies checked against published versions for known staleness",
+    ],
+  },
+];
 
 const trustPrinciples = [
   {
@@ -134,6 +201,45 @@ export default function TrustCentrePage() {
             We hold no other certification or accreditation at present. Where a service page describes
             readiness work for a standard such as Cyber Essentials, that means helping you prepare and
             remediate; the certification decision rests with the certification body.
+          </p>
+        </div>
+      </section>
+
+      {/* Security measures: each item is something the platform actually does. */}
+      <section className="border-t border-white/10 bg-[#041635] py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">How this site is secured</p>
+            <h2 className="mt-4 font-outfit text-3xl font-black tracking-tight sm:text-4xl">
+              The technical measures actually in place.
+            </h2>
+            <p className="mt-5 text-base leading-8 text-slate-300">
+              Every item below is implemented on this platform today. We list specifics rather than
+              general assurances, because a specific claim is one you can check.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {securityMeasures.map((group) => (
+              <article key={group.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+                <group.icon className="h-6 w-6 text-sky-300" />
+                <h3 className="mt-6 font-outfit text-lg font-black text-white">{group.title}</h3>
+                <ul className="mt-4 space-y-2.5">
+                  {group.items.map((item) => (
+                    <li key={item} className="flex gap-2.5 text-sm leading-6 text-slate-400">
+                      <span aria-hidden="true" className="mt-2 h-1 w-1 shrink-0 rounded-full bg-sky-300" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
+
+          <p className="mt-8 max-w-3xl text-sm leading-7 text-slate-400">
+            These measures reduce risk; they do not eliminate it, and we do not claim they do. We hold no
+            security certification at present. If you identify a concern affecting CYVRIX, please contact
+            us with enough detail for us to investigate.
           </p>
         </div>
       </section>

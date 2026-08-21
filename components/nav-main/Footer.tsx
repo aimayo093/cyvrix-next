@@ -80,7 +80,8 @@ const defaultFooterColumns: FooterColumn[] = [
       { key: "privacy", label: "Privacy Policy", url: "/privacy-policy" },
       { key: "terms", label: "Terms and Conditions", url: "/terms" },
       { key: "cookies", label: "Cookie Policy", url: "/cookie-policy" },
-      { key: "search", label: "Search the Site", url: "/search" },
+      { key: "data-rights", label: "Your Data Rights", url: "/privacy-request" },
+      { key: "trust", label: "Trust Centre", url: "/trust" },
     ],
   },
 ];
@@ -599,6 +600,25 @@ export function Footer({
           </div>
         </div>
 
+
+        {/* Data protection statement: concrete and checkable rather than a blanket claim. */}
+        <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.03] px-6 py-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <p className="max-w-3xl text-xs leading-6 font-semibold text-slate-400">
+              <LockKeyhole className="mr-2 inline h-3.5 w-3.5 text-[#2691F0]" />
+              We handle personal data in line with UK GDPR and the Data Protection Act 2018, and are
+              registered with the Information Commissioner&rsquo;s Office (ZC075683). Optional cookies
+              are never set without your consent.
+            </p>
+            <FooterNavLink
+              href="/privacy-request"
+              forceReload={forceFullPageReload}
+              className="shrink-0 text-xs font-black uppercase tracking-wide text-[#2691F0] transition-colors hover:text-white"
+            >
+              Exercise your data rights
+            </FooterNavLink>
+          </div>
+        </div>
 
         {/* Footer Bottom bar */}
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
