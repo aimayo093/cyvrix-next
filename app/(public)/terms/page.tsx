@@ -2,6 +2,7 @@ import { Scale } from "lucide-react";
 import { LegalDocumentPage } from "@/components/public/LegalDocumentPage";
 import { getPublicLegalPage } from "@/lib/public-cache";
 import { toPublicLegalDocument } from "@/lib/public-legal";
+import { getDefaultLegalDocument } from "@/lib/legal-content";
 
 export const metadata = {
   title: "Terms of Service",
@@ -10,7 +11,7 @@ export const metadata = {
 };
 
 export default async function TermsOfServicePage() {
-  const document = toPublicLegalDocument(await getPublicLegalPage("terms-of-service"));
+  const document = toPublicLegalDocument(await getPublicLegalPage("terms-of-service")) ?? getDefaultLegalDocument("terms-of-service");
 
   return (
     <LegalDocumentPage

@@ -1,6 +1,15 @@
+export type LegalSection = {
+  heading: string;
+  paragraphs: string[];
+};
+
 export type PublicLegalDocument = {
   title: string;
   paragraphs: string[];
+  /** Structured sections, used by the reviewed default documents. */
+  sections?: LegalSection[];
+  /** Human-readable date the wording was last reviewed. */
+  lastReviewed?: string;
   reviewNotice: string | null;
 };
 

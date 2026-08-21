@@ -2,6 +2,7 @@ import { ShieldCheck } from "lucide-react";
 import { LegalDocumentPage } from "@/components/public/LegalDocumentPage";
 import { getPublicLegalPage } from "@/lib/public-cache";
 import { toPublicLegalDocument } from "@/lib/public-legal";
+import { getDefaultLegalDocument } from "@/lib/legal-content";
 
 export const metadata = {
   title: "Privacy Policy",
@@ -10,7 +11,7 @@ export const metadata = {
 };
 
 export default async function PrivacyPolicyPage() {
-  const document = toPublicLegalDocument(await getPublicLegalPage("privacy-policy"));
+  const document = toPublicLegalDocument(await getPublicLegalPage("privacy-policy")) ?? getDefaultLegalDocument("privacy-policy");
 
   return (
     <LegalDocumentPage

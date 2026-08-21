@@ -2,6 +2,7 @@ import { Cookie } from "lucide-react";
 import { LegalDocumentPage } from "@/components/public/LegalDocumentPage";
 import { getPublicLegalPage } from "@/lib/public-cache";
 import { toPublicLegalDocument } from "@/lib/public-legal";
+import { getDefaultLegalDocument } from "@/lib/legal-content";
 
 export const metadata = {
   title: "Cookie Policy",
@@ -10,7 +11,7 @@ export const metadata = {
 };
 
 export default async function CookiePolicyPage() {
-  const document = toPublicLegalDocument(await getPublicLegalPage("cookie-policy"));
+  const document = toPublicLegalDocument(await getPublicLegalPage("cookie-policy")) ?? getDefaultLegalDocument("cookie-policy");
 
   return (
     <LegalDocumentPage

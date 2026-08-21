@@ -2,6 +2,11 @@ import Link from "next/link";
 import { ArrowRight, FileText, type LucideIcon } from "lucide-react";
 import type { PublicLegalDocument } from "@/lib/public-legal";
 
+/** Stable anchor id from a section heading. */
+function sectionId(heading: string): string {
+  return heading.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
 type LegalDocumentPageProps = {
   title: string;
   eyebrow: string;
@@ -29,9 +34,50 @@ export function LegalDocumentPage({ title, eyebrow, summary, icon: Icon, documen
       <main className="mx-auto max-w-4xl px-5 py-14">
         {document ? (
           <article className="rounded-3xl border border-white/10 bg-[#071126] p-7 md:p-10">
-            <div className="space-y-6 text-base font-medium leading-8 text-slate-200 md:text-lg">
-              {document.paragraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`}>{paragraph}</p>)}
-            </div>
+            {document.lastReviewed && (
+              <p className="mb-8 border-b border-white/10 pb-6 text-xs font-black uppercase tracking-[0.16em] text-[#7ab8f4]">
+                Last reviewed {document.lastReviewed}
+              </p>
+            )}
+
+            {document.sections && document.sections.length > 0 ? (
+              <>
+                {/* On-page contents: legal documents are referred to, not read start to finish. */}
+                <nav aria-label="Contents" className="mb-10 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Contents</p>
+                  <ol className="mt-4 grid gap-2 sm:grid-cols-2">
+                    {document.sections.map((section, index) => (
+                      <li key={section.heading}>
+                        <a
+                          href={`#${sectionId(section.heading)}`}
+                          className="text-sm font-semibold text-slate-300 transition-colors hover:text-[#7ab8f4]"
+                        >
+                          <span className="tabular-nums text-slate-500">{String(index + 1).padStart(2, "0")}. </span>
+                          {section.heading}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                </nav>
+
+                <div className="space-y-10">
+                  {document.sections.map((section) => (
+                    <section key={section.heading} id={sectionId(section.heading)} className="scroll-mt-28">
+                      <h2 className="font-outfit text-2xl font-black tracking-tight text-white">{section.heading}</h2>
+                      <div className="mt-4 space-y-4 text-base font-medium leading-8 text-slate-300">
+                        {section.paragraphs.map((paragraph, index) => (
+                          <p key={`${index}-${paragraph.slice(0, 32)}`}>{paragraph}</p>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="space-y-6 text-base font-medium leading-8 text-slate-200 md:text-lg">
+                {document.paragraphs.map((paragraph, index) => <p key={`${index}-${paragraph.slice(0, 32)}`}>{paragraph}</p>)}
+              </div>
+            )}
             {document.reviewNotice && (
               <aside className="mt-10 border-t border-white/10 pt-6 text-sm font-medium leading-relaxed text-slate-300">
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-[#7ab8f4]">Important information</p>
