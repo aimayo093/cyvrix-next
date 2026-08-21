@@ -15,7 +15,7 @@ const fallbackHeaderMenu = [
   { id: "fallback-contact", label: "Contact", url: "/contact", sortOrder: 80 },
   {
     id: "fallback-cta",
-    label: "Book a technology review",
+    label: "Book a Free Review",
     url: "/book-consultation",
     sortOrder: 90,
     iconKey: "button-cta",

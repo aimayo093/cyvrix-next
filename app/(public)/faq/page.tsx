@@ -60,7 +60,7 @@ function FaqFallback({ faqs }: { faqs: Array<{ question: string; answer: string;
             <p className="mt-2 text-sm font-medium leading-relaxed text-slate-200">Start with the practical context and we will identify an appropriate next step.</p>
           </div>
           <Link href="/book-consultation" className="mt-6 inline-flex shrink-0 items-center gap-2 text-sm font-black text-[#7ab8f4] transition-colors hover:text-white md:mt-0">
-            Book a technology review <ArrowRight className="h-4 w-4" />
+            Book a Free Review <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>

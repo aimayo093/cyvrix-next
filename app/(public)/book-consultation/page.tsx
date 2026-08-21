@@ -6,7 +6,7 @@ import { submitContact } from "@/lib/actions";
 import { BookingServiceSelect } from "./BookingServiceSelect";
 
 export const metadata = {
-  title: "Book a Technology Review",
+  title: "Book a Free Review",
   description: "Start a practical conversation about managed services, cloud and cybersecurity, field engineering or a professional technology project.",
 };
 

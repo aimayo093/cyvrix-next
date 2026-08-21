@@ -100,7 +100,7 @@ export default function TrustCentrePage() {
               href="/book-consultation?service=General%20Technology%20Review"
               className="inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-[#2691F0] px-7 font-bold text-white transition-colors hover:bg-white hover:text-[#041635]"
             >
-              Book a technology review <ArrowRight className="h-5 w-5" />
+              Book a Free Review <ArrowRight className="h-5 w-5" />
             </Link>
             <Link
               href="/contact"

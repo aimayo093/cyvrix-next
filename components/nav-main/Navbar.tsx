@@ -126,8 +126,8 @@ export function Navbar({
     : "text-[#041635] border-[#2691F0]";
   const getCtaLabel = (label?: string) =>
     label?.trim().toLowerCase() === "get a free it audit"
-      ? "Book a technology review"
-      : label || "Book a technology review";
+      ? "Book a Free Review"
+      : label || "Book a Free Review";
 
   return (
     <>

@@ -96,7 +96,7 @@ function AboutFallback() {
             <p className="mt-4 text-base font-medium leading-relaxed text-slate-200">We will use the context you share to identify the most appropriate service, project or assessment route.</p>
           </div>
           <Link href="/book-consultation" className="mt-7 inline-flex shrink-0 items-center gap-2 rounded-xl bg-[#2691F0] px-5 py-3.5 text-sm font-black text-white transition-colors hover:bg-white hover:text-[#041635] md:mt-0">
-            Book a technology review <ArrowRight className="h-4 w-4" />
+            Book a Free Review <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>

@@ -19,6 +19,90 @@ import {
 
 type FooterSectionWithLinks = FooterSection & { links: FooterLinkRecord[] };
 
+/** Render shape shared by CMS-managed sections and the built-in fallback. */
+type FooterColumn = {
+  key: string;
+  title: string;
+  description?: string | null;
+  links: Array<{ key: string; label: string; url: string; openInNewTab?: boolean }>;
+};
+
+/**
+ * Used whenever the CMS has no footer sections configured, so the footer is
+ * never a bare logo. Admins can override the whole set in Footer Builder.
+ */
+const defaultFooterColumns: FooterColumn[] = [
+  {
+    key: "services",
+    title: "Services",
+    description: "Four ways to work with us.",
+    links: [
+      { key: "managed", label: "Managed Services", url: "/services" },
+      { key: "cloudsec", label: "Cloud & Cybersecurity", url: "/services" },
+      { key: "field", label: "Field Engineering", url: "/services" },
+      { key: "professional", label: "Professional Services", url: "/services" },
+      { key: "pricing", label: "Managed IT Plans", url: "/pricing" },
+      { key: "assessments", label: "Free Assessments", url: "/assessments" },
+    ],
+  },
+  {
+    key: "company",
+    title: "Company",
+    description: "Who we are and how we work.",
+    links: [
+      { key: "about", label: "About CYVRIX", url: "/about" },
+      { key: "industries", label: "Industries", url: "/industries" },
+      { key: "case-studies", label: "Case Studies", url: "/case-studies" },
+      { key: "insights", label: "Insights", url: "/blog" },
+      { key: "careers", label: "Careers", url: "/careers" },
+      { key: "trust", label: "Trust Centre", url: "/trust" },
+    ],
+  },
+  {
+    key: "support",
+    title: "Support",
+    description: "Get help or start a conversation.",
+    links: [
+      { key: "support-desk", label: "Support Desk", url: "/support" },
+      { key: "portal", label: "Client Portal", url: "/portal" },
+      { key: "book", label: "Book a Free Review", url: "/book-consultation" },
+      { key: "quote", label: "Request a Quote", url: "/request-quote" },
+      { key: "contact", label: "Contact Us", url: "/contact" },
+      { key: "faq", label: "FAQs", url: "/faq" },
+    ],
+  },
+  {
+    key: "legal",
+    title: "Legal",
+    description: "Policies and terms.",
+    links: [
+      { key: "privacy", label: "Privacy Policy", url: "/privacy-policy" },
+      { key: "terms", label: "Terms and Conditions", url: "/terms" },
+      { key: "cookies", label: "Cookie Policy", url: "/cookie-policy" },
+      { key: "search", label: "Search the Site", url: "/search" },
+    ],
+  },
+];
+
+function toFooterColumns(sections: FooterSectionWithLinks[]): FooterColumn[] {
+  if (sections.length === 0) return defaultFooterColumns;
+
+  return sections.map((section) => ({
+    key: section.id,
+    title: section.title,
+    description: section.description,
+    links: (section.links ?? [])
+      .filter((link) => link.isVisible !== false)
+      .sort((left, right) => left.sortOrder - right.sortOrder)
+      .map((link) => ({
+        key: link.id,
+        label: link.label,
+        url: link.url,
+        openInNewTab: link.openInNewTab ?? false,
+      })),
+  }));
+}
+
 type FooterNavLinkProps = React.ComponentPropsWithoutRef<typeof Link> & {
   forceReload?: boolean;
 };
@@ -397,32 +481,28 @@ export function Footer({
           {/* Dynamic Footer Columns & Compliance Trust Section */}
           <div className="lg:col-span-8 space-y-12">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {footerSections.map((section) => (
-                <div key={section.id} className="space-y-5">
-                  <h4 className="font-outfit font-black text-xs uppercase tracking-widest text-slate-400">
-                    {section.title}
+              {toFooterColumns(footerSections).map((column) => (
+                <div key={column.key} className="space-y-4">
+                  <h4 className="font-outfit font-black text-xs uppercase tracking-widest text-white">
+                    {column.title}
                   </h4>
-                  {section.description && (
-                    <p className="text-xs text-slate-500 font-semibold">{section.description}</p>
+                  {column.description && (
+                    <p className="text-xs leading-5 text-slate-500 font-semibold">{column.description}</p>
                   )}
-                  <ul className="space-y-3">
-                    {section.links &&
-                       section.links
-                        .filter((link) => link.isVisible !== false)
-                        .sort((left, right) => left.sortOrder - right.sortOrder)
-                        .map((link) => (
-                          <li key={link.id}>
-                            <FooterNavLink
-                              href={link.url}
-                              forceReload={forceFullPageReload}
-                              target={link.openInNewTab ? "_blank" : undefined}
-                              className="group flex items-center text-slate-300 hover:text-white transition-colors text-sm font-semibold"
-                            >
-                              <ArrowRight className="h-3 w-3 mr-1.5 opacity-0 -ml-4 text-[#2691F0] group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
-                              {link.label}
-                            </FooterNavLink>
-                          </li>
-                        ))}
+                  <ul className="space-y-2.5">
+                    {column.links.map((link) => (
+                      <li key={link.key}>
+                        <FooterNavLink
+                          href={link.url}
+                          forceReload={forceFullPageReload}
+                          target={link.openInNewTab ? "_blank" : undefined}
+                          className="group flex items-center text-slate-300 hover:text-white transition-colors text-sm font-semibold"
+                        >
+                          <ArrowRight className="h-3 w-3 mr-1.5 opacity-0 -ml-4 text-[#2691F0] group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
+                          {link.label}
+                        </FooterNavLink>
+                      </li>
+                    ))}
                   </ul>
                 </div>
               ))}
@@ -511,7 +591,7 @@ export function Footer({
               forceReload={forceFullPageReload}
               className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer"
             >
-              Book a technology review
+              Book a Free Review
             </FooterNavLink>
           </div>
         </div>

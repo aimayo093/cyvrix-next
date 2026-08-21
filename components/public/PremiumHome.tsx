@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowRight, Cloud, ShieldCheck } from "lucide-react";
-import { resolveEngines } from "@/lib/service-engines";
+import Image from "next/image";
+import { ArrowRight, Check, Cloud, ShieldCheck } from "lucide-react";
+import { resolveEngines, type EngineImageOverrides } from "@/lib/service-engines";
 
 type Service = {
   slug: string;
@@ -10,6 +11,7 @@ type Service = {
 
 type PremiumHomeProps = {
   services: Service[];
+  engineImages?: EngineImageOverrides;
 };
 
 const deliverySteps = [
@@ -28,8 +30,8 @@ const commercialOffers = [
   { title: "Network Assessment", href: "/assessments/network-assessment" },
 ];
 
-export function PremiumHome({ services }: PremiumHomeProps) {
-  const engines = resolveEngines(services);
+export function PremiumHome({ services, engineImages = {} }: PremiumHomeProps) {
+  const engines = resolveEngines(services, engineImages);
 
   return (
     <div className="overflow-hidden bg-[#020817] text-white">
@@ -93,18 +95,43 @@ export function PremiumHome({ services }: PremiumHomeProps) {
             {engines.map((engine) => {
               const Icon = engine.icon;
               return (
-                <article key={engine.title} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-xl">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#2691F0]/10 text-[#1678cc]">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] text-slate-500">
+                <article key={engine.title} className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-xl">
+                  <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+                    <Image
+                      src={engine.image}
+                      alt={engine.imageAlt}
+                      fill
+                      sizes="(min-width: 768px) 50vw, 100vw"
+                      className="object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#041635]/70 via-[#041635]/10 to-transparent" />
+                    <span className="absolute bottom-4 left-4 rounded-full bg-white/95 px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] text-[#1678cc]">
                       {engine.engagement}
                     </span>
                   </div>
 
-                  <h3 className="mt-7 font-outfit text-2xl font-black">{engine.title}</h3>
+                  <div className="flex flex-1 flex-col p-7">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#2691F0]/10 text-[#1678cc]">
+                    <Icon className="h-6 w-6" />
+                  </div>
+
+                  <h3 className="mt-6 font-outfit text-2xl font-black">{engine.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-slate-600">{engine.description}</p>
+                  <p className="mt-3 text-sm leading-6 text-slate-500">{engine.detail}</p>
+
+                  <ul className="mt-5 space-y-2">
+                    {engine.outcomes.slice(0, 4).map((outcome) => (
+                      <li key={outcome} className="flex gap-2.5 text-sm leading-6 text-slate-600">
+                        <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-[#1678cc]" />
+                        {outcome}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 font-semibold text-slate-600">
+                    <span className="text-slate-400">Typically suits: </span>
+                    {engine.suitedTo}
+                  </p>
 
                   {engine.includes.length > 0 && (
                   <ul className="mt-6 flex flex-col gap-px border-t border-slate-100 pt-1">
@@ -128,6 +155,7 @@ export function PremiumHome({ services }: PremiumHomeProps) {
                   >
                     {engine.cta} <ArrowRight className="h-4 w-4" />
                   </Link>
+                  </div>
                 </article>
               );
             })}

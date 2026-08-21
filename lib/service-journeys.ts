@@ -96,7 +96,7 @@ const journeys: Record<string, ServiceJourney> = {
 const defaultJourney: ServiceJourney = {
   category: "Technology Services",
   primaryHref: "/book-consultation?service=General%20Technology%20Review",
-  primaryLabel: "Book a technology review",
+  primaryLabel: "Book a Free Review",
   secondaryHref: "/assessments",
   secondaryLabel: "Explore assessments",
 };

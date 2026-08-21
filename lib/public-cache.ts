@@ -23,6 +23,7 @@ export const PUBLIC_CACHE_TAGS = {
   insights: "insights",
   careers: "careers",
   contactSettings: "contact-settings",
+  siteImages: "site-images",
 } as const;
 
 function verifiedTrustWhere({
@@ -573,5 +574,34 @@ export async function getPublicCaseStudies() {
   } catch (error) {
     console.warn("[public-cache] failed to load published case studies", error);
     return [];
+  }
+}
+
+/**
+ * Representative images for the four service engines, keyed by engine key and
+ * stored in the `site_images` site setting. Falls back to the built-in images
+ * in `lib/service-engines.ts` when nothing is configured or the read fails.
+ */
+export async function getEngineImageOverrides(): Promise<Record<string, string | undefined>> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(PUBLIC_CACHE_TAGS.siteImages);
+
+  try {
+    const record = await prisma.siteSetting.findUnique({ where: { key: "site_images" } });
+    const value = record?.value;
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+
+    const engines = (value as Record<string, unknown>).engines;
+    if (!engines || typeof engines !== "object" || Array.isArray(engines)) return {};
+
+    const out: Record<string, string> = {};
+    for (const [key, url] of Object.entries(engines as Record<string, unknown>)) {
+      if (typeof url === "string" && url.trim().length > 0) out[key] = url.trim();
+    }
+    return out;
+  } catch (error) {
+    console.warn("[public-cache] failed to load site image overrides", error);
+    return {};
   }
 }

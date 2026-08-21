@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { getPublicServicesData } from "@/lib/public-cache";
+import Image from "next/image";
+import { ArrowRight, Check } from "lucide-react";
+import { getEngineImageOverrides, getPublicServicesData } from "@/lib/public-cache";
 import { services as staticServices } from "@/lib/cyvrix-data";
 import { findUnmappedServices, resolveEngines } from "@/lib/service-engines";
 
@@ -15,7 +16,8 @@ export default async function ServicesPage() {
   const dbServices = await getPublicServicesData();
   const services = dbServices.length > 0 ? dbServices : staticServices;
 
-  const engines = resolveEngines(services);
+  const engineImages = await getEngineImageOverrides().catch(() => ({}));
+  const engines = resolveEngines(services, engineImages);
   // Anything the CMS adds that no engine claims still gets a home on the page.
   const additional = findUnmappedServices(services);
 
@@ -53,12 +55,40 @@ export default async function ServicesPage() {
           >
             <div className="mx-auto grid max-w-7xl gap-10 px-5 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
               <div>
+                <div className="relative mb-8 h-56 w-full overflow-hidden rounded-2xl border border-white/10">
+                  <Image
+                    src={engine.image}
+                    alt={engine.imageAlt}
+                    fill
+                    sizes="(min-width: 1024px) 40vw, 100vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-[#020817]/30 to-transparent" />
+                </div>
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-sky-300">
                   <Icon className="h-6 w-6" />
                 </div>
                 <p className="mt-7 text-xs font-black uppercase tracking-[0.14em] text-sky-300">{engine.engagement}</p>
                 <h2 className="mt-3 font-outfit text-3xl font-black tracking-tight sm:text-4xl">{engine.title}</h2>
-                <p className="mt-4 max-w-md text-base leading-7 text-slate-400">{engine.description}</p>
+                <p className="mt-4 text-base leading-7 text-slate-300">{engine.description}</p>
+                <p className="mt-4 text-sm leading-7 text-slate-400">{engine.detail}</p>
+
+                <ul className="mt-6 space-y-2.5">
+                  {engine.outcomes.map((outcome) => (
+                    <li key={outcome} className="flex gap-3 text-sm leading-6 text-slate-300">
+                      <Check className="mt-1 h-4 w-4 shrink-0 text-sky-300" />
+                      {outcome}
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="mt-6 rounded-xl border border-sky-300/20 bg-sky-300/[0.07] px-4 py-3 text-sm leading-6 text-sky-50">
+                  <span className="font-black uppercase tracking-[0.1em] text-sky-300 text-[11px]">Typically suits </span>
+                  <br />
+                  {engine.suitedTo}
+                </p>
+
                 <Link
                   href={engine.href}
                   className="mt-7 inline-flex items-center gap-2 text-sm font-black text-sky-300 transition-colors hover:text-white"

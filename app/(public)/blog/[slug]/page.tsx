@@ -124,7 +124,7 @@ export default async function BlogPostDetailPage({ params }: BlogPostPageProps) 
           </p>
           <Button asChild variant="premium" className="mt-6 h-auto w-full px-4 py-3 text-sm">
             <Link href={getInsightConsultationHref(post)}>
-              Book a technology review <ArrowRight className="h-4 w-4" />
+              Book a Free Review <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </aside>
