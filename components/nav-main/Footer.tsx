@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import type { ComplianceCard, FooterLink as FooterLinkRecord, FooterSection, SocialLink } from "@/generated/prisma";
 import { Logo } from "./Logo";
+import { OPEN_COOKIE_PREFERENCES_EVENT } from "@/components/shared/CookieConsent";
 import {
   MessageCircle,
   Mail,
@@ -605,7 +606,14 @@ export function Footer({
             {(copyright || "CYVRIX Technologies Ltd.").replace(/all rights reserved\.?/gi, "").trim()}{" "}
             <span className="hidden sm:inline">All rights reserved. Registered in England &amp; Wales.</span>
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_PREFERENCES_EVENT))}
+              className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer"
+            >
+              Cookie Preferences
+            </button>
             <FooterNavLink
               href="/search"
               forceReload={forceFullPageReload}

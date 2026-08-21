@@ -23,7 +23,17 @@ type ConsentChoices = {
 type StoredConsent = ConsentChoices & {
   version: 1;
   updatedAt: string;
+  /**
+   * Whether the visitor has dismissed the floating preferences control.
+   * Optional so an existing consent cookie stays valid and nobody is asked
+   * to consent again. Hiding the control never changes a consent choice, and
+   * preferences remain reachable from the footer.
+   */
+  launcherHidden?: boolean;
 };
+
+/** Footer control asks the consent panel to open. */
+export const OPEN_COOKIE_PREFERENCES_EVENT = "cyvrix:open-cookie-preferences";
 
 const DEFAULT_CHOICES: ConsentChoices = {
   analytics: false,
@@ -61,7 +71,10 @@ function readStoredConsent(): StoredConsent | null {
       return null;
     }
 
-    lastConsentSnapshot = parsed as StoredConsent;
+    lastConsentSnapshot = {
+      ...(parsed as StoredConsent),
+      launcherHidden: parsed.launcherHidden === true,
+    };
     return lastConsentSnapshot;
   } catch {
     lastConsentSnapshot = null;
@@ -81,11 +94,12 @@ function getServerSnapshot() {
   return false;
 }
 
-function writeStoredConsent(choices: ConsentChoices): StoredConsent {
+function writeStoredConsent(choices: ConsentChoices, launcherHidden = false): StoredConsent {
   const consent: StoredConsent = {
     ...choices,
     version: 1,
     updatedAt: new Date().toISOString(),
+    launcherHidden,
   };
   const secure = window.location.protocol === "https:" ? "; Secure" : "";
 
@@ -138,11 +152,29 @@ export function CookieConsent() {
   const choices = draftChoices ?? consent ?? DEFAULT_CHOICES;
 
   const save = React.useCallback((nextChoices: ConsentChoices) => {
-    const nextConsent = writeStoredConsent(nextChoices);
+    const nextConsent = writeStoredConsent(nextChoices, consent?.launcherHidden === true);
     setSavedConsent(nextConsent);
     setDraftChoices(nextChoices);
     setIsManaging(false);
-  }, []);
+  }, [consent]);
+
+  const openPreferences = React.useCallback(() => {
+    setDraftChoices(consent ?? DEFAULT_CHOICES);
+    setIsManaging(true);
+  }, [consent]);
+
+  /** Hides the floating control without altering any consent choice. */
+  const hideLauncher = React.useCallback(() => {
+    if (!consent) return;
+    setSavedConsent(writeStoredConsent(consent, true));
+  }, [consent]);
+
+  // The footer keeps a permanent route back to these settings.
+  React.useEffect(() => {
+    const handler = () => openPreferences();
+    window.addEventListener(OPEN_COOKIE_PREFERENCES_EVENT, handler);
+    return () => window.removeEventListener(OPEN_COOKIE_PREFERENCES_EVENT, handler);
+  }, [openPreferences]);
 
   const updateChoice = React.useCallback((id: keyof ConsentChoices, checked: boolean) => {
     setDraftChoices((current) => ({ ...(current ?? consent ?? DEFAULT_CHOICES), [id]: checked }));
@@ -245,17 +277,25 @@ export function CookieConsent() {
             </button>
           </div>
         </section>
-      ) : (
-        <button
-          className="fixed bottom-4 left-4 z-[60] rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-lg transition hover:border-sky-300 hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 sm:bottom-6 sm:left-6"
-          onClick={() => {
-            setDraftChoices(consent ?? DEFAULT_CHOICES);
-            setIsManaging(true);
-          }}
-          type="button"
-        >
-          Cookie preferences
-        </button>
+      ) : consent?.launcherHidden ? null : (
+        <div className="fixed bottom-4 left-4 z-[60] flex items-stretch overflow-hidden rounded-full border border-slate-300 bg-white shadow-lg sm:bottom-6 sm:left-6">
+          <button
+            className="px-4 py-2 text-sm font-semibold text-slate-800 transition hover:text-sky-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500"
+            onClick={openPreferences}
+            type="button"
+          >
+            Cookie preferences
+          </button>
+          <button
+            aria-label="Hide the cookie preferences button. Preferences stay available from the footer."
+            className="border-l border-slate-200 px-2.5 text-slate-500 transition hover:bg-slate-50 hover:text-slate-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500"
+            onClick={hideLauncher}
+            title="Hide. You can reopen this from the footer."
+            type="button"
+          >
+            <span aria-hidden="true" className="text-base leading-none">&times;</span>
+          </button>
+        </div>
       )}
     </>
   );
