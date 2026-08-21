@@ -84,6 +84,41 @@ const defaultFooterColumns: FooterColumn[] = [
   },
 ];
 
+type SocialItem = {
+  key: string;
+  platform: string;
+  url: string;
+  label: string;
+  openInNewTab: boolean;
+};
+
+/**
+ * Shown when the CMS has no social links configured, so the footer is not
+ * missing its social icons entirely. These are the profiles recorded in the
+ * project's own seed data — confirm or replace them in Admin → Social Links.
+ */
+const defaultSocialItems: SocialItem[] = [
+  { key: "linkedin", platform: "LinkedIn", url: "https://linkedin.com/company/cyvrix", label: "CYVRIX on LinkedIn", openInNewTab: true },
+  { key: "x", platform: "X/Twitter", url: "https://x.com/cyvrix", label: "CYVRIX on X", openInNewTab: true },
+  { key: "github", platform: "GitHub", url: "https://github.com/cyvrix", label: "CYVRIX on GitHub", openInNewTab: true },
+];
+
+function toSocialItems(links: SocialLink[]): SocialItem[] {
+  const visible = links.filter((link) => link.isVisible !== false);
+  if (visible.length === 0) return defaultSocialItems;
+
+  return visible
+    .slice()
+    .sort((left, right) => left.sortOrder - right.sortOrder)
+    .map((link) => ({
+      key: link.id,
+      platform: link.platform,
+      url: link.url,
+      label: link.label || link.platform,
+      openInNewTab: link.openInNewTab ?? true,
+    }));
+}
+
 function toFooterColumns(sections: FooterSectionWithLinks[]): FooterColumn[] {
   if (sections.length === 0) return defaultFooterColumns;
 
@@ -452,25 +487,24 @@ export function Footer({
             </div>
 
             {/* Social Links */}
-            {socialLinks.length > 0 && (
-              <div className="flex flex-wrap gap-3 pt-4">
-                {socialLinks.map((social) => {
-                  const Icon = getSocialIcon(social.platform);
-                  return (
-                    <FooterNavLink
-                      key={social.id}
-                      href={social.url}
-                      forceReload={forceFullPageReload}
-                      target={social.openInNewTab ? "_blank" : undefined}
-                      aria-label={social.label || social.platform}
-                      className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#2691F0] hover:border-[#2691F0] transition-all hover:scale-105"
-                    >
-                      <Icon className="h-4.5 w-4.5" />
-                    </FooterNavLink>
-                  );
-                })}
-              </div>
-            )}
+            <div className="flex flex-wrap gap-3 pt-4">
+              {toSocialItems(socialLinks).map((social) => {
+                const Icon = getSocialIcon(social.platform);
+                return (
+                  <FooterNavLink
+                    key={social.key}
+                    href={social.url}
+                    forceReload={forceFullPageReload}
+                    target={social.openInNewTab ? "_blank" : undefined}
+                    rel={social.url.startsWith("http") ? "noreferrer noopener" : undefined}
+                    aria-label={social.label || social.platform}
+                    className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#2691F0] hover:border-[#2691F0] transition-all hover:scale-105"
+                  >
+                    <Icon className="h-4.5 w-4.5" />
+                  </FooterNavLink>
+                );
+              })}
+            </div>
 
             {/* Newsletter */}
             <div className="pt-2">

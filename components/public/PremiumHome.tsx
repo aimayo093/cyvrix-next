@@ -179,12 +179,22 @@ export function PremiumHome({
                   </ul>
                   )}
 
-                  <Link
-                    href={engine.href}
-                    className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-black text-[#1678cc] transition-colors hover:text-[#041635]"
-                  >
-                    {engine.cta} <ArrowRight className="h-4 w-4" />
-                  </Link>
+                  <div className="mt-auto flex flex-wrap items-center gap-x-5 gap-y-2 pt-7">
+                    <Link
+                      href={engine.href}
+                      className="inline-flex items-center gap-2 text-sm font-black text-[#1678cc] transition-colors hover:text-[#041635]"
+                    >
+                      {engine.cta} <ArrowRight className="h-4 w-4" />
+                    </Link>
+                    {engine.secondaryHref && engine.secondaryLabel && (
+                      <Link
+                        href={engine.secondaryHref}
+                        className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 transition-colors hover:text-[#1678cc]"
+                      >
+                        {engine.secondaryLabel}
+                      </Link>
+                    )}
+                  </div>
                   </div>
                 </article>
               );

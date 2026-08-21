@@ -7,6 +7,7 @@ import { clearSession, isAdminRole, setSession } from "@/lib/auth";
 import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { enforceRateLimit, getClientAddress, RateLimitError, resetRateLimit } from "@/lib/rate-limit";
+import { recordAuthEvent } from "@/lib/security-events";
 
 const authSchema = z.object({
   email: z.string().trim().email().toLowerCase(),
@@ -34,18 +35,42 @@ export async function login(formData: FormData) {
     });
 
     if (!user || !user.active || !verifyPassword(parsed.data.password, user.passwordHash)) {
+      // Recorded so the Security Centre can see authentication pressure. The
+      // reason is deliberately coarse and no password material is stored.
+      await recordAuthEvent({
+        action: "auth.sign_in_failed",
+        userId: user?.id ?? null,
+        ipAddress: clientAddress,
+        metadata: {
+          reason: !user ? "unknown_account" : !user.active ? "inactive_account" : "bad_credentials",
+          role: user?.role ?? null,
+        },
+      });
       return { error: "Invalid email or password." };
     }
 
     await setSession(user);
     resetRateLimit(ipKey);
     resetRateLimit(attemptKey);
+
+    await recordAuthEvent({
+      action: "auth.sign_in_succeeded",
+      userId: user.id,
+      ipAddress: clientAddress,
+      metadata: { role: user.role },
+    });
     
     // Redirect based on role
     const destination = isAdminRole(user.role) ? "/admin" : "/portal";
     return { success: true, destination };
   } catch (error) {
     if (error instanceof RateLimitError) {
+      await recordAuthEvent({
+        action: "auth.sign_in_throttled",
+        userId: null,
+        ipAddress: clientAddress,
+        metadata: { reason: "rate_limited" },
+      });
       return { error: "Too many sign-in attempts. Please wait before trying again." };
     }
 

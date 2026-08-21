@@ -13,9 +13,8 @@ const fallbackHeaderMenu = [
   { id: "fallback-home", label: "Home", url: "/", sortOrder: 10 },
   { id: "fallback-services", label: "Services", url: "/services", sortOrder: 20 },
   { id: "fallback-industries", label: "Industries", url: "/industries", sortOrder: 30 },
-  { id: "fallback-pricing", label: "Pricing", url: "/pricing", sortOrder: 40 },
-  { id: "fallback-about", label: "About", url: "/about", sortOrder: 50 },
-  { id: "fallback-contact", label: "Contact", url: "/contact", sortOrder: 60 },
+  { id: "fallback-about", label: "About", url: "/about", sortOrder: 40 },
+  { id: "fallback-contact", label: "Contact", url: "/contact", sortOrder: 50 },
   {
     id: "fallback-cta",
     label: "Book a Free Review",
@@ -25,8 +24,11 @@ const fallbackHeaderMenu = [
   },
 ];
 
-/** Header entries retired to the footer. Filtered out even when the CMS still supplies them. */
-const headerExcludedPaths = new Set(["/careers", "/case-studies", "/blog", "/insights"]);
+/**
+ * Header entries retired from the primary navigation. Filtered out even when the
+ * CMS still supplies them. Pricing is reached through Managed Services instead.
+ */
+const headerExcludedPaths = new Set(["/careers", "/case-studies", "/blog", "/insights", "/pricing"]);
 
 function withoutRetiredHeaderItems<T extends { url?: string | null }>(items: T[]): T[] {
   return items.filter((item) => {

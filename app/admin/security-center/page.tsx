@@ -8,6 +8,11 @@ import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { Button } from "@/components/shared/Button";
 import { SecurityScanCard } from "@/components/admin/SecurityScanCard";
 import {
+  SecurityAnalystEmptyState,
+  SecurityAnalystPanel,
+} from "@/components/admin/SecurityAnalystPanel";
+import { buildAnalystReport } from "@/lib/security-analyst";
+import {
   DEFAULT_SECURITY_CENTER_SETTINGS,
   parseSecurityCenterSettings,
   type SecurityScanResult,
@@ -54,6 +59,7 @@ async function SecurityCenterPageContent() {
   const statusMeta = lastResult ? STATUS_META[lastResult.overallStatus] : null;
   const failures = lastResult?.checks.filter((check) => check.status === "fail") ?? [];
   const warnings = lastResult?.checks.filter((check) => check.status === "warn") ?? [];
+  const analyst = lastResult ? await buildAnalystReport(lastResult) : null;
 
   return (
     <div className="space-y-8 pb-16">
@@ -85,6 +91,8 @@ async function SecurityCenterPageContent() {
           </div>
         )}
       </div>
+
+      {analyst ? <SecurityAnalystPanel report={analyst} /> : <SecurityAnalystEmptyState />}
 
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-8">

@@ -36,12 +36,6 @@ export default async function ServicesPage() {
                 security support, skilled field delivery or a well-governed project team.
               </p>
             </div>
-            <Link
-              href="/pricing"
-              className="inline-flex shrink-0 items-center gap-2 text-sm font-black text-sky-300 transition-colors hover:text-white"
-            >
-              View managed IT plans <ArrowRight className="h-4 w-4" />
-            </Link>
           </div>
         </div>
       </section>
@@ -89,12 +83,22 @@ export default async function ServicesPage() {
                   {engine.suitedTo}
                 </p>
 
-                <Link
-                  href={engine.href}
-                  className="mt-7 inline-flex items-center gap-2 text-sm font-black text-sky-300 transition-colors hover:text-white"
-                >
-                  {engine.cta} <ArrowRight className="h-4 w-4" />
-                </Link>
+                <div className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-3">
+                  <Link
+                    href={engine.href}
+                    className="inline-flex items-center gap-2 text-sm font-black text-sky-300 transition-colors hover:text-white"
+                  >
+                    {engine.cta} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  {engine.secondaryHref && engine.secondaryLabel && (
+                    <Link
+                      href={engine.secondaryHref}
+                      className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-black text-white transition-colors hover:border-sky-300/50 hover:bg-white/[0.06]"
+                    >
+                      {engine.secondaryLabel} <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  )}
+                </div>
               </div>
 
               {engine.includes.length > 0 && (

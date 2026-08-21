@@ -32,6 +32,9 @@ export type ServiceEngine = {
   imageAlt: string;
   href: string;
   cta: string;
+  /** Optional second route, e.g. published plans for the recurring engine. */
+  secondaryHref?: string;
+  secondaryLabel?: string;
   icon: LucideIcon;
 };
 
@@ -70,6 +73,8 @@ export const serviceEngines: ServiceEngine[] = [
     imageAlt: "A support engineer working at a desk with multiple screens",
     href: "/book-consultation?service=Managed%20Services",
     cta: "Explore managed support",
+    secondaryHref: "/pricing",
+    secondaryLabel: "View managed IT plans",
     icon: Headphones,
   },
   {
