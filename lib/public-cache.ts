@@ -577,12 +577,29 @@ export async function getPublicCaseStudies() {
   }
 }
 
+/** Site imagery that an administrator can replace, stored in the `site_images` setting. */
+export type SiteImages = {
+  /** Engine key -> image URL. */
+  engines: Record<string, string | undefined>;
+  /** Homepage hero image URL. */
+  hero?: string;
+};
+
+function readImageMap(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out: Record<string, string> = {};
+  for (const [key, url] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof url === "string" && url.trim().length > 0) out[key] = url.trim();
+  }
+  return out;
+}
+
 /**
- * Representative images for the four service engines, keyed by engine key and
- * stored in the `site_images` site setting. Falls back to the built-in images
- * in `lib/service-engines.ts` when nothing is configured or the read fails.
+ * Replaceable site imagery. Falls back to the built-in defaults in
+ * `lib/service-engines.ts` and the homepage when nothing is configured or the
+ * read fails, so the public site always has usable images.
  */
-export async function getEngineImageOverrides(): Promise<Record<string, string | undefined>> {
+export async function getSiteImages(): Promise<SiteImages> {
   "use cache";
   cacheLife("hours");
   cacheTag(PUBLIC_CACHE_TAGS.siteImages);
@@ -590,18 +607,13 @@ export async function getEngineImageOverrides(): Promise<Record<string, string |
   try {
     const record = await prisma.siteSetting.findUnique({ where: { key: "site_images" } });
     const value = record?.value;
-    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    if (!value || typeof value !== "object" || Array.isArray(value)) return { engines: {} };
 
-    const engines = (value as Record<string, unknown>).engines;
-    if (!engines || typeof engines !== "object" || Array.isArray(engines)) return {};
-
-    const out: Record<string, string> = {};
-    for (const [key, url] of Object.entries(engines as Record<string, unknown>)) {
-      if (typeof url === "string" && url.trim().length > 0) out[key] = url.trim();
-    }
-    return out;
+    const root = value as Record<string, unknown>;
+    const hero = typeof root.hero === "string" && root.hero.trim().length > 0 ? root.hero.trim() : undefined;
+    return { engines: readImageMap(root.engines), hero };
   } catch (error) {
-    console.warn("[public-cache] failed to load site image overrides", error);
-    return {};
+    console.warn("[public-cache] failed to load site images", error);
+    return { engines: {} };
   }
 }

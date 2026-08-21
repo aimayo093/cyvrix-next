@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Check } from "lucide-react";
-import { getEngineImageOverrides, getPublicServicesData } from "@/lib/public-cache";
+import { getPublicServicesData, getSiteImages, type SiteImages } from "@/lib/public-cache";
 import { services as staticServices } from "@/lib/cyvrix-data";
 import { findUnmappedServices, resolveEngines } from "@/lib/service-engines";
 
@@ -16,8 +16,8 @@ export default async function ServicesPage() {
   const dbServices = await getPublicServicesData();
   const services = dbServices.length > 0 ? dbServices : staticServices;
 
-  const engineImages = await getEngineImageOverrides().catch(() => ({}));
-  const engines = resolveEngines(services, engineImages);
+  const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {} }));
+  const engines = resolveEngines(services, siteImages.engines);
   // Anything the CMS adds that no engine claims still gets a home on the page.
   const additional = findUnmappedServices(services);
 

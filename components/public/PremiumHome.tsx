@@ -9,9 +9,14 @@ type Service = {
   title: string;
 };
 
+const DEFAULT_HERO_IMAGE =
+  "/uploads/1780490490158-59620428-christina-wocintechchat-com-m-bPVM4nOy0Rg-unsplash.jpg";
+
 type PremiumHomeProps = {
   services: Service[];
   engineImages?: EngineImageOverrides;
+  /** Replaceable from the CMS via the `site_images` setting. */
+  heroImage?: string;
 };
 
 const deliverySteps = [
@@ -30,7 +35,11 @@ const commercialOffers = [
   { title: "Network Assessment", href: "/assessments/network-assessment" },
 ];
 
-export function PremiumHome({ services, engineImages = {} }: PremiumHomeProps) {
+export function PremiumHome({
+  services,
+  engineImages = {},
+  heroImage = DEFAULT_HERO_IMAGE,
+}: PremiumHomeProps) {
   const engines = resolveEngines(services, engineImages);
 
   return (
@@ -38,31 +47,52 @@ export function PremiumHome({ services, engineImages = {} }: PremiumHomeProps) {
       <section className="relative isolate border-b border-white/10 bg-[#041635]">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_15%,rgba(38,145,240,0.22),transparent_38%),radial-gradient(circle_at_80%_72%,rgba(6,182,212,0.12),transparent_38%)]" />
         <div className="absolute inset-0 -z-10 bg-corporate-grid opacity-40" />
-        <div className="mx-auto max-w-7xl px-5 py-24 sm:py-28 lg:px-8 lg:py-36">
-          <div className="max-w-4xl">
-            <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3.5 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-sky-200">
-              <ShieldCheck className="h-4 w-4" />
-              Technology partnership for growing UK organisations
-            </p>
-            <h1 className="max-w-4xl font-outfit text-5xl font-black leading-[0.98] tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Technology that runs quietly. Security that stands up.
-            </h1>
-            <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
-              CYVRIX manages, secures and modernises the technology behind ambitious organisations — with ongoing support, expert projects and practical field delivery.
-            </p>
-            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
-              <Link
-                href="/assessments"
-                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-[#2691F0] px-7 font-bold text-white shadow-lg shadow-[#2691F0]/20 transition-colors hover:bg-white hover:text-[#041635]"
-              >
-                Choose an assessment <ArrowRight className="h-5 w-5" />
-              </Link>
-              <Link
-                href="/services"
-                className="inline-flex min-h-14 items-center justify-center rounded-md border border-white/20 px-7 font-bold text-white transition-colors hover:border-white/50 hover:bg-white/10"
-              >
-                Explore services
-              </Link>
+        <div className="mx-auto max-w-7xl px-5 py-20 sm:py-24 lg:px-8 lg:py-28">
+          <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+            <div>
+              <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3.5 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-sky-200">
+                <ShieldCheck className="h-4 w-4" />
+                Technology partnership for growing UK organisations
+              </p>
+              <h1 className="font-outfit text-5xl font-black leading-[0.98] tracking-tight text-white sm:text-6xl">
+                Technology that runs quietly. Security that stands up.
+              </h1>
+              <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">
+                CYVRIX manages, secures and modernises the technology behind ambitious organisations — with ongoing support, expert projects and practical field delivery.
+              </p>
+              <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+                <Link
+                  href="/assessments"
+                  className="inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-[#2691F0] px-7 font-bold text-white shadow-lg shadow-[#2691F0]/20 transition-colors hover:bg-white hover:text-[#041635]"
+                >
+                  Choose an assessment <ArrowRight className="h-5 w-5" />
+                </Link>
+                <Link
+                  href="/services"
+                  className="inline-flex min-h-14 items-center justify-center rounded-md border border-white/20 px-7 font-bold text-white transition-colors hover:border-white/50 hover:bg-white/10"
+                >
+                  Explore services
+                </Link>
+              </div>
+            </div>
+
+            <div className="relative">
+              {/* Soft brand glow behind the image, kept subtle so the photo stays the focus. */}
+              <div
+                aria-hidden="true"
+                className="absolute -inset-6 -z-10 rounded-[2rem] bg-[radial-gradient(circle_at_70%_30%,rgba(38,145,240,0.35),transparent_65%)] blur-2xl"
+              />
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-white/15 shadow-2xl shadow-black/50">
+                <Image
+                  src={heroImage}
+                  alt="Two CYVRIX specialists reviewing technical work together on a laptop"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 45vw, 100vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-tr from-[#041635]/55 via-transparent to-transparent" />
+              </div>
             </div>
           </div>
         </div>

@@ -1,7 +1,21 @@
 import type { Metadata, Viewport } from "next";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-
 import { getFaviconMetadata } from "@/lib/public-cache";
+
+// Self-hosted at build time. The previous Google Fonts @import in globals.css was
+// blocked by the site's own Content-Security-Policy, so neither face ever loaded.
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter-sans",
+});
+
+const outfit = Outfit({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-outfit-display",
+});
 
 export const viewport: Viewport = {
   themeColor: "#041635",
@@ -66,7 +80,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="scroll-smooth">
+    <html lang="en" suppressHydrationWarning className={`scroll-smooth ${inter.variable} ${outfit.variable}`}>
       <body suppressHydrationWarning className="antialiased font-inter text-slate-900 bg-white min-h-screen flex flex-col">
         {children}
       </body>

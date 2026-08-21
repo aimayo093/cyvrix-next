@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PremiumHome } from "@/components/public/PremiumHome";
 import { cacheLife, cacheTag } from "next/cache";
-import { getEngineImageOverrides, getHomePageData, getHomeSeoMetadata, PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
+import { getHomePageData, getHomeSeoMetadata, getSiteImages, PUBLIC_CACHE_TAGS, type SiteImages } from "@/lib/public-cache";
 import { services as staticServices } from "@/lib/cyvrix-data";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,7 +35,13 @@ export default async function HomePage() {
     };
   });
 
-  const engineImages = await getEngineImageOverrides().catch(() => ({}));
+  const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {} }));
 
-  return <PremiumHome services={services.length > 0 ? services : staticServices} engineImages={engineImages} />;
+  return (
+    <PremiumHome
+      services={services.length > 0 ? services : staticServices}
+      engineImages={siteImages.engines}
+      heroImage={siteImages.hero}
+    />
+  );
 }

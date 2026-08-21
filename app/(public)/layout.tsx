@@ -4,15 +4,18 @@ import { Footer } from "@/components/nav-main/Footer";
 import { CookieConsent } from "@/components/shared/CookieConsent";
 import { getPublicShellData } from "@/lib/public-cache";
 
+/**
+ * Primary navigation is kept deliberately short. Careers, Case Studies and
+ * Insights are reachable from the footer rather than the header, so the top
+ * level stays focused on what a prospective client is looking for.
+ */
 const fallbackHeaderMenu = [
   { id: "fallback-home", label: "Home", url: "/", sortOrder: 10 },
   { id: "fallback-services", label: "Services", url: "/services", sortOrder: 20 },
   { id: "fallback-industries", label: "Industries", url: "/industries", sortOrder: 30 },
-  { id: "fallback-about", label: "About", url: "/about", sortOrder: 40 },
-  { id: "fallback-insights", label: "Insights", url: "/blog", sortOrder: 50 },
-  { id: "fallback-case-studies", label: "Case Studies", url: "/case-studies", sortOrder: 60 },
-  { id: "fallback-careers", label: "Careers", url: "/careers", sortOrder: 70 },
-  { id: "fallback-contact", label: "Contact", url: "/contact", sortOrder: 80 },
+  { id: "fallback-pricing", label: "Pricing", url: "/pricing", sortOrder: 40 },
+  { id: "fallback-about", label: "About", url: "/about", sortOrder: 50 },
+  { id: "fallback-contact", label: "Contact", url: "/contact", sortOrder: 60 },
   {
     id: "fallback-cta",
     label: "Book a Free Review",
@@ -21,6 +24,16 @@ const fallbackHeaderMenu = [
     iconKey: "button-cta",
   },
 ];
+
+/** Header entries retired to the footer. Filtered out even when the CMS still supplies them. */
+const headerExcludedPaths = new Set(["/careers", "/case-studies", "/blog", "/insights"]);
+
+function withoutRetiredHeaderItems<T extends { url?: string | null }>(items: T[]): T[] {
+  return items.filter((item) => {
+    const url = (item.url ?? "").split("?")[0].replace(/\/$/, "");
+    return url === "" || !headerExcludedPaths.has(url);
+  });
+}
 
 function publicValue(value?: string) {
   if (!value || /set in admin|configured in admin|placeholder/i.test(value)) return undefined;
@@ -72,11 +85,19 @@ async function getPublicChromeData() {
   const brandData = (brandSettings?.value as Record<string, string>) ?? {};
   const companyData = (companySettings?.value as Record<string, string>) ?? {};
 
-  const logoDefault = brandAssets.find((asset) => asset.assetKey === "logo_default")?.mediaUrl || brandData.logoUrl || "";
-  const logoWhite = brandAssets.find((asset) => asset.assetKey === "logo_white")?.mediaUrl || "";
-  const logoDark = brandAssets.find((asset) => asset.assetKey === "logo_dark")?.mediaUrl || "";
-  const logoFooter = brandAssets.find((asset) => asset.assetKey === "logo_footer")?.mediaUrl || "";
-  const logoSticky = brandAssets.find((asset) => asset.assetKey === "logo_sticky")?.mediaUrl || "";
+  // Brand Assets in the CMS win; these defaults keep the correct logo variant on
+  // each background so the header never falls back to the text placeholder.
+  const brandLogo = {
+    colour: "/brand/cyvrix-logo-color.png",
+    white: "/brand/cyvrix-logo-white.png",
+    black: "/brand/cyvrix-logo-black.png",
+  } as const;
+
+  const logoDefault = brandAssets.find((asset) => asset.assetKey === "logo_default")?.mediaUrl || brandData.logoUrl || brandLogo.colour;
+  const logoWhite = brandAssets.find((asset) => asset.assetKey === "logo_white")?.mediaUrl || brandLogo.white;
+  const logoDark = brandAssets.find((asset) => asset.assetKey === "logo_dark")?.mediaUrl || brandLogo.colour;
+  const logoFooter = brandAssets.find((asset) => asset.assetKey === "logo_footer")?.mediaUrl || brandLogo.white;
+  const logoSticky = brandAssets.find((asset) => asset.assetKey === "logo_sticky")?.mediaUrl || brandLogo.white;
 
   const logoAlt = brandData.logoAlt || "CYVRIX Technologies";
   const companyDesc = publicValue(brandData.footerDescription);
@@ -118,7 +139,11 @@ async function PublicNavbar() {
 
   return (
     <Navbar
-      navItems={headerMenu?.items?.length ? headerMenu.items : fallbackHeaderMenu}
+      navItems={
+        headerMenu?.items?.length
+          ? withoutRetiredHeaderItems(headerMenu.items)
+          : fallbackHeaderMenu
+      }
       logoDefault={logoDefault}
       logoWhite={logoWhite}
       logoDark={logoDark}

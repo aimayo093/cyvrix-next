@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface LogoProps {
@@ -34,14 +35,17 @@ export function Logo({
   }
 
   return (
-    <a href="/" className={cn("flex items-center gap-2 group relative block", className)}>
+    <Link href="/" className={cn("flex items-center gap-2 group relative block", className)}>
       {activeLogo ? (
-        <div className="relative h-10 w-44 transition-opacity duration-300">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="h-10 w-44 transition-opacity duration-300">
+          {/* Explicit dimensions rather than `fill`: `fill`+`priority` here prevented
+              the streamed navbar Suspense boundary from being revealed. */}
+          <Image
             src={activeLogo}
             alt={logoAlt}
-            className="h-10 w-auto object-contain transition-all duration-300"
+            width={176}
+            height={40}
+            className="h-10 w-auto object-contain object-left transition-all duration-300"
           />
         </div>
       ) : (
@@ -69,6 +73,6 @@ export function Logo({
           )}
         </>
       )}
-    </a>
+    </Link>
   );
 }
