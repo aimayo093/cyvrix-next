@@ -583,6 +583,8 @@ export type SiteImages = {
   engines: Record<string, string | undefined>;
   /** Homepage hero image URL. */
   hero?: string;
+  /** Industry slug -> image URL. */
+  industries: Record<string, string | undefined>;
 };
 
 function readImageMap(value: unknown): Record<string, string> {
@@ -607,13 +609,13 @@ export async function getSiteImages(): Promise<SiteImages> {
   try {
     const record = await prisma.siteSetting.findUnique({ where: { key: "site_images" } });
     const value = record?.value;
-    if (!value || typeof value !== "object" || Array.isArray(value)) return { engines: {} };
+    if (!value || typeof value !== "object" || Array.isArray(value)) return { engines: {}, industries: {} };
 
     const root = value as Record<string, unknown>;
     const hero = typeof root.hero === "string" && root.hero.trim().length > 0 ? root.hero.trim() : undefined;
-    return { engines: readImageMap(root.engines), hero };
+    return { engines: readImageMap(root.engines), industries: readImageMap(root.industries), hero };
   } catch (error) {
     console.warn("[public-cache] failed to load site images", error);
-    return { engines: {} };
+    return { engines: {}, industries: {} };
   }
 }

@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { IndustryClient } from "./IndustryClient";
-import { getPublicIndustryDetail } from "@/lib/public-cache";
+import { getPublicIndustryDetail, getSiteImages, type SiteImages } from "@/lib/public-cache";
 import { getStaticPublicIndustry, toPublicIndustry } from "@/lib/public-industry";
 import { industries as staticIndustries } from "@/lib/cyvrix-data";
 
@@ -27,8 +27,14 @@ export async function generateStaticParams() {
 
 export default async function IndustryDetailPage({ params }: IndustryPageProps) {
   const { slug } = await params;
-  const dbIndustry = await getPublicIndustryDetail(slug);
-  const industry = dbIndustry ? toPublicIndustry(dbIndustry) : getStaticPublicIndustry(slug);
+  const [dbIndustry, siteImages] = await Promise.all([
+    getPublicIndustryDetail(slug),
+    getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} })),
+  ]);
+  const imageOverride = siteImages.industries[slug];
+  const industry = dbIndustry
+    ? toPublicIndustry(dbIndustry, imageOverride)
+    : getStaticPublicIndustry(slug, imageOverride);
   if (!industry) notFound();
 
   return <IndustryClient industry={industry} />;

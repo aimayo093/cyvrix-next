@@ -16,7 +16,7 @@ export default async function ServicesPage() {
   const dbServices = await getPublicServicesData();
   const services = dbServices.length > 0 ? dbServices : staticServices;
 
-  const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {} }));
+  const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} }));
   const engines = resolveEngines(services, siteImages.engines);
   // Anything the CMS adds that no engine claims still gets a home on the page.
   const additional = findUnmappedServices(services);

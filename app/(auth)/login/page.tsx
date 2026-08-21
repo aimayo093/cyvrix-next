@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Shield, ArrowLeft, Mail, Loader2, AlertCircle } from "lucide-react";
+import { Shield, ArrowLeft, Mail, Loader2, AlertCircle, LockKeyhole, ServerCog } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 import { login } from "./actions";
@@ -46,10 +47,11 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#041635] flex items-center justify-center p-5 relative overflow-hidden">
-      {/* Background Glows */}
-      <div className="absolute top-0 -left-20 w-96 h-96 bg-[#2691F0] rounded-full blur-[150px] opacity-10 animate-pulse" />
-      <div className="absolute bottom-0 -right-20 w-96 h-96 bg-[#2691F0] rounded-full blur-[150px] opacity-10 animate-pulse delay-700" />
+    <div className="grid min-h-screen bg-[#041635] lg:grid-cols-[1fr_1.05fr]">
+      {/* Sign-in column */}
+      <div className="relative flex items-center justify-center overflow-hidden p-5 py-14 sm:p-10">
+        <div className="absolute -left-20 top-0 h-96 w-96 rounded-full bg-[#2691F0] opacity-10 blur-[150px]" />
+        <div className="absolute -right-20 bottom-0 h-96 w-96 rounded-full bg-[#2691F0] opacity-10 blur-[150px]" />
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo/Back Link */}
@@ -150,18 +152,77 @@ function LoginForm() {
           &copy; {new Date().getFullYear()} CYVRIX Technologies Ltd &bull; Secure Systems
         </p>
       </div>
+      </div>
+
+      <BrandPanel />
     </div>
+  );
+}
+
+/** Full-height brand panel shown beside the sign-in form on large screens. */
+function BrandPanel() {
+  return (
+    <aside className="relative hidden overflow-hidden lg:block">
+      <Image
+        src="/uploads/1780489287611-46531032-kirill-sh-eVWWr6nmDf8-unsplash.jpg"
+        alt="Structured network cabling in a CYVRIX-managed equipment rack"
+        fill
+        sizes="50vw"
+        className="object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-br from-[#041635]/95 via-[#041635]/70 to-[#020817]/90" />
+      <div className="absolute inset-0 bg-corporate-grid opacity-30" />
+
+      <div className="relative flex h-full flex-col justify-between p-12 xl:p-16">
+        <Image
+          src="/brand/cyvrix-logo-white.png"
+          alt="CYVRIX Technologies"
+          width={200}
+          height={46}
+          className="h-11 w-auto object-contain object-left"
+        />
+
+        <div className="max-w-md">
+          <h2 className="font-outfit text-4xl font-black leading-tight tracking-tight text-white xl:text-5xl">
+            Where technology meets security.
+          </h2>
+          <p className="mt-6 text-base leading-8 text-slate-300">
+            Your portal brings support requests, documents and service information into one
+            place, so the people who need an answer can find it without chasing.
+          </p>
+
+          <ul className="mt-10 space-y-4">
+            <li className="flex items-center gap-3 text-sm font-semibold text-slate-200">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] text-sky-300">
+                <LockKeyhole className="h-4 w-4" />
+              </span>
+              Access controlled by role, reviewed as your team changes
+            </li>
+            <li className="flex items-center gap-3 text-sm font-semibold text-slate-200">
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] text-sky-300">
+                <ServerCog className="h-4 w-4" />
+              </span>
+              Support requests and documents kept in one place
+            </li>
+          </ul>
+        </div>
+
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+          UK-based technology delivery
+        </p>
+      </div>
+    </aside>
   );
 }
 
 export default function LoginPage() {
   return (
     <React.Suspense fallback={
-      <div className="min-h-screen bg-[#041635] flex items-center justify-center p-5 relative overflow-hidden">
-        {/* Background Glows */}
-        <div className="absolute top-0 -left-20 w-96 h-96 bg-[#2691F0] rounded-full blur-[150px] opacity-10 animate-pulse" />
-        <div className="absolute bottom-0 -right-20 w-96 h-96 bg-[#2691F0] rounded-full blur-[150px] opacity-10 animate-pulse delay-700" />
-        <div className="text-center text-slate-400 font-medium z-10 animate-pulse">Loading control panel...</div>
+      <div className="grid min-h-screen bg-[#041635] lg:grid-cols-[1fr_1.05fr]">
+        <div className="flex items-center justify-center p-5">
+          <div className="text-center font-medium text-slate-400">Loading sign-in…</div>
+        </div>
+        <div className="hidden bg-[#020817] lg:block" />
       </div>
     }>
       <LoginForm />

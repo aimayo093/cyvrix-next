@@ -1,5 +1,6 @@
 import { findIndustry } from "@/lib/cyvrix-data";
 import { getIndustryJourney, type IndustryJourney } from "@/lib/industry-journeys";
+import { getIndustryContent, type IndustryContent } from "@/lib/industry-content";
 
 export type PublicIndustry = {
   slug: string;
@@ -9,6 +10,7 @@ export type PublicIndustry = {
   solutions: string[];
   services: string[];
   journey: IndustryJourney;
+  content: IndustryContent;
 };
 
 type IndustrySource = {
@@ -33,7 +35,7 @@ function readTextList(value: unknown): string[] {
     : [];
 }
 
-export function getStaticPublicIndustry(slug: string): PublicIndustry | null {
+export function getStaticPublicIndustry(slug: string, imageOverride?: string): PublicIndustry | null {
   const industry = findIndustry(slug);
   if (!industry) return null;
 
@@ -45,12 +47,13 @@ export function getStaticPublicIndustry(slug: string): PublicIndustry | null {
     solutions: industry.solutions,
     services: industry.services,
     journey: getIndustryJourney(industry.slug),
+    content: getIndustryContent(industry.slug, imageOverride),
   };
 }
 
-export function toPublicIndustry(source: IndustrySource): PublicIndustry {
+export function toPublicIndustry(source: IndustrySource, imageOverride?: string): PublicIndustry {
   const content = isRecord(source.content) ? source.content : {};
-  const fallback = getStaticPublicIndustry(source.slug);
+  const fallback = getStaticPublicIndustry(source.slug, imageOverride);
 
   return {
     slug: source.slug,
@@ -60,5 +63,15 @@ export function toPublicIndustry(source: IndustrySource): PublicIndustry {
     solutions: readTextList(content.solutions).length > 0 ? readTextList(content.solutions) : fallback?.solutions || [],
     services: readTextList(content.services).length > 0 ? readTextList(content.services) : fallback?.services || [],
     journey: getIndustryJourney(source.slug),
+    content: (() => {
+      const base = getIndustryContent(source.slug, imageOverride);
+      const overview = readTextList(content.overview);
+      const outcomes = readTextList(content.outcomes);
+      return {
+        ...base,
+        overview: overview.length > 0 ? overview : base.overview,
+        outcomes: outcomes.length > 0 ? outcomes : base.outcomes,
+      };
+    })(),
   };
 }

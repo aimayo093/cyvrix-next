@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 export default async function IndustriesPage() {
   const dbIndustries = await getPublicIndustriesData();
   const industries = dbIndustries.length > 0
-    ? dbIndustries.map(toPublicIndustry)
+    ? dbIndustries.map((industry) => toPublicIndustry(industry))
     : staticIndustries.flatMap((industry) => {
       const publicIndustry = getStaticPublicIndustry(industry.slug);
       return publicIndustry ? [publicIndustry] : [];

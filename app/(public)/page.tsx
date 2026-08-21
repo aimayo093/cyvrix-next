@@ -35,7 +35,7 @@ export default async function HomePage() {
     };
   });
 
-  const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {} }));
+  const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} }));
 
   return (
     <PremiumHome
