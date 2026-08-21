@@ -18,7 +18,7 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { SectionTypeSelect } from "@/components/admin/SectionTypeSelect";
 import { Plus, Pencil, ArrowUp, ArrowDown, Layers, FileText, Settings, Sparkles, AlertTriangle } from "lucide-react";
 
-export const metadata = { title: "Pages & Core Sections Builder | CYVRIX Admin" };
+export const metadata = { title: "Pages & Core Sections Builder" };
 
 export default function PagesCMSPage(props: any) {
   return (
@@ -505,7 +505,7 @@ function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionT
             <input
               name="settingsJson_eyebrow"
               defaultValue={settings.eyebrow}
-              placeholder="e.g. ISO 27001 Certified Operations"
+              placeholder="e.g. UK-based technology delivery"
               className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
             />
           </label>
@@ -516,7 +516,7 @@ function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionT
               <input
                 name="settingsJson_cardTitle"
                 defaultValue={settings.cardTitle}
-                placeholder="e.g. Premium UK Operations Center"
+                placeholder="e.g. How we work"
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
               />
             </label>
@@ -532,12 +532,18 @@ function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionT
 
         <div className="p-4 bg-slate-100 rounded-xl space-y-4 border border-slate-200">
           <p className="text-xs font-bold text-slate-800 border-b border-slate-200 pb-1.5">Floating Stat Card Badge</p>
-          
+
+          <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-semibold leading-5 text-amber-900">
+            Published figures must be supported by evidence. Do not enter a response time, uptime,
+            satisfaction or SLA claim that is not measured and covered by the relevant customer
+            agreement. Leave these fields empty and the badge hidden unless the number can be shown.
+          </p>
+
           <div className="flex items-center justify-between gap-4">
             <span className="text-xs font-bold text-slate-700">Display Floating Stat Badge</span>
             <select
               name="settingsJson_showStatCard"
-              defaultValue={settings.showStatCard !== false && settings.showStatCard !== "false" ? "true" : "false"}
+              defaultValue={settings.showStatCard === true || settings.showStatCard === "true" ? "true" : "false"}
               className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-[#041635] bg-white font-semibold cursor-pointer focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
             >
               <option value="true">Show Badge</option>
@@ -550,8 +556,8 @@ function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionT
               Stat Label
               <input
                 name="settingsJson_statLabel"
-                defaultValue={settings.statLabel || "Average Response Time"}
-                placeholder="e.g. Average Response Time"
+                defaultValue={settings.statLabel || ""}
+                placeholder="Only a figure you can evidence"
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
               />
             </label>
@@ -561,8 +567,8 @@ function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionT
                 Stat Value
                 <input
                   name="settingsJson_statValue"
-                  defaultValue={settings.statValue || "12"}
-                  placeholder="e.g. 12"
+                  defaultValue={settings.statValue || ""}
+                  placeholder="Value"
                   className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
                 />
               </label>
@@ -571,8 +577,8 @@ function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionT
                 Stat Unit
                 <input
                   name="settingsJson_statUnit"
-                  defaultValue={settings.statUnit || "Mins"}
-                  placeholder="e.g. Mins"
+                  defaultValue={settings.statUnit || ""}
+                  placeholder="Unit"
                   className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
                 />
               </label>
@@ -583,8 +589,8 @@ function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionT
             Stat Warnings / Subtext Badge
             <input
               name="settingsJson_statBadge"
-              defaultValue={settings.statBadge || "SLA Exceeded"}
-              placeholder="e.g. SLA Exceeded"
+              defaultValue={settings.statBadge || ""}
+              placeholder="Only a claim covered by an agreement"
               className="mt-1.5 w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs text-[#041635] bg-white focus:ring-1 focus:ring-[#2691F0] focus:outline-none"
             />
           </label>

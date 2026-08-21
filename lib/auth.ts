@@ -1,7 +1,7 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { forbidden, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createHmac } from "node:crypto";
 import { prisma } from "@/lib/prisma";
@@ -106,6 +106,22 @@ export async function requireAdmin() {
   return user;
 }
 
+export async function requireSuperAdmin() {
+  const user = await requireUser();
+  // An authenticated internal user who lacks the role gets an explained 403
+  // rather than a silent redirect that looks like a broken link.
+  if (user.role !== "SUPER_ADMIN") forbidden();
+  return user;
+}
+
 export function isAdminRole(role: UserRole) {
   return ADMIN_ROLES.includes(role);
+}
+
+export function canManageSecurityCenter(role: UserRole) {
+  return role === "SUPER_ADMIN" || role === "ADMIN";
+}
+
+export function canUpdateSiteSetting(role: UserRole, key: string) {
+  return role === "SUPER_ADMIN" || (role === "ADMIN" && key === "securityCenter");
 }

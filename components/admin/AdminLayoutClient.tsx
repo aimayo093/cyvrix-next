@@ -41,9 +41,11 @@ const adminNav = [
     { name: "Trusted Logos", href: "/admin/trusted-logos", icon: Users },
     { name: "Compliance Cards", href: "/admin/compliance-cards", icon: ShieldCheck },
     { name: "Services CMS", href: "/admin/services-cms", icon: Database },
+    { name: "Service Products", href: "/admin/service-products", icon: Database },
     { name: "Industries CMS", href: "/admin/industries-cms", icon: Globe },
     { name: "Blog & Insights", href: "/admin/blog-and-insights", icon: FileText },
     { name: "FAQ CMS", href: "/admin/faqs", icon: HelpCircle },
+    { name: "Legal Pages", href: "/admin/legal-pages", icon: FileText },
     { name: "Careers CMS", href: "/admin/careers", icon: Briefcase },
     { name: "Contact Us CMS", href: "/admin/contact-cms", icon: PhoneCall },
     { name: "Testimonials", href: "/admin/testimonials", icon: Star },
@@ -74,9 +76,10 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
   // Load initial collapsed state on mount
   React.useEffect(() => {
     const saved = localStorage.getItem("admin_sidebar_collapsed");
-    if (saved === "true") {
-      setIsCollapsed(true);
-    }
+    if (saved !== "true") return;
+
+    const restoreTimer = window.setTimeout(() => setIsCollapsed(true), 0);
+    return () => window.clearTimeout(restoreTimer);
   }, []);
 
   const toggleSidebar = () => {

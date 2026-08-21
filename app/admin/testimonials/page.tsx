@@ -3,12 +3,13 @@ import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { approveTestimonial, toggleFeaturedTestimonial, deleteTestimonial, createTestimonial } from "@/lib/admin-actions";
+import { approveTestimonial, toggleFeaturedTestimonial, deleteTestimonial, createTestimonial, updateTestimonialTrust } from "@/lib/admin-actions";
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
+import { TrustPublicationFields } from "@/components/admin/TrustPublicationFields";
 import { Star, Trash2, CheckCircle, XCircle, Bookmark } from "lucide-react";
 
-export const metadata = { title: "Testimonials | CYVRIX Admin" };
+export const metadata = { title: "Testimonials" };
 
 export default function TestimonialsPage(props: any) {
   return (
@@ -56,10 +57,21 @@ async function TestimonialsPageContent() {
                   {t.featured && (
                     <span className="text-[10px] font-black uppercase tracking-wider text-[#2691F0] bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">Featured</span>
                   )}
+                  <span className="text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">{t.verificationStatus}</span>
                 </div>
                 <p className="text-sm text-slate-700 font-medium leading-relaxed mb-3">&ldquo;{t.quote}&rdquo;</p>
                 <p className="text-xs font-black text-[#041635]">{t.clientName}</p>
                 <p className="text-xs text-slate-400">{t.company}</p>
+                <details className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <summary className="cursor-pointer text-xs font-black text-[#041635]">Review evidence & publication</summary>
+                  <form action={updateTestimonialTrust} className="mt-4 space-y-4">
+                    <input type="hidden" name="id" value={t.id} />
+                    <TrustPublicationFields defaults={t} requiresPermission />
+                    <Button type="submit" className="bg-[#041635] px-4 py-2 text-xs font-bold text-white hover:bg-[#2691F0]">
+                      Save review
+                    </Button>
+                  </form>
+                </details>
               </div>
               <div className="flex flex-col gap-1 shrink-0">
                 <form action={approveTestimonial}>
@@ -92,7 +104,7 @@ async function TestimonialsPageContent() {
         <div className="lg:col-span-5">
           <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sticky top-6">
             <h2 className="font-outfit text-lg font-black text-[#041635] mb-1">Add Testimonial</h2>
-            <p className="text-xs text-slate-400 font-semibold mb-5">New testimonials require approval before appearing on the website.</p>
+            <p className="text-xs text-slate-400 font-semibold mb-5">Testimonials need evidence, permission and approval before they can be public.</p>
             <form action={createTestimonial} className="space-y-4">
               <label className="block text-sm font-bold text-slate-700">Client Name
                 <input name="clientName" required placeholder="e.g. Operations Director"
@@ -114,6 +126,7 @@ async function TestimonialsPageContent() {
                   ))}
                 </select>
               </label>
+              <TrustPublicationFields requiresPermission />
               <Button type="submit" className="w-full bg-[#041635] text-white hover:bg-[#2691F0] py-3 rounded-xl font-bold">Add Testimonial</Button>
             </form>
           </div>

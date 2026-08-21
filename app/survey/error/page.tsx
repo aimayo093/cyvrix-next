@@ -3,7 +3,7 @@ import { AlertTriangle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Survey Status Check | CYVRIX Technologies",
+  title: "Survey Status Check",
   description: "Secure survey request error validation page.",
 };
 

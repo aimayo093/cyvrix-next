@@ -7,8 +7,6 @@ import {
   AlertTriangle,
   XCircle,
   Loader2,
-  X,
-  Clock,
   ChevronDown,
   ChevronUp,
   RefreshCw,
@@ -58,7 +56,7 @@ function ScoreRing({ score, status }: { score: number; status: "pass" | "warn" |
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-xl font-black text-white leading-none">{score}%</span>
-        <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Score</span>
+        <span className="text-[9px] text-slate-400 uppercase tracking-wider font-bold mt-0.5">Check score</span>
       </div>
     </div>
   );
@@ -69,35 +67,22 @@ export function SecurityScanCard() {
   const [state, setState] = useState<ScanState>("idle");
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState("");
-  const [progress, setProgress] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
   const runScan = useCallback(async () => {
     setState("scanning");
-    setProgress(0);
+    setError("");
     setExpanded(false);
-
-    /* Animate progress bar while request runs */
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 82) { clearInterval(interval); return 82; }
-        return Math.min(82, p + Math.random() * 14);
-      });
-    }, 280);
 
     try {
       const res = await fetch("/api/admin/security-scan", { method: "POST" });
-      clearInterval(interval);
       if (!res.ok) throw new Error(`Server error ${res.status}`);
       const data: ScanResult = await res.json();
-      setProgress(100);
-      await new Promise((r) => setTimeout(r, 350));
       setResult(data);
       setState("done");
       setExpanded(true);
-    } catch (err: any) {
-      clearInterval(interval);
-      setError(err?.message ?? "Scan failed. Please try again.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Scan failed. Please try again.");
       setState("error");
     }
   }, []);
@@ -120,33 +105,23 @@ export function SecurityScanCard() {
           <h3 className="font-outfit text-lg font-bold">Security Scan</h3>
           {result && (
             <span className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border", overall?.bg, overall?.color)}>
-              {result.overallStatus === "pass" ? "Secure" : result.overallStatus === "warn" ? "Warnings" : "Issues"}
+              {result.overallStatus === "pass" ? "Checks passed" : result.overallStatus === "warn" ? "Warnings" : "Issues"}
             </span>
           )}
         </div>
         <p className="text-slate-400 text-xs leading-relaxed">
-          {state === "idle" && "Initialize a full environment security audit and compliance check."}
-          {state === "scanning" && "Scanning environment — checking database, services, and compliance…"}
+          {state === "idle" && "Run the configured platform, public-route, and dependency checks."}
+          {state === "scanning" && "Running the configured checks…"}
           {state === "done" && result && `Last scanned ${new Date(result.timestamp).toLocaleTimeString()} · ${result.durationMs}ms`}
           {state === "error" && <span className="text-rose-400">{error}</span>}
         </p>
       </div>
 
-      {/* Progress bar (scanning only) */}
+      {/* Indeterminate status indicator: scan duration and check count vary. */}
       {state === "scanning" && (
         <div className="px-6 pb-2 relative z-10">
-          <div className="flex justify-between mb-1">
-            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Running checks…</span>
-            <span className="text-[10px] text-[#2691F0] font-black">{Math.round(progress)}%</span>
-          </div>
           <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all duration-300"
-              style={{
-                width: `${progress}%`,
-                background: "linear-gradient(90deg, #2691F0, #06b6d4)",
-              }}
-            />
+            <div className="h-full w-2/5 rounded-full animate-pulse bg-gradient-to-r from-[#2691F0] to-[#06b6d4]" />
           </div>
         </div>
       )}

@@ -131,10 +131,10 @@ export function AboutClient({ pageData }: AboutClientProps) {
               <div className="space-y-6">
                 {[
                   "UK-focused support and consultancy model",
-                  "Security and compliance considered in every service",
+                  "Security considered in every service",
                   "Direct access to technical leadership",
-                  "Clear, predictable service level agreements",
-                  "Practical focus on business uptime and security"
+                  "Service expectations agreed before delivery",
+                  "Practical focus on continuity and clarity"
                 ].map((item) => (
                   <div key={item} className="flex gap-4 items-center">
                     <div className="shrink-0 w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[#2691F0]">
@@ -154,13 +154,13 @@ export function AboutClient({ pageData }: AboutClientProps) {
             >
               <div className="grid grid-cols-2 gap-8 relative z-10">
                 {[
-                  { label: "UK Service", val: "100%" },
-                  { label: "SLA Adherence", val: "99.8%" },
-                  { label: "Response Time", val: "<15m" },
-                  { label: "Client Rating", val: "4.9/5" }
+                  { label: "Discover", val: "Context first" },
+                  { label: "Plan", val: "Clear ownership" },
+                  { label: "Deliver", val: "Careful change" },
+                  { label: "Review", val: "Ongoing improvement" }
                 ].map((stat) => (
                   <div key={stat.label}>
-                    <p className="text-4xl font-black text-[#2691F0] mb-1">{stat.val}</p>
+                    <p className="text-xl font-black text-[#2691F0] mb-1">{stat.val}</p>
                     <p className="text-xs font-black uppercase tracking-widest text-slate-400">{stat.label}</p>
                   </div>
                 ))}

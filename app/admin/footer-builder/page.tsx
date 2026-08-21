@@ -17,7 +17,7 @@ import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { Plus, Pencil, Layers, ExternalLink, ArrowUp, ArrowDown } from "lucide-react";
 
-export const metadata = { title: "Footer Builder CMS | CYVRIX Admin" };
+export const metadata = { title: "Footer Builder CMS" };
 
 export default function FooterBuilderCMSPage(props: any) {
   return (

@@ -12,9 +12,10 @@ import {
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import { TrustPublicationFields } from "@/components/admin/TrustPublicationFields";
 import { Plus, Pencil, Star, Globe, ArrowUp, ArrowDown } from "lucide-react";
 
-export const metadata = { title: "Partner Accreditations CMS | CYVRIX Admin" };
+export const metadata = { title: "Partner Accreditations CMS" };
 
 export default function PartnerLogosCMSPage(props: any) {
   return (
@@ -50,7 +51,7 @@ async function PartnerLogosCMSPageContent({
             Partner Accreditations CMS
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Display your certified tech alliances, cloud partnerships, and industrial accreditations.
+            Record partner credentials with review evidence before they can be approved for public display.
           </p>
         </div>
         <a
@@ -247,7 +248,7 @@ function PartnerFormFields({ defaults }: { defaults?: any }) {
           name="name"
           required
           defaultValue={defaults?.name}
-          placeholder="e.g. Microsoft Gold Partner"
+          placeholder="Exact issuer or programme name"
           className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none"
         />
       </label>
@@ -293,6 +294,8 @@ function PartnerFormFields({ defaults }: { defaults?: any }) {
         />
       </label>
 
+      <TrustPublicationFields defaults={defaults} />
+
       <div className="grid grid-cols-2 gap-4 pt-2">
         <label className="flex items-center gap-2 text-slate-700 text-sm font-bold cursor-pointer">
           <input
@@ -309,7 +312,7 @@ function PartnerFormFields({ defaults }: { defaults?: any }) {
           Visibility
           <select
             name="isVisible"
-            defaultValue={defaults?.isVisible !== false ? "true" : "false"}
+            defaultValue={defaults?.isVisible === true ? "true" : "false"}
             className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-[#041635] bg-white font-semibold"
           >
             <option value="true">Visible</option>

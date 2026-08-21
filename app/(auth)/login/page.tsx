@@ -4,10 +4,22 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Shield, ArrowLeft, Mail, Lock, Loader2, AlertCircle } from "lucide-react";
+import { Shield, ArrowLeft, Mail, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 import { login } from "./actions";
+
+function getSafeDestination(next: string | null, fallback: string) {
+  if (!next) return fallback;
+
+  const isProtectedPath =
+    next === "/portal" ||
+    next.startsWith("/portal/") ||
+    next === "/admin" ||
+    next.startsWith("/admin/");
+
+  return isProtectedPath ? next : fallback;
+}
 
 function LoginForm() {
   const router = useRouter();
@@ -29,7 +41,7 @@ function LoginForm() {
       setError(result.error);
       setIsLoading(false);
     } else if (result.success && result.destination) {
-      router.push(next || result.destination);
+      router.push(getSafeDestination(next, result.destination));
     }
   }
 
@@ -98,8 +110,8 @@ function LoginForm() {
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Password</label>
-                <Link href="/forgot-password" title="Coming soon" className="text-[10px] font-black text-[#2691F0] hover:underline uppercase tracking-wider">
-                  Forgot?
+                <Link href="/contact" className="text-[10px] font-black text-[#2691F0] hover:underline uppercase tracking-wider">
+                  Need help?
                 </Link>
               </div>
               <PasswordInput 

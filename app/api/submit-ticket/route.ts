@@ -2,16 +2,10 @@ import { NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { getEmailIdentity } from "@/lib/email-config";
+import { enforcePublicSubmissionRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 
-const buckets = new Map<string, { count: number; resetAt: number }>();
-function rateLimit(key: string, limit = 5) {
-  const now = Date.now();
-  const b = buckets.get(key);
-  if (!b || b.resetAt < now) { buckets.set(key, { count: 1, resetAt: now + 60_000 }); return; }
-  if (b.count >= limit) throw new Error("Too many requests. Please wait a moment.");
-  b.count += 1;
-}
 function sanitize(v: string) { return v.replace(/[<>]/g, "").slice(0, 5000); }
 
 const schema = z.object({
@@ -31,15 +25,10 @@ function ticketNumber() {
 }
 
 async function notify(to: string, subject: string, body: string) {
-  const siteSettings = await prisma.siteSetting.findUnique({ where: { key: "emailConfig" } });
-  const emailConfig = (siteSettings?.value as Record<string, string>) || {};
-
   const key = process.env.RESEND_API_KEY;
   if (!key) return;
-  const from = emailConfig.defaultFromEmail 
-    ? `${emailConfig.defaultFromName || "CYVRIX Support"} <${emailConfig.defaultFromEmail}>`
-    : process.env.MAIL_FROM ?? "CYVRIX Technologies <noreply@cyvrix.co.uk>";
-  const admin = emailConfig.adminNotificationEmail || process.env.ADMIN_NOTIFICATION_EMAIL;
+  const identity = await getEmailIdentity("CYVRIX Support");
+  const { from, adminNotificationEmail: admin } = identity;
   await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -74,7 +63,7 @@ export async function POST(req: Request) {
     }
 
     const data = parsed.data;
-    rateLimit(`ticket:${data.email}`);
+    enforcePublicSubmissionRateLimit("ticket", data.email, req.headers, { ipLimit: 5, emailLimit: 3 });
     const number = ticketNumber();
 
     await prisma.ticket.create({
@@ -96,13 +85,23 @@ export async function POST(req: Request) {
     await notify(
       data.email,
       `CYVRIX Support Ticket ${number}`,
-      `Hi ${data.name},\n\nYour support request has been logged.\nTicket: ${number}\nSubject: ${data.subject}\nPriority: ${data.priority}\n\nWe will respond within our SLA window.\n\nCYVRIX Operations Team`
+      `Hi ${data.name},\n\nYour support request has been logged.\nTicket: ${number}\nSubject: ${data.subject}\nPriority: ${data.priority}\n\nCYVRIX will review the request and follow up using this email address.\n\nCYVRIX Operations Team`
     );
 
     if (isJson) return NextResponse.json({ success: true, ticketNumber: number }, { status: 201 });
     return NextResponse.redirect(new URL(`/thank-you?type=ticket&ticket=${number}`, req.url), 303);
-  } catch (err: any) {
-    const msg = err?.message ?? "Submission failed.";
+  } catch (err: unknown) {
+    if (err instanceof RateLimitError) {
+      const headers = { "Retry-After": String(err.retryAfterSeconds), "Cache-Control": "no-store" };
+      return isJson
+        ? NextResponse.json({ error: err.message }, { status: 429, headers })
+        : NextResponse.redirect(
+          new URL(`/thank-you?type=ticket&status=error&message=${encodeURIComponent(err.message)}`, req.url),
+          { status: 303, headers },
+        );
+    }
+
+    const msg = err instanceof Error ? err.message : "Submission failed.";
     return isJson
       ? NextResponse.json({ error: msg }, { status: 500 })
       : NextResponse.redirect(new URL(`/thank-you?type=ticket&status=error&message=${encodeURIComponent(msg)}`, req.url), 303);

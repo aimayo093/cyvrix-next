@@ -1,6 +1,7 @@
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
+import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -12,11 +13,15 @@ import {
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Eye, EyeOff } from "lucide-react";
 
-export const metadata = { title: "Blog & Insights | CYVRIX Admin" };
+export const metadata = { title: "Blog & Insights" };
 
-export default function BlogCMSPage(props: any) {
+interface BlogCMSPageProps {
+  searchParams: Promise<{ edit?: string }>;
+}
+
+export default function BlogCMSPage(props: BlogCMSPageProps) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <BlogCMSPageContent {...props} />
@@ -50,12 +55,12 @@ async function BlogCMSPageContent({
             {posts.length} post{posts.length !== 1 ? "s" : ""} &mdash; write, publish, and manage your content.
           </p>
         </div>
-        <a
+        <Link
           href="/admin/blog-and-insights?edit=new"
           className="inline-flex items-center gap-2 bg-[#2691F0] text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-[#041635] transition-colors"
         >
           <Plus className="h-4 w-4" /> New Post
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -88,9 +93,9 @@ async function BlogCMSPageContent({
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <a href={`/admin/blog-and-insights?edit=${post.id}`} className="p-2 rounded-lg text-slate-400 hover:text-[#2691F0] hover:bg-blue-50 transition-colors" title="Edit">
+                      <Link href={`/admin/blog-and-insights?edit=${post.id}`} className="p-2 rounded-lg text-slate-400 hover:text-[#2691F0] hover:bg-blue-50 transition-colors" title="Edit">
                         <Pencil className="h-4 w-4" />
-                      </a>
+                      </Link>
                       <form action={publishBlogPost}>
                         <input type="hidden" name="id" value={post.id} />
                         <button type="submit" className="p-2 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title={post.status === "PUBLISHED" ? "Unpublish" : "Publish"}>
@@ -186,8 +191,8 @@ function BlogFormFields({ defaults }: { defaults?: Record<string, string> }) {
             className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />
         </label>
       </div>
-      <label className="block text-sm font-bold text-slate-700">Body (Markdown)
-        <textarea name="body" rows={6} defaultValue={defaults?.body} placeholder="Full article content in Markdown format..."
+      <label className="block text-sm font-bold text-slate-700">Article body
+        <textarea name="body" rows={6} defaultValue={defaults?.body} placeholder="Write clear paragraphs of practical guidance..."
           className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-mono text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none resize-none" />
       </label>
       <div className="grid grid-cols-1 gap-3 pt-1 border-t border-slate-100">

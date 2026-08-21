@@ -6,7 +6,11 @@ import { AdminLayoutClient } from "@/components/admin/AdminLayoutClient";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard | CYVRIX",
+  // Overrides the root template so admin tabs stay distinguishable from the public site.
+  title: {
+    default: "CYVRIX Admin",
+    template: "%s | CYVRIX Admin",
+  },
   description: "Internal management platform for CYVRIX Technologies.",
 };
 

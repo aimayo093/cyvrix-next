@@ -13,9 +13,10 @@ import {
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import { TrustPublicationFields } from "@/components/admin/TrustPublicationFields";
 import { Plus, Pencil, ShieldCheck, ArrowUp, ArrowDown } from "lucide-react";
 
-export const metadata = { title: "Compliance Framework Cards CMS | CYVRIX Admin" };
+export const metadata = { title: "Compliance Framework Cards CMS" };
 
 export default function ComplianceCardsCMSPage(props: any) {
   return (
@@ -51,7 +52,7 @@ async function ComplianceCardsCMSPageContent({
             Compliance & Trust Cards CMS
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Configure trust badges, security standards, and legislative guidelines (ISO 27001, Cyber Essentials, GDPR).
+            Record evidence-backed credentials and frameworks. Nothing is public until it passes the review gate.
           </p>
         </div>
         <a
@@ -291,7 +292,7 @@ function ComplianceFormFields({ defaults }: { defaults?: any }) {
         </label>
 
         <label className="block text-sm font-bold text-slate-700">
-          Status / State Badge
+          Public status label
           <select
             name="status"
             defaultValue={defaults?.status || "Framework followed"}
@@ -365,7 +366,7 @@ function ComplianceFormFields({ defaults }: { defaults?: any }) {
           Visibility
           <select
             name="isVisible"
-            defaultValue={defaults?.isVisible !== false ? "true" : "false"}
+            defaultValue={defaults?.isVisible === true ? "true" : "false"}
             className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs text-[#041635] bg-white font-semibold"
           >
             <option value="true">Visible</option>
@@ -373,6 +374,8 @@ function ComplianceFormFields({ defaults }: { defaults?: any }) {
           </select>
         </label>
       </div>
+
+      <TrustPublicationFields defaults={defaults} />
 
       <div className="flex items-center gap-2 pt-4 pb-2 text-sm font-bold text-slate-700 cursor-pointer">
         <input

@@ -34,7 +34,25 @@ function ticketNumber() {
   return `CYV-TKT-${suffix.padStart(6, "0")}`;
 }
 
-export async function createPortalTicket(prevState: any, formData: FormData) {
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error && error.message ? error.message : fallback;
+}
+
+function validationMessage(error: unknown, fallback: string) {
+  return error instanceof z.ZodError ? error.issues[0]?.message ?? fallback : errorMessage(error, fallback);
+}
+
+function isNextRedirect(error: unknown): error is { digest: string } {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof error.digest === "string" &&
+    error.digest.startsWith("NEXT_REDIRECT")
+  );
+}
+
+export async function createPortalTicket(_prevState: unknown, formData: FormData) {
   try {
     const user = await requireUser();
     
@@ -75,13 +93,14 @@ export async function createPortalTicket(prevState: any, formData: FormData) {
 
     revalidatePath("/portal/support-tickets");
     return { success: true, message: `Ticket ${tktNumber} successfully created.` };
-  } catch (error: any) {
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
     console.error("Portal ticket error:", error);
-    return { success: false, message: error instanceof z.ZodError ? error.issues[0].message : error.message || "Could not create ticket." };
+    return { success: false, message: validationMessage(error, "Could not create ticket.") };
   }
 }
 
-export async function replyPortalTicket(prevState: any, formData: FormData) {
+export async function replyPortalTicket(_prevState: unknown, formData: FormData) {
   try {
     const user = await requireUser();
     
@@ -118,9 +137,10 @@ export async function replyPortalTicket(prevState: any, formData: FormData) {
 
     revalidatePath(`/portal/support-tickets`);
     return { success: true, message: "Reply posted successfully." };
-  } catch (error: any) {
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
     console.error("Portal ticket reply error:", error);
-    return { success: false, message: error instanceof z.ZodError ? error.issues[0].message : error.message || "Could not post reply." };
+    return { success: false, message: validationMessage(error, "Could not post reply.") };
   }
 }
 
@@ -152,27 +172,30 @@ export async function acceptPortalProposal(proposalId: string) {
 
     revalidatePath("/portal/quotes-and-proposals");
     return { success: true, message: "Proposal successfully accepted. Thank you for your business!" };
-  } catch (error: any) {
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
     console.error("Accept proposal error:", error);
-    return { success: false, message: error.message || "Could not accept proposal." };
+    return { success: false, message: errorMessage(error, "Could not accept proposal.") };
   }
 }
 
-export async function updatePortalProfile(prevState: any, formData: FormData) {
+export async function updatePortalProfile(_prevState: unknown, formData: FormData) {
   try {
     const user = await requireUser();
     
     const raw = Object.fromEntries(formData.entries());
     const data = profileSchema.parse(raw);
     
-    const updateData: any = {
-      name: data.name,
-      updatedAt: new Date()
-    };
-    
-    if (data.password) {
-      updateData.passwordHash = await hashPassword(data.password);
-    }
+    const updateData = data.password
+      ? {
+          name: data.name,
+          passwordHash: await hashPassword(data.password),
+          updatedAt: new Date(),
+        }
+      : {
+          name: data.name,
+          updatedAt: new Date(),
+        };
 
     await prisma.user.update({
       where: { id: user.id },
@@ -181,21 +204,28 @@ export async function updatePortalProfile(prevState: any, formData: FormData) {
 
     revalidatePath("/portal/profile-and-company");
     return { success: true, message: "Profile successfully updated." };
-  } catch (error: any) {
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
     console.error("Profile update error:", error);
-    return { success: false, message: error instanceof z.ZodError ? error.issues[0].message : error.message || "Could not update profile." };
+    return { success: false, message: validationMessage(error, "Could not update profile.") };
   }
 }
 
 export async function submitPortalTestimonial(formData: FormData) {
   try {
     const user = await requireUser();
-    const quote = formData.get("quote") as string || "";
-    const ratingRaw = formData.get("rating") as string || "5";
-    const rating = parseInt(ratingRaw, 10) || 5;
+    const quoteValue = formData.get("quote");
+    const ratingValue = formData.get("rating");
+    const quote = typeof quoteValue === "string" ? quoteValue : "";
+    const ratingRaw = typeof ratingValue === "string" ? ratingValue : "";
+    const rating = Number.parseInt(ratingRaw, 10);
 
     if (!quote.trim()) {
       redirect("/portal?status=error&message=Testimonial quote cannot be empty.");
+    }
+
+    if (![3, 4, 5].includes(rating)) {
+      redirect("/portal?status=error&message=Please select a valid testimonial rating.");
     }
 
     let companyName = "Independent Client";
@@ -209,26 +239,38 @@ export async function submitPortalTestimonial(formData: FormData) {
       }
     }
 
-    await prisma.testimonial.create({
-      data: {
-        id: crypto.randomUUID(),
-        clientName: user.name || "Client User",
-        company: companyName,
-        quote: sanitize(quote),
-        rating,
-        approved: true,
-        featured: true,
-        createdAt: new Date(),
-      }
-    });
+    const testimonialId = crypto.randomUUID();
+    await prisma.$transaction([
+      prisma.testimonial.create({
+        data: {
+          id: testimonialId,
+          clientName: user.name || "Client User",
+          company: companyName,
+          quote: sanitize(quote),
+          rating,
+          approved: false,
+          featured: false,
+          createdAt: new Date(),
+        },
+      }),
+      prisma.auditLog.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId: user.id,
+          action: "portal_testimonial_submitted",
+          entityType: "Testimonial",
+          entityId: testimonialId,
+          metadata: { rating, source: "client_portal" },
+        },
+      }),
+    ]);
 
-    revalidatePath("/");
     revalidatePath("/portal");
-    redirect("/portal?status=success&message=Thank you! Your testimonial has been submitted and is now active on our public website.");
-  } catch (error: any) {
-    if (error.digest?.startsWith("NEXT_REDIRECT")) throw error;
+    redirect("/portal?status=success&message=Thank you. Your testimonial was submitted for review and remains private until CYVRIX verifies and approves it for public use.");
+  } catch (error) {
+    if (isNextRedirect(error)) throw error;
     console.error("Portal testimonial error:", error);
-    redirect(`/portal?status=error&message=${encodeURIComponent(error.message || "Could not submit testimonial.")}`);
+    redirect(`/portal?status=error&message=${encodeURIComponent(errorMessage(error, "Could not submit testimonial."))}`);
   }
 }
 

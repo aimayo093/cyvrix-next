@@ -1,7 +1,7 @@
 import * as React from "react";
 import { connection } from "next/server";
 import { AlertCircle, BellRing, CheckCircle2, Clock, LockKeyhole, Radar, Save, ShieldCheck, Siren, XCircle } from "lucide-react";
-import { requireAdmin } from "@/lib/auth";
+import { canManageSecurityCenter, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateSiteSetting } from "@/lib/admin-actions";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
@@ -13,26 +13,28 @@ import {
   type SecurityScanResult,
 } from "@/lib/security-scan";
 import { cn } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
-export const metadata = { title: "Security Center | CYVRIX Admin" };
+export const metadata = { title: "Security Center" };
 
 const STATUS_META = {
-  pass: { icon: CheckCircle2, label: "Secure", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
+  pass: { icon: CheckCircle2, label: "Checks passed", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
   warn: { icon: AlertCircle, label: "Review", color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
   fail: { icon: XCircle, label: "Action", color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
 };
 
-export default function SecurityCenterPage(props: any) {
+export default function SecurityCenterPage() {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
-      <SecurityCenterPageContent {...props} />
+      <SecurityCenterPageContent />
     </React.Suspense>
   );
 }
 
 async function SecurityCenterPageContent() {
   await connection();
-  await requireAdmin();
+  const administrator = await requireAdmin();
+  if (!canManageSecurityCenter(administrator.role)) redirect("/admin");
 
   const [securitySetting, lastScan, alertEvents] = await Promise.all([
     prisma.siteSetting.findUnique({ where: { key: "securityCenter" } }),
@@ -63,7 +65,7 @@ async function SecurityCenterPageContent() {
           </div>
           <h1 className="font-outfit text-3xl font-black text-[#041635]">Security Center</h1>
           <p className="mt-1 max-w-3xl text-sm font-medium leading-relaxed text-slate-500">
-            Manage automatic scans, website error monitoring, dependency freshness checks, alert delivery, and the security controls protecting the CYVRIX platform.
+            Review configured platform checks, public-route monitoring, dependency freshness, and alert delivery. Results cover these checks only; they are not a security certification or continuous monitoring service.
           </p>
         </div>
 
@@ -73,10 +75,10 @@ async function SecurityCenterPageContent() {
               <statusMeta.icon className={cn("h-5 w-5", statusMeta.color)} />
               <div>
                 <p className={cn("text-xs font-black uppercase tracking-widest", statusMeta.color)}>
-                  Last scan: {statusMeta.label}
+                  Last configured scan: {statusMeta.label}
                 </p>
                 <p className="mt-0.5 text-sm font-black text-[#041635]">
-                  {lastResult.score}% score - {failures.length} failures - {warnings.length} warnings
+                  {lastResult.score}% check score - {failures.length} failures - {warnings.length} warnings
                 </p>
               </div>
             </div>
@@ -90,7 +92,7 @@ async function SecurityCenterPageContent() {
             <div className="border-b border-slate-100 px-6 py-4">
               <h2 className="font-outfit font-black text-[#041635]">Automatic Protection Settings</h2>
               <p className="mt-1 text-xs font-semibold text-slate-500">
-                The daily background scan runs through Vercel Cron and sends an admin alert when configured thresholds are met.
+                The Vercel daily schedule needs `CRON_SECRET`; alert email also needs a recipient and working email transport. Treat these settings as configuration until a completed scan is recorded below.
               </p>
             </div>
 
@@ -99,13 +101,13 @@ async function SecurityCenterPageContent() {
               <ToggleField
                 name="value.automaticScanEnabled"
                 label="Enable automatic background scans"
-                description="Runs the Security Center scan daily in production."
+                description="Allows the deployed daily Vercel Cron request to run the configured scan."
                 defaultChecked={settings.automaticScanEnabled}
               />
               <ToggleField
                 name="value.emailAlertsEnabled"
                 label="Send email alerts to admin"
-                description="Emails the configured admin inbox when the background scan finds issues."
+                description="Attempts email delivery for background findings when a recipient and transport are configured."
                 defaultChecked={settings.emailAlertsEnabled}
               />
               <ToggleField
@@ -174,14 +176,14 @@ async function SecurityCenterPageContent() {
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
                 <h2 className="font-outfit font-black text-[#041635]">Security Control Areas</h2>
-                <p className="mt-1 text-xs font-semibold text-slate-500">Controls and checks now managed by Security Center.</p>
+                <p className="mt-1 text-xs font-semibold text-slate-500">The current scan covers these specific technical checks.</p>
               </div>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <ControlCard icon={Radar} title="Website error monitor" body="Scans public pages for HTTP failures and application error screens." />
-              <ControlCard icon={LockKeyhole} title="Platform hardening" body="Checks auth secret strength, RLS posture, privileged accounts, and security headers." />
-              <ControlCard icon={Siren} title="Dependency watch" body="Checks direct dependencies against npm latest versions and warns when updates are available." />
-              <ControlCard icon={BellRing} title="Admin alerting" body="Creates in-app notifications and emails the admin inbox when scans need attention." />
+              <ControlCard icon={Radar} title="Website route checks" body="Requests configured public routes and flags HTTP failures or recognised error pages." />
+              <ControlCard icon={LockKeyhole} title="Platform checks" body="Tests database access, environment presence, auth-secret length, RLS state, privileged-account count, and headers." />
+              <ControlCard icon={Siren} title="Dependency freshness" body="Compares direct package versions with npm's latest metadata when the registry is reachable." />
+              <ControlCard icon={BellRing} title="Background alerting" body="Background findings create internal notifications; email delivery also requires a recipient and configured transport." />
             </div>
           </section>
 
@@ -228,11 +230,14 @@ async function SecurityCenterPageContent() {
               {alertEvents.length ? (
                 alertEvents.map((event) => {
                   const metadata = readMetadata(event.metadata);
+                  const reason = typeof metadata.reason === "string" && metadata.reason.trim()
+                    ? metadata.reason
+                    : "Security alert event recorded.";
                   return (
                     <div key={event.id} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
                       <p className="text-xs font-black uppercase tracking-wide text-[#041635]">{event.action.replaceAll("_", " ")}</p>
                       <p className="mt-1 text-[11px] font-semibold leading-relaxed text-slate-500">
-                        {metadata.reason || "Security alert event recorded."}
+                        {reason}
                       </p>
                       <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
                         {event.createdAt.toLocaleString()}
@@ -251,21 +256,30 @@ async function SecurityCenterPageContent() {
   );
 }
 
-function readMetadata(value: unknown): Record<string, any> {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readMetadata(value: unknown): Record<string, unknown> {
   if (!value) return {};
   if (typeof value === "string") {
     try {
-      return JSON.parse(value);
+      const parsed: unknown = JSON.parse(value);
+      return isRecord(parsed) ? parsed : {};
     } catch {
       return {};
     }
   }
-  return typeof value === "object" ? value as Record<string, any> : {};
+  return isRecord(value) ? value : {};
 }
 
 function readScanResult(value: unknown): SecurityScanResult | null {
-  const metadata = readMetadata(value);
-  return (metadata.result as SecurityScanResult | undefined) ?? null;
+  const result = readMetadata(value).result;
+  if (!isRecord(result) || !Array.isArray(result.checks)) return null;
+  if (typeof result.score !== "number" || typeof result.durationMs !== "number" || typeof result.timestamp !== "string") return null;
+  if (result.overallStatus !== "pass" && result.overallStatus !== "warn" && result.overallStatus !== "fail") return null;
+  if (result.trigger !== "manual" && result.trigger !== "background") return null;
+  return result as unknown as SecurityScanResult;
 }
 
 function ToggleField({

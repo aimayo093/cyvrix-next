@@ -6,7 +6,7 @@ import { SurveyForm } from "./SurveyForm";
 import Image from "next/image";
 
 export const metadata = {
-  title: "Customer Feedback Survey | CYVRIX Technologies",
+  title: "Customer Feedback Survey",
   description: "Share your experience with CYVRIX Technologies. We value your feedback to continuously elevate our services.",
 };
 

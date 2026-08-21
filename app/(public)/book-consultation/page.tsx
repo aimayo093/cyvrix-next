@@ -1,26 +1,28 @@
 import * as React from "react";
+import { Suspense } from "react";
 import { Calendar, ShieldCheck, CheckCircle2, Clock, MapPin, Send, HelpCircle } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { submitContact } from "@/lib/actions";
+import { BookingServiceSelect } from "./BookingServiceSelect";
 
 export const metadata = {
-  title: "Book a Free Consultation | CYVRIX Technologies",
-  description: "Schedule a secure, professional technical consultation with CYVRIX. Discuss IT support, cybersecurity readiness, cloud migration, and infrastructure compliance.",
+  title: "Book a Technology Review",
+  description: "Start a practical conversation about managed services, cloud and cybersecurity, field engineering or a professional technology project.",
 };
 
 export default function BookConsultationPage() {
   const benefits = [
     {
-      title: "Complimentary & Zero Obligation",
-      description: "A 30-minute discovery call with a senior consultant to understand your technical challenges.",
+      title: "Focused discovery",
+      description: "A practical first conversation to understand the technology, people and outcomes involved.",
     },
     {
-      title: "Tailored Security Roadmap",
-      description: "Receive practical recommendations to improve your security posture and resolve compliance gaps.",
+      title: "Useful next steps",
+      description: "We will help identify the most appropriate service route, project shape or initial assessment.",
     },
     {
-      title: "No Outsourced Aggression",
-      description: "Direct contact with UK engineers who understand operations, not aggressive sales agents.",
+      title: "A considered commercial fit",
+      description: "The discussion is designed to clarify scope and working approach before any proposal is prepared.",
     },
   ];
 
@@ -34,13 +36,13 @@ export default function BookConsultationPage() {
         <div className="relative max-w-5xl mx-auto px-6 text-center">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#2691F0]/100/10 border border-[#2691F0]/20 text-[#2691F0] text-xs font-black tracking-widest uppercase mb-6 animate-pulse">
             <Calendar className="h-3.5 w-3.5" />
-            Direct Calendar Booking
+            Start a conversation
           </span>
           <h1 className="font-outfit text-4xl sm:text-5xl md:text-6xl font-black tracking-tight mb-6">
-            Book a Technical <span className="text-[#2691F0]">Consultation</span>
+            Book a Technology <span className="text-[#2691F0]">Review</span>
           </h1>
           <p className="max-w-2xl mx-auto text-slate-300 font-medium text-lg md:text-xl leading-relaxed">
-            Discuss your IT infrastructure, cloud governance, and security posture with an experienced UK technology strategist.
+            Start a practical conversation about managed services, cloud and cybersecurity, field engineering or professional technology work.
           </p>
         </div>
       </section>
@@ -56,7 +58,7 @@ export default function BookConsultationPage() {
                 What to expect during our session
               </h2>
               <p className="text-slate-500 font-medium text-sm sm:text-base leading-relaxed">
-                We believe in providing immediate, practical technical value. Our consultations are designed to address real operations without pressure.
+                We use the first conversation to understand the work in front of you and determine the right next step.
               </p>
             </div>
 
@@ -85,15 +87,15 @@ export default function BookConsultationPage() {
               <div className="space-y-3 text-sm font-semibold text-slate-400">
                 <p className="flex items-center gap-3">
                   <Clock className="h-4 w-4 text-[#2691F0]" />
-                  30 Minutes Discovery Session
+                  Discovery format agreed with you
                 </p>
                 <p className="flex items-center gap-3">
                   <MapPin className="h-4 w-4 text-[#2691F0]" />
-                  Microsoft Teams Video Call
+                  Remote or on-site discussion, as appropriate
                 </p>
                 <p className="flex items-center gap-3">
                   <ShieldCheck className="h-4 w-4 text-[#2691F0]" />
-                  Strictly Confidential (NDA Ready)
+                  Sensitive information can be scoped before it is shared
                 </p>
               </div>
             </div>
@@ -102,15 +104,15 @@ export default function BookConsultationPage() {
           {/* Right Column: Booking Form */}
           <div className="lg:col-span-7 bg-[#020817] rounded-3xl border border-white/10 p-8 sm:p-12 shadow-sm relative overflow-hidden">
             <h3 className="font-outfit text-2xl font-black text-white mb-2">
-              Select details & schedule
+              Tell us about the work
             </h3>
             <p className="text-slate-400 font-bold text-sm mb-8">
-              Fill out the fields below and our operations coordinator will confirm your Teams slot.
+              Share the essentials and we will use them to prepare an appropriate response.
             </p>
 
             <form action={submitContact} className="space-y-6">
               {/* Invisible hidden trigger so the lead is classified correctly */}
-              <input type="hidden" name="preferredContact" value="teams_consultation" />
+              <input type="hidden" name="preferredContact" value="video_call" />
               <input type="hidden" name="businessType" value="consultation_form" />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -148,17 +150,9 @@ export default function BookConsultationPage() {
 
                 <label className="block text-sm font-bold text-slate-300">
                   Primary Interest
-                  <select
-                    name="service"
-                    required
-                    className="mt-2 w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0] focus:border-transparent transition-all font-semibold"
-                  >
-                    <option value="Managed IT support" className="bg-[#020817] text-white">Managed IT support</option>
-                    <option value="Cybersecurity and hardening" className="bg-[#020817] text-white">Cybersecurity & CE hardening</option>
-                    <option value="Cloud migration and setup" className="bg-[#020817] text-white">Cloud migration & M365/Google</option>
-                    <option value="Infrastructure audit and planning" className="bg-[#020817] text-white">Infrastructure audit</option>
-                    <option value="Compliance and risk consultancy" className="bg-[#020817] text-white">Compliance & risk advisory</option>
-                  </select>
+                  <Suspense fallback={<ServiceSelectFallback />}>
+                    <BookingServiceSelect />
+                  </Suspense>
                 </label>
               </div>
 
@@ -179,7 +173,7 @@ export default function BookConsultationPage() {
                 <label className="block text-sm font-bold text-slate-300">
                   Preferred Call Time
                   <select
-                    name="message_prefix"
+                    name="preferredTime"
                     required
                     className="mt-2 w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0] focus:border-transparent transition-all font-semibold"
                   >
@@ -204,13 +198,18 @@ export default function BookConsultationPage() {
               <div className="bg-[#020817] p-4 rounded-xl border border-white/5 flex items-start gap-3">
                 <HelpCircle className="h-5 w-5 text-[#2691F0] shrink-0 mt-0.5" />
                 <p className="text-xs text-slate-500 leading-relaxed font-semibold">
-                  By submitting this request, you consent to CYVRIX processing your data to schedule the requested video call. No sales lists, spam, or outbound cold calling.
+                  We only need the context required to respond to this request. Please do not include passwords, access tokens or sensitive configuration data.
                 </p>
               </div>
 
+              <label className="flex items-start gap-3 text-xs font-semibold leading-6 text-slate-400">
+                <input name="consent" type="checkbox" required className="mt-1 accent-[#2691F0]" />
+                <span>I consent to CYVRIX processing this technology review request in line with the <a href="/privacy-policy" className="text-sky-300 underline underline-offset-2 hover:text-white">Privacy Policy</a>.</span>
+              </label>
+
               <Button type="submit" variant="default" className="w-full bg-[#2691F0] text-white hover:bg-[#041635] py-4 rounded-xl flex items-center justify-center gap-2">
                 <Send className="h-4 w-4" />
-                Confirm Consultation Request
+                Send technology review request
               </Button>
             </form>
             <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-[#2691F0]/10 rounded-full blur-3xl pointer-events-none opacity-40" />
@@ -219,5 +218,25 @@ export default function BookConsultationPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function ServiceSelectFallback() {
+  return (
+    <select
+      name="service"
+      required
+      defaultValue="General Technology Review"
+      className="mt-2 w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-white focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#2691F0] transition-all font-semibold"
+    >
+      <option value="General Technology Review">General Technology Review</option>
+      <option value="Managed Services">Managed Services</option>
+      <option value="Cloud & Cybersecurity">Cloud &amp; Cybersecurity</option>
+      <option value="Cloud Services">Cloud Services</option>
+      <option value="Cybersecurity">Cybersecurity</option>
+      <option value="Infrastructure">Infrastructure</option>
+      <option value="Field Engineering">Field Engineering</option>
+      <option value="Professional Services">Professional Services</option>
+    </select>
   );
 }

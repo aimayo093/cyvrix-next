@@ -4,8 +4,12 @@ import crypto from "node:crypto";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
+import { publicContactSettingKeys, publicContactValue } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
+import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
+import { toPublicLegalDocument } from "@/lib/public-legal";
+import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
 import xss from "xss";
 import { z } from "zod";
 
@@ -16,6 +20,86 @@ function sanitize(v: string) {
 
 function slug(v: string) {
   return v.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+const trustVerificationStatuses = new Set(["PENDING", "VERIFIED", "EXPIRED", "REJECTED"]);
+const emailIdentityFields = new Set([
+  "defaultFromName",
+  "defaultFromEmail",
+  "adminNotificationEmail",
+]);
+
+const adminEmailSchema = z.object({
+  to: z.string().trim().email().max(254),
+  subject: z.string().trim().min(1).max(200).refine((value) => !/[\r\n]/.test(value), "Invalid subject."),
+  body: z.string().trim().min(1).max(20_000),
+});
+
+type TrustPublicationRecord = {
+  verificationStatus: string;
+  verificationReference: string | null;
+  evidenceUrl: string | null;
+  evidenceReviewedAt: Date | null;
+  evidenceReviewedBy: string | null;
+  expiresAt: Date | null;
+  permissionConfirmed: boolean;
+  permissionEvidenceUrl: string | null;
+  permissionConfirmedAt: Date | null;
+};
+
+function optionalDate(value: FormDataEntryValue | null, endOfDay = false) {
+  if (typeof value !== "string" || !value.trim()) return null;
+
+  const date = new Date(`${value.trim()}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`);
+  return Number.isNaN(date.valueOf()) ? null : date;
+}
+
+function isTrustPublicationReady(record: TrustPublicationRecord, requiresPermission: boolean) {
+  const hasReview = Boolean(
+    record.verificationReference &&
+      record.evidenceUrl &&
+      record.evidenceReviewedAt &&
+      record.evidenceReviewedBy,
+  );
+  const hasPermission = !requiresPermission || Boolean(
+    record.permissionConfirmed && record.permissionEvidenceUrl && record.permissionConfirmedAt,
+  );
+  const isCurrent = !record.expiresAt || record.expiresAt > new Date();
+
+  return record.verificationStatus === "VERIFIED" && hasReview && hasPermission && isCurrent;
+}
+
+function trustPublicationData(formData: FormData, requiresPermission: boolean) {
+  const submittedStatus = sanitize((formData.get("verificationStatus") as string) || "PENDING").toUpperCase();
+  const verificationStatus = trustVerificationStatuses.has(submittedStatus) ? submittedStatus : "PENDING";
+  const verificationReference = sanitize((formData.get("verificationReference") as string) || "") || null;
+  const evidenceUrl = sanitize((formData.get("evidenceUrl") as string) || "") || null;
+  const evidenceReviewedBy = sanitize((formData.get("evidenceReviewedBy") as string) || "") || null;
+  const evidenceReviewedAt = optionalDate(formData.get("evidenceReviewedAt"));
+  const expiresAt = optionalDate(formData.get("expiresAt"), true);
+  const permissionConfirmed = requiresPermission && formData.get("permissionConfirmed") === "true";
+  const permissionEvidenceUrl = requiresPermission
+    ? sanitize((formData.get("permissionEvidenceUrl") as string) || "") || null
+    : null;
+  const permissionConfirmedAt = requiresPermission
+    ? optionalDate(formData.get("permissionConfirmedAt"))
+    : null;
+  const record = {
+    verificationStatus,
+    verificationReference,
+    evidenceUrl,
+    evidenceReviewedAt,
+    evidenceReviewedBy,
+    expiresAt,
+    permissionConfirmed,
+    permissionEvidenceUrl,
+    permissionConfirmedAt,
+  };
+
+  return {
+    ...record,
+    publicVisibility: formData.get("publicVisibility") === "true" && isTrustPublicationReady(record, requiresPermission),
+  };
 }
 
 type PublicCacheTag = (typeof PUBLIC_CACHE_TAGS)[keyof typeof PUBLIC_CACHE_TAGS];
@@ -42,6 +126,97 @@ function updateHomeCache(...extraTags: PublicCacheTag[]) {
 
 function updateCmsPageCache() {
   updatePublicCacheTags(PUBLIC_CACHE_TAGS.cmsPages, PUBLIC_CACHE_TAGS.seo);
+}
+
+export async function updateContactSettings(formData: FormData) {
+  await requireAdmin();
+
+  const contactSettings = Object.fromEntries(
+    publicContactSettingKeys.map((key) => [key, sanitize((formData.get(`value.${key}`) as string) || "")]),
+  ) as Record<string, string>;
+
+  for (const [key, value] of Object.entries(contactSettings)) {
+    if (value && !publicContactValue(value)) {
+      throw new Error(`Replace the unapproved ${key} default before saving public contact details.`);
+    }
+  }
+
+  await prisma.siteSetting.upsert({
+    where: { key: "contact_settings" },
+    update: { value: contactSettings, updatedAt: new Date() },
+    create: { key: "contact_settings", value: contactSettings, updatedAt: new Date() },
+  });
+
+  await prisma.auditLog.create({
+    data: { id: crypto.randomUUID(), action: "contact_settings_updated", entityType: "SiteSetting", metadata: { key: "contact_settings" } },
+  });
+
+  revalidatePath("/admin/contact-cms");
+  revalidatePath("/contact");
+  revalidatePath("/", "layout");
+  updatePublicShellCache();
+  updateHomeCache(PUBLIC_CACHE_TAGS.contactSettings);
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.contactSettings, PUBLIC_CACHE_TAGS.cmsPages);
+}
+
+export async function saveLegalPage(formData: FormData) {
+  await requireAdmin();
+
+  const legalSlug = sanitize((formData.get("slug") as string) || "");
+  const definition = findPublicLegalPageDefinition(legalSlug);
+  if (!definition) {
+    throw new Error("This legal document is not available for public publication.");
+  }
+
+  const title = sanitize((formData.get("title") as string) || "");
+  const body = sanitize((formData.get("body") as string) || "");
+  const reviewNotice = sanitize((formData.get("reviewNotice") as string) || "");
+  const status = formData.get("status") === "PUBLISHED" ? "PUBLISHED" : "DRAFT";
+  const document = toPublicLegalDocument({ title, body, reviewNotice });
+
+  if (status === "PUBLISHED") {
+    if (formData.get("legalReviewConfirmed") !== "true") {
+      throw new Error("Confirm the legal review before publishing this document.");
+    }
+    if (!document) {
+      throw new Error("Published legal documents need a title and substantive reviewed content.");
+    }
+  }
+
+  const saved = await prisma.legalPage.upsert({
+    where: { slug: definition.slug },
+    create: {
+      id: crypto.randomUUID(),
+      slug: definition.slug,
+      title: title || definition.title,
+      body: body || null,
+      reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
+      status,
+      updatedAt: new Date(),
+    },
+    update: {
+      title: title || definition.title,
+      body: body || null,
+      reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
+      status,
+      updatedAt: new Date(),
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      action: "legal_page_saved",
+      entityType: "LegalPage",
+      entityId: saved.id,
+      metadata: { slug: definition.slug, title: saved.title, status: saved.status },
+    },
+  });
+
+  revalidatePath("/admin/legal-pages");
+  revalidatePath(definition.route);
+  revalidatePath("/sitemap.xml");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.legalPages, PUBLIC_CACHE_TAGS.seo);
 }
 
 // ─── SERVICES ────────────────────────────────────────────────────────────────
@@ -148,6 +323,146 @@ export async function deleteService(formData: FormData) {
   updateHomeCache(PUBLIC_CACHE_TAGS.services);
 }
 
+// â”€â”€â”€ SERVICE PRODUCTS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+const serviceProductPriceModes = new Set(["EXACT", "FROM", "REQUEST_PRICING", "HIDDEN"]);
+const serviceProductCtaRoutes = new Set([
+  "/book-consultation?service=Managed%20Services",
+  "/book-consultation?service=Cloud%20%26%20Cybersecurity",
+  "/book-consultation?service=Cloud%20Services",
+  "/book-consultation?service=Cybersecurity",
+  "/book-consultation?service=Infrastructure",
+  "/book-consultation?service=Field%20Engineering",
+  "/book-consultation?service=Professional%20Services",
+  "/assessments/it-health-check",
+]);
+
+function optionalNonNegativeAmount(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount >= 0 && amount <= 10_000_000 ? amount : null;
+}
+
+function serviceProductFeatures(value: FormDataEntryValue | null) {
+  if (typeof value !== "string") return [];
+  return value
+    .split("\n")
+    .map((feature) => sanitize(feature))
+    .filter(Boolean)
+    .slice(0, 20);
+}
+
+async function serviceProductFormData(formData: FormData) {
+  const serviceIdCandidate = sanitize((formData.get("serviceId") as string) || "");
+  const linkedService = serviceIdCandidate
+    ? await prisma.service.findUnique({ where: { id: serviceIdCandidate }, select: { id: true } })
+    : null;
+  const submittedMode = sanitize((formData.get("priceDisplayMode") as string) || "REQUEST_PRICING").toUpperCase();
+  const priceDisplayMode = serviceProductPriceModes.has(submittedMode) ? submittedMode : "REQUEST_PRICING";
+  const submittedCtaUrl = sanitize((formData.get("ctaUrl") as string) || "");
+  const ctaUrl = serviceProductCtaRoutes.has(submittedCtaUrl)
+    ? submittedCtaUrl
+    : "/book-consultation?service=Managed%20Services";
+  const name = sanitize((formData.get("name") as string) || "");
+  const description = sanitize((formData.get("description") as string) || "");
+
+  if (!name || !description) {
+    throw new Error("A service product needs a name and a concise public description.");
+  }
+
+  const sortOrderCandidate = Number(formData.get("sortOrder"));
+
+  return {
+    serviceId: linkedService?.id ?? null,
+    name,
+    description,
+    recommendedCustomerSize: sanitize((formData.get("recommendedCustomerSize") as string) || ""),
+    cadence: sanitize((formData.get("cadence") as string) || "") || null,
+    features: serviceProductFeatures(formData.get("features")),
+    pricingVisible: formData.get("pricingVisible") === "true",
+    priceDisplayMode,
+    monthlyPrice: optionalNonNegativeAmount(formData.get("monthlyPrice")),
+    annualPrice: optionalNonNegativeAmount(formData.get("annualPrice")),
+    ctaLabel: sanitize((formData.get("ctaLabel") as string) || "") || "Request pricing",
+    ctaUrl,
+    featured: formData.get("featured") === "true",
+    sortOrder: Number.isInteger(sortOrderCandidate) && sortOrderCandidate >= 0 && sortOrderCandidate <= 10_000 ? sortOrderCandidate : 0,
+  };
+}
+
+function updateServiceProductCache() {
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.serviceProducts);
+  revalidatePath("/pricing");
+  revalidatePath("/admin/service-products");
+}
+
+export async function createServiceProduct(formData: FormData) {
+  await requireAdmin();
+  const product = await serviceProductFormData(formData);
+
+  const created = await prisma.servicePackage.create({
+    data: {
+      id: crypto.randomUUID(),
+      ...product,
+      published: false,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: { id: crypto.randomUUID(), action: "service_product_created", entityType: "ServicePackage", entityId: created.id, metadata: { name: created.name } },
+  });
+
+  updateServiceProductCache();
+}
+
+export async function updateServiceProduct(formData: FormData) {
+  await requireAdmin();
+  const id = sanitize((formData.get("id") as string) || "");
+  const existing = await prisma.servicePackage.findUnique({ where: { id } });
+  if (!existing) return;
+
+  const product = await serviceProductFormData(formData);
+  await prisma.servicePackage.update({
+    where: { id },
+    data: { ...product, updatedAt: new Date() },
+  });
+
+  await prisma.auditLog.create({
+    data: { id: crypto.randomUUID(), action: "service_product_updated", entityType: "ServicePackage", entityId: id, metadata: { name: product.name } },
+  });
+
+  updateServiceProductCache();
+}
+
+export async function toggleServiceProductPublish(formData: FormData) {
+  await requireAdmin();
+  const id = sanitize((formData.get("id") as string) || "");
+  const existing = await prisma.servicePackage.findUnique({ where: { id } });
+  if (!existing) return;
+
+  const published = !existing.published;
+  await prisma.servicePackage.update({ where: { id }, data: { published, updatedAt: new Date() } });
+  await prisma.auditLog.create({
+    data: { id: crypto.randomUUID(), action: published ? "service_product_published" : "service_product_unpublished", entityType: "ServicePackage", entityId: id, metadata: { name: existing.name } },
+  });
+
+  updateServiceProductCache();
+}
+
+export async function deleteServiceProduct(formData: FormData) {
+  await requireAdmin();
+  const id = sanitize((formData.get("id") as string) || "");
+  const existing = await prisma.servicePackage.findUnique({ where: { id } });
+  if (!existing) return;
+
+  await prisma.servicePackage.delete({ where: { id } });
+  await prisma.auditLog.create({
+    data: { id: crypto.randomUUID(), action: "service_product_deleted", entityType: "ServicePackage", entityId: id, metadata: { name: existing.name } },
+  });
+
+  updateServiceProductCache();
+}
+
 // ─── BLOG POSTS ──────────────────────────────────────────────────────────────
 
 export async function createBlogPost(formData: FormData) {
@@ -184,6 +499,7 @@ export async function createBlogPost(formData: FormData) {
 
   revalidatePath("/admin/blog-and-insights");
   revalidatePath("/blog");
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.insights, PUBLIC_CACHE_TAGS.seo);
 }
 
 export async function updateBlogPost(formData: FormData) {
@@ -222,6 +538,7 @@ export async function updateBlogPost(formData: FormData) {
   revalidatePath("/admin/blog-and-insights");
   revalidatePath("/blog");
   revalidatePath(`/blog/${existing.slug}`);
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.insights, PUBLIC_CACHE_TAGS.seo);
 }
 
 export async function publishBlogPost(formData: FormData) {
@@ -242,6 +559,8 @@ export async function publishBlogPost(formData: FormData) {
 
   revalidatePath("/admin/blog-and-insights");
   revalidatePath("/blog");
+  revalidatePath(`/blog/${existing.slug}`);
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.insights, PUBLIC_CACHE_TAGS.seo);
 }
 
 export async function deleteBlogPost(formData: FormData) {
@@ -258,6 +577,8 @@ export async function deleteBlogPost(formData: FormData) {
 
   revalidatePath("/admin/blog-and-insights");
   revalidatePath("/blog");
+  revalidatePath(`/blog/${existing.slug}`);
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.insights, PUBLIC_CACHE_TAGS.seo);
 }
 
 // ─── INDUSTRIES ───────────────────────────────────────────────────────────────
@@ -379,16 +700,10 @@ export async function updateTicketStatus(formData: FormData) {
   try {
     const t = await prisma.ticket.findUnique({ where: { id } });
     if (t) {
-      let settings = await prisma.surveySetting.findFirst();
-      if (!settings) {
-        // Create default settings if they don't exist yet
-        const { triggerSurvey } = await import("./survey-actions");
-        // triggerSurvey handles settings creation automatically
-      }
-      settings = await prisma.surveySetting.findFirst();
+      const settings = await prisma.surveySetting.findFirst();
       const shouldTrigger =
-        (status === "CLOSED" && (settings?.triggerOnClosed !== false)) ||
-        (status === "RESOLVED" && (settings?.triggerOnResolved !== false));
+        (status === "CLOSED" && settings?.triggerOnClosed === true) ||
+        (status === "RESOLVED" && settings?.triggerOnResolved === true);
       
       if (shouldTrigger && t.email) {
         const { triggerSurvey } = await import("./survey-actions");
@@ -437,12 +752,8 @@ export async function closeTicket(formData: FormData) {
   try {
     const t = await prisma.ticket.findUnique({ where: { id } });
     if (t) {
-      let settings = await prisma.surveySetting.findFirst();
-      if (!settings) {
-        const { triggerSurvey } = await import("./survey-actions");
-      }
-      settings = await prisma.surveySetting.findFirst();
-      const shouldTrigger = settings?.triggerOnClosed !== false;
+      const settings = await prisma.surveySetting.findFirst();
+      const shouldTrigger = settings?.triggerOnClosed === true;
       
       if (shouldTrigger && t.email) {
         const { triggerSurvey } = await import("./survey-actions");
@@ -526,11 +837,21 @@ export async function deactivateClient(formData: FormData) {
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 
 export async function updateSiteSetting(formData: FormData) {
-  await requireAdmin();
-  const key = formData.get("key") as string;
+  const administrator = await requireAdmin();
+  const keyValue = formData.get("key");
+  const key = typeof keyValue === "string" ? keyValue.trim() : "";
+  if (!/^[A-Za-z][A-Za-z0-9_-]{0,99}$/.test(key)) {
+    throw new Error("Invalid setting key.");
+  }
+  if (!canUpdateSiteSetting(administrator.role, key)) {
+    throw new Error("You do not have permission to update this setting.");
+  }
 
   // Support dot-notation fields like value.name, value.email → build nested object
   const hasDotFields = Array.from(formData.keys()).some((k) => k.startsWith("value."));
+  if (key === "emailConfig" && !hasDotFields) {
+    throw new Error("Email delivery identity must be updated through the approved settings form.");
+  }
 
   let value: unknown;
   if (hasDotFields) {
@@ -545,7 +866,21 @@ export async function updateSiteSetting(formData: FormData) {
         incoming[k.slice(6)] = sanitizedVal;
       }
     }
-    value = { ...existingObj, ...incoming };
+    if (key === "emailConfig") {
+      const defaultFromEmail = incoming.defaultFromEmail ?? existingObj.defaultFromEmail ?? "";
+      const adminNotificationEmail = incoming.adminNotificationEmail ?? existingObj.adminNotificationEmail ?? "";
+      if (defaultFromEmail && !z.string().trim().email().max(254).safeParse(defaultFromEmail).success) {
+        throw new Error("Enter a valid default sender email address.");
+      }
+      if (adminNotificationEmail && !z.string().trim().email().max(254).safeParse(adminNotificationEmail).success) {
+        throw new Error("Enter a valid admin notification email address.");
+      }
+      value = Object.fromEntries(
+        [...emailIdentityFields].map((field) => [field, incoming[field] ?? existingObj[field] ?? ""]),
+      );
+    } else {
+      value = { ...existingObj, ...incoming };
+    }
   } else {
     const raw = formData.get("value") as string;
     try {
@@ -562,7 +897,7 @@ export async function updateSiteSetting(formData: FormData) {
   });
 
   await prisma.auditLog.create({
-    data: { id: crypto.randomUUID(), action: "site_setting_updated", entityType: "SiteSetting", metadata: { key } },
+    data: { id: crypto.randomUUID(), userId: administrator.id, action: "site_setting_updated", entityType: "SiteSetting", metadata: { key } },
   });
 
   revalidatePath("/admin/settings");
@@ -581,9 +916,10 @@ export async function approveTestimonial(formData: FormData) {
   const existing = await prisma.testimonial.findUnique({ where: { id } });
   if (!existing) return;
 
+  const approved = existing.approved ? false : isTrustPublicationReady(existing, true);
   await prisma.testimonial.update({
     where: { id },
-    data: { approved: !existing.approved },
+    data: { approved, featured: approved ? existing.featured : false },
   });
 
   revalidatePath("/admin/testimonials");
@@ -597,7 +933,10 @@ export async function toggleFeaturedTestimonial(formData: FormData) {
   const existing = await prisma.testimonial.findUnique({ where: { id } });
   if (!existing) return;
 
-  await prisma.testimonial.update({ where: { id }, data: { featured: !existing.featured } });
+  const featured = existing.featured
+    ? false
+    : existing.approved && existing.publicVisibility && isTrustPublicationReady(existing, true);
+  await prisma.testimonial.update({ where: { id }, data: { featured } });
   revalidatePath("/admin/testimonials");
   updateHomeCache(PUBLIC_CACHE_TAGS.testimonials);
 }
@@ -616,9 +955,31 @@ export async function createTestimonial(formData: FormData) {
   const company = sanitize(formData.get("company") as string || "");
   const quote = sanitize(formData.get("quote") as string || "");
   const rating = parseInt(formData.get("rating") as string || "5", 10);
+  const trustPublication = trustPublicationData(formData, true);
 
   await prisma.testimonial.create({
-    data: { id: crypto.randomUUID(), clientName, company, quote, rating, approved: false, featured: false },
+    data: { id: crypto.randomUUID(), clientName, company, quote, rating, approved: false, featured: false, ...trustPublication },
+  });
+
+  revalidatePath("/admin/testimonials");
+  updateHomeCache(PUBLIC_CACHE_TAGS.testimonials);
+}
+
+export async function updateTestimonialTrust(formData: FormData) {
+  await requireAdmin();
+  const id = formData.get("id") as string;
+  const existing = await prisma.testimonial.findUnique({ where: { id } });
+  if (!existing) return;
+
+  const trustPublication = trustPublicationData(formData, true);
+  const remainsEligible = isTrustPublicationReady(trustPublication, true);
+  await prisma.testimonial.update({
+    where: { id },
+    data: {
+      ...trustPublication,
+      approved: remainsEligible ? existing.approved : false,
+      featured: remainsEligible ? existing.featured : false,
+    },
   });
 
   revalidatePath("/admin/testimonials");
@@ -1108,7 +1469,8 @@ export async function createPartnerLogo(formData: FormData) {
   const altText = sanitize(formData.get("altText") as string || "");
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
-  const isVisible = formData.get("isVisible") !== "false";
+  const isVisible = formData.get("isVisible") === "true";
+  const trustPublication = trustPublicationData(formData, false);
 
   await prisma.partnerLogo.create({
     data: {
@@ -1121,6 +1483,7 @@ export async function createPartnerLogo(formData: FormData) {
       websiteUrl,
       isFeatured,
       isVisible,
+      ...trustPublication,
     },
   });
 
@@ -1139,7 +1502,8 @@ export async function updatePartnerLogo(formData: FormData) {
   const altText = sanitize(formData.get("altText") as string || "");
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
-  const isVisible = formData.get("isVisible") !== "false";
+  const isVisible = formData.get("isVisible") === "true";
+  const trustPublication = trustPublicationData(formData, false);
 
   await prisma.partnerLogo.update({
     where: { id },
@@ -1152,6 +1516,7 @@ export async function updatePartnerLogo(formData: FormData) {
       websiteUrl,
       isFeatured,
       isVisible,
+      ...trustPublication,
     },
   });
 
@@ -1192,7 +1557,8 @@ export async function createTrustedLogo(formData: FormData) {
   const altText = sanitize(formData.get("altText") as string || "");
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
-  const isVisible = formData.get("isVisible") !== "false";
+  const isVisible = formData.get("isVisible") === "true";
+  const trustPublication = trustPublicationData(formData, true);
 
   await prisma.trustedBusinessLogo.create({
     data: {
@@ -1203,6 +1569,7 @@ export async function createTrustedLogo(formData: FormData) {
       websiteUrl,
       isFeatured,
       isVisible,
+      ...trustPublication,
     },
   });
 
@@ -1219,7 +1586,8 @@ export async function updateTrustedLogo(formData: FormData) {
   const altText = sanitize(formData.get("altText") as string || "");
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
-  const isVisible = formData.get("isVisible") !== "false";
+  const isVisible = formData.get("isVisible") === "true";
+  const trustPublication = trustPublicationData(formData, true);
 
   await prisma.trustedBusinessLogo.update({
     where: { id },
@@ -1230,6 +1598,7 @@ export async function updateTrustedLogo(formData: FormData) {
       websiteUrl,
       isFeatured,
       isVisible,
+      ...trustPublication,
     },
   });
 
@@ -1274,7 +1643,8 @@ export async function createComplianceCard(formData: FormData) {
   const externalUrl = sanitize(formData.get("externalUrl") as string || "");
   const rawLocation = sanitize(formData.get("displayLocation") as string || "homepage");
   const showInFooter = formData.get("showInFooter") === "on";
-  const isVisible = formData.get("isVisible") !== "false";
+  const isVisible = formData.get("isVisible") === "true";
+  const trustPublication = trustPublicationData(formData, false);
 
   let locations = rawLocation
     .split(",")
@@ -1297,6 +1667,7 @@ export async function createComplianceCard(formData: FormData) {
       externalUrl: externalUrl || null,
       displayLocation,
       isVisible,
+      ...trustPublication,
     },
   });
 
@@ -1318,7 +1689,8 @@ export async function updateComplianceCard(formData: FormData) {
   const externalUrl = sanitize(formData.get("externalUrl") as string || "");
   const rawLocation = sanitize(formData.get("displayLocation") as string || "");
   const showInFooter = formData.get("showInFooter") === "on";
-  const isVisible = formData.get("isVisible") !== "false";
+  const isVisible = formData.get("isVisible") === "true";
+  const trustPublication = trustPublicationData(formData, false);
 
   let locations = rawLocation
     .split(",")
@@ -1341,6 +1713,7 @@ export async function updateComplianceCard(formData: FormData) {
       externalUrl: externalUrl || null,
       displayLocation,
       isVisible,
+      ...trustPublication,
     },
   });
 
@@ -1374,6 +1747,8 @@ export async function toggleComplianceCardFooter(formData: FormData) {
 
   if (hasFooter) {
     locations = locations.filter(l => l !== "footer");
+  } else if (!isTrustPublicationReady(card, false) || !card.publicVisibility || !card.isVisible) {
+    return;
   } else {
     locations.push("footer");
   }
@@ -1925,12 +2300,8 @@ export async function updateWorkOrderStatus(formData: FormData) {
   // Trigger survey if completed and triggerOnJobCompleted is true
   if (status === "Completed" && wo.contactEmail) {
     try {
-      let settings = await prisma.surveySetting.findFirst();
-      if (!settings) {
-        const { triggerSurvey } = await import("./survey-actions");
-      }
-      settings = await prisma.surveySetting.findFirst();
-      if (settings?.triggerOnJobCompleted !== false) {
+      const settings = await prisma.surveySetting.findFirst();
+      if (settings?.triggerOnJobCompleted === true) {
         const { triggerSurvey } = await import("./survey-actions");
         await triggerSurvey("work_order", id, wo.contactEmail, wo.contactName, wo.clientCompanyId);
       }
@@ -1955,41 +2326,36 @@ export async function deleteWorkOrder(formData: FormData) {
 // ─── ADMIN EMAIL DISPATCH ─────────────────────────────────────────────────────
 
 export async function sendAdminEmail(formData: FormData) {
-  await requireAdmin();
-  const to = formData.get("to") as string;
-  const subject = formData.get("subject") as string;
-  const messageBody = formData.get("body") as string;
-
-  if (!to || !subject || !messageBody) {
-    throw new Error("Missing required fields");
+  const administrator = await requireAdmin();
+  const parsed = adminEmailSchema.safeParse({
+    to: formData.get("to"),
+    subject: formData.get("subject"),
+    body: formData.get("body"),
+  });
+  if (!parsed.success) {
+    throw new Error("Enter a valid recipient, subject and message.");
   }
+  const { to, subject, body: messageBody } = parsed.data;
 
-  const emailSettings = await prisma.siteSetting.findUnique({ where: { key: "emailConfig" } });
-  if (!emailSettings || !emailSettings.value) {
-    throw new Error("Email configuration not found. Please configure it in System Settings.");
-  }
-
-  const config = emailSettings.value as Record<string, string>;
-
-  if (!config.smtpHost || !config.smtpPort || !config.smtpUser || !config.smtpPassword) {
-    throw new Error("Incomplete SMTP configuration. Please check your System Settings.");
+  const smtp = getServerSmtpConfig();
+  if (!smtp) {
+    throw new Error("Server-managed SMTP is not configured. Ask a Super Admin to configure the approved environment secrets.");
   }
 
   const nodemailer = (await import("nodemailer")).default;
 
   const transporter = nodemailer.createTransport({
-    host: config.smtpHost,
-    port: parseInt(config.smtpPort, 10),
-    secure: parseInt(config.smtpPort, 10) === 465,
+    host: smtp.host,
+    port: smtp.port,
+    secure: smtp.port === 465,
     auth: {
-      user: config.smtpUser,
-      pass: config.smtpPassword,
+      user: smtp.user,
+      pass: smtp.password,
     },
   });
 
-  const fromAddress = config.defaultFromEmail
-    ? `"${config.defaultFromName || 'CYVRIX Admin'}" <${config.defaultFromEmail}>`
-    : config.smtpUser;
+  const identity = await getEmailIdentity("CYVRIX Admin");
+  const fromAddress = identity.from || smtp.user;
 
   await transporter.sendMail({
     from: fromAddress,
@@ -1999,7 +2365,7 @@ export async function sendAdminEmail(formData: FormData) {
   });
 
   await prisma.auditLog.create({
-    data: { id: crypto.randomUUID(), action: "admin_email_sent", entityType: "Email", metadata: { to, subject } },
+    data: { id: crypto.randomUUID(), userId: administrator.id, action: "admin_email_sent", entityType: "Email", metadata: { to, subject } },
   });
 }
 

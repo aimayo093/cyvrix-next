@@ -25,7 +25,7 @@ import {
   Search,
 } from "lucide-react";
 
-export const metadata = { title: "Satisfaction Surveys | CYVRIX Admin" };
+export const metadata = { title: "Satisfaction Surveys" };
 
 export default function SurveysAdminPage(props: any) {
   return (

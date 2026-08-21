@@ -141,6 +141,10 @@ export function SectionRenderer({
     .filter((s) => s.isVisible !== false)
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
+  // Trust and metrics stay unpublished until the prepared workflow can verify
+  // evidence, permission and expiry before a record reaches the public site.
+  const renderVerifiedTrustContent = false;
+
   const CustomLink = React.forwardRef<HTMLAnchorElement, React.ComponentPropsWithoutRef<typeof Link> & { forceReload?: boolean }>(
     ({ href, children, forceReload = forceFullPageReload, ...props }, ref) => {
       const hrefStr = href ? href.toString() : "";
@@ -201,7 +205,7 @@ export function SectionRenderer({
           case "Hero":
             const overlayOpacity = settings.overlayOpacity ?? 0.65;
             const focalPosition = settings.focalPosition ?? "center";
-            const cardTitle = settings.cardTitle ?? "Premium UK Operations Center";
+            const cardTitle = settings.cardTitle ?? "Technology service overview";
             const focalClass = 
               focalPosition === "top" ? "bg-top" :
               focalPosition === "bottom" ? "bg-bottom" :
@@ -317,21 +321,21 @@ export function SectionRenderer({
                         </div>
 
                         {/* Floating Response Stat Card */}
-                        {settings.showStatCard !== false && (
+                        {settings.showStatCard === true && settings.statLabel && settings.statValue && (
                           <div className="absolute -bottom-6 -left-6 glass-panel p-6 rounded-lg border border-white/10 w-64 animate-float">
                             <p className="text-sm font-bold text-slate-400 mb-1">
-                              {settings.statLabel || "Average Response Time"}
+                              {settings.statLabel}
                             </p>
                             <p className="text-4xl font-black text-white flex items-end gap-2">
-                              {settings.statValue || "12"}{" "}
+                              {settings.statValue}{" "}
                               <span className="text-lg text-slate-500 font-bold mb-1">
-                                {settings.statUnit || "Mins"}
+                                {settings.statUnit}
                               </span>
                             </p>
-                            {(settings.statBadge || "SLA Exceeded") && (
+                            {settings.statBadge && (
                               <div className="mt-3 flex items-center gap-2 text-xs font-bold text-[#06b6d4] bg-[#06b6d4]/10 px-2 py-1 rounded w-fit border border-[#06b6d4]/20">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#06b6d4]" />
-                                {settings.statBadge || "SLA Exceeded"}
+                                {settings.statBadge}
                               </div>
                             )}
                           </div>
@@ -586,6 +590,7 @@ export function SectionRenderer({
 
           // ─── 7. COMPLIANCE CARDS ───────────────────────────────────────────
           case "Compliance cards":
+            if (!renderVerifiedTrustContent) return null;
             return (
               <section key={sec.id} className={cn("py-24 bg-[#020817]", bgClass)}>
                 <div className="max-w-7xl mx-auto px-5 lg:px-8">
@@ -637,7 +642,7 @@ export function SectionRenderer({
 
           // ─── 8. PARTNER LOGOS ──────────────────────────────────────────────
           case "Partner logos":
-            if (partners.length === 0) return null;
+            if (!renderVerifiedTrustContent || partners.length === 0) return null;
             return (
               <section key={sec.id} className="bg-[#020817] border-b border-white/5 py-8 overflow-hidden">
                 <div className="max-w-7xl mx-auto px-5 lg:px-8 mb-6 text-center">
@@ -669,7 +674,7 @@ export function SectionRenderer({
 
           // ─── 9. TRUSTED LOGOS ──────────────────────────────────────────────
           case "Trusted logos":
-            if (trustedLogos.length === 0) return null;
+            if (!renderVerifiedTrustContent || trustedLogos.length === 0) return null;
             return (
               <section key={sec.id} className="bg-[#020817] border-b border-white/5 py-10 overflow-hidden">
                 <div className="max-w-7xl mx-auto px-5 lg:px-8 mb-6 text-center">
@@ -706,7 +711,7 @@ export function SectionRenderer({
 
           // ─── 10. TESTIMONIALS ──────────────────────────────────────────────
           case "Testimonials":
-            if (testimonials.length === 0) return null;
+            if (!renderVerifiedTrustContent || testimonials.length === 0) return null;
             return (
               <section key={sec.id} className={cn("py-24 border-y border-white/5 relative overflow-hidden", bgClass)}>
                 <div className="absolute inset-0 bg-dot-pattern opacity-30 pointer-events-none" />
@@ -790,6 +795,7 @@ export function SectionRenderer({
 
           // ─── 12. CASE STUDY PREVIEW ────────────────────────────────────────
           case "Case study preview":
+            if (!renderVerifiedTrustContent) return null;
             return (
               <section key={sec.id} className={cn("py-24", bgClass)}>
                 <div className="max-w-7xl mx-auto px-5 lg:px-8">
@@ -873,7 +879,7 @@ export function SectionRenderer({
                   </div>
 
                   <div className="glass-panel p-8 rounded-2xl border-white/10">
-                    <form action="/api/submit-contact" method="POST" encType="multipart/form-data" className="space-y-6">
+                    <form action="/api/submit-contact" method="POST" className="space-y-6">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <label className="block text-sm font-bold text-slate-300">
                           Your Name
@@ -908,25 +914,25 @@ export function SectionRenderer({
                         <textarea required name="message" rows={5} className="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0] resize-none" />
                       </label>
                       
-                      {/* Optional File Attachment field */}
-                      <label className="block text-sm font-bold text-slate-300">
-                        {isCareersForm ? "Attach CV (Optional, PDF/DOC/DOCX up to 10MB)" : "Attach Specifications or Document (Optional, PDF/DOC/DOCX up to 10MB)"}
-                        <input 
-                          type="file" 
-                          name="cv" 
-                          accept=".pdf,.doc,.docx"
-                          className="mt-2 block w-full text-xs text-slate-400
-                            file:mr-4 file:py-2.5 file:px-4
-                            file:rounded-xl file:border-0
-                            file:text-xs file:font-semibold
-                            file:bg-white/10 file:text-white
-                            hover:file:bg-white/20
-                            focus:outline-none cursor-pointer"
-                        />
+                      <p className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-relaxed text-slate-300">
+                        {isCareersForm
+                          ? "For your privacy, do not upload a CV or other personal documents here. Submit your interest and CYVRIX will provide an approved sharing route if your application progresses."
+                          : "For privacy and document security, this form does not accept attachments. Describe your requirements and CYVRIX will provide an approved sharing route if documents are needed."}
+                      </p>
+
+                      <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-relaxed text-slate-300">
+                        <input required type="checkbox" name="consent" className="mt-0.5 h-4 w-4 shrink-0 accent-[#2691F0]" />
+                        <span>
+                          I consent to CYVRIX processing this {isCareersForm ? "application interest" : "enquiry"} in accordance with the{" "}
+                          <CustomLink href="/privacy-policy" className="text-sky-300 underline underline-offset-2 hover:text-white">
+                            Privacy Policy
+                          </CustomLink>
+                          .
+                        </span>
                       </label>
 
                       <Button type="submit" className="w-full justify-center bg-[#2691F0] text-white rounded font-bold py-3.5 shadow-lg shadow-[#2691F0]/20 hover:bg-[#041635] transition-all">
-                        {isCareersForm ? "Submit Application" : "Send Enquiry"}
+                        {isCareersForm ? "Submit Application Interest" : "Send Enquiry"}
                       </Button>
                     </form>
                   </div>
@@ -1031,6 +1037,7 @@ export function SectionRenderer({
 
           // ─── 16. STATISTICS ────────────────────────────────────────────────
           case "Statistics":
+            if (settings.allowPublicMetrics !== true) return null;
             const stats = settings.stats || [];
             return (
               <section key={sec.id} className={cn("py-20 bg-[#041635] text-white", bgClass)}>

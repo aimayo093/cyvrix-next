@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { services, industries, faqs, legalPages, blogPosts, caseStudies, testimonials } from "../lib/cyvrix-data";
+import { services, industries, faqs, legalPages, blogPosts } from "../lib/cyvrix-data";
 import { hashPassword } from "../lib/password";
 import { prisma } from "../lib/prisma";
 
@@ -38,8 +38,8 @@ async function main() {
         websiteUrl: "https://www.cyvrix.co.uk",
         contactEmail: "support@cyvrix.co.uk",
         supportEmail: "support@cyvrix.co.uk",
-        phone: "Set in admin settings",
-        address: "UK service coverage configured in admin",
+        phone: "",
+        address: "",
       },
       updatedAt: new Date(),
     },
@@ -51,8 +51,8 @@ async function main() {
         websiteUrl: "https://www.cyvrix.co.uk",
         contactEmail: "support@cyvrix.co.uk",
         supportEmail: "support@cyvrix.co.uk",
-        phone: "Set in admin settings",
-        address: "UK service coverage configured in admin",
+        phone: "",
+        address: "",
       },
       updatedAt: new Date(),
     },
@@ -90,7 +90,7 @@ async function main() {
           { id: crypto.randomUUID(), type: "SERVICE_CARDS", title: "Core services", sortOrder: 1, content: { limit: 4 }, updatedAt: new Date() },
           { id: crypto.randomUUID(), type: "TEXT", title: "Why CYVRIX", sortOrder: 2, content: { body: "Clear ownership, practical security, and reliable support without unnecessary complexity." }, updatedAt: new Date() },
           { id: crypto.randomUUID(), type: "CASE_STUDY_CARDS", title: "Proof points", sortOrder: 3, content: { limit: 2 }, updatedAt: new Date() },
-          { id: crypto.randomUUID(), type: "CTA", title: "Book a consultation", sortOrder: 4, content: { href: "/request-quote", label: "Book a free consultation" }, updatedAt: new Date() },
+          { id: crypto.randomUUID(), type: "CTA", title: "Book a technology review", sortOrder: 4, content: { href: "/book-consultation", label: "Book a technology review" }, updatedAt: new Date() },
         ],
       },
     },
@@ -172,20 +172,6 @@ async function main() {
     });
   }
 
-  for (const study of caseStudies) {
-    await prisma.caseStudy.upsert({
-      where: { slug: study.slug },
-      update: { title: study.title, clientType: study.clientType, challenge: study.challenge, solution: study.solution, outcome: study.outcome, technologies: study.technologies, services: study.services, timeline: study.timeline, testimonial: study.testimonial, published: true, updatedAt: new Date() },
-      create: { id: crypto.randomUUID(), slug: study.slug, title: study.title, clientType: study.clientType, challenge: study.challenge, solution: study.solution, outcome: study.outcome, technologies: study.technologies, services: study.services, timeline: study.timeline, testimonial: study.testimonial, published: true, updatedAt: new Date() },
-    });
-  }
-
-  for (const item of testimonials) {
-    await prisma.testimonial.create({
-      data: { id: crypto.randomUUID(), clientName: item.name, company: item.company, quote: item.quote, rating: item.rating, approved: true, featured: true },
-    }).catch(() => undefined);
-  }
-
   // Seeding Brand Assets
   const brandAssets = [
     { key: "logo_default", name: "Primary Brand Logo", url: "", alt: "CYVRIX Technologies Logo", usage: "Light backgrounds, general usage" },
@@ -220,76 +206,6 @@ async function main() {
     }).catch(() => undefined);
   }
 
-  // Seeding Compliance Cards
-  const complianceFrameworks = [
-    { title: "ISO 27001", desc: "International standard for information security management systems (ISMS).", cat: "Security Management", icon: "Shield", status: "Framework followed", location: "homepage,services,about,compliance_page,footer", order: 1 },
-    { title: "Cyber Essentials Plus", desc: "UK government-backed scheme demonstrating robust technical cyber controls.", cat: "Technical Security", icon: "CheckCircle", status: "In progress", location: "homepage,services,cybersecurity,about,footer", order: 2 },
-    { title: "UK GDPR & DPA 2018", desc: "Full alignment with data protection regulations for secure, compliant records.", cat: "Data Privacy", icon: "Lock", status: "Certified", location: "homepage,about,compliance_page,footer", order: 3 },
-    { title: "ITIL-aligned Support", desc: "Service delivery routines aligned with best practices in service management.", cat: "IT Service Management", icon: "Settings", status: "Framework followed", location: "services,about,compliance_page,footer", order: 4 },
-  ];
-
-  for (const comp of complianceFrameworks) {
-    await prisma.complianceCard.create({
-      data: {
-        id: crypto.randomUUID(),
-        title: comp.title,
-        description: comp.desc,
-        category: comp.cat,
-        iconKey: comp.icon,
-        status: comp.status,
-        displayLocation: comp.location,
-        sortOrder: comp.order,
-      },
-    }).catch(() => undefined);
-  }
-
-  // Seeding Partner Logos
-  const partners = [
-    { name: "Microsoft Solutions Partner", category: "Vendor Partner", logo: "", alt: "Microsoft Solutions Partner", url: "https://microsoft.com", featured: true, order: 1 },
-    { name: "CREST Security Certified", category: "Certification", logo: "", alt: "CREST Certified", url: "https://crest-approved.org", featured: true, order: 2 },
-    { name: "AWS Advanced Partner", category: "Technology Partner", logo: "", alt: "AWS Advanced Partner", url: "https://aws.amazon.com", featured: true, order: 3 },
-    { name: "Fortinet Certified Partner", category: "Security Partner", logo: "", alt: "Fortinet Security Partner", url: "https://fortinet.com", featured: false, order: 4 },
-    { name: "Cisco Premier Integrator", category: "Vendor Partner", logo: "", alt: "Cisco Integrator", url: "https://cisco.com", featured: false, order: 5 },
-  ];
-
-  for (const part of partners) {
-    await prisma.partnerLogo.create({
-      data: {
-        id: crypto.randomUUID(),
-        name: part.name,
-        category: part.category,
-        logoUrl: part.logo,
-        altText: part.alt,
-        websiteUrl: part.url,
-        isFeatured: part.featured,
-        sortOrder: part.order,
-      },
-    }).catch(() => undefined);
-  }
-
-  // Seeding Trusted Logos
-  const trustedBusinesses = [
-    { name: "Meridian Logistics", logo: "", alt: "Meridian Logistics", url: "", featured: true, order: 1 },
-    { name: "Hartwell Group", logo: "", alt: "Hartwell Group", url: "", featured: true, order: 2 },
-    { name: "Pinnacle Finance", logo: "", alt: "Pinnacle Finance", url: "", featured: true, order: 3 },
-    { name: "NorthBridge Law", logo: "", alt: "NorthBridge Law", url: "", featured: true, order: 4 },
-    { name: "Apex Healthcare", logo: "", alt: "Apex Healthcare", url: "", featured: true, order: 5 },
-  ];
-
-  for (const logo of trustedBusinesses) {
-    await prisma.trustedBusinessLogo.create({
-      data: {
-        id: crypto.randomUUID(),
-        companyName: logo.name,
-        logoUrl: logo.logo,
-        altText: logo.alt,
-        websiteUrl: logo.url,
-        isFeatured: logo.featured,
-        sortOrder: logo.order,
-      },
-    }).catch(() => undefined);
-  }
-
   // Seeding Menus
   const headerMenu = await prisma.menu.upsert({
     where: { location: "header" },
@@ -304,7 +220,7 @@ async function main() {
     { label: "Case Studies", url: "/case-studies", order: 4 },
     { label: "About Us", url: "/about", order: 5 },
     { label: "Contact", url: "/contact", order: 6 },
-    { label: "Get a Free IT Audit", url: "/book-consultation", order: 7, iconKey: "button-cta" },
+    { label: "Book a Technology Review", url: "/book-consultation", order: 7, iconKey: "button-cta" },
   ];
 
   for (const item of headerItems) {
@@ -391,18 +307,13 @@ async function main() {
         order: 1,
       },
       {
-        type: "Partner logos",
-        title: "Accredited & Certified Partner",
-        order: 2,
-      },
-      {
         type: "Service cards",
         title: "Comprehensive IT Solutions",
         sub: "From day-to-day helpdesk support to complex cloud migrations and robust cybersecurity defenses, we have the expertise to scale with you.",
         btnLab: "View All Services",
         btnUrl: "/services",
         bg: "dark",
-        order: 3,
+        order: 2,
       },
       {
         type: "Image and text",
@@ -413,7 +324,7 @@ async function main() {
         btnUrl: "/about",
         bg: "dark",
         layout: "left",
-        order: 4,
+        order: 3,
         settings: {
           points: [
             "No generic fixes. We resolve the root cause of issues.",
@@ -424,25 +335,13 @@ async function main() {
         }
       },
       {
-        type: "Testimonials",
-        title: "Client Success",
-        sub: "What our clients say about partnering with CYVRIX",
-        bg: "dark",
-        order: 5,
-      },
-      {
-        type: "Trusted logos",
-        title: "Trusted By Leading UK Businesses",
-        order: 6,
-      },
-      {
         type: "CTA section",
-        title: "Secure your business future today.",
-        body: "Speak to one of our technical architects for a no-obligation audit of your current IT infrastructure and security posture.",
-        btnLab: "Request Free Audit",
+        title: "Start with the right technology conversation.",
+        body: "Tell us what needs attention and we will help identify the most useful next step.",
+        btnLab: "Book a technology review",
         btnUrl: "/book-consultation",
         bg: "dark",
-        order: 7,
+        order: 4,
       }
     ];
 

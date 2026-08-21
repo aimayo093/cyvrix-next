@@ -13,16 +13,16 @@ async function getOrCreateSurveySettings() {
     settings = await prisma.surveySetting.create({
       data: {
         id: crypto.randomUUID(),
-        autoSendEnabled: true,
-        triggerOnResolved: true,
-        triggerOnClosed: true,
-        triggerOnJobCompleted: true,
+        autoSendEnabled: false,
+        triggerOnResolved: false,
+        triggerOnClosed: false,
+        triggerOnJobCompleted: false,
         sendDelayMinutes: 0,
         emailSubject: "How did we do? Your feedback matters",
         emailBody: "Hello {{client_name}},\n\nYour recent support request/job has been marked as completed.\n\nWe would appreciate your feedback so we can continue improving the service we provide.\n\nTicket/Job Reference: {{reference_number}}\nService: {{service_name}}\n\nPlease take a moment to complete this short survey:\n{{survey_link}}\n\nThank you,\nCYVRIX Technologies",
         ratingType: "stars_5",
         lowRatingThreshold: 3,
-        adminNotificationEmail: process.env.ADMIN_NOTIFICATION_EMAIL || "admin@cyvrix.co.uk",
+        adminNotificationEmail: process.env.ADMIN_NOTIFICATION_EMAIL || "",
         surveyExpiryDays: 7,
       },
     });
@@ -38,6 +38,8 @@ export async function triggerSurvey(
   contactName?: string | null,
   clientCompanyId?: string | null
 ) {
+  const admin = await requireAdmin();
+
   try {
     const settings = await getOrCreateSurveySettings();
     if (!settings.autoSendEnabled) return null;
@@ -55,18 +57,33 @@ export async function triggerSurvey(
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + settings.surveyExpiryDays);
 
-    const request = await prisma.surveyRequest.create({
-      data: {
-        id: crypto.randomUUID(),
-        relatedType,
-        relatedId,
-        clientCompanyId,
-        contactEmail,
-        contactName: contactName || "Client",
-        token,
-        status: "pending",
-        expiresAt,
-      },
+    const request = await prisma.$transaction(async (tx) => {
+      const created = await tx.surveyRequest.create({
+        data: {
+          id: crypto.randomUUID(),
+          relatedType,
+          relatedId,
+          clientCompanyId,
+          contactEmail,
+          contactName: contactName || "Client",
+          token,
+          status: "pending",
+          expiresAt,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId: admin.id,
+          action: "survey_request_created",
+          entityType: "SurveyRequest",
+          entityId: created.id,
+          metadata: { relatedType, relatedId, clientCompanyId, contactEmail },
+        },
+      });
+
+      return created;
     });
 
     // Send the email
@@ -89,8 +106,20 @@ async function sendSurveyEmailInternal(requestId: string) {
   const settings = await getOrCreateSurveySettings();
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.MAIL_FROM ?? "CYVRIX Technologies <noreply@cyvrix.co.uk>";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
+  const baseUrl = siteUrl
+    ? (siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`).replace(/\/+$/, "")
+    : "";
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  if (!apiKey || !baseUrl) {
+    console.error("Survey email delivery is not configured with a mail key and canonical site URL.");
+    await prisma.surveyRequest.update({
+      where: { id: requestId },
+      data: { status: "failed" },
+    });
+    return;
+  }
+
   const surveyLink = `${baseUrl}/survey/${request.token}`;
 
   let referenceNumber = "CYV-REF-" + request.relatedId.slice(0, 8).toUpperCase();
@@ -118,28 +147,14 @@ async function sendSurveyEmailInternal(requestId: string) {
   }
 
   // Populate dynamic variables
-  let body = settings.emailBody
+  const body = settings.emailBody
     .replace(/\{\{client_name\}\}/g, request.contactName || "Client")
     .replace(/\{\{reference_number\}\}/g, referenceNumber)
     .replace(/\{\{service_name\}\}/g, serviceName)
     .replace(/\{\{survey_link\}\}/g, surveyLink);
 
-  let subject = settings.emailSubject
+  const subject = settings.emailSubject
     .replace(/\{\{reference_number\}\}/g, referenceNumber);
-
-  if (!apiKey) {
-    console.info("Dev Mode: Simulated Survey Email Dispatch:", {
-      to: request.contactEmail,
-      subject,
-      surveyLink,
-      body,
-    });
-    await prisma.surveyRequest.update({
-      where: { id: requestId },
-      data: { status: "sent", sentAt: new Date() },
-    });
-    return;
-  }
 
   try {
     const res = await fetch("https://api.resend.com/emails", {

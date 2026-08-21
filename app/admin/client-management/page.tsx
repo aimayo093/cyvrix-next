@@ -8,7 +8,7 @@ import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 import { Plus, Pencil, Power, UserPlus, Users, KeyRound } from "lucide-react";
 
-export const metadata = { title: "Client Management | CYVRIX Admin" };
+export const metadata = { title: "Client Management" };
 
 export default function ClientManagementPage(props: any) {
   return (

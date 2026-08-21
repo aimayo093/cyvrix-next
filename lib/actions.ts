@@ -1,13 +1,13 @@
 "use server";
 
 import crypto from "node:crypto";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
+import { enforcePublicSubmissionRateLimit } from "@/lib/rate-limit";
 
 type SubmissionType = "contact" | "quote" | "ticket" | "newsletter" | "career" | "cms";
-
-const buckets = new Map<string, { count: number; resetAt: number }>();
 
 const requiredText = z.string().trim().min(1).max(5000).transform(sanitize);
 const optionalText = z.string().trim().max(5000).transform(sanitize).optional().or(z.literal(""));
@@ -21,8 +21,37 @@ const contactSchema = z.object({
   businessType: optionalText,
   urgency: optionalText,
   preferredContact: optionalText,
+  preferredTime: optionalText,
   message: requiredText,
+  consent: z.literal("on"),
 });
+
+const assessmentSchema = z.object({
+  assessmentType: z.enum([
+    "it-health-check",
+    "microsoft-365-security",
+    "cybersecurity-assessment",
+    "cloud-readiness",
+    "network-assessment",
+  ]),
+  name: requiredText,
+  email,
+  company: requiredText,
+  organisationSize: requiredText,
+  assessmentScope: requiredText,
+  planningHorizon: requiredText,
+  message: optionalText,
+  website: z.literal("").optional(),
+  consent: z.literal("on"),
+});
+
+const assessmentDetails = {
+  "it-health-check": { name: "Free IT Health Check", serviceInterest: "Managed IT Services" },
+  "microsoft-365-security": { name: "Microsoft 365 Security Assessment", serviceInterest: "Cybersecurity" },
+  "cybersecurity-assessment": { name: "Cybersecurity Assessment", serviceInterest: "Cybersecurity" },
+  "cloud-readiness": { name: "Cloud Readiness Assessment", serviceInterest: "Cloud Services" },
+  "network-assessment": { name: "Network Assessment", serviceInterest: "Infrastructure" },
+} as const;
 
 const quoteSchema = z.object({
   businessName: requiredText,
@@ -78,20 +107,8 @@ function sanitize(value: string) {
   return value.replace(/[<>]/g, "").slice(0, 5000);
 }
 
-async function rateLimit(key: string, limit = 8) {
-  const now = Date.now();
-  const bucket = buckets.get(key);
-
-  if (!bucket || bucket.resetAt < now) {
-    buckets.set(key, { count: 1, resetAt: now + 60_000 });
-    return;
-  }
-
-  if (bucket.count >= limit) {
-    throw new Error("Too many requests. Please wait a moment and try again.");
-  }
-
-  bucket.count += 1;
+async function limitSubmission(channel: string, email: string, emailLimit: number, ipLimit: number) {
+  enforcePublicSubmissionRateLimit(channel, email, await headers(), { emailLimit, ipLimit });
 }
 
 async function notify(template: string, to: string, subject: string, body: string) {
@@ -152,7 +169,7 @@ function parse<T>(schema: z.ZodType<T>, formData: FormData) {
 export async function submitContact(formData: FormData) {
   try {
     const data = parse(contactSchema, formData);
-    await rateLimit(`contact:${data.email}`);
+    await limitSubmission("contact", data.email, 3, 8);
     await prisma.lead.create({
       data: {
         id: crypto.randomUUID(),
@@ -167,7 +184,9 @@ export async function submitContact(formData: FormData) {
           businessType: data.businessType,
           urgency: data.urgency,
           preferredContactMethod: data.preferredContact,
+          preferredTime: data.preferredTime,
           message: data.message,
+          consentLoggedAt: new Date().toISOString(),
         },
       },
     });
@@ -179,10 +198,45 @@ export async function submitContact(formData: FormData) {
   }
 }
 
+export async function submitAssessment(formData: FormData) {
+  try {
+    const data = parse(assessmentSchema, formData);
+    await limitSubmission("assessment", data.email, 2, 6);
+    const assessment = assessmentDetails[data.assessmentType];
+
+    await prisma.lead.create({
+      data: {
+        id: crypto.randomUUID(),
+        updatedAt: new Date(),
+        name: data.name,
+        email: data.email,
+        company: data.company,
+        source: "assessment_request",
+        status: "NEW",
+        payload: {
+          assessmentType: data.assessmentType,
+          assessmentName: assessment.name,
+          serviceInterest: assessment.serviceInterest,
+          organisationSize: data.organisationSize,
+          assessmentScope: data.assessmentScope,
+          planningHorizon: data.planningHorizon,
+          message: data.message || undefined,
+          consentLoggedAt: new Date().toISOString(),
+        },
+      },
+    });
+    await notify("assessment_acknowledgement", data.email, "CYVRIX has received your assessment request", `Thank you for requesting a ${assessment.name}. We will review the context you shared and respond with an appropriate next step.`);
+    await notify("new_assessment_admin", data.email, "New CYVRIX assessment request", JSON.stringify({ ...data, assessmentName: assessment.name }, null, 2));
+    done("contact");
+  } catch (error) {
+    fail("contact", error);
+  }
+}
+
 export async function submitQuote(formData: FormData) {
   try {
     const data = parse(quoteSchema, formData);
-    await rateLimit(`quote:${data.email}`, 4);
+    await limitSubmission("quote", data.email, 2, 6);
     await prisma.$transaction(async (tx) => {
       await tx.quoteRequest.create({
         data: {
@@ -226,7 +280,7 @@ export async function submitQuote(formData: FormData) {
 export async function submitTicket(formData: FormData) {
   try {
     const data = parse(ticketSchema, formData);
-    await rateLimit(`ticket:${data.email}`, 5);
+    await limitSubmission("ticket", data.email, 3, 5);
     const number = ticketNumber();
     await prisma.ticket.create({
       data: {
@@ -254,7 +308,7 @@ export async function submitTicket(formData: FormData) {
 export async function subscribeNewsletter(formData: FormData) {
   try {
     const data = parse(newsletterSchema, formData);
-    await rateLimit(`newsletter:${data.email}`, 3);
+    await limitSubmission("newsletter", data.email, 2, 5);
     await prisma.newsletterSubscriber.upsert({
       where: { email: data.email },
       update: { status: "subscribed", source: data.source || "website", gdprConsentAt: new Date() },
@@ -270,7 +324,7 @@ export async function subscribeNewsletter(formData: FormData) {
 export async function submitJobApplication(formData: FormData) {
   try {
     const data = parse(careerSchema, formData);
-    await rateLimit(`career:${data.email}`, 3);
+    await limitSubmission("career", data.email, 2, 4);
     await prisma.jobApplication.create({
       data: {
         id: crypto.randomUUID(),

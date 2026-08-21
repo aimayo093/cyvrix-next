@@ -1,8 +1,8 @@
-import * as React from "react";
 import { notFound } from "next/navigation";
-import { findIndustry as findStaticIndustry } from "@/lib/cyvrix-data";
 import { IndustryClient } from "./IndustryClient";
 import { getPublicIndustryDetail } from "@/lib/public-cache";
+import { getStaticPublicIndustry, toPublicIndustry } from "@/lib/public-industry";
+import { industries as staticIndustries } from "@/lib/cyvrix-data";
 
 interface IndustryPageProps {
   params: Promise<{
@@ -12,51 +12,24 @@ interface IndustryPageProps {
 
 export async function generateMetadata({ params }: IndustryPageProps) {
   const { slug } = await params;
-  const industry = await getPublicIndustryDetail(slug);
-  
+  const dbIndustry = await getPublicIndustryDetail(slug);
+  const industry = dbIndustry ? toPublicIndustry(dbIndustry) : getStaticPublicIndustry(slug);
+
   return {
-    title: industry ? `${industry.title} | CYVRIX Technologies` : "Industry Detail",
-    description: industry ? (industry.content as any)?.summary || "Specialised IT solutions for your sector" : "Specialised IT solutions",
+    title: industry ? industry.title : "Industry Technology Support",
+    description: industry?.summary || "Technology, security and resilience priorities for UK organisations.",
   };
 }
 
-export default function IndustryDetailPage(props: IndustryPageProps) {
-  return (
-    <React.Suspense fallback={<IndustryDetailFallback />}>
-      <IndustryDetailContent {...props} />
-    </React.Suspense>
-  );
+export async function generateStaticParams() {
+  return staticIndustries.map((industry) => ({ slug: industry.slug }));
 }
 
-async function IndustryDetailContent({ params }: IndustryPageProps) {
+export default async function IndustryDetailPage({ params }: IndustryPageProps) {
   const { slug } = await params;
-  
-  const industry = await getPublicIndustryDetail(slug);
+  const dbIndustry = await getPublicIndustryDetail(slug);
+  const industry = dbIndustry ? toPublicIndustry(dbIndustry) : getStaticPublicIndustry(slug);
   if (!industry) notFound();
 
-  const staticInd = findStaticIndustry(slug);
-  const content = industry.content as any;
-
-  const mergedIndustry = {
-    ...industry,
-    challenges: content?.challenges?.length ? content.challenges : (staticInd?.challenges || []),
-    help: content?.summary || staticInd?.help || "",
-    solutions: content?.solutions?.length ? content.solutions : (staticInd?.solutions || []),
-    services: content?.services?.length ? content.services : (staticInd?.services || []),
-    image: content?.image || "",
-  };
-
-  return <IndustryClient industry={mergedIndustry} />;
-}
-
-function IndustryDetailFallback() {
-  return (
-    <div className="min-h-screen bg-[#020817] pt-24 text-white">
-      <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-        <div className="h-4 w-36 rounded bg-white/10" />
-        <div className="mt-8 h-16 max-w-3xl rounded bg-white/10" />
-        <div className="mt-6 h-6 max-w-2xl rounded bg-white/10" />
-      </section>
-    </div>
-  );
+  return <IndustryClient industry={industry} />;
 }

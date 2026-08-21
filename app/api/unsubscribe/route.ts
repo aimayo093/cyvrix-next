@@ -1,48 +1,63 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verifyNewsletterUnsubscribeToken } from "@/lib/newsletter-unsubscribe";
 
 
 /**
- * GET /api/unsubscribe?email=...&token=...
+ * GET or POST /api/unsubscribe?email=...&token=...
  *
- * GDPR-compliant one-click unsubscribe.
- * Token = SHA-256(email + UNSUBSCRIBE_SECRET) — generated when each confirmation
- * email is sent and appended as a query param.
+ * Signed one-click unsubscribe for newsletter confirmation and campaign emails.
+ * Token = HMAC-SHA-256(email, signing secret), generated when each newsletter
+ * confirmation email is sent and appended as a query parameter.
  *
- * For now we also accept email-only (no token) so existing subscribers can
- * unsubscribe immediately — tighten this once you implement token generation
- * in the subscribe confirmation email.
+ * Requests without the matching token are rejected before any subscriber lookup.
+ * GET renders a user-facing confirmation; POST supports RFC 8058 one-click mail actions.
  */
-export async function GET(req: Request) {
+function unsubscribeParams(req: Request) {
   const { searchParams } = new URL(req.url);
-  const email = searchParams.get("email")?.toLowerCase().trim();
+  return {
+    email: searchParams.get("email")?.toLowerCase().trim(),
+    token: searchParams.get("token"),
+  };
+}
 
-  if (!email) {
-    return new NextResponse(unsubscribePage("Missing email address.", false), {
+async function unsubscribe(email: string) {
+  const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
+
+  if (!existing) return "missing" as const;
+  if (existing.status === "unsubscribed") return "already" as const;
+
+  await prisma.newsletterSubscriber.update({
+    where: { email },
+    data: { status: "unsubscribed" },
+  });
+
+  return "updated" as const;
+}
+
+export async function GET(req: Request) {
+  const { email, token } = unsubscribeParams(req);
+
+  if (!email || !verifyNewsletterUnsubscribeToken(email, token)) {
+    return new NextResponse(unsubscribePage("This unsubscribe link is invalid.", false), {
       headers: { "Content-Type": "text/html" },
       status: 400,
     });
   }
 
   try {
-    const existing = await prisma.newsletterSubscriber.findUnique({ where: { email } });
-
-    if (!existing) {
+    const result = await unsubscribe(email);
+    if (result === "missing") {
       return new NextResponse(unsubscribePage("This email address is not on our list.", false), {
         headers: { "Content-Type": "text/html" },
       });
     }
 
-    if (existing.status === "unsubscribed") {
+    if (result === "already") {
       return new NextResponse(unsubscribePage("You are already unsubscribed.", true), {
         headers: { "Content-Type": "text/html" },
       });
     }
-
-    await prisma.newsletterSubscriber.update({
-      where: { email },
-      data: { status: "unsubscribed" },
-    });
 
     return new NextResponse(unsubscribePage("You have been successfully unsubscribed.", true), {
       headers: { "Content-Type": "text/html" },
@@ -52,6 +67,24 @@ export async function GET(req: Request) {
       headers: { "Content-Type": "text/html" },
       status: 500,
     });
+  }
+}
+
+export async function POST(req: Request) {
+  const { email, token } = unsubscribeParams(req);
+
+  if (!email || !verifyNewsletterUnsubscribeToken(email, token)) {
+    return NextResponse.json({ error: "Invalid unsubscribe request." }, { status: 400 });
+  }
+
+  try {
+    await unsubscribe(email);
+    return new NextResponse(null, {
+      status: 202,
+      headers: { "Cache-Control": "no-store" },
+    });
+  } catch {
+    return NextResponse.json({ error: "Unsubscribe request could not be completed." }, { status: 500 });
   }
 }
 

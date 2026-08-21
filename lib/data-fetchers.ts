@@ -17,8 +17,6 @@ export async function getAdminStats() {
       activeTickets,
       newLeads,
       totalSubscribers,
-      // Mocked security score for now, could be derived from an aggregate of client data later
-      securityScore: 94,
     };
   } catch (error) {
     console.error("Error fetching admin stats:", error);
@@ -27,7 +25,6 @@ export async function getAdminStats() {
       activeTickets: 0,
       newLeads: 0,
       totalSubscribers: 0,
-      securityScore: 0,
     };
   }
 }
@@ -74,7 +71,6 @@ export async function getPortalStats(clientCompanyId?: string) {
     return {
       activeTickets: tickets,
       storedDocuments: documents,
-      systemUptime: "99.9%", // Usually a global or service-level metric
     };
   } catch (error) {
     console.error("Error fetching portal stats:", error);

@@ -47,19 +47,14 @@ export type Industry = {
 export const siteSettings = {
   companyName: "CYVRIX Technologies",
   tradingName: "CYVRIX Technologies",
-  supportEmail: "Set in admin settings",
-  phone: "Set in admin settings",
-  address: "UK service coverage configured in admin",
-  coverage: "Remote-first UK support with planned onsite coverage by agreement",
+  supportEmail: "",
+  phone: "",
+  address: "",
+  coverage: "",
   social: ["LinkedIn", "X", "GitHub"],
 };
 
-export const stats = [
-  { label: "Security posture", value: "Editable", detail: "Admin-managed client proof points" },
-  { label: "Response targets", value: "SLA-ready", detail: "Aligned to support plans" },
-  { label: "Service coverage", value: "UK-wide", detail: "Remote and onsite engagement models" },
-  { label: "Delivery model", value: "MSP + Projects", detail: "Support, consultancy, and transformation" },
-];
+export const stats: never[] = [];
 
 export const services: Service[] = [
   {
@@ -70,12 +65,12 @@ export const services: Service[] = [
     includes: ["Remote helpdesk and escalation", "Device and endpoint management", "Patch and asset routines", "User onboarding and offboarding", "Monthly service reviews"],
     audience: "SMEs, care providers, professional services, and operational teams that need responsive IT without building a large internal function.",
     problems: ["Recurring IT interruptions", "Slow ticket resolution", "Unclear ownership across suppliers", "Unmanaged laptops and mobile devices"],
-    features: ["Priority support queues", "SLA-ready ticket workflow", "Endpoint visibility", "Procurement advice", "Client portal"],
+    features: ["Ticket tracking and escalation workflow", "Endpoint visibility", "Procurement advice", "Client portal"],
     process: ["Discovery and access review", "Stabilise critical systems", "Document assets and support flows", "Operate helpdesk and monitoring", "Improve through service reviews"],
     compliance: "Support routines are designed around least privilege, audit trails, account hygiene, and clear handling of client data.",
     faqs: [
       { question: "Can CYVRIX support hybrid teams?", answer: "Yes. The support model covers remote users, office networks, and agreed onsite work where needed." },
-      { question: "Do we need a long contract?", answer: "Engagement terms are configurable in admin and can support retained, project, or emergency models." },
+      { question: "Do we need a long contract?", answer: "Engagement terms can be shaped around the support model, project scope and urgency involved." },
     ],
   },
   {
@@ -269,59 +264,81 @@ export const industries: Industry[] = [
   { slug: "nonprofits-community", title: "Nonprofits and Community Organisations", icon: Users, challenges: ["Lean budgets", "Volunteer access", "Data protection"], help: "CYVRIX helps community organisations use secure, maintainable technology within realistic budgets.", solutions: ["Workspace setup", "Device standards", "Policy guidance"], services: ["Managed IT Support", "Cloud Solutions", "Compliance and Risk Advisory"] },
 ];
 
-export const pricingPackages = [
-  { name: "Managed IT Support", cadence: "Monthly or annual", visible: true, summary: "Helpdesk, endpoint management, service reviews, and day-to-day IT ownership.", features: ["User support", "Device routines", "Vendor coordination", "Client portal"], cta: "Request support plan" },
-  { name: "Cybersecurity Monitoring", cadence: "Monthly", visible: true, summary: "Security baseline, hardening actions, vulnerability routines, and readiness reporting.", features: ["Risk review", "MFA checks", "Endpoint visibility", "Executive summary"], cta: "Request security review" },
-  { name: "Project-Based Consultancy", cadence: "Scoped project", visible: true, summary: "Roadmaps, migrations, network refreshes, compliance readiness, and transformation work.", features: ["Discovery", "Project plan", "Delivery support", "Handover"], cta: "Scope a project" },
-  { name: "Cloud Migration", cadence: "Fixed scope or retained", visible: true, summary: "Microsoft 365, Google Workspace, secure configuration, backup, and migration support.", features: ["Tenant review", "Migration runbook", "User comms", "Post-migration support"], cta: "Plan migration" },
-  { name: "Emergency IT Support", cadence: "Priority engagement", visible: false, summary: "Short-term triage for urgent incidents, outages, and recovery coordination.", features: ["Rapid triage", "Containment guidance", "Recovery plan", "After-action notes"], cta: "Request urgent help" },
-  { name: "Custom MSP Package", cadence: "Monthly or annual", visible: true, summary: "A tailored blend of support, security, cloud, networking, and consultancy.", features: ["Custom SLA", "Dedicated review cadence", "Service bundle", "Growth roadmap"], cta: "Request custom quote" },
+export type ServiceProductPriceDisplayMode = "EXACT" | "FROM" | "REQUEST_PRICING" | "HIDDEN";
+
+export type ServiceProduct = {
+  name: string;
+  recommendedCustomerSize: string;
+  cadence: string;
+  summary: string;
+  features: string[];
+  cta: string;
+  href: string;
+  featured?: boolean;
+  pricingVisible: boolean;
+  priceDisplayMode: ServiceProductPriceDisplayMode;
+  monthlyPrice: string | null;
+  annualPrice: string | null;
+};
+
+export const productisedServicePlans: ServiceProduct[] = [
+  {
+    name: "Managed IT Essential",
+    recommendedCustomerSize: "Smaller organisations establishing a dependable support baseline.",
+    cadence: "Managed monthly service",
+    summary: "A clear starting point for day-to-day user support, device care and practical technology ownership.",
+    features: ["User support and request coordination", "Device inventory and support standards", "Patch and endpoint routines", "Supplier and warranty coordination"],
+    cta: "Discuss Essential",
+    href: "/book-consultation?service=Managed%20Services",
+    pricingVisible: false,
+    priceDisplayMode: "REQUEST_PRICING",
+    monthlyPrice: null,
+    annualPrice: null,
+  },
+  {
+    name: "Managed IT Business",
+    recommendedCustomerSize: "Growing teams that need consistent support, oversight and improvement planning.",
+    cadence: "Managed monthly service",
+    summary: "A broader managed service for organisations that need technology support to work alongside their growth plans.",
+    features: ["Everything in Essential", "Microsoft 365 administration support", "Security and access-control review routines", "Regular service and improvement reviews"],
+    cta: "Discuss Business",
+    href: "/book-consultation?service=Managed%20Services",
+    featured: true,
+    pricingVisible: false,
+    priceDisplayMode: "REQUEST_PRICING",
+    monthlyPrice: null,
+    annualPrice: null,
+  },
+  {
+    name: "Managed IT Complete",
+    recommendedCustomerSize: "Organisations seeking a more comprehensive outsourced technology function.",
+    cadence: "Managed monthly service",
+    summary: "A managed technology partnership shaped around wider ownership, resilience and specialist delivery needs.",
+    features: ["Everything in Business", "Technology roadmap and project governance", "Infrastructure and supplier coordination", "Planned onsite and specialist delivery"],
+    cta: "Discuss Complete",
+    href: "/book-consultation?service=Managed%20Services",
+    pricingVisible: false,
+    priceDisplayMode: "REQUEST_PRICING",
+    monthlyPrice: null,
+    annualPrice: null,
+  },
 ];
 
-export const caseStudies = [
-  {
-    slug: "care-provider-security-stabilisation",
-    title: "Stabilising IT and Security for a Regional Care Provider",
-    clientType: "Care provider",
-    challenge: "A growing care organisation needed tighter account controls, more reliable device support, and a clearer backup position without disrupting frontline staff.",
-    solution: "CYVRIX designed a staged improvement plan covering Microsoft 365 hardening, endpoint standards, support workflows, and recovery testing.",
-    technologies: ["Microsoft 365", "Endpoint management", "Secure backup", "Helpdesk workflow"],
-    outcome: "Leadership gained a clearer risk view, staff had a cleaner support route, and priority security gaps were moved into a managed improvement plan.",
-    timeline: "8-week stabilisation roadmap",
-    services: ["Managed IT Support", "Cybersecurity Services", "Backup and Disaster Recovery"],
-    testimonial: "CYVRIX translated technical risk into a practical plan our managers could act on.",
-  },
-  {
-    slug: "logistics-network-refresh",
-    title: "Warehouse Connectivity and Support Refresh",
-    clientType: "Logistics business",
-    challenge: "Intermittent Wi-Fi and undocumented network hardware were slowing warehouse operations and creating support uncertainty.",
-    solution: "CYVRIX mapped the network, redesigned segmentation, refreshed critical switching and Wi-Fi settings, and created support documentation.",
-    technologies: ["Business Wi-Fi", "Switching", "Firewall policy", "VPN"],
-    outcome: "The operation moved from reactive troubleshooting to documented, supportable network management.",
-    timeline: "4-week discovery and deployment",
-    services: ["Network Infrastructure", "Managed IT Support"],
-    testimonial: "The difference was immediate: fewer escalations and a network we finally understood.",
-  },
-  {
-    slug: "professional-services-cloud-hardening",
-    title: "Cloud Collaboration Hardening for a Professional Services Firm",
-    clientType: "Professional services",
-    challenge: "The firm needed stronger Microsoft 365 controls before client security reviews and cyber insurance renewal.",
-    solution: "CYVRIX reviewed tenant security, improved MFA and admin controls, configured safer sharing defaults, and prepared evidence notes.",
-    technologies: ["Microsoft 365", "Conditional access", "DMARC", "SharePoint"],
-    outcome: "The firm gained a credible control baseline and a clear roadmap for the next phase of security maturity.",
-    timeline: "3-week hardening sprint",
-    services: ["Microsoft 365 and Google Workspace Support", "Compliance and Risk Advisory"],
-    testimonial: "The work gave us both technical fixes and confidence in client conversations.",
-  },
-];
+// Existing CMS pricing blocks use this compatible, public-safe projection.
+export const pricingPackages = productisedServicePlans.map((plan) => ({
+  name: plan.name,
+  cadence: plan.cadence,
+  visible: true,
+  summary: plan.summary,
+  features: plan.features,
+  cta: plan.cta,
+  href: plan.href,
+  featured: plan.featured,
+}));
 
-export const testimonials = [
-  { name: "Operations Director", company: "UK care provider", quote: "CYVRIX made our technology risks understandable and gave us a support route staff actually use.", rating: 5 },
-  { name: "Managing Partner", company: "Professional services firm", quote: "The security review was pragmatic, commercial, and immediately useful for our leadership team.", rating: 5 },
-  { name: "Logistics Manager", company: "Regional transport business", quote: "They focused on uptime and clarity, not jargon. That mattered to our warehouse team.", rating: 5 },
-];
+// Public proof is published only through the verified Trust & Credentials workflow.
+export const caseStudies: never[] = [];
+export const testimonials: never[] = [];
 
 export const faqs = [
   { category: "Managed IT Support", question: "Can CYVRIX act as our outsourced IT department?", answer: "Yes. CYVRIX can provide helpdesk, device management, supplier coordination, documentation, and service reviews." },
@@ -335,9 +352,54 @@ export const faqs = [
 ];
 
 export const blogPosts = [
-  { slug: "microsoft-365-security-baseline-uk-smes", title: "A Microsoft 365 Security Baseline for UK SMEs", category: "Cybersecurity", author: "CYVRIX Security Desk", excerpt: "The controls most growing businesses should review first: MFA, admin roles, sharing defaults, email authentication, and backup.", tags: ["Microsoft 365", "SME security", "MFA"], published: "2026-05-07" },
-  { slug: "backup-is-not-business-continuity", title: "Backup Is Not the Same as Business Continuity", category: "Business Continuity", author: "CYVRIX Advisory", excerpt: "A backup only matters when it can be restored in time. Here is how to think about recovery objectives and real-world testing.", tags: ["Backup", "Disaster recovery", "Continuity"], published: "2026-05-07" },
-  { slug: "questions-before-outsourcing-it-support", title: "Questions to Ask Before Outsourcing IT Support", category: "MSP Advice", author: "CYVRIX Service Desk", excerpt: "A practical checklist for choosing an MSP that can support security, operations, and growth.", tags: ["Managed IT", "Procurement", "Support"], published: "2026-05-07" },
+  {
+    slug: "microsoft-365-security-baseline-uk-smes",
+    title: "A Microsoft 365 Security Baseline for UK SMEs",
+    category: "Cybersecurity",
+    author: "CYVRIX Editorial",
+    excerpt: "The controls most growing businesses should review first: multi-factor authentication, administrator roles, sharing defaults, email authentication and recovery.",
+    tags: ["Microsoft 365", "SME security", "MFA"],
+    published: "2026-05-07",
+    body: [
+      "A useful Microsoft 365 security baseline starts with a reliable picture of who can sign in, which accounts hold elevated permissions and how devices are managed. It should be understandable to the people responsible for the service, not just a list of settings.",
+      "Start with identity. Multi-factor authentication, sensible authentication methods and a reviewed process for joiners, movers and leavers help reduce avoidable account risk. Privileged roles deserve particular attention, with access kept to the people who genuinely need it.",
+      "Next, review collaboration and email. Sharing defaults, external access, mailbox forwarding and email authentication should match the way the organisation works. The aim is to make secure choices practical for users rather than relying on informal workarounds.",
+      "Device management and recovery complete the picture. Keep a clear view of enrolled devices, supported software and recovery arrangements. A backup plan is only useful when responsibilities, restoration steps and the systems that need to come back first are understood.",
+      "Turn the review into a short, prioritised plan. Record the decisions, assign owners and revisit the baseline when the organisation changes. That makes security improvement a manageable operational routine rather than a one-off exercise.",
+    ],
+  },
+  {
+    slug: "backup-is-not-business-continuity",
+    title: "Backup Is Not the Same as Business Continuity",
+    category: "Business Continuity",
+    author: "CYVRIX Editorial",
+    excerpt: "A backup only helps when it can be restored in time. Here is how to connect recovery objectives, dependencies and realistic testing.",
+    tags: ["Backup", "Disaster recovery", "Continuity"],
+    published: "2026-05-07",
+    body: [
+      "Backup protects copies of data. Business continuity is the wider plan for keeping essential work moving when a system, supplier, site or connection is unavailable. The two should inform each other, but they are not interchangeable.",
+      "Begin by identifying the services that the organisation cannot operate without. That might include communication, customer records, finance, order processing or line-of-business platforms. For each one, agree what a tolerable interruption looks like and who makes recovery decisions.",
+      "Then look beyond the backup itself. A restoration may rely on identities, administrator access, devices, network connectivity, application licences or a third-party supplier. Those dependencies need to be visible before an incident puts them under pressure.",
+      "Testing should confirm more than whether a file can be recovered. Use a proportionate scenario to check that the right people can access the restored service, that the data is usable and that communications and workarounds are clear.",
+      "A concise continuity plan gives teams a practical order of operations: what to restore first, who to contact, how to record decisions and when to update stakeholders. Review it after material technology or organisational change.",
+    ],
+  },
+  {
+    slug: "questions-before-outsourcing-it-support",
+    title: "Questions to Ask Before Outsourcing IT Support",
+    category: "Managed IT",
+    author: "CYVRIX Editorial",
+    excerpt: "A practical checklist for choosing an IT partner that can support security, operations and growth without losing sight of day-to-day service.",
+    tags: ["Managed IT", "Procurement", "Support"],
+    published: "2026-05-07",
+    body: [
+      "Choosing an outsourced IT partner is not only about the helpdesk. It is a decision about responsibility: who understands the estate, who coordinates suppliers and who helps the business make technology decisions when priorities compete.",
+      "Ask how discovery and onboarding will work. A considered provider should want to understand users, devices, identities, systems, suppliers, existing risks and the work that is already planned. That gives both sides a clearer starting point.",
+      "Clarify what sits inside the service and what is treated as a project or specialist engagement. Useful conversations cover support hours, escalation routes, on-site requirements, documentation, change control, vendor coordination and commercial reporting.",
+      "Use realistic scenarios when comparing options. For example, ask how a lost device, a failed internet connection, an urgent new starter or a suspected mailbox compromise would be handled. The responses reveal how the operating model works in practice.",
+      "Finally, look for clear communication and a shared improvement rhythm. A good service relationship should make responsibilities visible, give decision-makers useful context and leave room to adapt as the organisation grows.",
+    ],
+  },
 ];
 
 export const legalPages = [
@@ -345,7 +407,7 @@ export const legalPages = [
   { slug: "terms-of-service", title: "Terms of Service", summary: "Commercial terms for using CYVRIX websites, portals, and engagement workflows.", sections: ["Website use", "Consultation requests", "Client portal responsibilities", "Acceptable behaviour", "Limitations and professional review"] },
   { slug: "cookie-policy", title: "Cookie Policy", summary: "How essential, analytics, and preference cookies can be configured.", sections: ["Essential cookies", "Analytics configuration", "Consent preferences", "Admin-managed tracking IDs"] },
   { slug: "acceptable-use-policy", title: "Acceptable Use Policy", summary: "Expected conduct for portal users and client-facing systems.", sections: ["No unlawful use", "No unauthorised access", "Responsible uploads", "Account security"] },
-  { slug: "data-processing-addendum", title: "Data Processing Addendum", summary: "A placeholder framework for controller/processor responsibilities.", sections: ["Processing scope", "Security measures", "Sub-processors", "Incident notification", "Legal review required"] },
+  { slug: "data-processing-addendum", title: "Data Processing Addendum", summary: "Available only after legal review and agreement for the relevant engagement.", sections: ["Processing scope", "Security measures", "Sub-processors", "Incident notification", "Legal review required"] },
   { slug: "service-level-agreement", title: "Service Level Agreement Overview", summary: "High-level service level concepts for managed support engagements.", sections: ["Priority categories", "Response targets", "Client responsibilities", "Exclusions", "Review cadence"] },
 ];
 

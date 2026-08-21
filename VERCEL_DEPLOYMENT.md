@@ -25,7 +25,7 @@ This guide details how to build, deploy, and verify the premium Next.js App Rout
 
 ## 3. Environment Variables Configuration
 
-In your Vercel project settings under **Settings > Environment Variables**, add the following required keys:
+In your Vercel project settings under **Settings > Environment Variables**, add the required keys and the approved email transport variables you use:
 
 | Environment Variable | Example Value | Description |
 | :--- | :--- | :--- |
@@ -34,8 +34,14 @@ In your Vercel project settings under **Settings > Environment Variables**, add 
 | `NEXT_PUBLIC_SITE_URL` | `https://cyvrix.co.uk` | The live production canonical domain (used for SEO and sitemaps). |
 | `NEXT_PUBLIC_COMPANY_NAME`| `"CYVRIX Technologies"` | Global company branding descriptor. |
 | `RESEND_API_KEY` | `re_123456789...` | Optional. Connection API key for email delivery via Resend. |
-| `EMAIL_FROM` | `CYVRIX Support <support@cyvrix.co.uk>` | Outgoing sender profile for support and booking notifications. |
+| `MAIL_FROM` | `CYVRIX Support <support@cyvrix.co.uk>` | Outgoing sender profile for Resend and SMTP notifications. |
 | `ADMIN_NOTIFICATION_EMAIL`| `alerts@cyvrix.co.uk` | Target address where internal sales leads and tickets are notified. |
+| `SMTP_HOST` | `smtp.example.co.uk` | SMTP host for administrator broadcasts and Security Center alerts. Keep this server-managed. |
+| `SMTP_PORT` | `587` | SMTP port. |
+| `SMTP_USER` | `service-account@example.co.uk` | SMTP service-account username. Keep this server-managed. |
+| `SMTP_PASSWORD` | *Secret-manager value* | SMTP service-account password. Keep this in Vercel's encrypted environment settings only. |
+
+`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME` and `MAIL_PASSWORD` remain supported as compatibility names. Do not store SMTP credentials in System Settings, CMS content or any browser-visible configuration.
 
 ---
 
@@ -71,6 +77,8 @@ Next.js security headers are automatically loaded inside `next.config.ts` to sec
 - **X-Frame-Options**: `DENY` (prevents clickjacking)
 - **X-Content-Type-Options**: `nosniff`
 - **Referrer-Policy**: `strict-origin-when-cross-origin`
-- **Content-Security-Policy**: Enforces secure HTTPS asset delivery.
+- **Permissions-Policy**: Disables unneeded browser capabilities including camera, microphone and geolocation.
+- **Strict-Transport-Security**: Enforces HTTPS for the production domain and subdomains.
+- **Content-Security-Policy**: Restricts script, form, framing, object and resource sources. `unsafe-eval` is permitted only in development because Next.js development tooling requires it.
 
 Custom session cookie verification (`cyvrix_session`) runs server-side during the Next.js routing cycle to prevent unauthorized access to `/admin` and `/portal` paths, entirely secure against IDOR risks.

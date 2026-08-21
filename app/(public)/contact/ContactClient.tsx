@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Mail,
   Phone,
   MapPin,
   Clock,
@@ -15,12 +14,12 @@ import {
   Loader2,
   Building,
   AlertCircle,
-  HelpCircle,
   Sparkles,
   Server,
   Lock,
   Headphones
 } from "lucide-react";
+import { publicContactValue } from "@/lib/contact-settings";
 
 interface Service {
   id: string;
@@ -29,21 +28,42 @@ interface Service {
   summary: string;
 }
 
-interface FAQItem {
-  id?: string;
-  question: string;
-  answer: string;
+interface ContactPageSection {
+  sectionType?: string | null;
+  subtitle?: string | null;
+  title?: string | null;
+  body?: string | null;
+  mediaId?: string | null;
+}
+
+interface ContactPageData {
+  sections?: ContactPageSection[];
+  featuredImage?: string | null;
 }
 
 interface ContactClientProps {
-  pageData?: any;
+  pageData?: ContactPageData | null;
   services: Service[];
-  industries?: any[];
-  faqs?: FAQItem[];
   contactSettings?: Record<string, string>;
 }
 
-export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], contactSettings }: ContactClientProps) {
+const fallbackServices: Service[] = [
+  { id: "managed-services", slug: "managed-services", title: "Managed Services", summary: "" },
+  { id: "cloud-services", slug: "cloud-services", title: "Cloud Services", summary: "" },
+  { id: "cybersecurity", slug: "cybersecurity", title: "Cybersecurity", summary: "" },
+  { id: "infrastructure", slug: "infrastructure", title: "Infrastructure", summary: "" },
+  { id: "field-engineering", slug: "field-engineering", title: "Field Engineering", summary: "" },
+  { id: "professional-services", slug: "professional-services", title: "Professional Services", summary: "" },
+];
+
+export function ContactClient({ pageData, services = [], contactSettings }: ContactClientProps) {
+  const salesEmail = publicContactValue(contactSettings?.salesEmail);
+  const supportEmail = publicContactValue(contactSettings?.supportEmail);
+  const phone = publicContactValue(contactSettings?.phone);
+  const phoneHours = publicContactValue(contactSettings?.phoneHours);
+  const location = publicContactValue(contactSettings?.hqAddress);
+  const locationDetails = publicContactValue(contactSettings?.hqDetails);
+  const selectableServices = services.length > 0 ? services : fallbackServices;
   const [formData, setFormData] = React.useState({
     name: "",
     email: "",
@@ -68,26 +88,25 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
   const [submitting, setSubmitting] = React.useState(false);
   const [submitStatus, setSubmitStatus] = React.useState<"idle" | "success" | "error">("idle");
   const [submitError, setSubmitError] = React.useState("");
-
-  // FAQ Accordion State
-  const [openFaq, setOpenFaq] = React.useState<number | null>(null);
+  const [consent, setConsent] = React.useState(false);
 
   // Parse custom sections from DB
-  const heroSection = pageData?.sections?.find((s: any) => {
+  const heroSection = pageData?.sections?.find((s) => {
     const type = s.sectionType?.toLowerCase() || "";
     return type === "hero" || type === "contact_hero";
   });
-  const contactSection = pageData?.sections?.find((s: any) => {
+  const contactSection = pageData?.sections?.find((s) => {
     const type = s.sectionType?.toLowerCase() || "";
     return type === "contact section" || type === "contact_form";
   });
 
   const heroTag = heroSection?.subtitle || "Connect with CYVRIX";
-  const heroTitleText = heroSection?.title || "Let's build secure digital capability.";
-  const heroDescriptionText = heroSection?.body || "Speak directly with our senior technology specialists. No sales gatekeepers, just practical engineering guidance tailored to your operational goals.";
+  const heroTitleText = heroSection?.title || "Start a practical technology conversation.";
+  const heroDescriptionText = heroSection?.body || "Tell us about the support, project or risk you are assessing. We will use the context you share to identify an appropriate next step.";
 
-  const formTitleText = contactSection?.title || "Project Consultation Brief";
-  const formSubtitleText = contactSection?.body || "We respond to all verified enquiries within 1 business day.";
+  const formTitleText = contactSection?.title || "Tell us about the work";
+  const formSubtitleText = contactSection?.body || "Share the essential context. Please do not include passwords, access tokens or sensitive configuration data.";
+  const heroBackgroundImage = heroSection?.mediaId || pageData?.featuredImage || "";
 
   const renderTitle = (titleString: string) => {
     const words = titleString.trim().split(" ");
@@ -154,7 +173,8 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
     formData.message.trim().length >= 10 &&
     !formErrors.name &&
     !formErrors.email &&
-    !formErrors.message;
+    !formErrors.message &&
+    consent;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -180,7 +200,7 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, consent: consent ? "on" : "" }),
       });
 
       const result = await response.json();
@@ -196,11 +216,12 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
           _hp: "",
         });
         setTouched({ name: false, email: false, message: false });
+        setConsent(false);
       } else {
         setSubmitStatus("error");
         setSubmitError(result.error || "Something went wrong. Please try again.");
       }
-    } catch (err: any) {
+    } catch {
       setSubmitStatus("error");
       setSubmitError("Network connection error. Please verify your internet and try again.");
     } finally {
@@ -208,34 +229,13 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
     }
   };
 
-  const defaultFaqs = [
-    {
-      question: "What is your typical response time for general inquiries?",
-      answer: "Our typical response time for general inquiries via this contact form is under 1 business hour. For existing clients on managed support, critical SLA tickets are responded to in under 15 minutes.",
-    },
-    {
-      question: "Do you support businesses outside the UK?",
-      answer: "While our core operations, engineers, and secure vaults are UK-based, we provide comprehensive remote support and engineering services for international branches of UK firms and partner companies globally.",
-    },
-    {
-      question: "Can we request an on-site visit for IT audits?",
-      answer: "Absolutely. We schedule structured IT audits, network architecture reviews, and cybersecurity posture reviews on-site at your offices. Please outline your location details in the message box.",
-    },
-    {
-      question: "Do you offer custom SLA support agreements?",
-      answer: "Yes. Every contract we construct can be custom-fitted with custom support scopes, dedicated virtual CIO advisory, custom coverage hours (including 24/7/365 operational monitoring), and distinct escalation rules.",
-    },
-  ];
-
-  const activeFaqs = dbFaqs && dbFaqs.length > 0 ? dbFaqs : defaultFaqs;
-
   return (
     <div className="pt-24 lg:pt-36 pb-32 bg-[#020817] min-h-screen relative overflow-hidden">
       {/* Background Gradients, Glows & Admin CMS Uploaded Image */}
-      {heroSection?.mediaId || pageData?.featuredImage ? (
+      {heroBackgroundImage ? (
         <div 
           className="absolute inset-0 z-0 bg-cover bg-center opacity-20 mix-blend-luminosity pointer-events-none" 
-          style={{ backgroundImage: `url(${heroSection.mediaId || pageData.featuredImage})` }} 
+          style={{ backgroundImage: `url(${heroBackgroundImage})` }}
         />
       ) : (
         <>
@@ -303,9 +303,9 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-6 animate-bounce">
                       <CheckCircle2 className="h-8 w-8" />
                     </div>
-                    <h2 className="font-outfit text-3xl font-black text-white mb-4">Transmission Successful</h2>
+                    <h2 className="font-outfit text-3xl font-black text-white mb-4">Enquiry received</h2>
                     <p className="text-slate-400 text-lg leading-relaxed max-w-md mx-auto mb-8">
-                      Thank you for reaching out to CYVRIX. A senior member of our technology team has received your enquiry. We will contact you within 1 business hour.
+                      Thank you for contacting CYVRIX. We will review the details you have shared and respond using the email address provided.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                       <button
@@ -368,6 +368,7 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                           type="text"
                           name="name"
                           id="name"
+                          aria-label="Full name"
                           value={formData.name}
                           onChange={handleInputChange}
                           onBlur={handleBlur}
@@ -393,6 +394,7 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                           type="email"
                           name="email"
                           id="email"
+                          aria-label="Work email address"
                           value={formData.email}
                           onChange={handleInputChange}
                           onBlur={handleBlur}
@@ -421,6 +423,7 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                           type="text"
                           name="company"
                           id="company"
+                          aria-label="Company name"
                           value={formData.company}
                           onChange={handleInputChange}
                           placeholder="Company name (optional)"
@@ -433,13 +436,14 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                         <select
                           name="service"
                           id="service"
+                          aria-label="Area of interest"
                           value={formData.service}
                           onChange={handleInputChange}
                           onBlur={handleBlur}
                           className="w-full rounded-2xl border border-white/10 bg-white/5 focus:border-[#2691F0]/50 px-4 py-4 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0]/20 transition-all font-medium appearance-none cursor-pointer"
                         >
                           <option value="" className="bg-[#020817] text-slate-400">Select area of interest</option>
-                          {services.map((svc) => (
+                          {selectableServices.map((svc) => (
                             <option key={svc.id} value={svc.title} className="bg-[#020817] text-white">
                               {svc.title}
                             </option>
@@ -459,6 +463,7 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                         required
                         name="message"
                         id="message"
+                        aria-label="Technology challenge or project scope"
                         rows={5}
                         value={formData.message}
                         onChange={handleInputChange}
@@ -483,6 +488,23 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                       </div>
                     </div>
 
+                    <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-slate-300">
+                      <input
+                        type="checkbox"
+                        required
+                        checked={consent}
+                        onChange={(event) => setConsent(event.target.checked)}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-[#2691F0]"
+                      />
+                      <span>
+                        I consent to CYVRIX processing this enquiry in accordance with the{" "}
+                        <Link href="/privacy-policy" className="text-sky-300 underline underline-offset-2 hover:text-white">
+                          Privacy Policy
+                        </Link>
+                        .
+                      </span>
+                    </label>
+
                     {/* Submit Button */}
                     <button
                       type="submit"
@@ -498,11 +520,11 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                       {submitting ? (
                         <>
                           <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>Transmitting details...</span>
+                          <span>Sending enquiry...</span>
                         </>
                       ) : (
                         <>
-                          <span>Submit Consultation Inquiry</span>
+                          <span>Send enquiry</span>
                           <ArrowRight className="h-5 w-5" />
                         </>
                       )}
@@ -524,69 +546,68 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
             {/* Contact Channels Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               
-              {/* Sales Card */}
-              <div className="p-6 rounded-2xl glass-panel-subtle border-white/5 hover:border-[#2691F0]/30 transition-all duration-300 group hover:shadow-xl relative overflow-hidden">
+              {salesEmail && <div className="p-6 rounded-2xl glass-panel-subtle border-white/5 hover:border-[#2691F0]/30 transition-all duration-300 group hover:shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#2691F0]/5 rounded-bl-full pointer-events-none group-hover:scale-150 transition-transform duration-300" />
                 <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[#2691F0] mb-4 group-hover:bg-[#2691F0] group-hover:text-white transition-colors duration-300">
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <h3 className="font-outfit font-bold text-white text-base mb-1">Sales & Consulting</h3>
-                <a href={`mailto:${contactSettings?.salesEmail || 'sales@cyvrix.co.uk'}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
-                  {contactSettings?.salesEmail || 'sales@cyvrix.co.uk'}
+                <a href={`mailto:${salesEmail}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
+                  {salesEmail}
                 </a>
                 <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">
-                  {contactSettings?.salesSla || 'Response SLA: < 1hr'}
+                  New technology enquiries
                 </span>
-              </div>
+              </div>}
 
-              {/* Support Card */}
-              <div className="p-6 rounded-2xl glass-panel-subtle border-white/5 hover:border-[#2691F0]/30 transition-all duration-300 group hover:shadow-xl relative overflow-hidden">
+              {supportEmail && <div className="p-6 rounded-2xl glass-panel-subtle border-white/5 hover:border-[#2691F0]/30 transition-all duration-300 group hover:shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#2691F0]/5 rounded-bl-full pointer-events-none group-hover:scale-150 transition-transform duration-300" />
                 <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[#2691F0] mb-4 group-hover:bg-[#2691F0] group-hover:text-white transition-colors duration-300">
                   <Headphones className="h-5 w-5" />
                 </div>
                 <h3 className="font-outfit font-bold text-white text-base mb-1">Technical Support Desk</h3>
-                <a href={`mailto:${contactSettings?.supportEmail || 'support@cyvrix.co.uk'}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
-                  {contactSettings?.supportEmail || 'support@cyvrix.co.uk'}
+                <a href={`mailto:${supportEmail}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
+                  {supportEmail}
                 </a>
                 <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">
-                  {contactSettings?.supportSla || '15-min Critical SLA'}
+                  Existing support queries
                 </span>
-              </div>
+              </div>}
 
               {/* Telephone Card */}
-              <div className="p-6 rounded-2xl glass-panel-subtle border-white/5 hover:border-[#2691F0]/30 transition-all duration-300 group hover:shadow-xl relative overflow-hidden">
+              {phone && <div className="p-6 rounded-2xl glass-panel-subtle border-white/5 hover:border-[#2691F0]/30 transition-all duration-300 group hover:shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#2691F0]/5 rounded-bl-full pointer-events-none group-hover:scale-150 transition-transform duration-300" />
                 <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[#2691F0] mb-4 group-hover:bg-[#2691F0] group-hover:text-white transition-colors duration-300">
                   <Phone className="h-5 w-5" />
                 </div>
                 <h3 className="font-outfit font-bold text-white text-base mb-1">Corporate Phone Line</h3>
-                <a href={`tel:${(contactSettings?.phone || '+44 (0) 20 8080 8080').replace(/[^0-9+]/g, '')}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
-                  {contactSettings?.phone || '+44 (0) 20 8080 8080'}
+                <a href={`tel:${phone.replace(/[^0-9+]/g, '')}`} className="text-slate-400 hover:text-white text-sm transition-colors font-medium mb-3 block">
+                  {phone}
                 </a>
-                <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">
-                  {contactSettings?.phoneHours || 'Mon-Fri: 8am - 6pm'}
-                </span>
-              </div>
+                {phoneHours && <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">{phoneHours}</span>}
+              </div>}
 
               {/* HQ Card */}
-              <div className="p-6 rounded-2xl glass-panel-subtle border-white/5 hover:border-[#2691F0]/30 transition-all duration-300 group hover:shadow-xl relative overflow-hidden">
+              {location && <div className="p-6 rounded-2xl glass-panel-subtle border-white/5 hover:border-[#2691F0]/30 transition-all duration-300 group hover:shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-16 h-16 bg-[#2691F0]/5 rounded-bl-full pointer-events-none group-hover:scale-150 transition-transform duration-300" />
                 <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-[#2691F0] mb-4 group-hover:bg-[#2691F0] group-hover:text-white transition-colors duration-300">
                   <MapPin className="h-5 w-5" />
                 </div>
-                <h3 className="font-outfit font-bold text-white text-base mb-1">London Headquarters</h3>
+                <h3 className="font-outfit font-bold text-white text-base mb-1">Service Location</h3>
                 <span className="text-slate-400 text-sm font-medium mb-3 block">
-                  {contactSettings?.hqAddress || 'City of London, UK'}
+                  {location}
                 </span>
-                <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">
-                  {contactSettings?.hqDetails || 'Secure Site Operations'}
-                </span>
-              </div>
+                {locationDetails && <span className="text-[10px] font-black text-[#2691F0] uppercase tracking-wider block">{locationDetails}</span>}
+              </div>}
+
+              {!salesEmail && !supportEmail && !phone && !location && <div className="sm:col-span-2 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+                <h3 className="font-outfit text-lg font-bold text-white">Use the enquiry form to get in touch</h3>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-slate-300">Direct contact details are published here once they have been configured and approved for public use.</p>
+              </div>}
 
             </div>
 
-            {/* Response Time SLA Widget */}
+            {/* Engagement expectations */}
             <div className="p-6 rounded-3xl glass-panel border-white/10 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-full bg-[#2691F0]" />
               <div className="flex gap-4 items-start">
@@ -594,62 +615,62 @@ export function ContactClient({ pageData, services = [], faqs: dbFaqs = [], cont
                   <Clock className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="font-outfit font-bold text-white text-lg mb-2">{contactSettings?.slaWidgetTitle || 'Our Performance Service Levels'}</h3>
+                  <h3 className="font-outfit font-bold text-white text-lg mb-2">Engagement expectations</h3>
                   <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                    {contactSettings?.slaWidgetSubtitle || 'CYVRIX maintains contractual uptime and support SLAs. For general inquiries, we ensure rapid senior availability:'}
+                    Response and escalation targets are agreed for the specific engagement, rather than assumed in public copy.
                   </p>
                   
                   <div className="space-y-3">
                     <div className="flex justify-between items-center text-xs border-b border-white/5 pb-2">
-                      <span className="text-slate-400 font-semibold">{contactSettings?.slaItem1Name || 'Virtual CIO Consultations'}</span>
-                      <span className="text-[#2691F0] font-black uppercase tracking-wider">{contactSettings?.slaItem1Value || 'Same Business Day'}</span>
+                      <span className="text-slate-400 font-semibold">New enquiries</span>
+                      <span className="text-[#2691F0] font-black uppercase tracking-wider">Reviewed by the team</span>
                     </div>
                     <div className="flex justify-between items-center text-xs border-b border-white/5 pb-2">
-                      <span className="text-slate-400 font-semibold">{contactSettings?.slaItem2Name || 'Critical Cybersecurity Escapes'}</span>
-                      <span className="text-emerald-400 font-black uppercase tracking-wider">{contactSettings?.slaItem2Value || '< 15 Minutes SLA'}</span>
+                      <span className="text-slate-400 font-semibold">Existing support</span>
+                      <span className="text-emerald-400 font-black uppercase tracking-wider">Use agreed support routes</span>
                     </div>
                     <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-400 font-semibold">{contactSettings?.slaItem3Name || 'UK Engineering Dispatch'}</span>
-                      <span className="text-[#06b6d4] font-black uppercase tracking-wider">{contactSettings?.slaItem3Value || 'Under 4 Hours'}</span>
+                      <span className="text-slate-400 font-semibold">On-site work</span>
+                      <span className="text-[#06b6d4] font-black uppercase tracking-wider">Planned to project needs</span>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Certifications and Compliance Area */}
+            {/* Delivery principles */}
             <div className="p-6 rounded-3xl glass-panel-subtle border-white/5 space-y-4">
               <div className="flex items-center gap-2 mb-2">
                 <ShieldCheck className="h-5 w-5 text-emerald-400" />
-                <h4 className="font-outfit font-bold text-white text-base">{contactSettings?.securityTitle || 'Standard Security & Compliance'}</h4>
+                <h4 className="font-outfit font-bold text-white text-base">Delivery principles</h4>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-start gap-2 text-xs">
                   <Lock className="h-4 w-4 text-[#2691F0] shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-300">{contactSettings?.securityItem1Name || 'ISO 27001'}</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">{contactSettings?.securityItem1Value || 'Framework Aligned'}</p>
+                    <p className="font-bold text-slate-300">Security planning</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">Built into the scope</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2 text-xs">
                   <ShieldCheck className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-300">{contactSettings?.securityItem2Name || 'Cyber Essentials'}</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">{contactSettings?.securityItem2Value || 'Consultancy Certified'}</p>
+                    <p className="font-bold text-slate-300">Evidence requirements</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">Agreed before delivery</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2 text-xs">
                   <Server className="h-4 w-4 text-[#06b6d4] shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-300">{contactSettings?.securityItem3Name || 'GDPR Compliant'}</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">{contactSettings?.securityItem3Value || 'Document Vault Protected'}</p>
+                    <p className="font-bold text-slate-300">Data protection</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">Considered in delivery</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2 text-xs">
                   <Building className="h-4 w-4 text-indigo-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-bold text-slate-300">{contactSettings?.securityItem4Name || 'UK Registered'}</p>
-                    <p className="text-[10px] text-slate-500 font-semibold">{contactSettings?.securityItem4Value || 'Incorporated in London'}</p>
+                    <p className="font-bold text-slate-300">Trust records</p>
+                    <p className="text-[10px] text-slate-500 font-semibold">Published when verified</p>
                   </div>
                 </div>
               </div>

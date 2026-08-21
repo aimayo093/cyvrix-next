@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import * as React from "react";
 import { connection } from "next/server";
@@ -6,19 +7,23 @@ import {
   Users, 
   Shield, 
   Server, 
-  Activity, 
   ArrowUpRight, 
-  ArrowDownRight,
   Clock,
 } from "lucide-react";
 import { getAdminStats, getRecentActivities } from "@/lib/data-fetchers";
 import { formatDistanceToNow } from "date-fns";
 import { SecurityScanCard } from "@/components/admin/SecurityScanCard";
 
-export default function AdminDashboard(props: any) {
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "CYVRIX internal management dashboard.",
+};
+
+
+export default function AdminDashboard() {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
-      <AdminDashboardContent {...props} />
+      <AdminDashboardContent />
     </React.Suspense>
   );
 }
@@ -31,17 +36,17 @@ async function AdminDashboardContent() {
   ]);
 
   const stats = [
-    { name: "Active Clients", value: statsData.totalClients.toString(), change: "+2%", trend: "up", icon: Users },
-    { name: "Newsletter", value: statsData.totalSubscribers.toString(), change: "Live", trend: "neutral", icon: Shield },
-    { name: "Security Score", value: `${statsData.securityScore}%`, change: "High", trend: "up", icon: Activity },
-    { name: "Support Tickets", value: statsData.activeTickets.toString(), change: "Active", trend: "down", icon: Server },
+    { name: "Active clients", value: statsData.totalClients.toString(), context: "Active company records", icon: Users },
+    { name: "New enquiries", value: statsData.newLeads.toString(), context: "Awaiting triage", icon: Shield },
+    { name: "Newsletter", value: statsData.totalSubscribers.toString(), context: "Subscribed contacts", icon: ArrowUpRight },
+    { name: "Open support tickets", value: statsData.activeTickets.toString(), context: "Not marked closed", icon: Server },
   ];
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="font-outfit text-3xl font-black text-[#041635] mb-2">Systems Overview</h1>
-        <p className="text-slate-500 font-medium">Welcome back, Administrator. Everything is running smoothly.</p>
+        <p className="text-slate-500 font-medium">Operational records and recent audit activity.</p>
       </div>
 
       {/* Stats Grid */}
@@ -52,12 +57,9 @@ async function AdminDashboardContent() {
               <div className="p-3 rounded-xl bg-slate-50 text-[#2691F0]">
                 <stat.icon className="h-6 w-6" />
               </div>
-              <div className={`flex items-center gap-1 text-xs font-black ${
-                stat.trend === "up" ? "text-emerald-500" : stat.trend === "down" ? "text-rose-500" : "text-slate-400"
-              }`}>
-                {stat.change}
-                {stat.trend === "up" ? <ArrowUpRight className="h-3 w-3" /> : stat.trend === "down" ? <ArrowDownRight className="h-3 w-3" /> : null}
-              </div>
+              <p className="max-w-28 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">
+                {stat.context}
+              </p>
             </div>
             <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{stat.name}</p>
             <p className="text-3xl font-black text-[#041635] mt-1">{stat.value}</p>

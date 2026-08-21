@@ -3,7 +3,7 @@
  * Client
 **/
 
-import * as runtime from './runtime/library.js';
+import * as runtime from './runtime/client.js';
 import $Types = runtime.Types // general types
 import $Public = runtime.Types.Public
 import $Utils = runtime.Types.Utils
@@ -722,13 +722,15 @@ export const user_role: typeof $Enums.user_role
  * Type-safe database client for TypeScript & Node.js
  * @example
  * ```
- * const prisma = new PrismaClient()
+ * const prisma = new PrismaClient({
+ *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+ * })
  * // Fetch zero or more Audit_log_entries
  * const audit_log_entries = await prisma.audit_log_entries.findMany()
  * ```
  *
  *
- * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+ * Read more in our [docs](https://pris.ly/d/client).
  */
 export class PrismaClient<
   ClientOptions extends Prisma.PrismaClientOptions = Prisma.PrismaClientOptions,
@@ -743,13 +745,15 @@ export class PrismaClient<
    * Type-safe database client for TypeScript & Node.js
    * @example
    * ```
-   * const prisma = new PrismaClient()
+   * const prisma = new PrismaClient({
+   *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+   * })
    * // Fetch zero or more Audit_log_entries
    * const audit_log_entries = await prisma.audit_log_entries.findMany()
    * ```
    *
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+   * Read more in our [docs](https://pris.ly/d/client).
    */
 
   constructor(optionsArg ?: Prisma.Subset<ClientOptions, Prisma.PrismaClientOptions>);
@@ -772,7 +776,7 @@ export class PrismaClient<
    * const result = await prisma.$executeRaw`UPDATE User SET cool = ${true} WHERE email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -784,7 +788,7 @@ export class PrismaClient<
    * const result = await prisma.$executeRawUnsafe('UPDATE User SET cool = $1 WHERE email = $2 ;', true, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -795,7 +799,7 @@ export class PrismaClient<
    * const result = await prisma.$queryRaw`SELECT * FROM User WHERE id = ${1} OR email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<T>;
 
@@ -807,7 +811,7 @@ export class PrismaClient<
    * const result = await prisma.$queryRawUnsafe('SELECT * FROM User WHERE id = $1 OR email = $2;', 1, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
 
@@ -823,12 +827,11 @@ export class PrismaClient<
    * ])
    * ```
    * 
-   * Read more in our [docs](https://www.prisma.io/docs/concepts/components/prisma-client/transactions).
+   * Read more in our [docs](https://www.prisma.io/docs/orm/prisma-client/queries/transactions).
    */
-  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
+  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
 
   $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => $Utils.JsPromise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<R>
-
 
   $extends: $Extensions.ExtendsHook<"extends", Prisma.TypeMapCb<ClientOptions>, ExtArgs, $Utils.Call<Prisma.TypeMapCb<ClientOptions>, {
     extArgs: ExtArgs
@@ -1783,14 +1786,6 @@ export namespace Prisma {
   export type DecimalJsLike = runtime.DecimalJsLike
 
   /**
-   * Metrics
-   */
-  export type Metrics = runtime.Metrics
-  export type Metric<T> = runtime.Metric<T>
-  export type MetricHistogram = runtime.MetricHistogram
-  export type MetricHistogramBucket = runtime.MetricHistogramBucket
-
-  /**
   * Extensions
   */
   export import Extension = $Extensions.UserArgs
@@ -1801,11 +1796,12 @@ export namespace Prisma {
   export import Exact = $Public.Exact
 
   /**
-   * Prisma Client JS version: 6.19.3
-   * Query Engine version: c2990dca591cba766e3b7ef5d9e8a84796e47ab7
+   * Prisma Client JS version: 7.8.0
+   * Query Engine version: 3c6e192761c0362d496ed980de936e2f3cebcd3a
    */
   export type PrismaVersion = {
     client: string
+    engine: string
   }
 
   export const prismaVersion: PrismaVersion
@@ -2280,9 +2276,6 @@ export namespace Prisma {
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
 
 
-  export type Datasources = {
-    db?: Datasource
-  }
 
   interface TypeMapCb<ClientOptions = {}> extends $Utils.Fn<{extArgs: $Extensions.InternalArgs }, $Utils.Record<string, any>> {
     returns: Prisma.TypeMap<this['params']['extArgs'], ClientOptions extends { omit: infer OmitOptions } ? OmitOptions : {}>
@@ -9060,14 +9053,6 @@ export namespace Prisma {
   export type ErrorFormat = 'pretty' | 'colorless' | 'minimal'
   export interface PrismaClientOptions {
     /**
-     * Overwrites the datasource url from your schema.prisma file
-     */
-    datasources?: Datasources
-    /**
-     * Overwrites the datasource url from your schema.prisma file
-     */
-    datasourceUrl?: string
-    /**
      * @default "colorless"
      */
     errorFormat?: ErrorFormat
@@ -9093,7 +9078,7 @@ export namespace Prisma {
      *  { emit: 'stdout', level: 'error' }
      * 
      * ```
-     * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/logging#the-log-option).
+     * Read more in our [docs](https://pris.ly/d/logging).
      */
     log?: (LogLevel | LogDefinition)[]
     /**
@@ -9109,7 +9094,11 @@ export namespace Prisma {
     /**
      * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
      */
-    adapter?: runtime.SqlDriverAdapterFactory | null
+    adapter?: runtime.SqlDriverAdapterFactory
+    /**
+     * Prisma Accelerate URL allowing the client to connect through Accelerate instead of a direct database.
+     */
+    accelerateUrl?: string
     /**
      * Global configuration for omitting model fields by default.
      * 
@@ -9125,6 +9114,22 @@ export namespace Prisma {
      * ```
      */
     omit?: Prisma.GlobalOmitConfig
+    /**
+     * SQL commenter plugins that add metadata to SQL queries as comments.
+     * Comments follow the sqlcommenter format: https://google.github.io/sqlcommenter/
+     * 
+     * @example
+     * ```
+     * const prisma = new PrismaClient({
+     *   adapter,
+     *   comments: [
+     *     traceContext(),
+     *     queryInsights(),
+     *   ],
+     * })
+     * ```
+     */
+    comments?: runtime.SqlCommenterPlugin[]
   }
   export type GlobalOmitConfig = {
     audit_log_entries?: audit_log_entriesOmit
@@ -11175,6 +11180,11 @@ export namespace Prisma {
      * Skip the first `n` audit_log_entries.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of audit_log_entries.
+     */
     distinct?: Audit_log_entriesScalarFieldEnum | Audit_log_entriesScalarFieldEnum[]
   }
 
@@ -12397,6 +12407,11 @@ export namespace Prisma {
      * Skip the first `n` custom_oauth_providers.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of custom_oauth_providers.
+     */
     distinct?: Custom_oauth_providersScalarFieldEnum | Custom_oauth_providersScalarFieldEnum[]
   }
 
@@ -13579,6 +13594,11 @@ export namespace Prisma {
      * Skip the first `n` flow_states.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of flow_states.
+     */
     distinct?: Flow_stateScalarFieldEnum | Flow_stateScalarFieldEnum[]
   }
 
@@ -14701,6 +14721,11 @@ export namespace Prisma {
      * Skip the first `n` identities.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of identities.
+     */
     distinct?: IdentitiesScalarFieldEnum | IdentitiesScalarFieldEnum[]
   }
 
@@ -15724,6 +15749,11 @@ export namespace Prisma {
      * Skip the first `n` instances.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of instances.
+     */
     distinct?: InstancesScalarFieldEnum | InstancesScalarFieldEnum[]
   }
 
@@ -16754,6 +16784,11 @@ export namespace Prisma {
      * Skip the first `n` mfa_amr_claims.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of mfa_amr_claims.
+     */
     distinct?: Mfa_amr_claimsScalarFieldEnum | Mfa_amr_claimsScalarFieldEnum[]
   }
 
@@ -17834,6 +17869,11 @@ export namespace Prisma {
      * Skip the first `n` mfa_challenges.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of mfa_challenges.
+     */
     distinct?: Mfa_challengesScalarFieldEnum | Mfa_challengesScalarFieldEnum[]
   }
 
@@ -18994,6 +19034,11 @@ export namespace Prisma {
      * Skip the first `n` mfa_factors.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of mfa_factors.
+     */
     distinct?: Mfa_factorsScalarFieldEnum | Mfa_factorsScalarFieldEnum[]
   }
 
@@ -20240,6 +20285,11 @@ export namespace Prisma {
      * Skip the first `n` oauth_authorizations.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of oauth_authorizations.
+     */
     distinct?: Oauth_authorizationsScalarFieldEnum | Oauth_authorizationsScalarFieldEnum[]
   }
 
@@ -21269,6 +21319,11 @@ export namespace Prisma {
      * Skip the first `n` oauth_client_states.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of oauth_client_states.
+     */
     distinct?: Oauth_client_statesScalarFieldEnum | Oauth_client_statesScalarFieldEnum[]
   }
 
@@ -22407,6 +22462,11 @@ export namespace Prisma {
      * Skip the first `n` oauth_clients.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of oauth_clients.
+     */
     distinct?: Oauth_clientsScalarFieldEnum | Oauth_clientsScalarFieldEnum[]
   }
 
@@ -23550,6 +23610,11 @@ export namespace Prisma {
      * Skip the first `n` oauth_consents.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of oauth_consents.
+     */
     distinct?: Oauth_consentsScalarFieldEnum | Oauth_consentsScalarFieldEnum[]
   }
 
@@ -24634,6 +24699,11 @@ export namespace Prisma {
      * Skip the first `n` one_time_tokens.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of one_time_tokens.
+     */
     distinct?: One_time_tokensScalarFieldEnum | One_time_tokensScalarFieldEnum[]
   }
 
@@ -25778,6 +25848,11 @@ export namespace Prisma {
      * Skip the first `n` refresh_tokens.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of refresh_tokens.
+     */
     distinct?: Refresh_tokensScalarFieldEnum | Refresh_tokensScalarFieldEnum[]
   }
 
@@ -26903,6 +26978,11 @@ export namespace Prisma {
      * Skip the first `n` saml_providers.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of saml_providers.
+     */
     distinct?: Saml_providersScalarFieldEnum | Saml_providersScalarFieldEnum[]
   }
 
@@ -28008,6 +28088,11 @@ export namespace Prisma {
      * Skip the first `n` saml_relay_states.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of saml_relay_states.
+     */
     distinct?: Saml_relay_statesScalarFieldEnum | Saml_relay_statesScalarFieldEnum[]
   }
 
@@ -28998,6 +29083,11 @@ export namespace Prisma {
      * Skip the first `n` schema_migrations.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of schema_migrations.
+     */
     distinct?: Schema_migrationsScalarFieldEnum | Schema_migrationsScalarFieldEnum[]
   }
 
@@ -30210,6 +30300,11 @@ export namespace Prisma {
      * Skip the first `n` sessions.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of sessions.
+     */
     distinct?: SessionsScalarFieldEnum | SessionsScalarFieldEnum[]
   }
 
@@ -31335,6 +31430,11 @@ export namespace Prisma {
      * Skip the first `n` sso_domains.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of sso_domains.
+     */
     distinct?: Sso_domainsScalarFieldEnum | Sso_domainsScalarFieldEnum[]
   }
 
@@ -32397,6 +32497,11 @@ export namespace Prisma {
      * Skip the first `n` sso_providers.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of sso_providers.
+     */
     distinct?: Sso_providersScalarFieldEnum | Sso_providersScalarFieldEnum[]
   }
 
@@ -34019,6 +34124,11 @@ export namespace Prisma {
      * Skip the first `n` users.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of users.
+     */
     distinct?: UsersScalarFieldEnum | UsersScalarFieldEnum[]
   }
 
@@ -35625,6 +35735,11 @@ export namespace Prisma {
      * Skip the first `n` webauthn_challenges.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of webauthn_challenges.
+     */
     distinct?: Webauthn_challengesScalarFieldEnum | Webauthn_challengesScalarFieldEnum[]
   }
 
@@ -36849,6 +36964,11 @@ export namespace Prisma {
      * Skip the first `n` webauthn_credentials.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of webauthn_credentials.
+     */
     distinct?: Webauthn_credentialsScalarFieldEnum | Webauthn_credentialsScalarFieldEnum[]
   }
 
@@ -37907,6 +38027,11 @@ export namespace Prisma {
      * Skip the first `n` AuditLogs.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuditLogs.
+     */
     distinct?: AuditLogScalarFieldEnum | AuditLogScalarFieldEnum[]
   }
 
@@ -38998,6 +39123,11 @@ export namespace Prisma {
      * Skip the first `n` BlogPosts.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BlogPosts.
+     */
     distinct?: BlogPostScalarFieldEnum | BlogPostScalarFieldEnum[]
   }
 
@@ -40063,6 +40193,11 @@ export namespace Prisma {
      * Skip the first `n` CareerJobs.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CareerJobs.
+     */
     distinct?: CareerJobScalarFieldEnum | CareerJobScalarFieldEnum[]
   }
 
@@ -40318,6 +40453,16 @@ export namespace Prisma {
     timeline: string | null
     testimonial: string | null
     published: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -40333,6 +40478,16 @@ export namespace Prisma {
     timeline: string | null
     testimonial: string | null
     published: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -40350,6 +40505,16 @@ export namespace Prisma {
     timeline: number
     testimonial: number
     published: number
+    verificationStatus: number
+    verificationReference: number
+    evidenceUrl: number
+    evidenceReviewedAt: number
+    evidenceReviewedBy: number
+    expiresAt: number
+    permissionConfirmed: number
+    permissionEvidenceUrl: number
+    permissionConfirmedAt: number
+    publicVisibility: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -40367,6 +40532,16 @@ export namespace Prisma {
     timeline?: true
     testimonial?: true
     published?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -40382,6 +40557,16 @@ export namespace Prisma {
     timeline?: true
     testimonial?: true
     published?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -40399,6 +40584,16 @@ export namespace Prisma {
     timeline?: true
     testimonial?: true
     published?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -40489,6 +40684,16 @@ export namespace Prisma {
     timeline: string | null
     testimonial: string | null
     published: boolean
+    verificationStatus: string
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean
     createdAt: Date
     updatedAt: Date
     _count: CaseStudyCountAggregateOutputType | null
@@ -40523,6 +40728,16 @@ export namespace Prisma {
     timeline?: boolean
     testimonial?: boolean
     published?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["caseStudy"]>
@@ -40540,6 +40755,16 @@ export namespace Prisma {
     timeline?: boolean
     testimonial?: boolean
     published?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["caseStudy"]>
@@ -40557,6 +40782,16 @@ export namespace Prisma {
     timeline?: boolean
     testimonial?: boolean
     published?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["caseStudy"]>
@@ -40574,11 +40809,21 @@ export namespace Prisma {
     timeline?: boolean
     testimonial?: boolean
     published?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type CaseStudyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "title" | "clientType" | "challenge" | "solution" | "outcome" | "technologies" | "services" | "timeline" | "testimonial" | "published" | "createdAt" | "updatedAt", ExtArgs["result"]["caseStudy"]>
+  export type CaseStudyOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "slug" | "title" | "clientType" | "challenge" | "solution" | "outcome" | "technologies" | "services" | "timeline" | "testimonial" | "published" | "verificationStatus" | "verificationReference" | "evidenceUrl" | "evidenceReviewedAt" | "evidenceReviewedBy" | "expiresAt" | "permissionConfirmed" | "permissionEvidenceUrl" | "permissionConfirmedAt" | "publicVisibility" | "createdAt" | "updatedAt", ExtArgs["result"]["caseStudy"]>
 
   export type $CaseStudyPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "CaseStudy"
@@ -40596,6 +40841,16 @@ export namespace Prisma {
       timeline: string | null
       testimonial: string | null
       published: boolean
+      verificationStatus: string
+      verificationReference: string | null
+      evidenceUrl: string | null
+      evidenceReviewedAt: Date | null
+      evidenceReviewedBy: string | null
+      expiresAt: Date | null
+      permissionConfirmed: boolean
+      permissionEvidenceUrl: string | null
+      permissionConfirmedAt: Date | null
+      publicVisibility: boolean
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["caseStudy"]>
@@ -41033,6 +41288,16 @@ export namespace Prisma {
     readonly timeline: FieldRef<"CaseStudy", 'String'>
     readonly testimonial: FieldRef<"CaseStudy", 'String'>
     readonly published: FieldRef<"CaseStudy", 'Boolean'>
+    readonly verificationStatus: FieldRef<"CaseStudy", 'String'>
+    readonly verificationReference: FieldRef<"CaseStudy", 'String'>
+    readonly evidenceUrl: FieldRef<"CaseStudy", 'String'>
+    readonly evidenceReviewedAt: FieldRef<"CaseStudy", 'DateTime'>
+    readonly evidenceReviewedBy: FieldRef<"CaseStudy", 'String'>
+    readonly expiresAt: FieldRef<"CaseStudy", 'DateTime'>
+    readonly permissionConfirmed: FieldRef<"CaseStudy", 'Boolean'>
+    readonly permissionEvidenceUrl: FieldRef<"CaseStudy", 'String'>
+    readonly permissionConfirmedAt: FieldRef<"CaseStudy", 'DateTime'>
+    readonly publicVisibility: FieldRef<"CaseStudy", 'Boolean'>
     readonly createdAt: FieldRef<"CaseStudy", 'DateTime'>
     readonly updatedAt: FieldRef<"CaseStudy", 'DateTime'>
   }
@@ -41211,6 +41476,11 @@ export namespace Prisma {
      * Skip the first `n` CaseStudies.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CaseStudies.
+     */
     distinct?: CaseStudyScalarFieldEnum | CaseStudyScalarFieldEnum[]
   }
 
@@ -42313,6 +42583,11 @@ export namespace Prisma {
      * Skip the first `n` ClientCompanies.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ClientCompanies.
+     */
     distinct?: ClientCompanyScalarFieldEnum | ClientCompanyScalarFieldEnum[]
   }
 
@@ -43544,6 +43819,11 @@ export namespace Prisma {
      * Skip the first `n` ClientDocuments.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ClientDocuments.
+     */
     distinct?: ClientDocumentScalarFieldEnum | ClientDocumentScalarFieldEnum[]
   }
 
@@ -44753,6 +45033,11 @@ export namespace Prisma {
      * Skip the first `n` CmsPages.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CmsPages.
+     */
     distinct?: CmsPageScalarFieldEnum | CmsPageScalarFieldEnum[]
   }
 
@@ -45877,6 +46162,11 @@ export namespace Prisma {
      * Skip the first `n` Contacts.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Contacts.
+     */
     distinct?: ContactScalarFieldEnum | ContactScalarFieldEnum[]
   }
 
@@ -47036,6 +47326,11 @@ export namespace Prisma {
      * Skip the first `n` ContentBlocks.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ContentBlocks.
+     */
     distinct?: ContentBlockScalarFieldEnum | ContentBlockScalarFieldEnum[]
   }
 
@@ -48119,6 +48414,11 @@ export namespace Prisma {
      * Skip the first `n` FAQS.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FAQS.
+     */
     distinct?: FAQScalarFieldEnum | FAQScalarFieldEnum[]
   }
 
@@ -49192,6 +49492,11 @@ export namespace Prisma {
      * Skip the first `n` Industries.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Industries.
+     */
     distinct?: IndustryScalarFieldEnum | IndustryScalarFieldEnum[]
   }
 
@@ -50261,6 +50566,11 @@ export namespace Prisma {
      * Skip the first `n` JobApplications.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of JobApplications.
+     */
     distinct?: JobApplicationScalarFieldEnum | JobApplicationScalarFieldEnum[]
   }
 
@@ -51364,6 +51674,11 @@ export namespace Prisma {
      * Skip the first `n` KnowledgeBaseArticles.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of KnowledgeBaseArticles.
+     */
     distinct?: KnowledgeBaseArticleScalarFieldEnum | KnowledgeBaseArticleScalarFieldEnum[]
   }
 
@@ -52403,6 +52718,11 @@ export namespace Prisma {
      * Skip the first `n` LandingPages.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LandingPages.
+     */
     distinct?: LandingPageScalarFieldEnum | LandingPageScalarFieldEnum[]
   }
 
@@ -53516,6 +53836,11 @@ export namespace Prisma {
      * Skip the first `n` Leads.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Leads.
+     */
     distinct?: LeadScalarFieldEnum | LeadScalarFieldEnum[]
   }
 
@@ -54577,6 +54902,11 @@ export namespace Prisma {
      * Skip the first `n` LeadNotes.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LeadNotes.
+     */
     distinct?: LeadNoteScalarFieldEnum | LeadNoteScalarFieldEnum[]
   }
 
@@ -55639,6 +55969,11 @@ export namespace Prisma {
      * Skip the first `n` LegalPages.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LegalPages.
+     */
     distinct?: LegalPageScalarFieldEnum | LegalPageScalarFieldEnum[]
   }
 
@@ -56798,6 +57133,11 @@ export namespace Prisma {
      * Skip the first `n` MediaAssets.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MediaAssets.
+     */
     distinct?: MediaAssetScalarFieldEnum | MediaAssetScalarFieldEnum[]
   }
 
@@ -57853,6 +58193,11 @@ export namespace Prisma {
      * Skip the first `n` NavigationItems.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NavigationItems.
+     */
     distinct?: NavigationItemScalarFieldEnum | NavigationItemScalarFieldEnum[]
   }
 
@@ -58861,6 +59206,11 @@ export namespace Prisma {
      * Skip the first `n` NewsletterSubscribers.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of NewsletterSubscribers.
+     */
     distinct?: NewsletterSubscriberScalarFieldEnum | NewsletterSubscriberScalarFieldEnum[]
   }
 
@@ -59869,6 +60219,11 @@ export namespace Prisma {
      * Skip the first `n` Notifications.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Notifications.
+     */
     distinct?: NotificationScalarFieldEnum | NotificationScalarFieldEnum[]
   }
 
@@ -60999,6 +61354,11 @@ export namespace Prisma {
      * Skip the first `n` Proposals.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Proposals.
+     */
     distinct?: ProposalScalarFieldEnum | ProposalScalarFieldEnum[]
   }
 
@@ -62170,6 +62530,11 @@ export namespace Prisma {
      * Skip the first `n` ProposalItems.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProposalItems.
+     */
     distinct?: ProposalItemScalarFieldEnum | ProposalItemScalarFieldEnum[]
   }
 
@@ -63367,6 +63732,11 @@ export namespace Prisma {
      * Skip the first `n` QuoteRequests.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of QuoteRequests.
+     */
     distinct?: QuoteRequestScalarFieldEnum | QuoteRequestScalarFieldEnum[]
   }
 
@@ -64528,6 +64898,11 @@ export namespace Prisma {
      * Skip the first `n` Services.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Services.
+     */
     distinct?: ServiceScalarFieldEnum | ServiceScalarFieldEnum[]
   }
 
@@ -64777,48 +65152,74 @@ export namespace Prisma {
   export type ServicePackageAvgAggregateOutputType = {
     monthlyPrice: Decimal | null
     annualPrice: Decimal | null
+    sortOrder: number | null
   }
 
   export type ServicePackageSumAggregateOutputType = {
     monthlyPrice: Decimal | null
     annualPrice: Decimal | null
+    sortOrder: number | null
   }
 
   export type ServicePackageMinAggregateOutputType = {
     id: string | null
     serviceId: string | null
     name: string | null
+    description: string | null
+    recommendedCustomerSize: string | null
     cadence: string | null
     pricingVisible: boolean | null
+    priceDisplayMode: string | null
     monthlyPrice: Decimal | null
     annualPrice: Decimal | null
+    ctaLabel: string | null
+    ctaUrl: string | null
     featured: boolean | null
+    published: boolean | null
+    sortOrder: number | null
     createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type ServicePackageMaxAggregateOutputType = {
     id: string | null
     serviceId: string | null
     name: string | null
+    description: string | null
+    recommendedCustomerSize: string | null
     cadence: string | null
     pricingVisible: boolean | null
+    priceDisplayMode: string | null
     monthlyPrice: Decimal | null
     annualPrice: Decimal | null
+    ctaLabel: string | null
+    ctaUrl: string | null
     featured: boolean | null
+    published: boolean | null
+    sortOrder: number | null
     createdAt: Date | null
+    updatedAt: Date | null
   }
 
   export type ServicePackageCountAggregateOutputType = {
     id: number
     serviceId: number
     name: number
+    description: number
+    recommendedCustomerSize: number
     cadence: number
     features: number
     pricingVisible: number
+    priceDisplayMode: number
     monthlyPrice: number
     annualPrice: number
+    ctaLabel: number
+    ctaUrl: number
     featured: number
+    published: number
+    sortOrder: number
     createdAt: number
+    updatedAt: number
     _all: number
   }
 
@@ -64826,48 +65227,74 @@ export namespace Prisma {
   export type ServicePackageAvgAggregateInputType = {
     monthlyPrice?: true
     annualPrice?: true
+    sortOrder?: true
   }
 
   export type ServicePackageSumAggregateInputType = {
     monthlyPrice?: true
     annualPrice?: true
+    sortOrder?: true
   }
 
   export type ServicePackageMinAggregateInputType = {
     id?: true
     serviceId?: true
     name?: true
+    description?: true
+    recommendedCustomerSize?: true
     cadence?: true
     pricingVisible?: true
+    priceDisplayMode?: true
     monthlyPrice?: true
     annualPrice?: true
+    ctaLabel?: true
+    ctaUrl?: true
     featured?: true
+    published?: true
+    sortOrder?: true
     createdAt?: true
+    updatedAt?: true
   }
 
   export type ServicePackageMaxAggregateInputType = {
     id?: true
     serviceId?: true
     name?: true
+    description?: true
+    recommendedCustomerSize?: true
     cadence?: true
     pricingVisible?: true
+    priceDisplayMode?: true
     monthlyPrice?: true
     annualPrice?: true
+    ctaLabel?: true
+    ctaUrl?: true
     featured?: true
+    published?: true
+    sortOrder?: true
     createdAt?: true
+    updatedAt?: true
   }
 
   export type ServicePackageCountAggregateInputType = {
     id?: true
     serviceId?: true
     name?: true
+    description?: true
+    recommendedCustomerSize?: true
     cadence?: true
     features?: true
     pricingVisible?: true
+    priceDisplayMode?: true
     monthlyPrice?: true
     annualPrice?: true
+    ctaLabel?: true
+    ctaUrl?: true
     featured?: true
+    published?: true
+    sortOrder?: true
     createdAt?: true
+    updatedAt?: true
     _all?: true
   }
 
@@ -64961,13 +65388,21 @@ export namespace Prisma {
     id: string
     serviceId: string | null
     name: string
+    description: string
+    recommendedCustomerSize: string
     cadence: string | null
     features: JsonValue
     pricingVisible: boolean
+    priceDisplayMode: string
     monthlyPrice: Decimal | null
     annualPrice: Decimal | null
+    ctaLabel: string
+    ctaUrl: string | null
     featured: boolean
+    published: boolean
+    sortOrder: number
     createdAt: Date
+    updatedAt: Date
     _count: ServicePackageCountAggregateOutputType | null
     _avg: ServicePackageAvgAggregateOutputType | null
     _sum: ServicePackageSumAggregateOutputType | null
@@ -64993,13 +65428,21 @@ export namespace Prisma {
     id?: boolean
     serviceId?: boolean
     name?: boolean
+    description?: boolean
+    recommendedCustomerSize?: boolean
     cadence?: boolean
     features?: boolean
     pricingVisible?: boolean
+    priceDisplayMode?: boolean
     monthlyPrice?: boolean
     annualPrice?: boolean
+    ctaLabel?: boolean
+    ctaUrl?: boolean
     featured?: boolean
+    published?: boolean
+    sortOrder?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
     Service?: boolean | ServicePackage$ServiceArgs<ExtArgs>
   }, ExtArgs["result"]["servicePackage"]>
 
@@ -65007,13 +65450,21 @@ export namespace Prisma {
     id?: boolean
     serviceId?: boolean
     name?: boolean
+    description?: boolean
+    recommendedCustomerSize?: boolean
     cadence?: boolean
     features?: boolean
     pricingVisible?: boolean
+    priceDisplayMode?: boolean
     monthlyPrice?: boolean
     annualPrice?: boolean
+    ctaLabel?: boolean
+    ctaUrl?: boolean
     featured?: boolean
+    published?: boolean
+    sortOrder?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
     Service?: boolean | ServicePackage$ServiceArgs<ExtArgs>
   }, ExtArgs["result"]["servicePackage"]>
 
@@ -65021,13 +65472,21 @@ export namespace Prisma {
     id?: boolean
     serviceId?: boolean
     name?: boolean
+    description?: boolean
+    recommendedCustomerSize?: boolean
     cadence?: boolean
     features?: boolean
     pricingVisible?: boolean
+    priceDisplayMode?: boolean
     monthlyPrice?: boolean
     annualPrice?: boolean
+    ctaLabel?: boolean
+    ctaUrl?: boolean
     featured?: boolean
+    published?: boolean
+    sortOrder?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
     Service?: boolean | ServicePackage$ServiceArgs<ExtArgs>
   }, ExtArgs["result"]["servicePackage"]>
 
@@ -65035,16 +65494,24 @@ export namespace Prisma {
     id?: boolean
     serviceId?: boolean
     name?: boolean
+    description?: boolean
+    recommendedCustomerSize?: boolean
     cadence?: boolean
     features?: boolean
     pricingVisible?: boolean
+    priceDisplayMode?: boolean
     monthlyPrice?: boolean
     annualPrice?: boolean
+    ctaLabel?: boolean
+    ctaUrl?: boolean
     featured?: boolean
+    published?: boolean
+    sortOrder?: boolean
     createdAt?: boolean
+    updatedAt?: boolean
   }
 
-  export type ServicePackageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "serviceId" | "name" | "cadence" | "features" | "pricingVisible" | "monthlyPrice" | "annualPrice" | "featured" | "createdAt", ExtArgs["result"]["servicePackage"]>
+  export type ServicePackageOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "serviceId" | "name" | "description" | "recommendedCustomerSize" | "cadence" | "features" | "pricingVisible" | "priceDisplayMode" | "monthlyPrice" | "annualPrice" | "ctaLabel" | "ctaUrl" | "featured" | "published" | "sortOrder" | "createdAt" | "updatedAt", ExtArgs["result"]["servicePackage"]>
   export type ServicePackageInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Service?: boolean | ServicePackage$ServiceArgs<ExtArgs>
   }
@@ -65064,13 +65531,21 @@ export namespace Prisma {
       id: string
       serviceId: string | null
       name: string
+      description: string
+      recommendedCustomerSize: string
       cadence: string | null
       features: Prisma.JsonValue
       pricingVisible: boolean
+      priceDisplayMode: string
       monthlyPrice: Prisma.Decimal | null
       annualPrice: Prisma.Decimal | null
+      ctaLabel: string
+      ctaUrl: string | null
       featured: boolean
+      published: boolean
+      sortOrder: number
       createdAt: Date
+      updatedAt: Date
     }, ExtArgs["result"]["servicePackage"]>
     composites: {}
   }
@@ -65498,13 +65973,21 @@ export namespace Prisma {
     readonly id: FieldRef<"ServicePackage", 'String'>
     readonly serviceId: FieldRef<"ServicePackage", 'String'>
     readonly name: FieldRef<"ServicePackage", 'String'>
+    readonly description: FieldRef<"ServicePackage", 'String'>
+    readonly recommendedCustomerSize: FieldRef<"ServicePackage", 'String'>
     readonly cadence: FieldRef<"ServicePackage", 'String'>
     readonly features: FieldRef<"ServicePackage", 'Json'>
     readonly pricingVisible: FieldRef<"ServicePackage", 'Boolean'>
+    readonly priceDisplayMode: FieldRef<"ServicePackage", 'String'>
     readonly monthlyPrice: FieldRef<"ServicePackage", 'Decimal'>
     readonly annualPrice: FieldRef<"ServicePackage", 'Decimal'>
+    readonly ctaLabel: FieldRef<"ServicePackage", 'String'>
+    readonly ctaUrl: FieldRef<"ServicePackage", 'String'>
     readonly featured: FieldRef<"ServicePackage", 'Boolean'>
+    readonly published: FieldRef<"ServicePackage", 'Boolean'>
+    readonly sortOrder: FieldRef<"ServicePackage", 'Int'>
     readonly createdAt: FieldRef<"ServicePackage", 'DateTime'>
+    readonly updatedAt: FieldRef<"ServicePackage", 'DateTime'>
   }
     
 
@@ -65701,6 +66184,11 @@ export namespace Prisma {
      * Skip the first `n` ServicePackages.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ServicePackages.
+     */
     distinct?: ServicePackageScalarFieldEnum | ServicePackageScalarFieldEnum[]
   }
 
@@ -66713,6 +67201,11 @@ export namespace Prisma {
      * Skip the first `n` SiteSettings.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SiteSettings.
+     */
     distinct?: SiteSettingScalarFieldEnum | SiteSettingScalarFieldEnum[]
   }
 
@@ -66931,6 +67424,16 @@ export namespace Prisma {
     rating: number | null
     featured: boolean | null
     approved: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     createdAt: Date | null
   }
 
@@ -66942,6 +67445,16 @@ export namespace Prisma {
     rating: number | null
     featured: boolean | null
     approved: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     createdAt: Date | null
   }
 
@@ -66953,6 +67466,16 @@ export namespace Prisma {
     rating: number
     featured: number
     approved: number
+    verificationStatus: number
+    verificationReference: number
+    evidenceUrl: number
+    evidenceReviewedAt: number
+    evidenceReviewedBy: number
+    expiresAt: number
+    permissionConfirmed: number
+    permissionEvidenceUrl: number
+    permissionConfirmedAt: number
+    publicVisibility: number
     createdAt: number
     _all: number
   }
@@ -66974,6 +67497,16 @@ export namespace Prisma {
     rating?: true
     featured?: true
     approved?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     createdAt?: true
   }
 
@@ -66985,6 +67518,16 @@ export namespace Prisma {
     rating?: true
     featured?: true
     approved?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     createdAt?: true
   }
 
@@ -66996,6 +67539,16 @@ export namespace Prisma {
     rating?: true
     featured?: true
     approved?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     createdAt?: true
     _all?: true
   }
@@ -67094,6 +67647,16 @@ export namespace Prisma {
     rating: number | null
     featured: boolean
     approved: boolean
+    verificationStatus: string
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean
     createdAt: Date
     _count: TestimonialCountAggregateOutputType | null
     _avg: TestimonialAvgAggregateOutputType | null
@@ -67124,6 +67687,16 @@ export namespace Prisma {
     rating?: boolean
     featured?: boolean
     approved?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["testimonial"]>
 
@@ -67135,6 +67708,16 @@ export namespace Prisma {
     rating?: boolean
     featured?: boolean
     approved?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["testimonial"]>
 
@@ -67146,6 +67729,16 @@ export namespace Prisma {
     rating?: boolean
     featured?: boolean
     approved?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     createdAt?: boolean
   }, ExtArgs["result"]["testimonial"]>
 
@@ -67157,10 +67750,20 @@ export namespace Prisma {
     rating?: boolean
     featured?: boolean
     approved?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     createdAt?: boolean
   }
 
-  export type TestimonialOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientName" | "company" | "quote" | "rating" | "featured" | "approved" | "createdAt", ExtArgs["result"]["testimonial"]>
+  export type TestimonialOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "clientName" | "company" | "quote" | "rating" | "featured" | "approved" | "verificationStatus" | "verificationReference" | "evidenceUrl" | "evidenceReviewedAt" | "evidenceReviewedBy" | "expiresAt" | "permissionConfirmed" | "permissionEvidenceUrl" | "permissionConfirmedAt" | "publicVisibility" | "createdAt", ExtArgs["result"]["testimonial"]>
 
   export type $TestimonialPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Testimonial"
@@ -67173,6 +67776,16 @@ export namespace Prisma {
       rating: number | null
       featured: boolean
       approved: boolean
+      verificationStatus: string
+      verificationReference: string | null
+      evidenceUrl: string | null
+      evidenceReviewedAt: Date | null
+      evidenceReviewedBy: string | null
+      expiresAt: Date | null
+      permissionConfirmed: boolean
+      permissionEvidenceUrl: string | null
+      permissionConfirmedAt: Date | null
+      publicVisibility: boolean
       createdAt: Date
     }, ExtArgs["result"]["testimonial"]>
     composites: {}
@@ -67604,6 +68217,16 @@ export namespace Prisma {
     readonly rating: FieldRef<"Testimonial", 'Int'>
     readonly featured: FieldRef<"Testimonial", 'Boolean'>
     readonly approved: FieldRef<"Testimonial", 'Boolean'>
+    readonly verificationStatus: FieldRef<"Testimonial", 'String'>
+    readonly verificationReference: FieldRef<"Testimonial", 'String'>
+    readonly evidenceUrl: FieldRef<"Testimonial", 'String'>
+    readonly evidenceReviewedAt: FieldRef<"Testimonial", 'DateTime'>
+    readonly evidenceReviewedBy: FieldRef<"Testimonial", 'String'>
+    readonly expiresAt: FieldRef<"Testimonial", 'DateTime'>
+    readonly permissionConfirmed: FieldRef<"Testimonial", 'Boolean'>
+    readonly permissionEvidenceUrl: FieldRef<"Testimonial", 'String'>
+    readonly permissionConfirmedAt: FieldRef<"Testimonial", 'DateTime'>
+    readonly publicVisibility: FieldRef<"Testimonial", 'Boolean'>
     readonly createdAt: FieldRef<"Testimonial", 'DateTime'>
   }
     
@@ -67781,6 +68404,11 @@ export namespace Prisma {
      * Skip the first `n` Testimonials.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Testimonials.
+     */
     distinct?: TestimonialScalarFieldEnum | TestimonialScalarFieldEnum[]
   }
 
@@ -68964,6 +69592,11 @@ export namespace Prisma {
      * Skip the first `n` Tickets.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Tickets.
+     */
     distinct?: TicketScalarFieldEnum | TicketScalarFieldEnum[]
   }
 
@@ -70089,6 +70722,11 @@ export namespace Prisma {
      * Skip the first `n` TicketAttachments.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TicketAttachments.
+     */
     distinct?: TicketAttachmentScalarFieldEnum | TicketAttachmentScalarFieldEnum[]
   }
 
@@ -71160,6 +71798,11 @@ export namespace Prisma {
      * Skip the first `n` TicketMessages.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TicketMessages.
+     */
     distinct?: TicketMessageScalarFieldEnum | TicketMessageScalarFieldEnum[]
   }
 
@@ -72296,6 +72939,11 @@ export namespace Prisma {
      * Skip the first `n` Users.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
     distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
   }
 
@@ -73433,6 +74081,11 @@ export namespace Prisma {
      * Skip the first `n` WebsiteSections.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WebsiteSections.
+     */
     distinct?: WebsiteSectionScalarFieldEnum | WebsiteSectionScalarFieldEnum[]
   }
 
@@ -74498,6 +75151,11 @@ export namespace Prisma {
      * Skip the first `n` audit_logs.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of audit_logs.
+     */
     distinct?: Audit_logsScalarFieldEnum | Audit_logsScalarFieldEnum[]
   }
 
@@ -75545,6 +76203,11 @@ export namespace Prisma {
      * Skip the first `n` blog_categories.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of blog_categories.
+     */
     distinct?: Blog_categoriesScalarFieldEnum | Blog_categoriesScalarFieldEnum[]
   }
 
@@ -76718,6 +77381,11 @@ export namespace Prisma {
      * Skip the first `n` blog_posts.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of blog_posts.
+     */
     distinct?: Blog_postsScalarFieldEnum | Blog_postsScalarFieldEnum[]
   }
 
@@ -77866,6 +78534,11 @@ export namespace Prisma {
      * Skip the first `n` career_applications.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of career_applications.
+     */
     distinct?: Career_applicationsScalarFieldEnum | Career_applicationsScalarFieldEnum[]
   }
 
@@ -79024,6 +79697,11 @@ export namespace Prisma {
      * Skip the first `n` career_jobs.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of career_jobs.
+     */
     distinct?: Career_jobsScalarFieldEnum | Career_jobsScalarFieldEnum[]
   }
 
@@ -80167,6 +80845,11 @@ export namespace Prisma {
      * Skip the first `n` case_studies.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of case_studies.
+     */
     distinct?: Case_studiesScalarFieldEnum | Case_studiesScalarFieldEnum[]
   }
 
@@ -81301,6 +81984,11 @@ export namespace Prisma {
      * Skip the first `n` client_companies.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of client_companies.
+     */
     distinct?: Client_companiesScalarFieldEnum | Client_companiesScalarFieldEnum[]
   }
 
@@ -82501,6 +83189,11 @@ export namespace Prisma {
      * Skip the first `n` client_company_users.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of client_company_users.
+     */
     distinct?: Client_company_usersScalarFieldEnum | Client_company_usersScalarFieldEnum[]
   }
 
@@ -83619,6 +84312,11 @@ export namespace Prisma {
      * Skip the first `n` client_documents.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of client_documents.
+     */
     distinct?: Client_documentsScalarFieldEnum | Client_documentsScalarFieldEnum[]
   }
 
@@ -84793,6 +85491,11 @@ export namespace Prisma {
      * Skip the first `n` leads.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of leads.
+     */
     distinct?: LeadsScalarFieldEnum | LeadsScalarFieldEnum[]
   }
 
@@ -85980,6 +86683,11 @@ export namespace Prisma {
      * Skip the first `n` media_assets.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of media_assets.
+     */
     distinct?: Media_assetsScalarFieldEnum | Media_assetsScalarFieldEnum[]
   }
 
@@ -87123,6 +87831,11 @@ export namespace Prisma {
      * Skip the first `n` navigation_items.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of navigation_items.
+     */
     distinct?: Navigation_itemsScalarFieldEnum | Navigation_itemsScalarFieldEnum[]
   }
 
@@ -88263,6 +88976,11 @@ export namespace Prisma {
      * Skip the first `n` notifications.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of notifications.
+     */
     distinct?: NotificationsScalarFieldEnum | NotificationsScalarFieldEnum[]
   }
 
@@ -89369,6 +90087,11 @@ export namespace Prisma {
      * Skip the first `n` pages.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of pages.
+     */
     distinct?: PagesScalarFieldEnum | PagesScalarFieldEnum[]
   }
 
@@ -90472,6 +91195,11 @@ export namespace Prisma {
      * Skip the first `n` profiles.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of profiles.
+     */
     distinct?: ProfilesScalarFieldEnum | ProfilesScalarFieldEnum[]
   }
 
@@ -91603,6 +92331,11 @@ export namespace Prisma {
      * Skip the first `n` quote_requests.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of quote_requests.
+     */
     distinct?: Quote_requestsScalarFieldEnum | Quote_requestsScalarFieldEnum[]
   }
 
@@ -92733,6 +93466,11 @@ export namespace Prisma {
      * Skip the first `n` service_faqs.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of service_faqs.
+     */
     distinct?: Service_faqsScalarFieldEnum | Service_faqsScalarFieldEnum[]
   }
 
@@ -93931,6 +94669,11 @@ export namespace Prisma {
      * Skip the first `n` services.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of services.
+     */
     distinct?: ServicesScalarFieldEnum | ServicesScalarFieldEnum[]
   }
 
@@ -95014,6 +95757,11 @@ export namespace Prisma {
      * Skip the first `n` site_settings.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of site_settings.
+     */
     distinct?: Site_settingsScalarFieldEnum | Site_settingsScalarFieldEnum[]
   }
 
@@ -96238,6 +96986,11 @@ export namespace Prisma {
      * Skip the first `n` support_tickets.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of support_tickets.
+     */
     distinct?: Support_ticketsScalarFieldEnum | Support_ticketsScalarFieldEnum[]
   }
 
@@ -97379,6 +98132,11 @@ export namespace Prisma {
      * Skip the first `n` ticket_messages.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ticket_messages.
+     */
     distinct?: Ticket_messagesScalarFieldEnum | Ticket_messagesScalarFieldEnum[]
   }
 
@@ -98480,6 +99238,11 @@ export namespace Prisma {
      * Skip the first `n` BrandAssets.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BrandAssets.
+     */
     distinct?: BrandAssetScalarFieldEnum | BrandAssetScalarFieldEnum[]
   }
 
@@ -99519,6 +100282,11 @@ export namespace Prisma {
      * Skip the first `n` Menus.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Menus.
+     */
     distinct?: MenuScalarFieldEnum | MenuScalarFieldEnum[]
   }
 
@@ -100758,6 +101526,11 @@ export namespace Prisma {
      * Skip the first `n` MenuItems.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MenuItems.
+     */
     distinct?: MenuItemScalarFieldEnum | MenuItemScalarFieldEnum[]
   }
 
@@ -101941,6 +102714,11 @@ export namespace Prisma {
      * Skip the first `n` FooterSections.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FooterSections.
+     */
     distinct?: FooterSectionScalarFieldEnum | FooterSectionScalarFieldEnum[]
   }
 
@@ -103140,6 +103918,11 @@ export namespace Prisma {
      * Skip the first `n` FooterLinks.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of FooterLinks.
+     */
     distinct?: FooterLinkScalarFieldEnum | FooterLinkScalarFieldEnum[]
   }
 
@@ -104397,6 +105180,11 @@ export namespace Prisma {
      * Skip the first `n` PageSections.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PageSections.
+     */
     distinct?: PageSectionScalarFieldEnum | PageSectionScalarFieldEnum[]
   }
 
@@ -104645,6 +105433,16 @@ export namespace Prisma {
     websiteUrl: string | null
     isFeatured: boolean | null
     isVisible: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -104662,6 +105460,16 @@ export namespace Prisma {
     websiteUrl: string | null
     isFeatured: boolean | null
     isVisible: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -104679,6 +105487,16 @@ export namespace Prisma {
     websiteUrl: number
     isFeatured: number
     isVisible: number
+    verificationStatus: number
+    verificationReference: number
+    evidenceUrl: number
+    evidenceReviewedAt: number
+    evidenceReviewedBy: number
+    expiresAt: number
+    permissionConfirmed: number
+    permissionEvidenceUrl: number
+    permissionConfirmedAt: number
+    publicVisibility: number
     sortOrder: number
     createdAt: number
     updatedAt: number
@@ -104706,6 +105524,16 @@ export namespace Prisma {
     websiteUrl?: true
     isFeatured?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -104723,6 +105551,16 @@ export namespace Prisma {
     websiteUrl?: true
     isFeatured?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -104740,6 +105578,16 @@ export namespace Prisma {
     websiteUrl?: true
     isFeatured?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -104844,6 +105692,16 @@ export namespace Prisma {
     websiteUrl: string | null
     isFeatured: boolean
     isVisible: boolean
+    verificationStatus: string
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean
     sortOrder: number
     createdAt: Date
     updatedAt: Date
@@ -104880,6 +105738,16 @@ export namespace Prisma {
     websiteUrl?: boolean
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -104897,6 +105765,16 @@ export namespace Prisma {
     websiteUrl?: boolean
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -104914,6 +105792,16 @@ export namespace Prisma {
     websiteUrl?: boolean
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -104931,6 +105819,16 @@ export namespace Prisma {
     websiteUrl?: boolean
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -104938,7 +105836,7 @@ export namespace Prisma {
     updatedBy?: boolean
   }
 
-  export type PartnerLogoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "category" | "description" | "logoUrl" | "altText" | "websiteUrl" | "isFeatured" | "isVisible" | "sortOrder" | "createdAt" | "updatedAt" | "createdBy" | "updatedBy", ExtArgs["result"]["partnerLogo"]>
+  export type PartnerLogoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "category" | "description" | "logoUrl" | "altText" | "websiteUrl" | "isFeatured" | "isVisible" | "verificationStatus" | "verificationReference" | "evidenceUrl" | "evidenceReviewedAt" | "evidenceReviewedBy" | "expiresAt" | "permissionConfirmed" | "permissionEvidenceUrl" | "permissionConfirmedAt" | "publicVisibility" | "sortOrder" | "createdAt" | "updatedAt" | "createdBy" | "updatedBy", ExtArgs["result"]["partnerLogo"]>
 
   export type $PartnerLogoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "PartnerLogo"
@@ -104953,6 +105851,16 @@ export namespace Prisma {
       websiteUrl: string | null
       isFeatured: boolean
       isVisible: boolean
+      verificationStatus: string
+      verificationReference: string | null
+      evidenceUrl: string | null
+      evidenceReviewedAt: Date | null
+      evidenceReviewedBy: string | null
+      expiresAt: Date | null
+      permissionConfirmed: boolean
+      permissionEvidenceUrl: string | null
+      permissionConfirmedAt: Date | null
+      publicVisibility: boolean
       sortOrder: number
       createdAt: Date
       updatedAt: Date
@@ -105390,6 +106298,16 @@ export namespace Prisma {
     readonly websiteUrl: FieldRef<"PartnerLogo", 'String'>
     readonly isFeatured: FieldRef<"PartnerLogo", 'Boolean'>
     readonly isVisible: FieldRef<"PartnerLogo", 'Boolean'>
+    readonly verificationStatus: FieldRef<"PartnerLogo", 'String'>
+    readonly verificationReference: FieldRef<"PartnerLogo", 'String'>
+    readonly evidenceUrl: FieldRef<"PartnerLogo", 'String'>
+    readonly evidenceReviewedAt: FieldRef<"PartnerLogo", 'DateTime'>
+    readonly evidenceReviewedBy: FieldRef<"PartnerLogo", 'String'>
+    readonly expiresAt: FieldRef<"PartnerLogo", 'DateTime'>
+    readonly permissionConfirmed: FieldRef<"PartnerLogo", 'Boolean'>
+    readonly permissionEvidenceUrl: FieldRef<"PartnerLogo", 'String'>
+    readonly permissionConfirmedAt: FieldRef<"PartnerLogo", 'DateTime'>
+    readonly publicVisibility: FieldRef<"PartnerLogo", 'Boolean'>
     readonly sortOrder: FieldRef<"PartnerLogo", 'Int'>
     readonly createdAt: FieldRef<"PartnerLogo", 'DateTime'>
     readonly updatedAt: FieldRef<"PartnerLogo", 'DateTime'>
@@ -105571,6 +106489,11 @@ export namespace Prisma {
      * Skip the first `n` PartnerLogos.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PartnerLogos.
+     */
     distinct?: PartnerLogoScalarFieldEnum | PartnerLogoScalarFieldEnum[]
   }
 
@@ -105789,6 +106712,16 @@ export namespace Prisma {
     websiteUrl: string | null
     isFeatured: boolean | null
     isVisible: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -105804,6 +106737,16 @@ export namespace Prisma {
     websiteUrl: string | null
     isFeatured: boolean | null
     isVisible: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -105819,6 +106762,16 @@ export namespace Prisma {
     websiteUrl: number
     isFeatured: number
     isVisible: number
+    verificationStatus: number
+    verificationReference: number
+    evidenceUrl: number
+    evidenceReviewedAt: number
+    evidenceReviewedBy: number
+    expiresAt: number
+    permissionConfirmed: number
+    permissionEvidenceUrl: number
+    permissionConfirmedAt: number
+    publicVisibility: number
     sortOrder: number
     createdAt: number
     updatedAt: number
@@ -105844,6 +106797,16 @@ export namespace Prisma {
     websiteUrl?: true
     isFeatured?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -105859,6 +106822,16 @@ export namespace Prisma {
     websiteUrl?: true
     isFeatured?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -105874,6 +106847,16 @@ export namespace Prisma {
     websiteUrl?: true
     isFeatured?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -105976,6 +106959,16 @@ export namespace Prisma {
     websiteUrl: string | null
     isFeatured: boolean
     isVisible: boolean
+    verificationStatus: string
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean
     sortOrder: number
     createdAt: Date
     updatedAt: Date
@@ -106010,6 +107003,16 @@ export namespace Prisma {
     websiteUrl?: boolean
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -106025,6 +107028,16 @@ export namespace Prisma {
     websiteUrl?: boolean
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -106040,6 +107053,16 @@ export namespace Prisma {
     websiteUrl?: boolean
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -106055,6 +107078,16 @@ export namespace Prisma {
     websiteUrl?: boolean
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -106062,7 +107095,7 @@ export namespace Prisma {
     updatedBy?: boolean
   }
 
-  export type TrustedBusinessLogoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "companyName" | "logoUrl" | "altText" | "websiteUrl" | "isFeatured" | "isVisible" | "sortOrder" | "createdAt" | "updatedAt" | "createdBy" | "updatedBy", ExtArgs["result"]["trustedBusinessLogo"]>
+  export type TrustedBusinessLogoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "companyName" | "logoUrl" | "altText" | "websiteUrl" | "isFeatured" | "isVisible" | "verificationStatus" | "verificationReference" | "evidenceUrl" | "evidenceReviewedAt" | "evidenceReviewedBy" | "expiresAt" | "permissionConfirmed" | "permissionEvidenceUrl" | "permissionConfirmedAt" | "publicVisibility" | "sortOrder" | "createdAt" | "updatedAt" | "createdBy" | "updatedBy", ExtArgs["result"]["trustedBusinessLogo"]>
 
   export type $TrustedBusinessLogoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "TrustedBusinessLogo"
@@ -106075,6 +107108,16 @@ export namespace Prisma {
       websiteUrl: string | null
       isFeatured: boolean
       isVisible: boolean
+      verificationStatus: string
+      verificationReference: string | null
+      evidenceUrl: string | null
+      evidenceReviewedAt: Date | null
+      evidenceReviewedBy: string | null
+      expiresAt: Date | null
+      permissionConfirmed: boolean
+      permissionEvidenceUrl: string | null
+      permissionConfirmedAt: Date | null
+      publicVisibility: boolean
       sortOrder: number
       createdAt: Date
       updatedAt: Date
@@ -106510,6 +107553,16 @@ export namespace Prisma {
     readonly websiteUrl: FieldRef<"TrustedBusinessLogo", 'String'>
     readonly isFeatured: FieldRef<"TrustedBusinessLogo", 'Boolean'>
     readonly isVisible: FieldRef<"TrustedBusinessLogo", 'Boolean'>
+    readonly verificationStatus: FieldRef<"TrustedBusinessLogo", 'String'>
+    readonly verificationReference: FieldRef<"TrustedBusinessLogo", 'String'>
+    readonly evidenceUrl: FieldRef<"TrustedBusinessLogo", 'String'>
+    readonly evidenceReviewedAt: FieldRef<"TrustedBusinessLogo", 'DateTime'>
+    readonly evidenceReviewedBy: FieldRef<"TrustedBusinessLogo", 'String'>
+    readonly expiresAt: FieldRef<"TrustedBusinessLogo", 'DateTime'>
+    readonly permissionConfirmed: FieldRef<"TrustedBusinessLogo", 'Boolean'>
+    readonly permissionEvidenceUrl: FieldRef<"TrustedBusinessLogo", 'String'>
+    readonly permissionConfirmedAt: FieldRef<"TrustedBusinessLogo", 'DateTime'>
+    readonly publicVisibility: FieldRef<"TrustedBusinessLogo", 'Boolean'>
     readonly sortOrder: FieldRef<"TrustedBusinessLogo", 'Int'>
     readonly createdAt: FieldRef<"TrustedBusinessLogo", 'DateTime'>
     readonly updatedAt: FieldRef<"TrustedBusinessLogo", 'DateTime'>
@@ -106691,6 +107744,11 @@ export namespace Prisma {
      * Skip the first `n` TrustedBusinessLogos.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TrustedBusinessLogos.
+     */
     distinct?: TrustedBusinessLogoScalarFieldEnum | TrustedBusinessLogoScalarFieldEnum[]
   }
 
@@ -106912,6 +107970,16 @@ export namespace Prisma {
     externalUrl: string | null
     displayLocation: string | null
     isVisible: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -106930,6 +107998,16 @@ export namespace Prisma {
     externalUrl: string | null
     displayLocation: string | null
     isVisible: boolean | null
+    verificationStatus: string | null
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean | null
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean | null
     sortOrder: number | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -106948,6 +108026,16 @@ export namespace Prisma {
     externalUrl: number
     displayLocation: number
     isVisible: number
+    verificationStatus: number
+    verificationReference: number
+    evidenceUrl: number
+    evidenceReviewedAt: number
+    evidenceReviewedBy: number
+    expiresAt: number
+    permissionConfirmed: number
+    permissionEvidenceUrl: number
+    permissionConfirmedAt: number
+    publicVisibility: number
     sortOrder: number
     createdAt: number
     updatedAt: number
@@ -106976,6 +108064,16 @@ export namespace Prisma {
     externalUrl?: true
     displayLocation?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -106994,6 +108092,16 @@ export namespace Prisma {
     externalUrl?: true
     displayLocation?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -107012,6 +108120,16 @@ export namespace Prisma {
     externalUrl?: true
     displayLocation?: true
     isVisible?: true
+    verificationStatus?: true
+    verificationReference?: true
+    evidenceUrl?: true
+    evidenceReviewedAt?: true
+    evidenceReviewedBy?: true
+    expiresAt?: true
+    permissionConfirmed?: true
+    permissionEvidenceUrl?: true
+    permissionConfirmedAt?: true
+    publicVisibility?: true
     sortOrder?: true
     createdAt?: true
     updatedAt?: true
@@ -107117,6 +108235,16 @@ export namespace Prisma {
     externalUrl: string | null
     displayLocation: string
     isVisible: boolean
+    verificationStatus: string
+    verificationReference: string | null
+    evidenceUrl: string | null
+    evidenceReviewedAt: Date | null
+    evidenceReviewedBy: string | null
+    expiresAt: Date | null
+    permissionConfirmed: boolean
+    permissionEvidenceUrl: string | null
+    permissionConfirmedAt: Date | null
+    publicVisibility: boolean
     sortOrder: number
     createdAt: Date
     updatedAt: Date
@@ -107154,6 +108282,16 @@ export namespace Prisma {
     externalUrl?: boolean
     displayLocation?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -107172,6 +108310,16 @@ export namespace Prisma {
     externalUrl?: boolean
     displayLocation?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -107190,6 +108338,16 @@ export namespace Prisma {
     externalUrl?: boolean
     displayLocation?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -107208,6 +108366,16 @@ export namespace Prisma {
     externalUrl?: boolean
     displayLocation?: boolean
     isVisible?: boolean
+    verificationStatus?: boolean
+    verificationReference?: boolean
+    evidenceUrl?: boolean
+    evidenceReviewedAt?: boolean
+    evidenceReviewedBy?: boolean
+    expiresAt?: boolean
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: boolean
+    permissionConfirmedAt?: boolean
+    publicVisibility?: boolean
     sortOrder?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -107215,7 +108383,7 @@ export namespace Prisma {
     updatedBy?: boolean
   }
 
-  export type ComplianceCardOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "category" | "iconKey" | "logoUrl" | "status" | "externalUrl" | "displayLocation" | "isVisible" | "sortOrder" | "createdAt" | "updatedAt" | "createdBy" | "updatedBy", ExtArgs["result"]["complianceCard"]>
+  export type ComplianceCardOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "category" | "iconKey" | "logoUrl" | "status" | "externalUrl" | "displayLocation" | "isVisible" | "verificationStatus" | "verificationReference" | "evidenceUrl" | "evidenceReviewedAt" | "evidenceReviewedBy" | "expiresAt" | "permissionConfirmed" | "permissionEvidenceUrl" | "permissionConfirmedAt" | "publicVisibility" | "sortOrder" | "createdAt" | "updatedAt" | "createdBy" | "updatedBy", ExtArgs["result"]["complianceCard"]>
 
   export type $ComplianceCardPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "ComplianceCard"
@@ -107231,6 +108399,16 @@ export namespace Prisma {
       externalUrl: string | null
       displayLocation: string
       isVisible: boolean
+      verificationStatus: string
+      verificationReference: string | null
+      evidenceUrl: string | null
+      evidenceReviewedAt: Date | null
+      evidenceReviewedBy: string | null
+      expiresAt: Date | null
+      permissionConfirmed: boolean
+      permissionEvidenceUrl: string | null
+      permissionConfirmedAt: Date | null
+      publicVisibility: boolean
       sortOrder: number
       createdAt: Date
       updatedAt: Date
@@ -107669,6 +108847,16 @@ export namespace Prisma {
     readonly externalUrl: FieldRef<"ComplianceCard", 'String'>
     readonly displayLocation: FieldRef<"ComplianceCard", 'String'>
     readonly isVisible: FieldRef<"ComplianceCard", 'Boolean'>
+    readonly verificationStatus: FieldRef<"ComplianceCard", 'String'>
+    readonly verificationReference: FieldRef<"ComplianceCard", 'String'>
+    readonly evidenceUrl: FieldRef<"ComplianceCard", 'String'>
+    readonly evidenceReviewedAt: FieldRef<"ComplianceCard", 'DateTime'>
+    readonly evidenceReviewedBy: FieldRef<"ComplianceCard", 'String'>
+    readonly expiresAt: FieldRef<"ComplianceCard", 'DateTime'>
+    readonly permissionConfirmed: FieldRef<"ComplianceCard", 'Boolean'>
+    readonly permissionEvidenceUrl: FieldRef<"ComplianceCard", 'String'>
+    readonly permissionConfirmedAt: FieldRef<"ComplianceCard", 'DateTime'>
+    readonly publicVisibility: FieldRef<"ComplianceCard", 'Boolean'>
     readonly sortOrder: FieldRef<"ComplianceCard", 'Int'>
     readonly createdAt: FieldRef<"ComplianceCard", 'DateTime'>
     readonly updatedAt: FieldRef<"ComplianceCard", 'DateTime'>
@@ -107850,6 +109038,11 @@ export namespace Prisma {
      * Skip the first `n` ComplianceCards.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ComplianceCards.
+     */
     distinct?: ComplianceCardScalarFieldEnum | ComplianceCardScalarFieldEnum[]
   }
 
@@ -108970,6 +110163,11 @@ export namespace Prisma {
      * Skip the first `n` SocialLinks.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SocialLinks.
+     */
     distinct?: SocialLinkScalarFieldEnum | SocialLinkScalarFieldEnum[]
   }
 
@@ -110137,6 +111335,11 @@ export namespace Prisma {
      * Skip the first `n` SurveySettings.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SurveySettings.
+     */
     distinct?: SurveySettingScalarFieldEnum | SurveySettingScalarFieldEnum[]
   }
 
@@ -111275,6 +112478,11 @@ export namespace Prisma {
      * Skip the first `n` SurveyRequests.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SurveyRequests.
+     */
     distinct?: SurveyRequestScalarFieldEnum | SurveyRequestScalarFieldEnum[]
   }
 
@@ -112577,6 +113785,11 @@ export namespace Prisma {
      * Skip the first `n` SurveyResponses.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SurveyResponses.
+     */
     distinct?: SurveyResponseScalarFieldEnum | SurveyResponseScalarFieldEnum[]
   }
 
@@ -113778,6 +114991,11 @@ export namespace Prisma {
      * Skip the first `n` WorkOrders.
      */
     skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of WorkOrders.
+     */
     distinct?: WorkOrderScalarFieldEnum | WorkOrderScalarFieldEnum[]
   }
 
@@ -114466,6 +115684,16 @@ export namespace Prisma {
     timeline: 'timeline',
     testimonial: 'testimonial',
     published: 'published',
+    verificationStatus: 'verificationStatus',
+    verificationReference: 'verificationReference',
+    evidenceUrl: 'evidenceUrl',
+    evidenceReviewedAt: 'evidenceReviewedAt',
+    evidenceReviewedBy: 'evidenceReviewedBy',
+    expiresAt: 'expiresAt',
+    permissionConfirmed: 'permissionConfirmed',
+    permissionEvidenceUrl: 'permissionEvidenceUrl',
+    permissionConfirmedAt: 'permissionConfirmedAt',
+    publicVisibility: 'publicVisibility',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -114790,13 +116018,21 @@ export namespace Prisma {
     id: 'id',
     serviceId: 'serviceId',
     name: 'name',
+    description: 'description',
+    recommendedCustomerSize: 'recommendedCustomerSize',
     cadence: 'cadence',
     features: 'features',
     pricingVisible: 'pricingVisible',
+    priceDisplayMode: 'priceDisplayMode',
     monthlyPrice: 'monthlyPrice',
     annualPrice: 'annualPrice',
+    ctaLabel: 'ctaLabel',
+    ctaUrl: 'ctaUrl',
     featured: 'featured',
-    createdAt: 'createdAt'
+    published: 'published',
+    sortOrder: 'sortOrder',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
   };
 
   export type ServicePackageScalarFieldEnum = (typeof ServicePackageScalarFieldEnum)[keyof typeof ServicePackageScalarFieldEnum]
@@ -114819,6 +116055,16 @@ export namespace Prisma {
     rating: 'rating',
     featured: 'featured',
     approved: 'approved',
+    verificationStatus: 'verificationStatus',
+    verificationReference: 'verificationReference',
+    evidenceUrl: 'evidenceUrl',
+    evidenceReviewedAt: 'evidenceReviewedAt',
+    evidenceReviewedBy: 'evidenceReviewedBy',
+    expiresAt: 'expiresAt',
+    permissionConfirmed: 'permissionConfirmed',
+    permissionEvidenceUrl: 'permissionEvidenceUrl',
+    permissionConfirmedAt: 'permissionConfirmedAt',
+    publicVisibility: 'publicVisibility',
     createdAt: 'createdAt'
   };
 
@@ -115331,6 +116577,16 @@ export namespace Prisma {
     websiteUrl: 'websiteUrl',
     isFeatured: 'isFeatured',
     isVisible: 'isVisible',
+    verificationStatus: 'verificationStatus',
+    verificationReference: 'verificationReference',
+    evidenceUrl: 'evidenceUrl',
+    evidenceReviewedAt: 'evidenceReviewedAt',
+    evidenceReviewedBy: 'evidenceReviewedBy',
+    expiresAt: 'expiresAt',
+    permissionConfirmed: 'permissionConfirmed',
+    permissionEvidenceUrl: 'permissionEvidenceUrl',
+    permissionConfirmedAt: 'permissionConfirmedAt',
+    publicVisibility: 'publicVisibility',
     sortOrder: 'sortOrder',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -115349,6 +116605,16 @@ export namespace Prisma {
     websiteUrl: 'websiteUrl',
     isFeatured: 'isFeatured',
     isVisible: 'isVisible',
+    verificationStatus: 'verificationStatus',
+    verificationReference: 'verificationReference',
+    evidenceUrl: 'evidenceUrl',
+    evidenceReviewedAt: 'evidenceReviewedAt',
+    evidenceReviewedBy: 'evidenceReviewedBy',
+    expiresAt: 'expiresAt',
+    permissionConfirmed: 'permissionConfirmed',
+    permissionEvidenceUrl: 'permissionEvidenceUrl',
+    permissionConfirmedAt: 'permissionConfirmedAt',
+    publicVisibility: 'publicVisibility',
     sortOrder: 'sortOrder',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -115370,6 +116636,16 @@ export namespace Prisma {
     externalUrl: 'externalUrl',
     displayLocation: 'displayLocation',
     isVisible: 'isVisible',
+    verificationStatus: 'verificationStatus',
+    verificationReference: 'verificationReference',
+    evidenceUrl: 'evidenceUrl',
+    evidenceReviewedAt: 'evidenceReviewedAt',
+    evidenceReviewedBy: 'evidenceReviewedBy',
+    expiresAt: 'expiresAt',
+    permissionConfirmed: 'permissionConfirmed',
+    permissionEvidenceUrl: 'permissionEvidenceUrl',
+    permissionConfirmedAt: 'permissionConfirmedAt',
+    publicVisibility: 'publicVisibility',
     sortOrder: 'sortOrder',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
@@ -118095,6 +119371,16 @@ export namespace Prisma {
     timeline?: StringNullableFilter<"CaseStudy"> | string | null
     testimonial?: StringNullableFilter<"CaseStudy"> | string | null
     published?: BoolFilter<"CaseStudy"> | boolean
+    verificationStatus?: StringFilter<"CaseStudy"> | string
+    verificationReference?: StringNullableFilter<"CaseStudy"> | string | null
+    evidenceUrl?: StringNullableFilter<"CaseStudy"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"CaseStudy"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"CaseStudy"> | string | null
+    expiresAt?: DateTimeNullableFilter<"CaseStudy"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"CaseStudy"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"CaseStudy"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"CaseStudy"> | Date | string | null
+    publicVisibility?: BoolFilter<"CaseStudy"> | boolean
     createdAt?: DateTimeFilter<"CaseStudy"> | Date | string
     updatedAt?: DateTimeFilter<"CaseStudy"> | Date | string
   }
@@ -118112,6 +119398,16 @@ export namespace Prisma {
     timeline?: SortOrderInput | SortOrder
     testimonial?: SortOrderInput | SortOrder
     published?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -118132,6 +119428,16 @@ export namespace Prisma {
     timeline?: StringNullableFilter<"CaseStudy"> | string | null
     testimonial?: StringNullableFilter<"CaseStudy"> | string | null
     published?: BoolFilter<"CaseStudy"> | boolean
+    verificationStatus?: StringFilter<"CaseStudy"> | string
+    verificationReference?: StringNullableFilter<"CaseStudy"> | string | null
+    evidenceUrl?: StringNullableFilter<"CaseStudy"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"CaseStudy"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"CaseStudy"> | string | null
+    expiresAt?: DateTimeNullableFilter<"CaseStudy"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"CaseStudy"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"CaseStudy"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"CaseStudy"> | Date | string | null
+    publicVisibility?: BoolFilter<"CaseStudy"> | boolean
     createdAt?: DateTimeFilter<"CaseStudy"> | Date | string
     updatedAt?: DateTimeFilter<"CaseStudy"> | Date | string
   }, "id" | "slug">
@@ -118149,6 +119455,16 @@ export namespace Prisma {
     timeline?: SortOrderInput | SortOrder
     testimonial?: SortOrderInput | SortOrder
     published?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: CaseStudyCountOrderByAggregateInput
@@ -118172,6 +119488,16 @@ export namespace Prisma {
     timeline?: StringNullableWithAggregatesFilter<"CaseStudy"> | string | null
     testimonial?: StringNullableWithAggregatesFilter<"CaseStudy"> | string | null
     published?: BoolWithAggregatesFilter<"CaseStudy"> | boolean
+    verificationStatus?: StringWithAggregatesFilter<"CaseStudy"> | string
+    verificationReference?: StringNullableWithAggregatesFilter<"CaseStudy"> | string | null
+    evidenceUrl?: StringNullableWithAggregatesFilter<"CaseStudy"> | string | null
+    evidenceReviewedAt?: DateTimeNullableWithAggregatesFilter<"CaseStudy"> | Date | string | null
+    evidenceReviewedBy?: StringNullableWithAggregatesFilter<"CaseStudy"> | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"CaseStudy"> | Date | string | null
+    permissionConfirmed?: BoolWithAggregatesFilter<"CaseStudy"> | boolean
+    permissionEvidenceUrl?: StringNullableWithAggregatesFilter<"CaseStudy"> | string | null
+    permissionConfirmedAt?: DateTimeNullableWithAggregatesFilter<"CaseStudy"> | Date | string | null
+    publicVisibility?: BoolWithAggregatesFilter<"CaseStudy"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"CaseStudy"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CaseStudy"> | Date | string
   }
@@ -119766,13 +121092,21 @@ export namespace Prisma {
     id?: StringFilter<"ServicePackage"> | string
     serviceId?: StringNullableFilter<"ServicePackage"> | string | null
     name?: StringFilter<"ServicePackage"> | string
+    description?: StringFilter<"ServicePackage"> | string
+    recommendedCustomerSize?: StringFilter<"ServicePackage"> | string
     cadence?: StringNullableFilter<"ServicePackage"> | string | null
     features?: JsonFilter<"ServicePackage">
     pricingVisible?: BoolFilter<"ServicePackage"> | boolean
+    priceDisplayMode?: StringFilter<"ServicePackage"> | string
     monthlyPrice?: DecimalNullableFilter<"ServicePackage"> | Decimal | DecimalJsLike | number | string | null
     annualPrice?: DecimalNullableFilter<"ServicePackage"> | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFilter<"ServicePackage"> | string
+    ctaUrl?: StringNullableFilter<"ServicePackage"> | string | null
     featured?: BoolFilter<"ServicePackage"> | boolean
+    published?: BoolFilter<"ServicePackage"> | boolean
+    sortOrder?: IntFilter<"ServicePackage"> | number
     createdAt?: DateTimeFilter<"ServicePackage"> | Date | string
+    updatedAt?: DateTimeFilter<"ServicePackage"> | Date | string
     Service?: XOR<ServiceNullableScalarRelationFilter, ServiceWhereInput> | null
   }
 
@@ -119780,13 +121114,21 @@ export namespace Prisma {
     id?: SortOrder
     serviceId?: SortOrderInput | SortOrder
     name?: SortOrder
+    description?: SortOrder
+    recommendedCustomerSize?: SortOrder
     cadence?: SortOrderInput | SortOrder
     features?: SortOrder
     pricingVisible?: SortOrder
+    priceDisplayMode?: SortOrder
     monthlyPrice?: SortOrderInput | SortOrder
     annualPrice?: SortOrderInput | SortOrder
+    ctaLabel?: SortOrder
+    ctaUrl?: SortOrderInput | SortOrder
     featured?: SortOrder
+    published?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
     Service?: ServiceOrderByWithRelationInput
   }
 
@@ -119797,13 +121139,21 @@ export namespace Prisma {
     NOT?: ServicePackageWhereInput | ServicePackageWhereInput[]
     serviceId?: StringNullableFilter<"ServicePackage"> | string | null
     name?: StringFilter<"ServicePackage"> | string
+    description?: StringFilter<"ServicePackage"> | string
+    recommendedCustomerSize?: StringFilter<"ServicePackage"> | string
     cadence?: StringNullableFilter<"ServicePackage"> | string | null
     features?: JsonFilter<"ServicePackage">
     pricingVisible?: BoolFilter<"ServicePackage"> | boolean
+    priceDisplayMode?: StringFilter<"ServicePackage"> | string
     monthlyPrice?: DecimalNullableFilter<"ServicePackage"> | Decimal | DecimalJsLike | number | string | null
     annualPrice?: DecimalNullableFilter<"ServicePackage"> | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFilter<"ServicePackage"> | string
+    ctaUrl?: StringNullableFilter<"ServicePackage"> | string | null
     featured?: BoolFilter<"ServicePackage"> | boolean
+    published?: BoolFilter<"ServicePackage"> | boolean
+    sortOrder?: IntFilter<"ServicePackage"> | number
     createdAt?: DateTimeFilter<"ServicePackage"> | Date | string
+    updatedAt?: DateTimeFilter<"ServicePackage"> | Date | string
     Service?: XOR<ServiceNullableScalarRelationFilter, ServiceWhereInput> | null
   }, "id">
 
@@ -119811,13 +121161,21 @@ export namespace Prisma {
     id?: SortOrder
     serviceId?: SortOrderInput | SortOrder
     name?: SortOrder
+    description?: SortOrder
+    recommendedCustomerSize?: SortOrder
     cadence?: SortOrderInput | SortOrder
     features?: SortOrder
     pricingVisible?: SortOrder
+    priceDisplayMode?: SortOrder
     monthlyPrice?: SortOrderInput | SortOrder
     annualPrice?: SortOrderInput | SortOrder
+    ctaLabel?: SortOrder
+    ctaUrl?: SortOrderInput | SortOrder
     featured?: SortOrder
+    published?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
     _count?: ServicePackageCountOrderByAggregateInput
     _avg?: ServicePackageAvgOrderByAggregateInput
     _max?: ServicePackageMaxOrderByAggregateInput
@@ -119832,13 +121190,21 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"ServicePackage"> | string
     serviceId?: StringNullableWithAggregatesFilter<"ServicePackage"> | string | null
     name?: StringWithAggregatesFilter<"ServicePackage"> | string
+    description?: StringWithAggregatesFilter<"ServicePackage"> | string
+    recommendedCustomerSize?: StringWithAggregatesFilter<"ServicePackage"> | string
     cadence?: StringNullableWithAggregatesFilter<"ServicePackage"> | string | null
     features?: JsonWithAggregatesFilter<"ServicePackage">
     pricingVisible?: BoolWithAggregatesFilter<"ServicePackage"> | boolean
+    priceDisplayMode?: StringWithAggregatesFilter<"ServicePackage"> | string
     monthlyPrice?: DecimalNullableWithAggregatesFilter<"ServicePackage"> | Decimal | DecimalJsLike | number | string | null
     annualPrice?: DecimalNullableWithAggregatesFilter<"ServicePackage"> | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringWithAggregatesFilter<"ServicePackage"> | string
+    ctaUrl?: StringNullableWithAggregatesFilter<"ServicePackage"> | string | null
     featured?: BoolWithAggregatesFilter<"ServicePackage"> | boolean
+    published?: BoolWithAggregatesFilter<"ServicePackage"> | boolean
+    sortOrder?: IntWithAggregatesFilter<"ServicePackage"> | number
     createdAt?: DateTimeWithAggregatesFilter<"ServicePackage"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ServicePackage"> | Date | string
   }
 
   export type SiteSettingWhereInput = {
@@ -119894,6 +121260,16 @@ export namespace Prisma {
     rating?: IntNullableFilter<"Testimonial"> | number | null
     featured?: BoolFilter<"Testimonial"> | boolean
     approved?: BoolFilter<"Testimonial"> | boolean
+    verificationStatus?: StringFilter<"Testimonial"> | string
+    verificationReference?: StringNullableFilter<"Testimonial"> | string | null
+    evidenceUrl?: StringNullableFilter<"Testimonial"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"Testimonial"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"Testimonial"> | string | null
+    expiresAt?: DateTimeNullableFilter<"Testimonial"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"Testimonial"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"Testimonial"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"Testimonial"> | Date | string | null
+    publicVisibility?: BoolFilter<"Testimonial"> | boolean
     createdAt?: DateTimeFilter<"Testimonial"> | Date | string
   }
 
@@ -119905,6 +121281,16 @@ export namespace Prisma {
     rating?: SortOrderInput | SortOrder
     featured?: SortOrder
     approved?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -119919,6 +121305,16 @@ export namespace Prisma {
     rating?: IntNullableFilter<"Testimonial"> | number | null
     featured?: BoolFilter<"Testimonial"> | boolean
     approved?: BoolFilter<"Testimonial"> | boolean
+    verificationStatus?: StringFilter<"Testimonial"> | string
+    verificationReference?: StringNullableFilter<"Testimonial"> | string | null
+    evidenceUrl?: StringNullableFilter<"Testimonial"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"Testimonial"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"Testimonial"> | string | null
+    expiresAt?: DateTimeNullableFilter<"Testimonial"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"Testimonial"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"Testimonial"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"Testimonial"> | Date | string | null
+    publicVisibility?: BoolFilter<"Testimonial"> | boolean
     createdAt?: DateTimeFilter<"Testimonial"> | Date | string
   }, "id">
 
@@ -119930,6 +121326,16 @@ export namespace Prisma {
     rating?: SortOrderInput | SortOrder
     featured?: SortOrder
     approved?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
     _count?: TestimonialCountOrderByAggregateInput
     _avg?: TestimonialAvgOrderByAggregateInput
@@ -119949,6 +121355,16 @@ export namespace Prisma {
     rating?: IntNullableWithAggregatesFilter<"Testimonial"> | number | null
     featured?: BoolWithAggregatesFilter<"Testimonial"> | boolean
     approved?: BoolWithAggregatesFilter<"Testimonial"> | boolean
+    verificationStatus?: StringWithAggregatesFilter<"Testimonial"> | string
+    verificationReference?: StringNullableWithAggregatesFilter<"Testimonial"> | string | null
+    evidenceUrl?: StringNullableWithAggregatesFilter<"Testimonial"> | string | null
+    evidenceReviewedAt?: DateTimeNullableWithAggregatesFilter<"Testimonial"> | Date | string | null
+    evidenceReviewedBy?: StringNullableWithAggregatesFilter<"Testimonial"> | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"Testimonial"> | Date | string | null
+    permissionConfirmed?: BoolWithAggregatesFilter<"Testimonial"> | boolean
+    permissionEvidenceUrl?: StringNullableWithAggregatesFilter<"Testimonial"> | string | null
+    permissionConfirmedAt?: DateTimeNullableWithAggregatesFilter<"Testimonial"> | Date | string | null
+    publicVisibility?: BoolWithAggregatesFilter<"Testimonial"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"Testimonial"> | Date | string
   }
 
@@ -122515,6 +123931,16 @@ export namespace Prisma {
     websiteUrl?: StringNullableFilter<"PartnerLogo"> | string | null
     isFeatured?: BoolFilter<"PartnerLogo"> | boolean
     isVisible?: BoolFilter<"PartnerLogo"> | boolean
+    verificationStatus?: StringFilter<"PartnerLogo"> | string
+    verificationReference?: StringNullableFilter<"PartnerLogo"> | string | null
+    evidenceUrl?: StringNullableFilter<"PartnerLogo"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"PartnerLogo"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"PartnerLogo"> | string | null
+    expiresAt?: DateTimeNullableFilter<"PartnerLogo"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"PartnerLogo"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"PartnerLogo"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"PartnerLogo"> | Date | string | null
+    publicVisibility?: BoolFilter<"PartnerLogo"> | boolean
     sortOrder?: IntFilter<"PartnerLogo"> | number
     createdAt?: DateTimeFilter<"PartnerLogo"> | Date | string
     updatedAt?: DateTimeFilter<"PartnerLogo"> | Date | string
@@ -122532,6 +123958,16 @@ export namespace Prisma {
     websiteUrl?: SortOrderInput | SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -122552,6 +123988,16 @@ export namespace Prisma {
     websiteUrl?: StringNullableFilter<"PartnerLogo"> | string | null
     isFeatured?: BoolFilter<"PartnerLogo"> | boolean
     isVisible?: BoolFilter<"PartnerLogo"> | boolean
+    verificationStatus?: StringFilter<"PartnerLogo"> | string
+    verificationReference?: StringNullableFilter<"PartnerLogo"> | string | null
+    evidenceUrl?: StringNullableFilter<"PartnerLogo"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"PartnerLogo"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"PartnerLogo"> | string | null
+    expiresAt?: DateTimeNullableFilter<"PartnerLogo"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"PartnerLogo"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"PartnerLogo"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"PartnerLogo"> | Date | string | null
+    publicVisibility?: BoolFilter<"PartnerLogo"> | boolean
     sortOrder?: IntFilter<"PartnerLogo"> | number
     createdAt?: DateTimeFilter<"PartnerLogo"> | Date | string
     updatedAt?: DateTimeFilter<"PartnerLogo"> | Date | string
@@ -122569,6 +124015,16 @@ export namespace Prisma {
     websiteUrl?: SortOrderInput | SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -122594,6 +124050,16 @@ export namespace Prisma {
     websiteUrl?: StringNullableWithAggregatesFilter<"PartnerLogo"> | string | null
     isFeatured?: BoolWithAggregatesFilter<"PartnerLogo"> | boolean
     isVisible?: BoolWithAggregatesFilter<"PartnerLogo"> | boolean
+    verificationStatus?: StringWithAggregatesFilter<"PartnerLogo"> | string
+    verificationReference?: StringNullableWithAggregatesFilter<"PartnerLogo"> | string | null
+    evidenceUrl?: StringNullableWithAggregatesFilter<"PartnerLogo"> | string | null
+    evidenceReviewedAt?: DateTimeNullableWithAggregatesFilter<"PartnerLogo"> | Date | string | null
+    evidenceReviewedBy?: StringNullableWithAggregatesFilter<"PartnerLogo"> | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"PartnerLogo"> | Date | string | null
+    permissionConfirmed?: BoolWithAggregatesFilter<"PartnerLogo"> | boolean
+    permissionEvidenceUrl?: StringNullableWithAggregatesFilter<"PartnerLogo"> | string | null
+    permissionConfirmedAt?: DateTimeNullableWithAggregatesFilter<"PartnerLogo"> | Date | string | null
+    publicVisibility?: BoolWithAggregatesFilter<"PartnerLogo"> | boolean
     sortOrder?: IntWithAggregatesFilter<"PartnerLogo"> | number
     createdAt?: DateTimeWithAggregatesFilter<"PartnerLogo"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PartnerLogo"> | Date | string
@@ -122612,6 +124078,16 @@ export namespace Prisma {
     websiteUrl?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
     isFeatured?: BoolFilter<"TrustedBusinessLogo"> | boolean
     isVisible?: BoolFilter<"TrustedBusinessLogo"> | boolean
+    verificationStatus?: StringFilter<"TrustedBusinessLogo"> | string
+    verificationReference?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
+    evidenceUrl?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"TrustedBusinessLogo"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
+    expiresAt?: DateTimeNullableFilter<"TrustedBusinessLogo"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"TrustedBusinessLogo"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"TrustedBusinessLogo"> | Date | string | null
+    publicVisibility?: BoolFilter<"TrustedBusinessLogo"> | boolean
     sortOrder?: IntFilter<"TrustedBusinessLogo"> | number
     createdAt?: DateTimeFilter<"TrustedBusinessLogo"> | Date | string
     updatedAt?: DateTimeFilter<"TrustedBusinessLogo"> | Date | string
@@ -122627,6 +124103,16 @@ export namespace Prisma {
     websiteUrl?: SortOrderInput | SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -122645,6 +124131,16 @@ export namespace Prisma {
     websiteUrl?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
     isFeatured?: BoolFilter<"TrustedBusinessLogo"> | boolean
     isVisible?: BoolFilter<"TrustedBusinessLogo"> | boolean
+    verificationStatus?: StringFilter<"TrustedBusinessLogo"> | string
+    verificationReference?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
+    evidenceUrl?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"TrustedBusinessLogo"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
+    expiresAt?: DateTimeNullableFilter<"TrustedBusinessLogo"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"TrustedBusinessLogo"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"TrustedBusinessLogo"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"TrustedBusinessLogo"> | Date | string | null
+    publicVisibility?: BoolFilter<"TrustedBusinessLogo"> | boolean
     sortOrder?: IntFilter<"TrustedBusinessLogo"> | number
     createdAt?: DateTimeFilter<"TrustedBusinessLogo"> | Date | string
     updatedAt?: DateTimeFilter<"TrustedBusinessLogo"> | Date | string
@@ -122660,6 +124156,16 @@ export namespace Prisma {
     websiteUrl?: SortOrderInput | SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -122683,6 +124189,16 @@ export namespace Prisma {
     websiteUrl?: StringNullableWithAggregatesFilter<"TrustedBusinessLogo"> | string | null
     isFeatured?: BoolWithAggregatesFilter<"TrustedBusinessLogo"> | boolean
     isVisible?: BoolWithAggregatesFilter<"TrustedBusinessLogo"> | boolean
+    verificationStatus?: StringWithAggregatesFilter<"TrustedBusinessLogo"> | string
+    verificationReference?: StringNullableWithAggregatesFilter<"TrustedBusinessLogo"> | string | null
+    evidenceUrl?: StringNullableWithAggregatesFilter<"TrustedBusinessLogo"> | string | null
+    evidenceReviewedAt?: DateTimeNullableWithAggregatesFilter<"TrustedBusinessLogo"> | Date | string | null
+    evidenceReviewedBy?: StringNullableWithAggregatesFilter<"TrustedBusinessLogo"> | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"TrustedBusinessLogo"> | Date | string | null
+    permissionConfirmed?: BoolWithAggregatesFilter<"TrustedBusinessLogo"> | boolean
+    permissionEvidenceUrl?: StringNullableWithAggregatesFilter<"TrustedBusinessLogo"> | string | null
+    permissionConfirmedAt?: DateTimeNullableWithAggregatesFilter<"TrustedBusinessLogo"> | Date | string | null
+    publicVisibility?: BoolWithAggregatesFilter<"TrustedBusinessLogo"> | boolean
     sortOrder?: IntWithAggregatesFilter<"TrustedBusinessLogo"> | number
     createdAt?: DateTimeWithAggregatesFilter<"TrustedBusinessLogo"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"TrustedBusinessLogo"> | Date | string
@@ -122704,6 +124220,16 @@ export namespace Prisma {
     externalUrl?: StringNullableFilter<"ComplianceCard"> | string | null
     displayLocation?: StringFilter<"ComplianceCard"> | string
     isVisible?: BoolFilter<"ComplianceCard"> | boolean
+    verificationStatus?: StringFilter<"ComplianceCard"> | string
+    verificationReference?: StringNullableFilter<"ComplianceCard"> | string | null
+    evidenceUrl?: StringNullableFilter<"ComplianceCard"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"ComplianceCard"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"ComplianceCard"> | string | null
+    expiresAt?: DateTimeNullableFilter<"ComplianceCard"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"ComplianceCard"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"ComplianceCard"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"ComplianceCard"> | Date | string | null
+    publicVisibility?: BoolFilter<"ComplianceCard"> | boolean
     sortOrder?: IntFilter<"ComplianceCard"> | number
     createdAt?: DateTimeFilter<"ComplianceCard"> | Date | string
     updatedAt?: DateTimeFilter<"ComplianceCard"> | Date | string
@@ -122722,6 +124248,16 @@ export namespace Prisma {
     externalUrl?: SortOrderInput | SortOrder
     displayLocation?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -122743,6 +124279,16 @@ export namespace Prisma {
     externalUrl?: StringNullableFilter<"ComplianceCard"> | string | null
     displayLocation?: StringFilter<"ComplianceCard"> | string
     isVisible?: BoolFilter<"ComplianceCard"> | boolean
+    verificationStatus?: StringFilter<"ComplianceCard"> | string
+    verificationReference?: StringNullableFilter<"ComplianceCard"> | string | null
+    evidenceUrl?: StringNullableFilter<"ComplianceCard"> | string | null
+    evidenceReviewedAt?: DateTimeNullableFilter<"ComplianceCard"> | Date | string | null
+    evidenceReviewedBy?: StringNullableFilter<"ComplianceCard"> | string | null
+    expiresAt?: DateTimeNullableFilter<"ComplianceCard"> | Date | string | null
+    permissionConfirmed?: BoolFilter<"ComplianceCard"> | boolean
+    permissionEvidenceUrl?: StringNullableFilter<"ComplianceCard"> | string | null
+    permissionConfirmedAt?: DateTimeNullableFilter<"ComplianceCard"> | Date | string | null
+    publicVisibility?: BoolFilter<"ComplianceCard"> | boolean
     sortOrder?: IntFilter<"ComplianceCard"> | number
     createdAt?: DateTimeFilter<"ComplianceCard"> | Date | string
     updatedAt?: DateTimeFilter<"ComplianceCard"> | Date | string
@@ -122761,6 +124307,16 @@ export namespace Prisma {
     externalUrl?: SortOrderInput | SortOrder
     displayLocation?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrderInput | SortOrder
+    evidenceUrl?: SortOrderInput | SortOrder
+    evidenceReviewedAt?: SortOrderInput | SortOrder
+    evidenceReviewedBy?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrderInput | SortOrder
+    permissionConfirmedAt?: SortOrderInput | SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -122787,6 +124343,16 @@ export namespace Prisma {
     externalUrl?: StringNullableWithAggregatesFilter<"ComplianceCard"> | string | null
     displayLocation?: StringWithAggregatesFilter<"ComplianceCard"> | string
     isVisible?: BoolWithAggregatesFilter<"ComplianceCard"> | boolean
+    verificationStatus?: StringWithAggregatesFilter<"ComplianceCard"> | string
+    verificationReference?: StringNullableWithAggregatesFilter<"ComplianceCard"> | string | null
+    evidenceUrl?: StringNullableWithAggregatesFilter<"ComplianceCard"> | string | null
+    evidenceReviewedAt?: DateTimeNullableWithAggregatesFilter<"ComplianceCard"> | Date | string | null
+    evidenceReviewedBy?: StringNullableWithAggregatesFilter<"ComplianceCard"> | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"ComplianceCard"> | Date | string | null
+    permissionConfirmed?: BoolWithAggregatesFilter<"ComplianceCard"> | boolean
+    permissionEvidenceUrl?: StringNullableWithAggregatesFilter<"ComplianceCard"> | string | null
+    permissionConfirmedAt?: DateTimeNullableWithAggregatesFilter<"ComplianceCard"> | Date | string | null
+    publicVisibility?: BoolWithAggregatesFilter<"ComplianceCard"> | boolean
     sortOrder?: IntWithAggregatesFilter<"ComplianceCard"> | number
     createdAt?: DateTimeWithAggregatesFilter<"ComplianceCard"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"ComplianceCard"> | Date | string
@@ -125865,6 +127431,16 @@ export namespace Prisma {
     timeline?: string | null
     testimonial?: string | null
     published?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     createdAt?: Date | string
     updatedAt: Date | string
   }
@@ -125882,6 +127458,16 @@ export namespace Prisma {
     timeline?: string | null
     testimonial?: string | null
     published?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     createdAt?: Date | string
     updatedAt: Date | string
   }
@@ -125899,6 +127485,16 @@ export namespace Prisma {
     timeline?: NullableStringFieldUpdateOperationsInput | string | null
     testimonial?: NullableStringFieldUpdateOperationsInput | string | null
     published?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -125916,6 +127512,16 @@ export namespace Prisma {
     timeline?: NullableStringFieldUpdateOperationsInput | string | null
     testimonial?: NullableStringFieldUpdateOperationsInput | string | null
     published?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -125933,6 +127539,16 @@ export namespace Prisma {
     timeline?: string | null
     testimonial?: string | null
     published?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     createdAt?: Date | string
     updatedAt: Date | string
   }
@@ -125950,6 +127566,16 @@ export namespace Prisma {
     timeline?: NullableStringFieldUpdateOperationsInput | string | null
     testimonial?: NullableStringFieldUpdateOperationsInput | string | null
     published?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -125967,6 +127593,16 @@ export namespace Prisma {
     timeline?: NullableStringFieldUpdateOperationsInput | string | null
     testimonial?: NullableStringFieldUpdateOperationsInput | string | null
     published?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -127768,13 +129404,21 @@ export namespace Prisma {
   export type ServicePackageCreateInput = {
     id: string
     name: string
+    description?: string
+    recommendedCustomerSize?: string
     cadence?: string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: boolean
+    priceDisplayMode?: string
     monthlyPrice?: Decimal | DecimalJsLike | number | string | null
     annualPrice?: Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: string
+    ctaUrl?: string | null
     featured?: boolean
+    published?: boolean
+    sortOrder?: number
     createdAt?: Date | string
+    updatedAt?: Date | string
     Service?: ServiceCreateNestedOneWithoutServicePackageInput
   }
 
@@ -127782,25 +129426,41 @@ export namespace Prisma {
     id: string
     serviceId?: string | null
     name: string
+    description?: string
+    recommendedCustomerSize?: string
     cadence?: string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: boolean
+    priceDisplayMode?: string
     monthlyPrice?: Decimal | DecimalJsLike | number | string | null
     annualPrice?: Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: string
+    ctaUrl?: string | null
     featured?: boolean
+    published?: boolean
+    sortOrder?: number
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ServicePackageUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    recommendedCustomerSize?: StringFieldUpdateOperationsInput | string
     cadence?: NullableStringFieldUpdateOperationsInput | string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: BoolFieldUpdateOperationsInput | boolean
+    priceDisplayMode?: StringFieldUpdateOperationsInput | string
     monthlyPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     annualPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFieldUpdateOperationsInput | string
+    ctaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     featured?: BoolFieldUpdateOperationsInput | boolean
+    published?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Service?: ServiceUpdateOneWithoutServicePackageNestedInput
   }
 
@@ -127808,51 +129468,83 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     serviceId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    recommendedCustomerSize?: StringFieldUpdateOperationsInput | string
     cadence?: NullableStringFieldUpdateOperationsInput | string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: BoolFieldUpdateOperationsInput | boolean
+    priceDisplayMode?: StringFieldUpdateOperationsInput | string
     monthlyPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     annualPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFieldUpdateOperationsInput | string
+    ctaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     featured?: BoolFieldUpdateOperationsInput | boolean
+    published?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ServicePackageCreateManyInput = {
     id: string
     serviceId?: string | null
     name: string
+    description?: string
+    recommendedCustomerSize?: string
     cadence?: string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: boolean
+    priceDisplayMode?: string
     monthlyPrice?: Decimal | DecimalJsLike | number | string | null
     annualPrice?: Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: string
+    ctaUrl?: string | null
     featured?: boolean
+    published?: boolean
+    sortOrder?: number
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ServicePackageUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    recommendedCustomerSize?: StringFieldUpdateOperationsInput | string
     cadence?: NullableStringFieldUpdateOperationsInput | string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: BoolFieldUpdateOperationsInput | boolean
+    priceDisplayMode?: StringFieldUpdateOperationsInput | string
     monthlyPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     annualPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFieldUpdateOperationsInput | string
+    ctaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     featured?: BoolFieldUpdateOperationsInput | boolean
+    published?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ServicePackageUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     serviceId?: NullableStringFieldUpdateOperationsInput | string | null
     name?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    recommendedCustomerSize?: StringFieldUpdateOperationsInput | string
     cadence?: NullableStringFieldUpdateOperationsInput | string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: BoolFieldUpdateOperationsInput | boolean
+    priceDisplayMode?: StringFieldUpdateOperationsInput | string
     monthlyPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     annualPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFieldUpdateOperationsInput | string
+    ctaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     featured?: BoolFieldUpdateOperationsInput | boolean
+    published?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type SiteSettingCreateInput = {
@@ -127905,6 +129597,16 @@ export namespace Prisma {
     rating?: number | null
     featured?: boolean
     approved?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     createdAt?: Date | string
   }
 
@@ -127916,6 +129618,16 @@ export namespace Prisma {
     rating?: number | null
     featured?: boolean
     approved?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     createdAt?: Date | string
   }
 
@@ -127927,6 +129639,16 @@ export namespace Prisma {
     rating?: NullableIntFieldUpdateOperationsInput | number | null
     featured?: BoolFieldUpdateOperationsInput | boolean
     approved?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -127938,6 +129660,16 @@ export namespace Prisma {
     rating?: NullableIntFieldUpdateOperationsInput | number | null
     featured?: BoolFieldUpdateOperationsInput | boolean
     approved?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -127949,6 +129681,16 @@ export namespace Prisma {
     rating?: number | null
     featured?: boolean
     approved?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     createdAt?: Date | string
   }
 
@@ -127960,6 +129702,16 @@ export namespace Prisma {
     rating?: NullableIntFieldUpdateOperationsInput | number | null
     featured?: BoolFieldUpdateOperationsInput | boolean
     approved?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -127971,6 +129723,16 @@ export namespace Prisma {
     rating?: NullableIntFieldUpdateOperationsInput | number | null
     featured?: BoolFieldUpdateOperationsInput | boolean
     approved?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -130809,6 +132571,16 @@ export namespace Prisma {
     websiteUrl?: string | null
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -130826,6 +132598,16 @@ export namespace Prisma {
     websiteUrl?: string | null
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -130843,6 +132625,16 @@ export namespace Prisma {
     websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isFeatured?: BoolFieldUpdateOperationsInput | boolean
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -130860,6 +132652,16 @@ export namespace Prisma {
     websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isFeatured?: BoolFieldUpdateOperationsInput | boolean
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -130877,6 +132679,16 @@ export namespace Prisma {
     websiteUrl?: string | null
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -130894,6 +132706,16 @@ export namespace Prisma {
     websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isFeatured?: BoolFieldUpdateOperationsInput | boolean
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -130911,6 +132733,16 @@ export namespace Prisma {
     websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isFeatured?: BoolFieldUpdateOperationsInput | boolean
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -130926,6 +132758,16 @@ export namespace Prisma {
     websiteUrl?: string | null
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -130941,6 +132783,16 @@ export namespace Prisma {
     websiteUrl?: string | null
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -130956,6 +132808,16 @@ export namespace Prisma {
     websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isFeatured?: BoolFieldUpdateOperationsInput | boolean
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -130971,6 +132833,16 @@ export namespace Prisma {
     websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isFeatured?: BoolFieldUpdateOperationsInput | boolean
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -130986,6 +132858,16 @@ export namespace Prisma {
     websiteUrl?: string | null
     isFeatured?: boolean
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -131001,6 +132883,16 @@ export namespace Prisma {
     websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isFeatured?: BoolFieldUpdateOperationsInput | boolean
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -131016,6 +132908,16 @@ export namespace Prisma {
     websiteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isFeatured?: BoolFieldUpdateOperationsInput | boolean
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -131034,6 +132936,16 @@ export namespace Prisma {
     externalUrl?: string | null
     displayLocation: string
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -131052,6 +132964,16 @@ export namespace Prisma {
     externalUrl?: string | null
     displayLocation: string
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -131070,6 +132992,16 @@ export namespace Prisma {
     externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
     displayLocation?: StringFieldUpdateOperationsInput | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -131088,6 +133020,16 @@ export namespace Prisma {
     externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
     displayLocation?: StringFieldUpdateOperationsInput | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -131106,6 +133048,16 @@ export namespace Prisma {
     externalUrl?: string | null
     displayLocation: string
     isVisible?: boolean
+    verificationStatus?: string
+    verificationReference?: string | null
+    evidenceUrl?: string | null
+    evidenceReviewedAt?: Date | string | null
+    evidenceReviewedBy?: string | null
+    expiresAt?: Date | string | null
+    permissionConfirmed?: boolean
+    permissionEvidenceUrl?: string | null
+    permissionConfirmedAt?: Date | string | null
+    publicVisibility?: boolean
     sortOrder?: number
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -131124,6 +133076,16 @@ export namespace Prisma {
     externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
     displayLocation?: StringFieldUpdateOperationsInput | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -131142,6 +133104,16 @@ export namespace Prisma {
     externalUrl?: NullableStringFieldUpdateOperationsInput | string | null
     displayLocation?: StringFieldUpdateOperationsInput | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    verificationReference?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceReviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    evidenceReviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    permissionConfirmed?: BoolFieldUpdateOperationsInput | boolean
+    permissionEvidenceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    permissionConfirmedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publicVisibility?: BoolFieldUpdateOperationsInput | boolean
     sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -133733,6 +135705,16 @@ export namespace Prisma {
     timeline?: SortOrder
     testimonial?: SortOrder
     published?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -133748,6 +135730,16 @@ export namespace Prisma {
     timeline?: SortOrder
     testimonial?: SortOrder
     published?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -133763,6 +135755,16 @@ export namespace Prisma {
     timeline?: SortOrder
     testimonial?: SortOrder
     published?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -134836,47 +136838,73 @@ export namespace Prisma {
     id?: SortOrder
     serviceId?: SortOrder
     name?: SortOrder
+    description?: SortOrder
+    recommendedCustomerSize?: SortOrder
     cadence?: SortOrder
     features?: SortOrder
     pricingVisible?: SortOrder
+    priceDisplayMode?: SortOrder
     monthlyPrice?: SortOrder
     annualPrice?: SortOrder
+    ctaLabel?: SortOrder
+    ctaUrl?: SortOrder
     featured?: SortOrder
+    published?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type ServicePackageAvgOrderByAggregateInput = {
     monthlyPrice?: SortOrder
     annualPrice?: SortOrder
+    sortOrder?: SortOrder
   }
 
   export type ServicePackageMaxOrderByAggregateInput = {
     id?: SortOrder
     serviceId?: SortOrder
     name?: SortOrder
+    description?: SortOrder
+    recommendedCustomerSize?: SortOrder
     cadence?: SortOrder
     pricingVisible?: SortOrder
+    priceDisplayMode?: SortOrder
     monthlyPrice?: SortOrder
     annualPrice?: SortOrder
+    ctaLabel?: SortOrder
+    ctaUrl?: SortOrder
     featured?: SortOrder
+    published?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type ServicePackageMinOrderByAggregateInput = {
     id?: SortOrder
     serviceId?: SortOrder
     name?: SortOrder
+    description?: SortOrder
+    recommendedCustomerSize?: SortOrder
     cadence?: SortOrder
     pricingVisible?: SortOrder
+    priceDisplayMode?: SortOrder
     monthlyPrice?: SortOrder
     annualPrice?: SortOrder
+    ctaLabel?: SortOrder
+    ctaUrl?: SortOrder
     featured?: SortOrder
+    published?: SortOrder
+    sortOrder?: SortOrder
     createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type ServicePackageSumOrderByAggregateInput = {
     monthlyPrice?: SortOrder
     annualPrice?: SortOrder
+    sortOrder?: SortOrder
   }
 
   export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -134919,6 +136947,16 @@ export namespace Prisma {
     rating?: SortOrder
     featured?: SortOrder
     approved?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -134934,6 +136972,16 @@ export namespace Prisma {
     rating?: SortOrder
     featured?: SortOrder
     approved?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -134945,6 +136993,16 @@ export namespace Prisma {
     rating?: SortOrder
     featured?: SortOrder
     approved?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -136433,6 +138491,16 @@ export namespace Prisma {
     websiteUrl?: SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136454,6 +138522,16 @@ export namespace Prisma {
     websiteUrl?: SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136471,6 +138549,16 @@ export namespace Prisma {
     websiteUrl?: SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136490,6 +138578,16 @@ export namespace Prisma {
     websiteUrl?: SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136509,6 +138607,16 @@ export namespace Prisma {
     websiteUrl?: SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136524,6 +138632,16 @@ export namespace Prisma {
     websiteUrl?: SortOrder
     isFeatured?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136546,6 +138664,16 @@ export namespace Prisma {
     externalUrl?: SortOrder
     displayLocation?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136568,6 +138696,16 @@ export namespace Prisma {
     externalUrl?: SortOrder
     displayLocation?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -136586,6 +138724,16 @@ export namespace Prisma {
     externalUrl?: SortOrder
     displayLocation?: SortOrder
     isVisible?: SortOrder
+    verificationStatus?: SortOrder
+    verificationReference?: SortOrder
+    evidenceUrl?: SortOrder
+    evidenceReviewedAt?: SortOrder
+    evidenceReviewedBy?: SortOrder
+    expiresAt?: SortOrder
+    permissionConfirmed?: SortOrder
+    permissionEvidenceUrl?: SortOrder
+    permissionConfirmedAt?: SortOrder
+    publicVisibility?: SortOrder
     sortOrder?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -147716,25 +149864,41 @@ export namespace Prisma {
   export type ServicePackageCreateWithoutServiceInput = {
     id: string
     name: string
+    description?: string
+    recommendedCustomerSize?: string
     cadence?: string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: boolean
+    priceDisplayMode?: string
     monthlyPrice?: Decimal | DecimalJsLike | number | string | null
     annualPrice?: Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: string
+    ctaUrl?: string | null
     featured?: boolean
+    published?: boolean
+    sortOrder?: number
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ServicePackageUncheckedCreateWithoutServiceInput = {
     id: string
     name: string
+    description?: string
+    recommendedCustomerSize?: string
     cadence?: string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: boolean
+    priceDisplayMode?: string
     monthlyPrice?: Decimal | DecimalJsLike | number | string | null
     annualPrice?: Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: string
+    ctaUrl?: string | null
     featured?: boolean
+    published?: boolean
+    sortOrder?: number
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ServicePackageCreateOrConnectWithoutServiceInput = {
@@ -147770,13 +149934,21 @@ export namespace Prisma {
     id?: StringFilter<"ServicePackage"> | string
     serviceId?: StringNullableFilter<"ServicePackage"> | string | null
     name?: StringFilter<"ServicePackage"> | string
+    description?: StringFilter<"ServicePackage"> | string
+    recommendedCustomerSize?: StringFilter<"ServicePackage"> | string
     cadence?: StringNullableFilter<"ServicePackage"> | string | null
     features?: JsonFilter<"ServicePackage">
     pricingVisible?: BoolFilter<"ServicePackage"> | boolean
+    priceDisplayMode?: StringFilter<"ServicePackage"> | string
     monthlyPrice?: DecimalNullableFilter<"ServicePackage"> | Decimal | DecimalJsLike | number | string | null
     annualPrice?: DecimalNullableFilter<"ServicePackage"> | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFilter<"ServicePackage"> | string
+    ctaUrl?: StringNullableFilter<"ServicePackage"> | string | null
     featured?: BoolFilter<"ServicePackage"> | boolean
+    published?: BoolFilter<"ServicePackage"> | boolean
+    sortOrder?: IntFilter<"ServicePackage"> | number
     createdAt?: DateTimeFilter<"ServicePackage"> | Date | string
+    updatedAt?: DateTimeFilter<"ServicePackage"> | Date | string
   }
 
   export type ServiceCreateWithoutServicePackageInput = {
@@ -156431,49 +158603,81 @@ export namespace Prisma {
   export type ServicePackageCreateManyServiceInput = {
     id: string
     name: string
+    description?: string
+    recommendedCustomerSize?: string
     cadence?: string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: boolean
+    priceDisplayMode?: string
     monthlyPrice?: Decimal | DecimalJsLike | number | string | null
     annualPrice?: Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: string
+    ctaUrl?: string | null
     featured?: boolean
+    published?: boolean
+    sortOrder?: number
     createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ServicePackageUpdateWithoutServiceInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    recommendedCustomerSize?: StringFieldUpdateOperationsInput | string
     cadence?: NullableStringFieldUpdateOperationsInput | string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: BoolFieldUpdateOperationsInput | boolean
+    priceDisplayMode?: StringFieldUpdateOperationsInput | string
     monthlyPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     annualPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFieldUpdateOperationsInput | string
+    ctaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     featured?: BoolFieldUpdateOperationsInput | boolean
+    published?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ServicePackageUncheckedUpdateWithoutServiceInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    recommendedCustomerSize?: StringFieldUpdateOperationsInput | string
     cadence?: NullableStringFieldUpdateOperationsInput | string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: BoolFieldUpdateOperationsInput | boolean
+    priceDisplayMode?: StringFieldUpdateOperationsInput | string
     monthlyPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     annualPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFieldUpdateOperationsInput | string
+    ctaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     featured?: BoolFieldUpdateOperationsInput | boolean
+    published?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ServicePackageUncheckedUpdateManyWithoutServiceInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    recommendedCustomerSize?: StringFieldUpdateOperationsInput | string
     cadence?: NullableStringFieldUpdateOperationsInput | string | null
     features?: JsonNullValueInput | InputJsonValue
     pricingVisible?: BoolFieldUpdateOperationsInput | boolean
+    priceDisplayMode?: StringFieldUpdateOperationsInput | string
     monthlyPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
     annualPrice?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ctaLabel?: StringFieldUpdateOperationsInput | string
+    ctaUrl?: NullableStringFieldUpdateOperationsInput | string | null
     featured?: BoolFieldUpdateOperationsInput | boolean
+    published?: BoolFieldUpdateOperationsInput | boolean
+    sortOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TicketAttachmentCreateManyTicketInput = {

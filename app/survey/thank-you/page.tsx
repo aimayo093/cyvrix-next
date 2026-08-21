@@ -3,7 +3,7 @@ import { CheckCircle2, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Thank You | CYVRIX Technologies Feedback",
+  title: "Thank You",
   description: "Thank you for sharing your experience with us.",
 };
 

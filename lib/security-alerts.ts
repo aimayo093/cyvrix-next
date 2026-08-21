@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
 import type { SecurityScanResult, SecurityCenterSettings } from "@/lib/security-scan";
 
 function buildScanSummary(result: SecurityScanResult) {
@@ -35,18 +36,11 @@ function buildScanSummary(result: SecurityScanResult) {
   return lines.join("\n");
 }
 
-async function getEmailConfig() {
-  const setting = await prisma.siteSetting.findUnique({ where: { key: "emailConfig" } }).catch(() => null);
-  return (setting?.value as Record<string, string> | null) ?? {};
-}
-
-async function getAdminRecipients(settings: SecurityCenterSettings) {
+async function getAdminRecipients(settings: SecurityCenterSettings, fallbackRecipients: string) {
   const configured = settings.adminAlertEmail;
   if (configured) return configured;
 
-  const emailConfig = await getEmailConfig();
-  if (emailConfig.adminNotificationEmail) return emailConfig.adminNotificationEmail;
-  if (process.env.ADMIN_NOTIFICATION_EMAIL) return process.env.ADMIN_NOTIFICATION_EMAIL;
+  if (fallbackRecipients) return fallbackRecipients;
 
   const admin = await prisma.user.findFirst({
     where: {
@@ -83,31 +77,30 @@ export async function createSecurityNotifications(result: SecurityScanResult) {
 }
 
 export async function sendSecurityAlertEmail(result: SecurityScanResult, settings: SecurityCenterSettings) {
-  const to = await getAdminRecipients(settings);
+  const identity = await getEmailIdentity("CYVRIX Security Center");
+  const to = await getAdminRecipients(settings, identity.adminNotificationEmail);
   if (!to) {
     return { sent: false, reason: "No admin alert email configured." };
   }
 
-  const config = await getEmailConfig();
+  const smtp = getServerSmtpConfig();
   const subject = result.overallStatus === "fail"
     ? `CYVRIX Security Alert: scan failed (${result.score}%)`
     : `CYVRIX Security Warning: scan needs review (${result.score}%)`;
   const text = buildScanSummary(result);
 
-  if (config.smtpHost && config.smtpPort && config.smtpUser && config.smtpPassword) {
+  if (smtp) {
     const nodemailer = (await import("nodemailer")).default;
     const transporter = nodemailer.createTransport({
-      host: config.smtpHost,
-      port: Number.parseInt(config.smtpPort, 10),
-      secure: Number.parseInt(config.smtpPort, 10) === 465,
+      host: smtp.host,
+      port: smtp.port,
+      secure: smtp.port === 465,
       auth: {
-        user: config.smtpUser,
-        pass: config.smtpPassword,
+        user: smtp.user,
+        pass: smtp.password,
       },
     });
-    const from = config.defaultFromEmail
-      ? `"${config.defaultFromName || "CYVRIX Security Center"}" <${config.defaultFromEmail}>`
-      : config.smtpUser;
+    const from = identity.from || smtp.user;
     await transporter.sendMail({ from, to, subject, text });
     return { sent: true, reason: "SMTP alert sent." };
   }

@@ -1,12 +1,13 @@
 import * as React from "react";
 import { Metadata } from "next";
-import { ShieldCheck, Info } from "lucide-react";
+import Link from "next/link";
+import { Info } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { submitQuote } from "@/lib/actions";
 import { industries, services } from "@/lib/cyvrix-data";
 
 export const metadata: Metadata = {
-  title: "Request a Quote | CYVRIX Technologies",
+  title: "Request a Quote",
   description: "Request a custom technical proposal and scoped IT support or cybersecurity quotation from CYVRIX.",
 };
 
@@ -46,13 +47,15 @@ export default function RequestQuotePage() {
               <Select 
                 name="industry" 
                 label="Sector / Industry Group" 
-                options={["Select Sector", ...industries.map(i => i.title)]} 
+                options={industries.map(i => i.title)}
+                placeholder="Select sector"
                 required 
               />
               <Select 
                 name="service" 
                 label="Primary Service Requirement" 
-                options={["Select Service", ...services.map(s => s.title)]} 
+                options={services.map(s => s.title)}
+                placeholder="Select service"
                 required 
               />
               <Select 
@@ -86,14 +89,14 @@ export default function RequestQuotePage() {
             <div className="p-4 bg-[#041635]/50 rounded-2xl border border-white/5 flex gap-3 items-start text-xs text-slate-400">
               <Info className="h-4.5 w-4.5 text-[#2691F0] shrink-0 mt-0.5" />
               <p>
-                By submitting this proposal draft, you authorize CYVRIX Technologies to create a secure Lead profile in our CRM, queue custom notifications, and follow up regarding scoped parameters.
+                Share only the information needed to scope this request. Please do not include passwords, access tokens, recovery codes, or sensitive configuration data.
               </p>
             </div>
 
             <div className="flex flex-col gap-4 mt-6">
               <label className="flex items-start gap-3 text-xs font-semibold text-slate-400 cursor-pointer">
                 <input name="consent" type="checkbox" required className="mt-0.5 accent-[#2691F0]" />
-                <span>I consent to CYVRIX Technologies processing this request in accordance with the Privacy Policy.</span>
+                <span>I consent to CYVRIX Technologies processing this request in accordance with the <Link href="/privacy-policy" className="text-sky-300 underline underline-offset-2 hover:text-white">Privacy Policy</Link>.</span>
               </label>
               
               <Button 
@@ -101,7 +104,7 @@ export default function RequestQuotePage() {
                 variant="premium" 
                 className="w-full bg-[#2691F0] text-white hover:bg-blue-600 border-none shadow-lg shadow-blue-500/20 py-3.5 mt-2"
               >
-                Submit Proposal Parameters
+                Submit quote request
               </Button>
             </div>
           </form>
@@ -145,12 +148,14 @@ function Select({
   name, 
   label, 
   options, 
+  placeholder,
   required = false 
 }: { 
   name: string; 
   label: string; 
   options: string[]; 
-  required?: boolean; 
+  placeholder?: string;
+  required?: boolean;
 }) {
   return (
     <div className="space-y-2">
@@ -160,8 +165,14 @@ function Select({
       <select 
         name={name} 
         required={required} 
+        defaultValue={placeholder ? "" : undefined}
         className="w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-sm text-white outline-none focus:border-[#2691F0] focus:ring-2 focus:ring-[#2691F0]/20 transition-all font-semibold cursor-pointer"
       >
+        {placeholder && (
+          <option value="" disabled className="bg-[#020817] text-slate-400">
+            {placeholder}
+          </option>
+        )}
         {options.map((option) => (
           <option key={option} value={option} className="bg-[#020817] text-white">
             {option}

@@ -1,7 +1,15 @@
+import type { Metadata } from "next";
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, AlertTriangle, ArrowRight, MessageSquare, Home } from "lucide-react";
+import { CheckCircle2, AlertTriangle, MessageSquare, Home } from "lucide-react";
 import { Button } from "@/components/shared/Button";
+
+export const metadata: Metadata = {
+  title: "Request received",
+  description: "Your request has been received by CYVRIX.",
+  robots: { index: false, follow: true },
+};
+
 
 interface ThankYouProps {
   searchParams: Promise<{
@@ -23,7 +31,6 @@ export default function ThankYouPage(props: ThankYouProps) {
 async function ThankYouContent({ searchParams }: ThankYouProps) {
   const params = await searchParams;
   const isError = params.status === "error";
-  const type = params.type || "general";
   const ticketRef = params.ticket;
 
   return (
@@ -48,13 +55,13 @@ async function ThankYouContent({ searchParams }: ThankYouProps) {
           </p>
 
           <h1 className="font-outfit text-3.5xl font-black text-white tracking-tight leading-tight mb-6">
-            {isError ? "Please Review Form" : "Operation Successful"}
+            {isError ? "Please review your form" : "Request received"}
           </h1>
 
           <p className="text-slate-400 text-sm leading-relaxed mb-8">
             {isError 
               ? (params.message || "We could not process your submission. Please check your information and try again.")
-              : `Thank you for contacting CYVRIX Technologies. Your ${type} request has been processed successfully, and our systems have scheduled the corresponding notifications.`
+              : "Thank you for contacting CYVRIX Technologies. Your request has been recorded and will be reviewed using the contact details you provided."
             }
           </p>
 

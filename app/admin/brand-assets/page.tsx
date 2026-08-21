@@ -8,7 +8,7 @@ import { Button } from "@/components/shared/Button";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { Settings, AlertTriangle, ShieldCheck, Image as ImageIcon } from "lucide-react";
 
-export const metadata = { title: "Brand Assets CMS | CYVRIX Admin" };
+export const metadata = { title: "Brand Assets CMS" };
 
 export default function BrandAssetsCMSPage(props: any) {
   return (

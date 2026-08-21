@@ -13,7 +13,7 @@ import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { Plus, Pencil, Globe, ArrowUp, ArrowDown } from "lucide-react";
 
-export const metadata = { title: "Social Links CMS | CYVRIX Admin" };
+export const metadata = { title: "Social Links CMS" };
 
 export default function SocialLinksCMSPage(props: any) {
   return (

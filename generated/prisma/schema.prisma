@@ -1,14 +1,11 @@
 generator client {
-  provider        = "prisma-client-js"
-  output          = "../generated/prisma"
-  previewFeatures = ["multiSchema"]
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-  schemas   = ["auth", "public"]
+  provider = "postgresql"
+  schemas  = ["auth", "public"]
 }
 
 /// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
@@ -559,20 +556,30 @@ model CareerJob {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CaseStudy {
-  id           String   @id
-  slug         String   @unique
-  title        String
-  clientType   String?
-  challenge    String?
-  solution     String?
-  outcome      String?
-  technologies Json     @default("[]")
-  services     Json     @default("[]")
-  timeline     String?
-  testimonial  String?
-  published    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime
+  id                    String    @id
+  slug                  String    @unique
+  title                 String
+  clientType            String?
+  challenge             String?
+  solution              String?
+  outcome               String?
+  technologies          Json      @default("[]")
+  services              Json      @default("[]")
+  timeline              String?
+  testimonial           String?
+  published             Boolean   @default(false)
+  verificationStatus    String    @default("PENDING") @map("verification_status")
+  verificationReference String?   @map("verification_reference")
+  evidenceUrl           String?   @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?   @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean   @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?   @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean   @default(false) @map("public_visibility")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime
 
   @@schema("public")
 }
@@ -913,18 +920,27 @@ model Service {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model ServicePackage {
-  id             String   @id
-  serviceId      String?
-  name           String
-  cadence        String?
-  features       Json     @default("[]")
-  pricingVisible Boolean  @default(false)
-  monthlyPrice   Decimal?
-  annualPrice    Decimal?
-  featured       Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  Service        Service? @relation(fields: [serviceId], references: [id])
+  id                      String   @id
+  serviceId               String?
+  name                    String
+  description             String   @default("")
+  recommendedCustomerSize String   @default("") @map("recommended_customer_size")
+  cadence                 String?
+  features                Json     @default("[]")
+  pricingVisible          Boolean  @default(false)
+  priceDisplayMode        String   @default("REQUEST_PRICING") @map("price_display_mode")
+  monthlyPrice            Decimal?
+  annualPrice             Decimal?
+  ctaLabel                String   @default("Request pricing") @map("cta_label")
+  ctaUrl                  String?  @map("cta_url")
+  featured                Boolean  @default(false)
+  published               Boolean  @default(false)
+  sortOrder               Int      @default(0) @map("sort_order")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt @map("updated_at")
+  Service                 Service? @relation(fields: [serviceId], references: [id])
 
+  @@index([published, sortOrder])
   @@schema("public")
 }
 
@@ -939,14 +955,24 @@ model SiteSetting {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Testimonial {
-  id         String   @id
-  clientName String?
-  company    String?
-  quote      String
-  rating     Int?
-  featured   Boolean  @default(false)
-  approved   Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id                    String    @id
+  clientName            String?
+  company               String?
+  quote                 String
+  rating                Int?
+  featured              Boolean   @default(false)
+  approved              Boolean   @default(false)
+  verificationStatus    String    @default("PENDING") @map("verification_status")
+  verificationReference String?   @map("verification_reference")
+  evidenceUrl           String?   @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?   @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean   @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?   @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean   @default(false) @map("public_visibility")
+  createdAt             DateTime  @default(now())
 
   @@schema("public")
 }
@@ -1643,59 +1669,89 @@ model PageSection {
 }
 
 model PartnerLogo {
-  id          String   @id @default(uuid())
-  name        String
-  category    String
-  description String?
-  logoUrl     String   @map("logo_url")
-  altText     String?  @map("alt_text")
-  websiteUrl  String?  @map("website_url")
-  isFeatured  Boolean  @default(false) @map("is_featured")
-  isVisible   Boolean  @default(true) @map("is_visible")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  createdBy   String?  @map("created_by")
-  updatedBy   String?  @map("updated_by")
+  id                    String    @id @default(uuid())
+  name                  String
+  category              String
+  description           String?
+  logoUrl               String    @map("logo_url")
+  altText               String?   @map("alt_text")
+  websiteUrl            String?   @map("website_url")
+  isFeatured            Boolean   @default(false) @map("is_featured")
+  isVisible             Boolean   @default(true) @map("is_visible")
+  verificationStatus    String    @default("PENDING") @map("verification_status")
+  verificationReference String?   @map("verification_reference")
+  evidenceUrl           String?   @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?   @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean   @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?   @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean   @default(false) @map("public_visibility")
+  sortOrder             Int       @default(0) @map("sort_order")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  createdBy             String?   @map("created_by")
+  updatedBy             String?   @map("updated_by")
 
   @@map("partner_logos")
   @@schema("public")
 }
 
 model TrustedBusinessLogo {
-  id          String   @id @default(uuid())
-  companyName String   @map("company_name")
-  logoUrl     String   @map("logo_url")
-  altText     String?  @map("alt_text")
-  websiteUrl  String?  @map("website_url")
-  isFeatured  Boolean  @default(false) @map("is_featured")
-  isVisible   Boolean  @default(true) @map("is_visible")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  createdBy   String?  @map("created_by")
-  updatedBy   String?  @map("updated_by")
+  id                    String    @id @default(uuid())
+  companyName           String    @map("company_name")
+  logoUrl               String    @map("logo_url")
+  altText               String?   @map("alt_text")
+  websiteUrl            String?   @map("website_url")
+  isFeatured            Boolean   @default(false) @map("is_featured")
+  isVisible             Boolean   @default(true) @map("is_visible")
+  verificationStatus    String    @default("PENDING") @map("verification_status")
+  verificationReference String?   @map("verification_reference")
+  evidenceUrl           String?   @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?   @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean   @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?   @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean   @default(false) @map("public_visibility")
+  sortOrder             Int       @default(0) @map("sort_order")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  createdBy             String?   @map("created_by")
+  updatedBy             String?   @map("updated_by")
 
   @@map("trusted_business_logos")
   @@schema("public")
 }
 
 model ComplianceCard {
-  id              String   @id @default(uuid())
-  title           String
-  description     String
-  category        String
-  iconKey         String   @map("icon_key")
-  logoUrl         String?  @map("logo_url")
-  status          String
-  externalUrl     String?  @map("external_url")
-  displayLocation String   @map("display_location")
-  isVisible       Boolean  @default(true) @map("is_visible")
-  sortOrder       Int      @default(0) @map("sort_order")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  createdBy       String?  @map("created_by")
-  updatedBy       String?  @map("updated_by")
+  id                    String    @id @default(uuid())
+  title                 String
+  description           String
+  category              String
+  iconKey               String    @map("icon_key")
+  logoUrl               String?   @map("logo_url")
+  status                String
+  externalUrl           String?   @map("external_url")
+  displayLocation       String    @map("display_location")
+  isVisible             Boolean   @default(true) @map("is_visible")
+  verificationStatus    String    @default("PENDING") @map("verification_status")
+  verificationReference String?   @map("verification_reference")
+  evidenceUrl           String?   @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?   @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean   @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?   @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean   @default(false) @map("public_visibility")
+  sortOrder             Int       @default(0) @map("sort_order")
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+  createdBy             String?   @map("created_by")
+  updatedBy             String?   @map("updated_by")
 
   @@map("compliance_cards")
   @@schema("public")

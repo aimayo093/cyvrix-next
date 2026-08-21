@@ -27,6 +27,12 @@ RESEND_API_KEY=optional_resend_api_key
 MAIL_FROM="CYVRIX Technologies <noreply@cyvrix.co.uk>"
 ADMIN_NOTIFICATION_EMAIL=admin@example.co.uk
 CRON_SECRET="generate-a-long-random-cron-secret"
+# Required only for the admin SMTP broadcast and SMTP security alerts. Store these
+# in the deployment secret manager, never Site Settings or browser-exposed config.
+SMTP_HOST=smtp.example.co.uk
+SMTP_PORT=587
+SMTP_USER=service-account@example.co.uk
+SMTP_PASSWORD=replace-with-secret-manager-value
 ```
 
 Do not expose service-role keys to the browser.

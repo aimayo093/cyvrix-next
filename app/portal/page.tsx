@@ -1,25 +1,37 @@
+import type { Metadata } from "next";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
+import Link from "next/link";
 import * as React from "react";
-import { 
-  Zap, 
-  ShieldCheck, 
-  Clock, 
+import {
+  AlertCircle,
   ArrowRight,
-  ExternalLink,
-  Plus,
-  Star,
-  Sparkles,
   CheckCircle2,
-  AlertCircle
+  FileText,
+  MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { requireUser } from "@/lib/auth";
 import { getPortalStats } from "@/lib/data-fetchers";
 import { submitPortalTestimonial } from "@/lib/portal-actions";
-import { redirect } from "next/navigation";
 
-export default function PortalOverview(props: any) {
+export const metadata: Metadata = {
+  title: "Overview",
+  description: "Your CYVRIX services overview.",
+};
+
+
+type PortalSearchParams = {
+  status?: string;
+  message?: string;
+};
+
+type PortalOverviewProps = {
+  searchParams: Promise<PortalSearchParams>;
+};
+
+export default function PortalOverview(props: PortalOverviewProps) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <PortalOverviewContent {...props} />
@@ -27,218 +39,186 @@ export default function PortalOverview(props: any) {
   );
 }
 
-async function PortalOverviewContent({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    status?: string;
-    message?: string;
-  }>;
-}) {
+async function PortalOverviewContent({ searchParams }: PortalOverviewProps) {
   await connection();
   const session = await requireUser();
   const sp = await searchParams;
-  
   const stats = await getPortalStats(session.clientCompanyId || undefined);
+  const feedbackStatus = sp.status === "success" || sp.status === "error" ? sp.status : null;
+
+  const recordsSummary = stats
+    ? `${stats.activeTickets} open support ticket${stats.activeTickets === 1 ? "" : "s"} and ${stats.storedDocuments} shared document${stats.storedDocuments === 1 ? "" : "s"} are associated with your organisation.`
+    : "Organisation records are not available for this account yet.";
 
   return (
-    <div className="space-y-10 pb-12">
-      {/* Testimonial Submission Alert */}
-      {sp.status && (
-        <div className={`p-4 rounded-3xl border flex items-start gap-3 relative z-10 ${
-          sp.status === "success" 
-            ? "bg-emerald-50 border-emerald-250 text-emerald-800" 
-            : "bg-rose-50 border-rose-250 text-rose-800"
-        }`}>
-          {sp.status === "success" ? (
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+    <div className="space-y-8 pb-12">
+      {feedbackStatus && (
+        <div
+          className={`relative z-10 flex items-start gap-3 rounded-3xl border p-4 ${
+            feedbackStatus === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-rose-200 bg-rose-50 text-rose-800"
+          }`}
+        >
+          {feedbackStatus === "success" ? (
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
           ) : (
-            <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
           )}
           <div>
-            <h4 className="font-outfit font-black text-sm uppercase tracking-wide">
-              {sp.status === "success" ? "Feedback Received" : "Error"}
+            <h4 className="font-outfit text-sm font-black uppercase tracking-wide">
+              {feedbackStatus === "success" ? "Feedback received" : "Unable to submit feedback"}
             </h4>
-            <p className="text-xs font-semibold mt-0.5 leading-relaxed">{sp.message}</p>
+            <p className="mt-0.5 text-xs font-semibold leading-relaxed">
+              {sp.message || "Please try again or contact CYVRIX support."}
+            </p>
           </div>
         </div>
       )}
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-[#041635] to-[#0a2a5e] rounded-3xl p-10 text-white relative overflow-hidden">
+
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#041635] to-[#0a2a5e] p-8 text-white sm:p-10">
         <div className="relative z-10 max-w-2xl">
-          <h1 className="font-outfit text-4xl font-black mb-4">
-            {session.name ? `Welcome, ${session.name.split(' ')[0]}.` : "Good morning."}
+          <p className="mb-3 text-xs font-black uppercase tracking-[0.2em] text-[#7cc6ff]">Client workspace</p>
+          <h1 className="mb-4 font-outfit text-4xl font-black">
+            {session.name ? `Welcome, ${session.name.split(" ")[0]}.` : "Welcome to CYVRIX."}
           </h1>
-          <p className="text-slate-300 font-medium text-lg leading-relaxed mb-8">
-            Your infrastructure is currently performing at optimal levels. 
-            {stats && stats.activeTickets > 0 ? ` You have ${stats.activeTickets} active support ticket${stats.activeTickets > 1 ? 's' : ''} requiring attention.` : " No critical issues have been detected in your environment."}
+          <p className="mb-3 text-lg font-medium leading-relaxed text-slate-200">
+            Follow support requests and access documents shared with your organisation.
           </p>
-          <div className="flex gap-4">
-            <Button variant="premium" className="bg-white text-[#041635] hover:bg-slate-100">
-              Request Support
-            </Button>
-            <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-              View Documents
-            </Button>
+          <p className="mb-8 text-sm font-semibold leading-relaxed text-slate-300">{recordsSummary}</p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              href="/portal/support-tickets"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-black text-[#041635] transition-colors hover:bg-slate-100"
+            >
+              Support tickets
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/portal/documents"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 px-5 py-3 text-sm font-black text-white transition-colors hover:bg-white/10"
+            >
+              Shared documents
+              <FileText className="h-4 w-4" />
+            </Link>
           </div>
         </div>
-        {/* Abstract background shape */}
-        <div className="absolute -right-20 -top-20 w-96 h-96 bg-[#2691F0] rounded-full blur-[100px] opacity-20" />
-      </div>
+        <div className="absolute -right-20 -top-20 h-96 w-96 rounded-full bg-[#2691F0] opacity-20 blur-[100px]" />
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Content (2 cols) */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* Active Services */}
-          <div>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-outfit text-xl font-black text-[#041635]">Active Subscriptions</h3>
-              <button className="text-sm font-bold text-[#2691F0] flex items-center gap-1">
-                Manage all <ArrowRight className="h-4 w-4" />
-              </button>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="space-y-8 lg:col-span-2">
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#2691F0]">Account records</p>
+                <h2 className="mt-1 font-outfit text-xl font-black text-[#041635]">Your workspace at a glance</h2>
+                <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-500">
+                  Counts reflect the ticket and document records currently available to this account.
+                </p>
+              </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { name: "Managed IT Support", plan: "Enterprise 24/7", status: "Active", icon: Zap },
-                { name: "Endpoint Protection", plan: "Advanced EDR", status: "Active", icon: ShieldCheck },
-              ].map((service) => (
-                <div key={service.name} className="bg-white p-6 rounded-2xl border border-slate-200 hover:border-[#2691F0]/30 transition-all group">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 rounded-xl bg-blue-50 text-[#2691F0]">
-                      <service.icon className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-black text-[#041635]">{service.name}</p>
-                      <p className="text-xs font-bold text-slate-400">{service.plan}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between mt-6">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-emerald-500 bg-emerald-50 px-2 py-1 rounded-md">
-                      {service.status}
-                    </span>
-                    <button className="text-slate-400 hover:text-[#041635] transition-colors">
-                      <ExternalLink className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-              <button className="border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-2 text-slate-400 hover:text-[#2691F0] hover:border-[#2691F0] hover:bg-blue-50/30 transition-all group">
-                <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center group-hover:bg-[#2691F0] group-hover:text-white transition-all">
-                  <Plus className="h-5 w-5" />
-                </div>
-                <span className="text-sm font-bold">Add Service</span>
-              </button>
-            </div>
-          </div>
 
-          {/* Pending Tasks / Notifications */}
-          <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-outfit font-black text-[#041635]">Upcoming Renewals</h3>
-              <Clock className="h-4 w-4 text-slate-400" />
-            </div>
-            <div className="divide-y divide-slate-50">
-              {[
-                { name: "Service Agreement", date: "June 24, 2026", type: "Auto-renew" },
-                { name: "Compliance Review", date: "July 12, 2026", type: "Scheduled" },
-              ].map((item) => (
-                <div key={item.name} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                  <div>
-                    <p className="text-sm font-bold text-[#041635]">{item.name}</p>
-                    <p className="text-xs text-slate-400">Due on {item.date}</p>
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded">
-                    {item.type}
-                  </span>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <Link
+                href="/portal/support-tickets"
+                className="group rounded-2xl border border-slate-200 p-5 transition-colors hover:border-[#2691F0]/40 hover:bg-blue-50/30"
+              >
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#2691F0]">
+                  <MessageSquare className="h-5 w-5" />
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Open support tickets</p>
+                <p className="mt-1 font-outfit text-3xl font-black text-[#041635]">{stats?.activeTickets ?? "—"}</p>
+                <span className="mt-5 inline-flex items-center gap-1 text-sm font-black text-[#2691F0]">
+                  View tickets <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </Link>
 
-        {/* Sidebar Actions (1 col) */}
-        <div className="space-y-8">
-          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-center">
-            <div className="w-16 h-16 bg-blue-50 text-[#2691F0] rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <MessageSquare className="h-8 w-8" />
+              <Link
+                href="/portal/documents"
+                className="group rounded-2xl border border-slate-200 p-5 transition-colors hover:border-[#2691F0]/40 hover:bg-blue-50/30"
+              >
+                <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-[#2691F0]">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Shared documents</p>
+                <p className="mt-1 font-outfit text-3xl font-black text-[#041635]">{stats?.storedDocuments ?? "—"}</p>
+                <span className="mt-5 inline-flex items-center gap-1 text-sm font-black text-[#2691F0]">
+                  Open documents <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                </span>
+              </Link>
             </div>
-            <h4 className="font-outfit text-lg font-black text-[#041635] mb-2">Need Help?</h4>
-            <p className="text-slate-500 text-sm font-medium mb-8">
-              Our support team is available 24/7 to assist with any technical issues.
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">Service reporting</p>
+            <h2 className="mt-1 font-outfit text-xl font-black text-[#041635]">Verified information only</h2>
+            <p className="mt-2 max-w-3xl text-sm font-semibold leading-relaxed text-slate-600">
+              Availability, security posture, renewals, and subscription status are shown here only when a verified service record or monitoring integration is connected. Contact CYVRIX if you need an update on any of these areas.
             </p>
-            <Button variant="premium" className="w-full">Open Support Ticket</Button>
-          </div>
+          </section>
+        </div>
 
-          {/* Share Testimonial Card */}
-          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm text-left space-y-5">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-amber-50 text-amber-500 rounded-xl flex items-center justify-center">
+        <aside className="space-y-8">
+          <section className="rounded-3xl border border-slate-200 bg-white p-7 text-center shadow-sm">
+            <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-[#2691F0]">
+              <MessageSquare className="h-7 w-7" />
+            </div>
+            <h2 className="font-outfit text-lg font-black text-[#041635]">Need support?</h2>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500">
+              Open a support ticket and the CYVRIX team can review your request.
+            </p>
+            <Link
+              href="/portal/support-tickets"
+              className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#041635] px-4 py-3 text-sm font-black text-white transition-colors hover:bg-[#2691F0]"
+            >
+              Open support tickets
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </section>
+
+          <section className="space-y-5 rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50 text-amber-500">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="font-outfit text-sm font-black text-[#041635]">Share Your Experience</h4>
-                <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Your quote will appear on our homepage!</p>
+                <h2 className="font-outfit text-sm font-black text-[#041635]">Share your experience</h2>
+                <p className="mt-0.5 text-[10px] font-semibold text-slate-400">Submitted feedback is reviewed before any public use.</p>
               </div>
             </div>
+            <p className="text-xs font-semibold leading-relaxed text-slate-500">
+              Your feedback stays private until CYVRIX completes verification, evidence, and permission checks.
+            </p>
             <form action={submitPortalTestimonial} className="space-y-4">
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500">
                 Rating
-                <select name="rating" required className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-[#041635] font-semibold focus:ring-2 focus:ring-[#2691F0] focus:outline-none">
-                  <option value="5">⭐⭐⭐⭐⭐ Excellent (5 Stars)</option>
-                  <option value="4">⭐⭐⭐⭐ Good (4 Stars)</option>
-                  <option value="3">⭐⭐⭐ Neutral (3 Stars)</option>
+                <select name="rating" required className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#041635] focus:outline-none focus:ring-2 focus:ring-[#2691F0]">
+                  <option value="5">Excellent (5 stars)</option>
+                  <option value="4">Good (4 stars)</option>
+                  <option value="3">Neutral (3 stars)</option>
                 </select>
               </label>
 
-              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-wider">
-                Your Review / Testimonial Quote
+              <label className="block text-[10px] font-black uppercase tracking-wider text-slate-500">
+                Your feedback
                 <textarea
                   name="quote"
                   required
                   rows={4}
-                  placeholder="e.g. CYVRIX has transformed our operations center security. Highly recommended!"
-                  className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none resize-none"
+                  placeholder="Tell us about your experience with CYVRIX."
+                  className="mt-1.5 w-full resize-none rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:outline-none focus:ring-2 focus:ring-[#2691F0]"
                 />
               </label>
 
-              <Button type="submit" className="w-full bg-[#041635] hover:bg-[#2691F0] text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-amber-400" /> Submit Testimonial
+              <Button type="submit" className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-[#041635] py-2.5 text-xs font-bold text-white hover:bg-[#2691F0]">
+                <Sparkles className="h-4 w-4 text-amber-400" />
+                Submit for review
               </Button>
             </form>
-          </div>
-
-          <div className="bg-slate-900 text-white p-8 rounded-3xl relative overflow-hidden">
-            <h4 className="font-outfit text-lg font-bold mb-4 relative z-10">Environment State</h4>
-            <div className="space-y-6 relative z-10">
-              {[
-                { label: "Active Tickets", value: stats?.activeTickets || 0, total: 10, pct: ((stats?.activeTickets || 0) / 10) * 100 },
-                { label: "Client Documents", value: stats?.storedDocuments || 0, total: 20, pct: ((stats?.storedDocuments || 0) / 20) * 100 },
-              ].map((item) => (
-                <div key={item.label} className="space-y-2">
-                  <div className="flex justify-between text-xs font-bold uppercase tracking-wider">
-                    <span className="text-slate-400">{item.label}</span>
-                    <span>{item.value} / {item.total}</span>
-                  </div>
-                  <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-[#2691F0] transition-all duration-1000" 
-                      style={{ width: `${Math.min(item.pct, 100)}%` }} 
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="absolute bottom-0 right-0 p-4 opacity-5">
-              <Zap className="h-32 w-32" />
-            </div>
-          </div>
-        </div>
+          </section>
+        </aside>
       </div>
     </div>
   );
 }
-
-
-const MessageSquare = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-);

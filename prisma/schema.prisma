@@ -1,7 +1,6 @@
 generator client {
   provider        = "prisma-client-js"
   output          = "../generated/prisma"
-  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
@@ -557,20 +556,30 @@ model CareerJob {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model CaseStudy {
-  id           String   @id
-  slug         String   @unique
-  title        String
-  clientType   String?
-  challenge    String?
-  solution     String?
-  outcome      String?
-  technologies Json     @default("[]")
-  services     Json     @default("[]")
-  timeline     String?
-  testimonial  String?
-  published    Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime
+  id                    String   @id
+  slug                  String   @unique
+  title                 String
+  clientType            String?
+  challenge             String?
+  solution              String?
+  outcome               String?
+  technologies          Json     @default("[]")
+  services              Json     @default("[]")
+  timeline              String?
+  testimonial           String?
+  published             Boolean  @default(false)
+  verificationStatus    String   @default("PENDING") @map("verification_status")
+  verificationReference String?  @map("verification_reference")
+  evidenceUrl           String?  @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?  @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean  @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?  @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean  @default(false) @map("public_visibility")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime
 
   @@schema("public")
 }
@@ -911,18 +920,27 @@ model Service {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model ServicePackage {
-  id             String   @id
-  serviceId      String?
-  name           String
-  cadence        String?
-  features       Json     @default("[]")
-  pricingVisible Boolean  @default(false)
-  monthlyPrice   Decimal?
-  annualPrice    Decimal?
-  featured       Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  Service        Service? @relation(fields: [serviceId], references: [id])
+  id                      String   @id
+  serviceId               String?
+  name                    String
+  description             String   @default("")
+  recommendedCustomerSize String   @default("") @map("recommended_customer_size")
+  cadence                 String?
+  features                Json     @default("[]")
+  pricingVisible          Boolean  @default(false)
+  priceDisplayMode        String   @default("REQUEST_PRICING") @map("price_display_mode")
+  monthlyPrice            Decimal?
+  annualPrice             Decimal?
+  ctaLabel                String   @default("Request pricing") @map("cta_label")
+  ctaUrl                  String?  @map("cta_url")
+  featured                Boolean  @default(false)
+  published               Boolean  @default(false)
+  sortOrder               Int      @default(0) @map("sort_order")
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt @map("updated_at")
+  Service                 Service? @relation(fields: [serviceId], references: [id])
 
+  @@index([published, sortOrder])
   @@schema("public")
 }
 
@@ -937,14 +955,24 @@ model SiteSetting {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Testimonial {
-  id         String   @id
-  clientName String?
-  company    String?
-  quote      String
-  rating     Int?
-  featured   Boolean  @default(false)
-  approved   Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  id                    String   @id
+  clientName            String?
+  company               String?
+  quote                 String
+  rating                Int?
+  featured              Boolean  @default(false)
+  approved              Boolean  @default(false)
+  verificationStatus    String   @default("PENDING") @map("verification_status")
+  verificationReference String?  @map("verification_reference")
+  evidenceUrl           String?  @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?  @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean  @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?  @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean  @default(false) @map("public_visibility")
+  createdAt             DateTime @default(now())
 
   @@schema("public")
 }
@@ -1650,6 +1678,16 @@ model PartnerLogo {
   websiteUrl  String?  @map("website_url")
   isFeatured  Boolean  @default(false) @map("is_featured")
   isVisible   Boolean  @default(true) @map("is_visible")
+  verificationStatus    String   @default("PENDING") @map("verification_status")
+  verificationReference String?  @map("verification_reference")
+  evidenceUrl           String?  @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?  @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean  @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?  @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean  @default(false) @map("public_visibility")
   sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -1668,6 +1706,16 @@ model TrustedBusinessLogo {
   websiteUrl  String?  @map("website_url")
   isFeatured  Boolean  @default(false) @map("is_featured")
   isVisible   Boolean  @default(true) @map("is_visible")
+  verificationStatus    String   @default("PENDING") @map("verification_status")
+  verificationReference String?  @map("verification_reference")
+  evidenceUrl           String?  @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?  @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean  @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?  @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean  @default(false) @map("public_visibility")
   sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
@@ -1689,6 +1737,16 @@ model ComplianceCard {
   externalUrl     String?  @map("external_url")
   displayLocation String   @map("display_location")
   isVisible       Boolean  @default(true) @map("is_visible")
+  verificationStatus    String   @default("PENDING") @map("verification_status")
+  verificationReference String?  @map("verification_reference")
+  evidenceUrl           String?  @map("evidence_url")
+  evidenceReviewedAt    DateTime? @map("evidence_reviewed_at")
+  evidenceReviewedBy    String?  @map("evidence_reviewed_by")
+  expiresAt             DateTime? @map("expires_at")
+  permissionConfirmed   Boolean  @default(false) @map("permission_confirmed")
+  permissionEvidenceUrl String?  @map("permission_evidence_url")
+  permissionConfirmedAt DateTime? @map("permission_confirmed_at")
+  publicVisibility      Boolean  @default(false) @map("public_visibility")
   sortOrder       Int      @default(0) @map("sort_order")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")

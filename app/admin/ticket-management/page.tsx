@@ -8,7 +8,7 @@ import { formatDistanceToNow } from "date-fns";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { MessageSquare } from "lucide-react";
 
-export const metadata = { title: "Ticket Management | CYVRIX Admin" };
+export const metadata = { title: "Ticket Management" };
 
 const PRIORITY_COLORS: Record<string, string> = {
   LOW: "bg-slate-50 text-slate-500 border-slate-100",

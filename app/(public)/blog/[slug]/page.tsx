@@ -1,136 +1,133 @@
 import * as React from "react";
-import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, Clock, User, Share2, ShieldAlert } from "lucide-react";
+import { notFound } from "next/navigation";
+import { ArrowLeft, ArrowRight, CalendarDays, User } from "lucide-react";
 import { Button } from "@/components/shared/Button";
-import { blogPosts } from "@/lib/cyvrix-data";
+import { getPublicInsightDetail } from "@/lib/public-cache";
+import {
+  getInsightConsultationHref,
+  getStaticPublicInsight,
+  getStaticPublicInsights,
+  toPublicInsight,
+} from "@/lib/public-insight";
+import { stripBrandSuffix } from "@/lib/utils";
 
 interface BlogPostPageProps {
-  params: Promise<{
-    slug: string;
-  }>;
+  params: Promise<{ slug: string }>;
+}
+
+async function resolveInsight(slug: string) {
+  const publishedInsight = toPublicInsight(await getPublicInsightDetail(slug));
+  return publishedInsight ?? getStaticPublicInsight(slug);
 }
 
 export function generateStaticParams() {
-  return blogPosts.map((post) => ({ slug: post.slug }));
+  return getStaticPublicInsights().map((post) => ({ slug: post.slug }));
 }
 
-export async function generateMetadata({ params }: BlogPostPageProps) {
+export async function generateMetadata({ params }: BlogPostPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = blogPosts.find((item) => item.slug === slug);
+  const post = await resolveInsight(slug);
+
+  if (!post) {
+    return { title: "Insight not found" };
+  }
+
   return {
-    title: post ? `${post.title} | CYVRIX Insights` : "Insight Detail",
-    description: post ? post.excerpt : "Technical articles and security insights",
+    title: stripBrandSuffix(post.seoTitle) || post.title,
+    description: post.seoDescription || post.excerpt,
+    alternates: { canonical: `/blog/${post.slug}` },
   };
 }
 
 export default async function BlogPostDetailPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
-  const post = blogPosts.find((item) => item.slug === slug);
+  const post = await resolveInsight(slug);
   if (!post) notFound();
 
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: post.title,
+    description: post.excerpt,
+    author: { "@type": "Organization", name: post.author },
+    publisher: { "@type": "Organization", name: "CYVRIX Technologies" },
+    ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
+    mainEntityOfPage: `https://cyvrix.co.uk/blog/${post.slug}`,
+  };
+
   return (
-    <div className="pt-24 pb-20 bg-[#020817] text-white">
-      {/* Article Header block */}
-      <section className="bg-gradient-to-b from-[#041635] to-[#0a2a5e] py-20 text-white relative overflow-hidden">
-        <div className="absolute right-0 top-0 w-80 h-80 bg-[#2691F0]/10 rounded-full blur-[100px]" />
-        
-        <div className="max-w-4xl mx-auto px-5 relative z-10">
-          <Link 
-            href="/blog" 
-            className="inline-flex items-center gap-2 text-sm font-bold text-[#2691F0] hover:text-[#2691F0]/80 transition-colors mb-6 group"
+    <div className="min-h-screen bg-[#020817] pb-24 pt-24 text-white">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+
+      <section className="border-b border-white/10 bg-[radial-gradient(ellipse_at_top_right,_rgba(38,145,240,0.2),transparent_48%),linear-gradient(180deg,#071b3d_0%,#020817_100%)] py-16 md:py-20">
+        <div className="mx-auto max-w-4xl px-5">
+          <Link
+            href="/blog"
+            className="inline-flex items-center gap-2 text-sm font-black text-[#7ab8f4] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] focus-visible:ring-offset-2 focus-visible:ring-offset-[#020817]"
           >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            <ArrowLeft className="h-4 w-4" />
             Back to Insights
           </Link>
 
-          <div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[#2691F0] bg-[#2691F0]/100/10 px-3 py-1.5 rounded-md border border-[#2691F0]/20">
-              {post.category}
+          <span className="mt-8 inline-flex rounded-md border border-[#2691F0]/30 bg-[#2691F0]/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#7ab8f4]">
+            {post.category}
+          </span>
+          <h1 className="mt-6 font-outfit text-4xl font-black leading-tight tracking-tight md:text-6xl">
+            {post.title}
+          </h1>
+          <p className="mt-6 max-w-3xl text-lg font-medium leading-relaxed text-slate-200">
+            {post.excerpt}
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-x-5 gap-y-3 border-t border-white/10 pt-6 text-sm font-semibold text-slate-300">
+            <span className="inline-flex items-center gap-2">
+              <User className="h-4 w-4 text-[#7ab8f4]" />
+              {post.author}
             </span>
-            <h1 className="font-outfit text-3.5xl md:text-5xl font-black mt-6 tracking-tight leading-tight">
-              {post.title}
-            </h1>
-            
-            <div className="flex items-center gap-6 mt-8 text-sm text-slate-300 font-semibold border-t border-white/5 pt-6">
-              <span className="flex items-center gap-2">
-                <User className="h-4 w-4 text-[#2691F0]" />
-                {post.author}
-              </span>
-              <span className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-slate-400" />
-                {post.published}
-              </span>
-            </div>
+            <span className="inline-flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-[#7ab8f4]" />
+              {post.published}
+            </span>
           </div>
         </div>
       </section>
 
-      {/* Main Content Area */}
-      <main className="max-w-4xl mx-auto px-5 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_250px] gap-12">
-          {/* Main content body */}
-          <article className="bg-[#020817] p-8 md:p-12 rounded-3xl border border-slate-200/80 shadow-xl shadow-blue-500/5 leading-relaxed text-slate-400 text-md font-medium">
-            <p className="text-lg text-white font-semibold leading-relaxed mb-6">
-              {post.excerpt}
-            </p>
-            
-            <p className="mb-6">
-              This article is fully dynamic and managed by the secure CYVRIX CMS. In production environments, administrators can configure tags, authorship profiles, featured images, and search engine fields without touching any code.
-            </p>
+      <main className="mx-auto grid max-w-5xl gap-10 px-5 py-14 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
+        <article className="rounded-3xl border border-white/10 bg-[#071126] p-7 shadow-2xl shadow-blue-950/20 md:p-10">
+          <div className="space-y-6 text-base font-medium leading-8 text-slate-200 md:text-lg">
+            {post.body.map((paragraph) => (
+              <p key={paragraph}>{paragraph}</p>
+            ))}
+          </div>
 
-            <p className="mb-8">
-              For growing organisations in the United Kingdom, security and IT systems should be treated as enablers for operations rather than static expenses. CYVRIX ensures that advice is calm, actionable, and aligned with standard compliance mandates such as GDPR and Cyber Essentials.
-            </p>
-
-            {/* Simulated Section Content */}
-            <div className="my-8 p-6 bg-[#020817] rounded-2xl border border-white/10 text-slate-500 text-sm leading-relaxed relative">
-              <div className="absolute top-0 right-0 p-4 opacity-5">
-                <ShieldAlert className="h-20 w-20 text-white" />
-              </div>
-              <h4 className="font-outfit text-lg font-black text-white mb-2">Technical Warning</h4>
-              <p>
-                Cyber threats targeting UK SMEs are increasing in operational sophistication. Maintain clear endpoints hardening plans, configure robust multi-factor validation, and routinely audit active admin privileges.
-              </p>
-            </div>
-
-            {/* Tag List */}
-            <div className="flex flex-wrap gap-2 mt-12 pt-8 border-t border-white/5">
-              {post.tags.map((tag) => (
-                <span 
-                  key={tag} 
-                  className="rounded-lg bg-[#2691F0] border border-[#2691F0]/10 px-3 py-1.5 text-xs font-black text-[#2691F0]"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          </article>
-
-          {/* Sidebar block */}
-          <aside className="space-y-6">
-            <div className="bg-gradient-to-b from-[#041635] to-[#0a2a5e] text-white p-6 rounded-3xl text-center">
-              <h4 className="font-outfit font-bold text-md mb-2">Need Guidance?</h4>
-              <p className="text-slate-400 text-xs leading-relaxed mb-6">
-                Consult with our senior technical engineering leads about implementing secure operations.
-              </p>
-              <Link href="/request-quote">
-                <Button variant="premium" className="w-full text-xs py-2 bg-[#2691F0] hover:bg-blue-600 border-none">
-                  Book consultation
-                </Button>
-              </Link>
-            </div>
-
-            <div className="bg-[#020817] p-6 rounded-3xl border border-white/10 text-center">
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Share Article</p>
-              <div className="flex justify-center gap-3">
-                <button className="p-3 bg-[#020817] hover:bg-[#2691F0] hover:text-[#2691F0] rounded-xl transition-all border border-white/5 text-slate-400">
-                  <Share2 className="h-4 w-4" />
-                </button>
+          {post.tags.length > 0 && (
+            <div className="mt-12 border-t border-white/10 pt-7">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Topics</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <span key={tag} className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-bold text-slate-200">
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
-          </aside>
-        </div>
+          )}
+        </article>
+
+        <aside className="rounded-3xl border border-[#2691F0]/25 bg-[#061a3c] p-6 lg:sticky lg:top-28">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#7ab8f4]">Next step</p>
+          <h2 className="mt-3 font-outfit text-2xl font-black leading-tight text-white">Discuss your technology priorities.</h2>
+          <p className="mt-3 text-sm font-medium leading-relaxed text-slate-300">
+            Start a practical conversation about the work in front of your organisation.
+          </p>
+          <Button asChild variant="premium" className="mt-6 h-auto w-full px-4 py-3 text-sm">
+            <Link href={getInsightConsultationHref(post)}>
+              Book a technology review <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </aside>
       </main>
     </div>
   );

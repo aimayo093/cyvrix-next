@@ -8,7 +8,7 @@ import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 
-export const metadata = { title: "FAQ CMS | CYVRIX Admin" };
+export const metadata = { title: "FAQ CMS" };
 
 export default function FAQsPage(props: any) {
   return (

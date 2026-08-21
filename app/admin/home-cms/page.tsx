@@ -8,7 +8,7 @@ import { Button } from "@/components/shared/Button";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { Save, Home, Layout, MessageSquare, Megaphone, AlertCircle, CheckCircle2 } from "lucide-react";
 
-export const metadata = { title: "Home Page CMS | CYVRIX Admin" };
+export const metadata = { title: "Home Page CMS" };
 
 export default function HomeCmsPage(props: any) {
   return (

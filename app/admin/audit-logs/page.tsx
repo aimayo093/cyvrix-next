@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { formatDistanceToNow } from "date-fns";
 import { ShieldCheck } from "lucide-react";
 
-export const metadata = { title: "Audit Logs | CYVRIX Admin" };
+export const metadata = { title: "Audit Logs" };
 
 const ACTION_COLORS: Record<string, string> = {
   seed_completed: "bg-slate-50 text-slate-500 border-slate-100",

@@ -6,8 +6,9 @@ import { redirect } from "next/navigation";
 export default async function AdminModuleFallback({
   params,
 }: {
-  params: { module: string };
+  params: Promise<{ module: string }>;
 }) {
   await connection();
+  await params;
   redirect("/admin");
 }

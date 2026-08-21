@@ -12,9 +12,10 @@ import {
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
+import { TrustPublicationFields } from "@/components/admin/TrustPublicationFields";
 import { Plus, Pencil, Users, ArrowUp, ArrowDown } from "lucide-react";
 
-export const metadata = { title: "Trusted Client Logos CMS | CYVRIX Admin" };
+export const metadata = { title: "Trusted Client Logos CMS" };
 
 export default function TrustedLogosCMSPage(props: any) {
   return (
@@ -50,7 +51,7 @@ async function TrustedLogosCMSPageContent({
             Trusted Client Logos CMS
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Manage the client brand logos rendered in your infinite slider grids and trust marquees.
+            Record client logo permissions and evidence before any brand can appear publicly.
           </p>
         </div>
         <a
@@ -261,6 +262,8 @@ function TrustedFormFields({ defaults }: { defaults?: any }) {
         />
       </label>
 
+      <TrustPublicationFields defaults={defaults} requiresPermission />
+
       <div className="grid grid-cols-2 gap-4 pt-2">
         <label className="flex items-center gap-2 text-slate-700 text-sm font-bold cursor-pointer">
           <input
@@ -277,7 +280,7 @@ function TrustedFormFields({ defaults }: { defaults?: any }) {
           Visibility
           <select
             name="isVisible"
-            defaultValue={defaults?.isVisible !== false ? "true" : "false"}
+            defaultValue={defaults?.isVisible === true ? "true" : "false"}
             className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-1.5 text-xs text-[#041635] bg-white font-semibold"
           >
             <option value="true">Visible</option>

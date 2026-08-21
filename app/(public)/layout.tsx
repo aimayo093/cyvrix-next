@@ -1,7 +1,31 @@
 import * as React from "react";
 import { Navbar } from "@/components/nav-main/Navbar";
 import { Footer } from "@/components/nav-main/Footer";
+import { CookieConsent } from "@/components/shared/CookieConsent";
 import { getPublicShellData } from "@/lib/public-cache";
+
+const fallbackHeaderMenu = [
+  { id: "fallback-home", label: "Home", url: "/", sortOrder: 10 },
+  { id: "fallback-services", label: "Services", url: "/services", sortOrder: 20 },
+  { id: "fallback-industries", label: "Industries", url: "/industries", sortOrder: 30 },
+  { id: "fallback-about", label: "About", url: "/about", sortOrder: 40 },
+  { id: "fallback-insights", label: "Insights", url: "/blog", sortOrder: 50 },
+  { id: "fallback-case-studies", label: "Case Studies", url: "/case-studies", sortOrder: 60 },
+  { id: "fallback-careers", label: "Careers", url: "/careers", sortOrder: 70 },
+  { id: "fallback-contact", label: "Contact", url: "/contact", sortOrder: 80 },
+  {
+    id: "fallback-cta",
+    label: "Book a technology review",
+    url: "/book-consultation",
+    sortOrder: 90,
+    iconKey: "button-cta",
+  },
+];
+
+function publicValue(value?: string) {
+  if (!value || /set in admin|configured in admin|placeholder/i.test(value)) return undefined;
+  return value;
+}
 
 export default function PublicLayout({
   children,
@@ -17,12 +41,13 @@ export default function PublicLayout({
       <React.Suspense fallback={null}>
         <PublicFooter />
       </React.Suspense>
+      <CookieConsent />
     </>
   );
 }
 
 async function getPublicChromeData() {
-  const [
+  const {
     brandSettings,
     companySettings,
     brandAssets,
@@ -30,19 +55,18 @@ async function getPublicChromeData() {
     footerSections,
     socialLinks,
     complianceCards,
-  ] = await getPublicShellData()
-    .then((data) => [
-      data.brandSettings,
-      data.companySettings,
-      data.brandAssets,
-      data.headerMenu,
-      data.footerSections,
-      data.socialLinks,
-      data.complianceCards,
-    ] as const)
+  } = await getPublicShellData()
     .catch((error) => {
       console.error("[public-layout] failed to load cached shell data", error);
-      return [null, null, [], null, [], [], []] as const;
+      return {
+        brandSettings: null,
+        companySettings: null,
+        brandAssets: [],
+        headerMenu: null,
+        footerSections: [],
+        socialLinks: [],
+        complianceCards: [],
+      };
     });
 
   const brandData = (brandSettings?.value as Record<string, string>) ?? {};
@@ -55,11 +79,11 @@ async function getPublicChromeData() {
   const logoSticky = brandAssets.find((asset) => asset.assetKey === "logo_sticky")?.mediaUrl || "";
 
   const logoAlt = brandData.logoAlt || "CYVRIX Technologies";
-  const companyDesc = brandData.footerDescription || undefined;
-  const phone = companyData.phone || "0800 123 4567";
-  const email = companyData.supportEmail || "support@cyvrix.co.uk";
-  const address = companyData.address || "UK service coverage";
-  const copyright = companyData.copyright || "CYVRIX Technologies Ltd. All rights reserved.";
+  const companyDesc = publicValue(brandData.footerDescription);
+  const phone = publicValue(companyData.phone);
+  const email = publicValue(companyData.supportEmail);
+  const address = publicValue(companyData.address);
+  const copyright = publicValue(companyData.copyright);
 
   return {
     headerMenu,
@@ -94,7 +118,7 @@ async function PublicNavbar() {
 
   return (
     <Navbar
-      navItems={headerMenu?.items || []}
+      navItems={headerMenu?.items?.length ? headerMenu.items : fallbackHeaderMenu}
       logoDefault={logoDefault}
       logoWhite={logoWhite}
       logoDark={logoDark}

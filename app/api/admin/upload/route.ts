@@ -1,150 +1,169 @@
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
-import { existsSync } from "fs";
+import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
 
+const PUBLIC_MEDIA_BUCKET = "public-media";
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+type TrustedImage = {
+  extension: "png" | "jpg" | "webp";
+  mimeType: "image/png" | "image/jpeg" | "image/webp";
+};
+
+function canPublishPublicMedia(role: string) {
+  return role === "SUPER_ADMIN" || role === "ADMIN" || role === "CONTENT_MANAGER";
+}
+
+function detectImage(buffer: Buffer): TrustedImage | null {
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return { extension: "png", mimeType: "image/png" };
+  }
+
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return { extension: "jpg", mimeType: "image/jpeg" };
+  }
+
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return { extension: "webp", mimeType: "image/webp" };
+  }
+
+  return null;
+}
+
+function clientIp(req: Request) {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || undefined;
+}
+
 export async function POST(req: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
+  }
+
+  if (!canPublishPublicMedia(session.user.role)) {
+    return NextResponse.json({ error: "You do not have permission to publish public media." }, { status: 403 });
+  }
+
   try {
-    const session = await requireAdmin();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const formData = await req.formData();
-    const file = formData.get("file") as File;
-
-    if (!file) {
-      return NextResponse.json({ error: "No file provided" }, { status: 400 });
+    const formFile = formData.get("file");
+    if (!(formFile instanceof File)) {
+      return NextResponse.json({ error: "No image file was provided." }, { status: 400 });
     }
 
-    // Validate type (basic check)
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json({ error: "File must be an image" }, { status: 400 });
+    if (formFile.size === 0 || formFile.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json({ error: "Image files must be between 1 byte and 5MB." }, { status: 400 });
     }
 
-    // Validate size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ error: "File size must be under 5MB" }, { status: 400 });
+    const buffer = Buffer.from(await formFile.arrayBuffer());
+    const image = detectImage(buffer);
+    if (!image) {
+      return NextResponse.json({ error: "Upload a validated PNG, JPEG, or WebP image under 5MB." }, { status: 422 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Create safe filename
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1e9)}`;
-    const originalName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, ""); // sanitize
-    const filename = `${uniqueSuffix}-${originalName}`;
-
-    let publicUrl = "";
-    let storagePath = filename;
-    let uploadedToSupabase = false;
-
-    // Attempt Supabase Storage Upload
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    // Prefer service role key if available for administrative uploads, fallback to anon key
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (supabaseUrl && supabaseKey) {
-      try {
-        const supabase = createClient(supabaseUrl, supabaseKey, {
-          auth: {
-            persistSession: false,
-          },
-        });
-
-        const bucketName = "public-media";
-        let uploadResult = await supabase.storage
-          .from(bucketName)
-          .upload(filename, buffer, {
-            contentType: file.type,
-            cacheControl: "3600",
-            upsert: true,
-          });
-
-        if (uploadResult.error && (uploadResult.error.message?.toLowerCase().includes("bucket") || uploadResult.error.message?.toLowerCase().includes("not found"))) {
-          console.log(`Bucket "${bucketName}" not found. Creating bucket...`);
-          const { error: createError } = await supabase.storage.createBucket(bucketName, {
-            public: true,
-          });
-          if (!createError) {
-            console.log(`Bucket "${bucketName}" created. Retrying upload...`);
-            uploadResult = await supabase.storage
-              .from(bucketName)
-              .upload(filename, buffer, {
-                contentType: file.type,
-                cacheControl: "3600",
-                upsert: true,
-              });
-          } else {
-            console.error("Failed to create bucket:", createError);
-          }
-        }
-
-        const { data, error } = uploadResult;
-
-        if (error) {
-          console.error("Supabase Storage upload error, falling back to local:", error);
-        } else if (data) {
-          // Get public URL
-          const { data: publicUrlData } = supabase.storage
-            .from(bucketName)
-            .getPublicUrl(filename);
-          
-          if (publicUrlData?.publicUrl) {
-            publicUrl = publicUrlData.publicUrl;
-            storagePath = filename;
-            uploadedToSupabase = true;
-          }
-        }
-      } catch (err) {
-        console.error("Supabase client error, falling back to local:", err);
-      }
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error("[admin-upload] Approved public media storage is not configured.");
+      return NextResponse.json(
+        { error: "Image storage is not configured. Ask an administrator to configure the approved public-media bucket." },
+        { status: 503 }
+      );
     }
 
-    // Local Disk Fallback
-    if (!uploadedToSupabase) {
-      const uploadDir = join(process.cwd(), "public", "uploads");
+    const assetId = crypto.randomUUID();
+    const storagePath = `cms/${assetId}.${image.extension}`;
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
-      // Ensure dir exists
-      if (!existsSync(uploadDir)) {
-        await mkdir(uploadDir, { recursive: true });
-      }
+    const { error: uploadError } = await supabase.storage.from(PUBLIC_MEDIA_BUCKET).upload(storagePath, buffer, {
+      contentType: image.mimeType,
+      cacheControl: "31536000",
+      upsert: false,
+    });
 
-      const filepath = join(uploadDir, filename);
-      await writeFile(filepath, buffer);
-      publicUrl = `/uploads/${filename}`;
-      storagePath = filepath;
+    if (uploadError) {
+      console.error("[admin-upload] Public media upload failed.", { message: uploadError.message });
+      return NextResponse.json(
+        { error: "The approved public-media bucket could not accept this image. No image was published." },
+        { status: 502 }
+      );
     }
 
-    // Store in media_assets table
+    const { data: publicUrlData } = supabase.storage.from(PUBLIC_MEDIA_BUCKET).getPublicUrl(storagePath);
+    const publicUrl = publicUrlData.publicUrl;
+    if (!publicUrl) {
+      const { error: cleanupError } = await supabase.storage.from(PUBLIC_MEDIA_BUCKET).remove([storagePath]);
+      console.error("[admin-upload] Public URL generation failed.", { cleanupFailed: Boolean(cleanupError) });
+      return NextResponse.json(
+        { error: "The image URL could not be created. Storage cleanup has been requested; do not retry until this is resolved." },
+        { status: 502 }
+      );
+    }
+
     try {
-      await prisma.mediaAsset.create({
-        data: {
-          id: crypto.randomUUID(),
-          filename,
-          url: publicUrl,
-          mimeType: file.type,
-          sizeBytes: BigInt(file.size),
-          category: "page_asset",
-          bucket: uploadedToSupabase ? "public-media" : "local",
-          filePath: storagePath,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          createdBy: session.email,
-        },
+      await prisma.$transaction([
+        prisma.mediaAsset.create({
+          data: {
+            id: assetId,
+            filename: `${assetId}.${image.extension}`,
+            url: publicUrl,
+            mimeType: image.mimeType,
+            sizeBytes: BigInt(formFile.size),
+            category: "page_asset",
+            bucket: PUBLIC_MEDIA_BUCKET,
+            filePath: storagePath,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            createdBy: session.user.email,
+          },
+        }),
+        prisma.auditLog.create({
+          data: {
+            id: crypto.randomUUID(),
+            userId: session.user.id,
+            action: "public_media_uploaded",
+            entityType: "MediaAsset",
+            entityId: assetId,
+            ipAddress: clientIp(req),
+            metadata: { bucket: PUBLIC_MEDIA_BUCKET, storagePath, mimeType: image.mimeType, sizeBytes: formFile.size },
+          },
+        }),
+      ]);
+    } catch (metadataError) {
+      const { error: cleanupError } = await supabase.storage.from(PUBLIC_MEDIA_BUCKET).remove([storagePath]);
+      console.error("[admin-upload] Failed to record uploaded media metadata.", {
+        message: metadataError instanceof Error ? metadataError.message : "Unknown error",
+        cleanupFailed: Boolean(cleanupError),
       });
-    } catch (dbErr) {
-      console.error("Failed to store asset metadata in database:", dbErr);
-      // We still return the publicUrl so the upload doesn't break in the UI
+      return NextResponse.json(
+        { error: "The image could not be recorded. Storage cleanup has been requested; do not retry until this is resolved." },
+        { status: 500 }
+      );
     }
 
-    return NextResponse.json({ url: publicUrl });
+    return NextResponse.json({ url: publicUrl }, { status: 201 });
   } catch (error) {
-    console.error("Upload error:", error);
-    return NextResponse.json({ error: "Failed to upload file" }, { status: 500 });
+    console.error("[admin-upload] Unexpected upload error.", {
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+    return NextResponse.json({ error: "Image upload failed. Please try again." }, { status: 500 });
   }
 }

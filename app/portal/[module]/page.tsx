@@ -11,21 +11,15 @@ import {
   FolderOpen, 
   User, 
   Building2,
-  Calendar,
   AlertCircle,
-  HelpCircle,
-  Clock,
   ChevronRight,
-  ExternalLink,
-  Lock,
-  Mail,
-  Phone,
   FileCheck,
   Download,
   Bell
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { ClientDocument, Notification, Proposal, ProposalItem, Ticket, TicketMessage } from "@/generated/prisma";
 import { 
   ProfileUpdateForm, 
   ProposalApprovalButton, 
@@ -38,7 +32,17 @@ interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default function PortalModulePage(props: any) {
+type TicketWithMessages = Ticket & { TicketMessage: TicketMessage[] };
+type ProposalWithItems = Proposal & { ProposalItem: ProposalItem[] };
+type PortalMessage = {
+  id: string;
+  authorId: string | null;
+  body: string;
+  createdAt: Date;
+  authorName: string;
+};
+
+export default function PortalModulePage(props: PageProps) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <PortalModulePageContent {...props} />
@@ -66,12 +70,12 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
     : null;
 
   // Pre-load data based on active module to keep JSX exceptionally clean and standard-compliant
-  let selectedTicket: any = null;
-  let initialMessages: any[] = [];
-  let tickets: any[] = [];
-  let proposals: any[] = [];
-  let documents: any[] = [];
-  let notifications: any[] = [];
+  let selectedTicket: TicketWithMessages | null = null;
+  let initialMessages: PortalMessage[] = [];
+  let tickets: Ticket[] = [];
+  let proposals: ProposalWithItems[] = [];
+  let documents: ClientDocument[] = [];
+  let notifications: Notification[] = [];
 
   // Load support tickets
   if (module === "support-tickets") {
@@ -83,7 +87,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
 
       if (selectedTicket && selectedTicket.clientCompanyId === user.clientCompanyId) {
         initialMessages = await Promise.all(
-          selectedTicket.TicketMessage.map(async (msg: any) => {
+          selectedTicket.TicketMessage.map(async (msg) => {
             let authorName = "CYVRIX Support";
             if (msg.authorId === user.id) {
               authorName = "You";
@@ -160,7 +164,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
             {module === "profile-and-company" && "Profile & Company"}
             {module === "support-tickets" && "Support Tickets"}
             {module === "quotes-and-proposals" && "Quotes & Proposals"}
-            {module === "services" && "Active Subscriptions"}
+            {module === "services" && "Services"}
             {module === "documents" && "Shared Documents"}
             {module === "notifications" && "System Notifications"}
           </h1>
@@ -367,10 +371,10 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
             <div className="bg-[#041635] text-white p-8 rounded-3xl space-y-4">
               <h4 className="font-outfit text-md font-black flex items-center gap-2">
                 <ShieldCheck className="h-5 w-5 text-[#2691F0]" />
-                Security First Support
+                Sensitive information
               </h4>
               <p className="text-xs text-slate-300 font-medium leading-relaxed">
-                All replies, tickets, and attachments are processed strictly inside CYVRIX secure networks. Database Row Level Security (RLS) is applied dynamically matching your workspace token.
+                Do not include passwords, recovery codes, access keys, or other secrets in a support request. Use the approved CYVRIX process when you need to share sensitive material.
               </p>
             </div>
           </div>
@@ -426,7 +430,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
                     <div className="bg-slate-50 rounded-2xl border border-slate-100 p-6 mb-6">
                       <h5 className="text-[10px] text-slate-400 font-black uppercase tracking-wider mb-4">Included Deliverables</h5>
                       <div className="space-y-3 font-bold text-sm">
-                        {prop.ProposalItem.map((item: any) => (
+                        {prop.ProposalItem.map((item) => (
                           <div key={item.id} className="flex justify-between items-center text-slate-700 py-1.5 border-b border-slate-200/50 last:border-0">
                             <span>{item.description} (x{Number(item.quantity)})</span>
                             <span className="text-[#041635]">£{(Number(item.quantity) * Number(item.unitPrice)).toLocaleString("en-GB", { minimumFractionDigits: 2 })}</span>
@@ -453,63 +457,26 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
         </div>
       )}
 
-      {/* 4. ACTIVE SERVICES */}
+      {/* 4. SERVICES */}
       {module === "services" && (
         <div className="space-y-8">
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
-            <h3 className="font-outfit text-xl font-black text-[#041635]">Your Covered Technologies</h3>
+            <h3 className="font-outfit text-xl font-black text-[#041635]">Service records</h3>
             <p className="text-sm font-medium text-slate-500 leading-relaxed max-w-2xl">
-              Below are the active SLA agreements, endpoint protection, or transformation services registered in your CYVRIX corporate account.
+              Confirmed service entitlements, service levels, and renewal dates appear here only when CYVRIX has connected an approved source of record for your organisation.
             </p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { name: "24/7 Managed IT Support", tier: "Enterprise SLAs - remote + planned onsite", status: "ACTIVE", renewal: "24 June 2026", details: "Covers remote support, daily server status verification, endpoint agent controls, and office router patch schedules." },
-                { name: "Advanced Endpoint Security", tier: "CrowdStrike Falcon Insight EDR", status: "ACTIVE", renewal: "24 June 2026", details: "Real-time behavior analysis, endpoint encryption reports, multi-factor credential auditing, and automated risk registers." }
-              ].map((svc) => (
-                <div key={svc.name} className="p-6 rounded-2xl border border-slate-200 hover:border-[#2691F0]/40 transition-all font-bold text-sm bg-slate-50/50">
-                  <div className="flex justify-between items-start gap-4 mb-4">
-                    <div>
-                      <h4 className="font-outfit text-lg font-black text-[#041635]">{svc.name}</h4>
-                      <p className="text-xs text-[#2691F0] mt-1">{svc.tier}</p>
-                    </div>
-                    <span className="text-[10px] font-black uppercase bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded tracking-wider">
-                      {svc.status}
-                    </span>
-                  </div>
-                  <p className="text-xs font-medium text-slate-500 leading-relaxed mb-6">{svc.details}</p>
-                  <div className="flex justify-between items-center text-[10px] font-black uppercase text-slate-400 tracking-wider">
-                    <span>Renewal Date</span>
-                    <span className="text-[#041635]">{svc.renewal}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Service Additions Catalog */}
-          <div className="bg-[#041635] text-white p-8 rounded-3xl space-y-6">
-            <h3 className="font-outfit text-xl font-black">Need Extra Cyber or Infrastructure Capabilities?</h3>
-            <p className="text-sm text-slate-300 max-w-2xl">CYVRIX offers simple flat scoped add-ons covering network architecture stabilization, cloud tenant hardening, backup continuity audits, and business VoIP calling.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { title: "M365 Tenant Hardening", cost: "Fixed Scope" },
-                { title: "Resilient Wi-Fi segments", cost: "Scope Surveyed" },
-                { title: "Secure Cloud Backups", cost: "Monthly retainer" }
-              ].map((opt) => (
-                <div key={opt.title} className="p-6 rounded-2xl bg-white/[0.04] border border-white/10 hover:border-white/20 transition-all flex flex-col justify-between h-40">
-                  <div>
-                    <h5 className="font-bold text-sm">{opt.title}</h5>
-                    <p className="text-xs text-slate-400 font-bold mt-1">{opt.cost}</p>
-                  </div>
-                  <Link 
-                    href="/book-consultation"
-                    className="w-full py-2 bg-white text-[#041635] hover:bg-slate-100 font-bold text-xs rounded-xl text-center transition-all uppercase tracking-wider block"
-                  >
-                    Request Proposal
-                  </Link>
-                </div>
-              ))}
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center">
+              <ShieldCheck className="mx-auto h-10 w-10 text-slate-300" />
+              <p className="mt-4 text-sm font-black text-[#041635]">No verified service records are available in this portal.</p>
+              <p className="mx-auto mt-2 max-w-xl text-xs font-semibold leading-relaxed text-slate-500">
+                This is not an indication of service status. Ask CYVRIX to confirm your scope, renewal information, or how service records should be shared with your account.
+              </p>
+              <Link
+                href="/portal/support-tickets"
+                className="mt-5 inline-flex rounded-xl bg-[#041635] px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white transition-colors hover:bg-[#2691F0]"
+              >
+                Contact CYVRIX support
+              </Link>
             </div>
           </div>
         </div>
@@ -521,8 +488,8 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
             <div className="flex items-center justify-between pb-6 border-b border-slate-100">
               <div>
-                <h3 className="font-outfit text-xl font-black text-[#041635]">Secure Client Document Vault</h3>
-                <p className="text-xs font-bold text-slate-400 mt-1">Access audit-ready policies, SLAs, system architecture logs, and credentials shared with your organization.</p>
+                <h3 className="font-outfit text-xl font-black text-[#041635]">Client document vault</h3>
+                <p className="text-xs font-bold text-slate-400 mt-1">Access documents CYVRIX has explicitly shared with your organisation.</p>
               </div>
               <span className="text-xs font-bold bg-[#EAF4FF] text-[#2691F0] px-3 py-1 rounded-full font-black">
                 {documents.length} secure files
@@ -565,10 +532,10 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
           <div className="bg-[#EAF4FF] p-8 rounded-3xl border border-blue-100 text-[#041635]">
             <h4 className="font-outfit text-md font-black flex items-center gap-2 mb-2">
               <ShieldCheck className="h-5 w-5 text-[#2691F0]" />
-              Secure Cryptographic File Delivery
+              Document handling
             </h4>
             <p className="text-xs text-slate-600 font-medium leading-relaxed">
-              All documents published in your vault are kept inside encrypted private buckets with temporal signed URLs. Under no circumstances should you distribute sensitive architecture maps or credentials outside authorization chains.
+              Check the approved CYVRIX process before sharing sensitive documents, credentials, architecture information, or other restricted material outside your authorised team.
             </p>
           </div>
         </div>
@@ -579,8 +546,8 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
         <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
           <div className="flex items-center justify-between pb-6 border-b border-slate-100">
             <div>
-              <h3 className="font-outfit text-xl font-black text-[#041635]">Inbox Notifications</h3>
-              <p className="text-xs font-bold text-slate-400 mt-1">Real-time status updates on active tickets, quotes, and audit completions.</p>
+              <h3 className="font-outfit text-xl font-black text-[#041635]">Portal notifications</h3>
+              <p className="text-xs font-bold text-slate-400 mt-1">Messages and updates recorded for this portal account.</p>
             </div>
             <span className="text-xs font-bold text-slate-400">{notifications.length} message{notifications.length !== 1 && "s"}</span>
           </div>
@@ -595,7 +562,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
               {notifications.map((notif) => (
                 <div key={notif.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-4 hover:bg-slate-50/20 px-4 rounded-xl transition-all">
                   <div className={`p-2 rounded-xl mt-1 shrink-0 ${
-                    notif.is_read ? "bg-slate-50 text-slate-400" : "bg-blue-50 text-[#2691F0]"
+                    notif.readAt ? "bg-slate-50 text-slate-400" : "bg-blue-50 text-[#2691F0]"
                   }`}>
                     <Bell className="h-4 w-4" />
                   </div>
@@ -603,10 +570,10 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
                     <div className="flex justify-between items-start gap-4">
                       <p className="text-[#041635] font-black">{notif.title}</p>
                       <span className="text-[10px] text-slate-400 font-medium">
-                        {notif.created_at ? new Date(notif.created_at).toLocaleDateString("en-GB") : ""}
+                        {new Date(notif.createdAt).toLocaleDateString("en-GB")}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">{notif.message}</p>
+                    {notif.body && <p className="text-xs text-slate-500 font-medium mt-1 leading-relaxed">{notif.body}</p>}
                   </div>
                 </div>
               ))}

@@ -1,7 +1,9 @@
 import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
+import type { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
+import { getEmailIdentity, normaliseEmailRecipients } from "@/lib/email-config";
 
 export type SecurityCheckStatus = "pass" | "warn" | "fail";
 export type SecurityCheckCategory =
@@ -61,6 +63,10 @@ export const DEFAULT_SECURITY_CENTER_SETTINGS: SecurityCenterSettings = {
 
 type RawSettings = Record<string, unknown>;
 
+function toJsonValue(value: unknown): Prisma.InputJsonValue {
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
+
 function asBool(value: unknown, fallback: boolean) {
   if (value === "true" || value === true) return true;
   if (value === "false" || value === false) return false;
@@ -91,29 +97,27 @@ export function parseSecurityCenterSettings(value: unknown): SecurityCenterSetti
     dependencyScanEnabled: asBool(raw.dependencyScanEnabled, DEFAULT_SECURITY_CENTER_SETTINGS.dependencyScanEnabled),
     websiteScanEnabled: asBool(raw.websiteScanEnabled, DEFAULT_SECURITY_CENTER_SETTINGS.websiteScanEnabled),
     alertOnWarnings: asBool(raw.alertOnWarnings, DEFAULT_SECURITY_CENTER_SETTINGS.alertOnWarnings),
-    adminAlertEmail: asString(raw.adminAlertEmail),
+    adminAlertEmail: normaliseEmailRecipients(raw.adminAlertEmail),
     websiteBaseUrl: asString(raw.websiteBaseUrl),
     monitoredRoutes: routes.length ? routes : DEFAULT_MONITORED_ROUTES,
   };
 }
 
 export async function getSecurityCenterSettings() {
-  const [securitySetting, emailSetting, companySetting] = await Promise.all([
+  const [securitySetting, emailIdentity, companySetting] = await Promise.all([
     prisma.siteSetting.findUnique({ where: { key: "securityCenter" } }).catch(() => null),
-    prisma.siteSetting.findUnique({ where: { key: "emailConfig" } }).catch(() => null),
+    getEmailIdentity(),
     prisma.siteSetting.findUnique({ where: { key: "company" } }).catch(() => null),
   ]);
 
   const settings = parseSecurityCenterSettings(securitySetting?.value);
-  const emailConfig = (emailSetting?.value as Record<string, string> | null) ?? {};
   const companyConfig = (companySetting?.value as Record<string, string> | null) ?? {};
 
   return {
     ...settings,
     adminAlertEmail:
       settings.adminAlertEmail ||
-      emailConfig.adminNotificationEmail ||
-      process.env.ADMIN_NOTIFICATION_EMAIL ||
+      emailIdentity.adminNotificationEmail ||
       "",
     websiteBaseUrl:
       settings.websiteBaseUrl ||
@@ -424,7 +428,7 @@ export async function runSecurityScan(options: {
         action: "SECURITY_SCAN_RUN",
         entityType: "SecurityCenter",
         entityId: options.trigger,
-        metadata: {
+        metadata: toJsonValue({
           score,
           checks: checks.length,
           passCount,
@@ -433,7 +437,7 @@ export async function runSecurityScan(options: {
           overallStatus,
           trigger: options.trigger,
           result,
-        },
+        }),
       },
     });
   } catch {

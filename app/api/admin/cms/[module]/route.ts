@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { getSession } from "@/lib/auth";
 import crypto from "node:crypto";
 
 
@@ -36,10 +36,21 @@ const MODULE_MAP: Record<string, string> = {
   "web-sections":        "websiteSection",
 };
 
-function getModel(module: string): any | null {
+type CmsRecord = Record<string, unknown> & { id: string };
+
+type CmsModel = {
+  findUnique(args: { where: { id: string } }): Promise<CmsRecord | null>;
+  findMany(args: { take: number; skip: number; orderBy: { createdAt: "desc" } }): Promise<CmsRecord[]>;
+  create(args: { data: Record<string, unknown> }): Promise<CmsRecord>;
+  update(args: { where: { id: string }; data: Record<string, unknown> }): Promise<CmsRecord>;
+  delete(args: { where: { id: string } }): Promise<CmsRecord>;
+};
+
+function getModel(module: string): CmsModel | null {
   const key = MODULE_MAP[module];
   if (!key) return null;
-  return (prisma as any)[key] ?? null;
+  const models = prisma as unknown as Record<string, CmsModel | undefined>;
+  return models[key] ?? null;
 }
 
 function sanitize(v: unknown): unknown {
@@ -53,14 +64,26 @@ function sanitize(v: unknown): unknown {
   return v;
 }
 
-async function auditLog(action: string, entityType: string, entityId: string) {
+async function requireCmsApiAdministrator() {
+  const session = await getSession();
+  if (!session || session.user.role !== "SUPER_ADMIN") return null;
+  return session.user;
+}
+
+function clientIp(req: Request) {
+  return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || undefined;
+}
+
+async function auditLog(userId: string, ipAddress: string | undefined, action: string, entityType: string, entityId: string) {
   try {
-    await (prisma as any).auditLog.create({
+    await prisma.auditLog.create({
       data: {
         id: crypto.randomUUID(),
+        userId,
         action,
         entityType,
         entityId,
+        ipAddress,
       },
     });
   } catch {
@@ -68,13 +91,18 @@ async function auditLog(action: string, entityType: string, entityId: string) {
   }
 }
 
+function isMissingRecordError(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "P2025";
+}
+
 /* ── GET ────────────────────────────────────────────────────────────────── */
 export async function GET(
   req: Request,
   { params }: { params: Promise<{ module: string }> }
 ) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!(await requireCmsApiAdministrator())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { module } = await params;
   const model = getModel(module);
@@ -95,8 +123,8 @@ export async function GET(
 
     const records = await model.findMany({ take, skip, orderBy: { createdAt: "desc" } });
     return NextResponse.json({ data: records, count: records.length });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Unable to retrieve CMS records." }, { status: 500 });
   }
 }
 
@@ -105,8 +133,8 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ module: string }> }
 ) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const administrator = await requireCmsApiAdministrator();
+  if (!administrator) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { module } = await params;
   const model = getModel(module);
@@ -118,10 +146,10 @@ export async function POST(
     const record = await model.create({
       data: { id, updatedAt: new Date(), ...body },
     });
-    auditLog(`${module.toUpperCase()}_CREATED`, module, record.id);
+    await auditLog(administrator.id, clientIp(req), `${module.toUpperCase()}_CREATED`, module, record.id);
     return NextResponse.json(record, { status: 201 });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 422 });
+  } catch {
+    return NextResponse.json({ error: "Unable to create this CMS record." }, { status: 422 });
   }
 }
 
@@ -130,8 +158,8 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ module: string }> }
 ) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const administrator = await requireCmsApiAdministrator();
+  if (!administrator) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { module } = await params;
   const model = getModel(module);
@@ -149,11 +177,11 @@ export async function PATCH(
       where: { id },
       data: { updatedAt: new Date(), ...body },
     });
-    auditLog(`${module.toUpperCase()}_UPDATED`, module, id);
+    await auditLog(administrator.id, clientIp(req), `${module.toUpperCase()}_UPDATED`, module, id);
     return NextResponse.json(record);
-  } catch (err: any) {
-    if (err.code === "P2025") return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ error: err.message }, { status: 422 });
+  } catch (error: unknown) {
+    if (isMissingRecordError(error)) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Unable to update this CMS record." }, { status: 422 });
   }
 }
 
@@ -162,8 +190,8 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ module: string }> }
 ) {
-  const session = await requireAdmin();
-  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const administrator = await requireCmsApiAdministrator();
+  if (!administrator) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { module } = await params;
   const model = getModel(module);
@@ -174,10 +202,10 @@ export async function DELETE(
 
   try {
     await model.delete({ where: { id } });
-    auditLog(`${module.toUpperCase()}_DELETED`, module, id);
+    await auditLog(administrator.id, clientIp(req), `${module.toUpperCase()}_DELETED`, module, id);
     return NextResponse.json({ success: true });
-  } catch (err: any) {
-    if (err.code === "P2025") return NextResponse.json({ error: "Not found" }, { status: 404 });
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (error: unknown) {
+    if (isMissingRecordError(error)) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ error: "Unable to delete this CMS record." }, { status: 500 });
   }
 }

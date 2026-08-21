@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifySessionToken } from "@/lib/auth-edge";
 
-// Basic in-memory rate limiter.
-const rateLimitMap = new Map<string, { count: number; lastReset: number }>();
+// Basic in-memory rate limiter. A durable edge limiter should be configured before
+// horizontally scaling the deployment; this protects individual runtime instances.
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 60; // 60 requests per minute
+const MAX_TRACKED_CLIENTS = 10_000;
 
 // Routes that require authentication (any role)
 const PROTECTED_ROUTES = ["/portal", "/admin"];
@@ -23,27 +25,53 @@ const ADMIN_ROLES = [
   "FINANCE_VIEWER",
 ];
 
+function getClientAddress(request: NextRequest) {
+  const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const direct = request.headers.get("x-real-ip")?.trim() || request.headers.get("cf-connecting-ip")?.trim();
+  return (forwarded || direct || "unknown").slice(0, 512);
+}
+
+function pruneRateLimitMap(now: number) {
+  if (rateLimitMap.size < MAX_TRACKED_CLIENTS) return;
+
+  for (const [key, record] of rateLimitMap) {
+    if (record.resetAt <= now) rateLimitMap.delete(key);
+  }
+
+  if (rateLimitMap.size >= MAX_TRACKED_CLIENTS) {
+    const oldestKey = rateLimitMap.keys().next().value;
+    if (oldestKey) rateLimitMap.delete(oldestKey);
+  }
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  let response = NextResponse.next();
+  const response = NextResponse.next();
 
   // ── 1. Rate Limiting for API routes ────────────────────────────────────
   if (pathname.startsWith("/api")) {
-    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const ip = getClientAddress(request);
     const now = Date.now();
-    const windowStart = now - RATE_LIMIT_WINDOW;
 
     const record = rateLimitMap.get(ip);
-    if (!record || record.lastReset < windowStart) {
-      rateLimitMap.set(ip, { count: 1, lastReset: now });
+    if (!record || record.resetAt <= now) {
+      pruneRateLimitMap(now);
+      rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
     } else {
-      record.count += 1;
-      if (record.count > MAX_REQUESTS) {
+      if (record.count >= MAX_REQUESTS) {
         return new NextResponse(
           JSON.stringify({ error: "Too many requests. Please try again later." }),
-          { status: 429, headers: { "Content-Type": "application/json" } }
+          {
+            status: 429,
+            headers: {
+              "Content-Type": "application/json",
+              "Retry-After": String(Math.max(1, Math.ceil((record.resetAt - now) / 1_000))),
+              "Cache-Control": "no-store",
+            },
+          }
         );
       }
+      record.count += 1;
     }
   }
 

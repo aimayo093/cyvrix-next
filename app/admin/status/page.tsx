@@ -4,12 +4,12 @@ import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { StatusClient } from "./StatusClient";
 
-export const metadata = { title: "System Status | CYVRIX Admin" };
+export const metadata = { title: "System Status" };
 
-export default function AdminStatusPage(props: any) {
+export default function AdminStatusPage() {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
-      <AdminStatusPageContent {...props} />
+      <AdminStatusPageContent />
     </React.Suspense>
   );
 }
@@ -23,7 +23,7 @@ async function AdminStatusPageContent() {
       <div>
         <h1 className="font-outfit text-3xl font-black text-[#041635]" id="admin-status-heading">System Status</h1>
         <p className="text-slate-500 text-sm mt-1">
-          Monitor the real-time health and response SLA metrics of core CYVRIX infrastructure and services.
+          Service-status reporting is available only from verified monitoring and incident sources.
         </p>
       </div>
       

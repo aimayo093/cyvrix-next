@@ -40,15 +40,23 @@ export function ImageUpload({ name, defaultValue, className = "" }: ImageUploadP
         method: "POST",
         body: formData,
       });
+      const data: unknown = await res.json().catch(() => null);
 
       if (!res.ok) {
-        throw new Error("Failed to upload image");
+        const message =
+          data && typeof data === "object" && "error" in data && typeof data.error === "string"
+            ? data.error
+            : "Failed to upload image.";
+        throw new Error(message);
       }
 
-      const data = await res.json();
+      if (!data || typeof data !== "object" || !("url" in data) || typeof data.url !== "string") {
+        throw new Error("The upload service returned an invalid image URL.");
+      }
+
       setUrl(data.url);
-    } catch (err: any) {
-      setError(err.message || "Something went wrong.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsUploading(false);
     }

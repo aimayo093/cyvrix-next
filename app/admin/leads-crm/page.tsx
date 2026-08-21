@@ -9,7 +9,7 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { Trash2, StickyNote } from "lucide-react";
 
-export const metadata = { title: "Leads CRM | CYVRIX Admin" };
+export const metadata = { title: "Leads CRM" };
 
 const STATUS_OPTIONS = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST", "ARCHIVED"];
 

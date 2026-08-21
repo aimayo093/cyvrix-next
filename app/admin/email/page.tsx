@@ -7,7 +7,7 @@ import { Button } from "@/components/shared/Button";
 import { Mail, AlertCircle, CheckCircle2, Send } from "lucide-react";
 import { redirect } from "next/navigation";
 
-export const metadata = { title: "Email Broadcasts | CYVRIX Admin" };
+export const metadata = { title: "Email Broadcasts" };
 
 export default function EmailBroadcastPage(props: any) {
   return (
@@ -106,7 +106,7 @@ async function EmailBroadcastPageContent({
           </label>
 
           <p className="text-[10px] text-slate-400 font-semibold mb-4">
-            Emails are securely dispatched via the SMTP configuration defined in System Settings.
+            Emails use server-managed SMTP credentials. The sender identity is managed in System Settings.
           </p>
 
           <Button type="submit" className="bg-[#041635] text-white hover:bg-[#2691F0] px-6 py-2.5 rounded-xl font-bold flex items-center gap-2">

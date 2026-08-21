@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import type { ComplianceCard, FooterLink as FooterLinkRecord, FooterSection, SocialLink } from "@/generated/prisma";
 import { Logo } from "./Logo";
 import {
   MessageCircle,
@@ -15,11 +16,43 @@ import {
   Send,
   CheckCircle2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+
+type FooterSectionWithLinks = FooterSection & { links: FooterLinkRecord[] };
+
+type FooterNavLinkProps = React.ComponentPropsWithoutRef<typeof Link> & {
+  forceReload?: boolean;
+};
+
+const FooterNavLink = React.forwardRef<HTMLAnchorElement, FooterNavLinkProps>(
+  ({ href, children, forceReload = false, ...props }, ref) => {
+    const hrefString = href.toString();
+    const isInternal =
+      !hrefString.startsWith("#") &&
+      !hrefString.startsWith("tel:") &&
+      !hrefString.startsWith("mailto:") &&
+      !hrefString.startsWith("http");
+
+    if (forceReload && isInternal) {
+      return (
+        <a href={hrefString} ref={ref} {...props}>
+          {children}
+        </a>
+      );
+    }
+
+    return (
+      <Link href={href} ref={ref} {...props}>
+        {children}
+      </Link>
+    );
+  }
+);
+FooterNavLink.displayName = "FooterNavLink";
 
 /* ── Newsletter form (inline, client-side) ─────────────────────────────── */
 function NewsletterForm() {
   const [email, setEmail] = React.useState("");
+  const [consent, setConsent] = React.useState(false);
   const [state, setState] = React.useState<"idle" | "loading" | "done" | "error">("idle");
   const [msg, setMsg] = React.useState("");
 
@@ -30,15 +63,22 @@ function NewsletterForm() {
       const res = await fetch("/api/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source: "footer", consent: "on" }),
+        body: JSON.stringify({ email, source: "footer", consent: consent ? "on" : "" }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Subscription failed.");
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) {
+        const message =
+          data && typeof data === "object" && "error" in data && typeof data.error === "string"
+            ? data.error
+            : "Subscription failed.";
+        throw new Error(message);
+      }
       setState("done");
       setEmail("");
-    } catch (err: any) {
+      setConsent(false);
+    } catch (err: unknown) {
       setState("error");
-      setMsg(err?.message ?? "Something went wrong.");
+      setMsg(err instanceof Error ? err.message : "Something went wrong.");
     }
   }
 
@@ -74,9 +114,25 @@ function NewsletterForm() {
           <Send className="h-3.5 w-3.5 text-white" />
         </button>
       </div>
+      <label className="flex items-start gap-2 text-[9px] leading-relaxed text-slate-400">
+        <input
+          type="checkbox"
+          required
+          checked={consent}
+          onChange={(event) => setConsent(event.target.checked)}
+          className="mt-0.5 h-3 w-3 shrink-0 accent-[#2691F0]"
+        />
+        <span>
+          I agree to receive CYVRIX Insights and understand how my data is handled in the{" "}
+          <Link href="/privacy-policy" className="text-slate-300 underline underline-offset-2 hover:text-white">
+            Privacy Policy
+          </Link>
+          .
+        </span>
+      </label>
       {state === "error" && <p className="text-rose-400 text-[10px] font-bold">{msg}</p>}
       <p className="text-[9px] text-slate-600 leading-relaxed">
-        No spam. Unsubscribe anytime via <Link href="/api/unsubscribe" className="underline hover:text-slate-400">this link</Link>.
+        Every newsletter confirmation includes a signed unsubscribe link.
       </p>
     </form>
   );
@@ -204,8 +260,8 @@ function Github(props: React.SVGProps<SVGSVGElement>) {
 
 
 interface FooterProps {
-  footerSections?: any[];
-  socialLinks?: any[];
+  footerSections?: FooterSectionWithLinks[];
+  socialLinks?: SocialLink[];
   logoUrl?: string;
   logoAlt?: string;
   companyDesc?: string;
@@ -213,7 +269,7 @@ interface FooterProps {
   email?: string;
   address?: string;
   copyright?: string;
-  complianceCards?: any[];
+  complianceCards?: ComplianceCard[];
   forceFullPageReload?: boolean;
 }
 
@@ -235,7 +291,7 @@ export function Footer({
   socialLinks = [],
   logoUrl,
   logoAlt,
-  companyDesc = "Premium IT support and robust cybersecurity solutions for UK businesses that demand absolute reliability and strategic technological excellence.",
+  companyDesc = "CYVRIX helps organisations manage, secure and modernise the technology their people rely on.",
   phone,
   email,
   address,
@@ -243,44 +299,20 @@ export function Footer({
   complianceCards = [],
   forceFullPageReload = false,
 }: FooterProps) {
-  const visibleComplianceCards = complianceCards.filter(
-    (card) =>
-      !card.displayLocation ||
-      card.displayLocation.toLowerCase() === "all" ||
-      card.displayLocation.toLowerCase().includes("footer")
-  );
+  const visibleComplianceCards = complianceCards.filter((card) => {
+    const expiry = card.expiresAt ? new Date(card.expiresAt) : null;
+    const hasCurrentEvidence =
+      card.isVisible === true &&
+      card.publicVisibility === true &&
+      card.verificationStatus === "VERIFIED" &&
+      Boolean(card.verificationReference && card.evidenceUrl && card.evidenceReviewedAt && card.evidenceReviewedBy) &&
+      (!expiry || (!Number.isNaN(expiry.valueOf()) && expiry > new Date()));
 
-  const CustomLink = React.forwardRef<HTMLAnchorElement, React.ComponentPropsWithoutRef<typeof Link> & { forceReload?: boolean }>(
-    ({ href, children, forceReload = forceFullPageReload, ...props }, ref) => {
-      const hrefStr = href ? href.toString() : "";
-      const isInternal = hrefStr && !hrefStr.startsWith("#") && !hrefStr.startsWith("tel:") && !hrefStr.startsWith("mailto:") && !hrefStr.startsWith("http");
-      if (forceReload && isInternal) {
-        return (
-          <a href={hrefStr} ref={ref} {...props}>
-            {children}
-          </a>
-        );
-      }
-      return (
-        <Link href={href} ref={ref} {...props}>
-          {children}
-        </Link>
-      );
-    }
-  );
-  CustomLink.displayName = "CustomLink";
-
-  function getSafeDisplayStatus(card: { title: string; status: string; logoUrl?: string | null }) {
-    if (card.status !== "Certified" || card.logoUrl) {
-      return card.status;
-    }
-    const title = card.title.toLowerCase();
-    if (title.includes("27001")) return "Framework aligned";
-    if (title.includes("essentials")) return "Advisory service";
-    if (title.includes("gdpr") || title.includes("dpa")) return "Compliance support";
-    if (title.includes("itil")) return "Service aligned";
-    return "Framework followed";
-  }
+    return hasCurrentEvidence &&
+      (!card.displayLocation ||
+        card.displayLocation.toLowerCase() === "all" ||
+        card.displayLocation.toLowerCase().includes("footer"));
+  });
 
   function getCardIcon(iconKey?: string | null) {
     const key = iconKey?.toLowerCase() || "";
@@ -320,17 +352,17 @@ export function Footer({
               {phone && (
                 <div className="flex items-center gap-2.5">
                   <Phone className="h-4 w-4 text-[#2691F0] shrink-0" />
-                  <CustomLink href={`tel:${phone.replace(/\s/g, "")}`} className="hover:text-white transition-colors">
+                  <FooterNavLink href={`tel:${phone.replace(/\s/g, "")}`} forceReload={forceFullPageReload} className="hover:text-white transition-colors">
                     {phone}
-                  </CustomLink>
+                  </FooterNavLink>
                 </div>
               )}
               {email && (
                 <div className="flex items-center gap-2.5">
                   <Mail className="h-4 w-4 text-[#2691F0] shrink-0" />
-                  <CustomLink href={`mailto:${email}`} className="hover:text-white transition-colors">
+                  <FooterNavLink href={`mailto:${email}`} forceReload={forceFullPageReload} className="hover:text-white transition-colors">
                     {email}
-                  </CustomLink>
+                  </FooterNavLink>
                 </div>
               )}
             </div>
@@ -341,15 +373,16 @@ export function Footer({
                 {socialLinks.map((social) => {
                   const Icon = getSocialIcon(social.platform);
                   return (
-                    <CustomLink
+                    <FooterNavLink
                       key={social.id}
                       href={social.url}
+                      forceReload={forceFullPageReload}
                       target={social.openInNewTab ? "_blank" : undefined}
                       aria-label={social.label || social.platform}
                       className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#2691F0] hover:border-[#2691F0] transition-all hover:scale-105"
                     >
                       <Icon className="h-4.5 w-4.5" />
-                    </CustomLink>
+                    </FooterNavLink>
                   );
                 })}
               </div>
@@ -375,18 +408,19 @@ export function Footer({
                   <ul className="space-y-3">
                     {section.links &&
                        section.links
-                        .filter((l: any) => l.isVisible !== false)
-                        .sort((a: any, b: any) => a.sortOrder - b.sortOrder)
-                        .map((link: any) => (
+                        .filter((link) => link.isVisible !== false)
+                        .sort((left, right) => left.sortOrder - right.sortOrder)
+                        .map((link) => (
                           <li key={link.id}>
-                            <CustomLink
+                            <FooterNavLink
                               href={link.url}
+                              forceReload={forceFullPageReload}
                               target={link.openInNewTab ? "_blank" : undefined}
                               className="group flex items-center text-slate-300 hover:text-white transition-colors text-sm font-semibold"
                             >
                               <ArrowRight className="h-3 w-3 mr-1.5 opacity-0 -ml-4 text-[#2691F0] group-hover:opacity-100 group-hover:ml-0 transition-all duration-200" />
                               {link.label}
-                            </CustomLink>
+                            </FooterNavLink>
                           </li>
                         ))}
                   </ul>
@@ -406,7 +440,6 @@ export function Footer({
                   </div>
                   <div className="flex flex-wrap lg:flex-nowrap items-center gap-3">
                     {visibleComplianceCards.map((card) => {
-                      const displayStatus = getSafeDisplayStatus(card);
                       const CardIcon = getCardIcon(card.iconKey);
 
                       return (
@@ -415,15 +448,19 @@ export function Footer({
                           href={card.externalUrl || "#"}
                           target={card.externalUrl ? "_blank" : undefined}
                           rel="noopener noreferrer"
-                          title={`${card.title} (${displayStatus}) — ${card.description || ""}`}
+                          title={`${card.title} — ${card.description || ""}`}
                           className="group flex items-center justify-center transition-all duration-200 shrink-0"
                         >
                           {card.logoUrl ? (
-                            <img
-                              src={card.logoUrl}
-                              alt={card.title}
-                              className="h-11 w-auto object-contain filter brightness-75 opacity-70 group-hover:brightness-100 group-hover:opacity-100 transition-all duration-200"
-                            />
+                            <React.Fragment>
+                              {/* CMS-managed trust logos can be served from approved remote storage. */}
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={card.logoUrl}
+                                alt={card.title}
+                                className="h-11 w-auto object-contain filter brightness-75 opacity-70 group-hover:brightness-100 group-hover:opacity-100 transition-all duration-200"
+                              />
+                            </React.Fragment>
                           ) : (
                             <div className="flex items-center gap-2.5 bg-white/5 border border-[#2691F0]/20 rounded-xl px-3 py-2 opacity-80 group-hover:opacity-100 transition-all duration-200 shadow-sm shrink-0">
                               <CardIcon className="h-5 w-5 text-[#2691F0]" />
@@ -451,23 +488,31 @@ export function Footer({
         {/* Footer Bottom bar */}
         <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-slate-500 text-xs font-bold uppercase tracking-wide text-center md:text-left">
-            {copyright || "CYVRIX Technologies Ltd."}{" "}
+            {(copyright || "CYVRIX Technologies Ltd.").replace(/all rights reserved\.?/gi, "").trim()}{" "}
             <span className="hidden sm:inline">All rights reserved. Registered in England &amp; Wales.</span>
           </p>
           <div className="flex items-center gap-6">
-            <CustomLink
-              href="/book-consultation"
+            <FooterNavLink
+              href="/search"
+              forceReload={forceFullPageReload}
               className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer"
             >
-              Security Audit
-            </CustomLink>
-            <CustomLink
-              href="/admin/status"
-              className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors flex items-center gap-2 cursor-pointer"
+              Search
+            </FooterNavLink>
+            <FooterNavLink
+              href="/trust"
+              forceReload={forceFullPageReload}
+              className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer"
             >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)] animate-pulse" />
-              System Status
-            </CustomLink>
+              Trust Centre
+            </FooterNavLink>
+            <FooterNavLink
+              href="/book-consultation"
+              forceReload={forceFullPageReload}
+              className="text-slate-500 hover:text-[#2691F0] text-xs font-bold uppercase tracking-wide transition-colors cursor-pointer"
+            >
+              Book a technology review
+            </FooterNavLink>
           </div>
         </div>
       </div>

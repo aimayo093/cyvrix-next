@@ -1,0 +1,195 @@
+import Link from "next/link";
+import { ArrowRight, Cloud, ShieldCheck } from "lucide-react";
+import { resolveEngines } from "@/lib/service-engines";
+
+type Service = {
+  slug: string;
+  summary?: string | null;
+  title: string;
+};
+
+type PremiumHomeProps = {
+  services: Service[];
+};
+
+const deliverySteps = [
+  "Discover the business context and current estate.",
+  "Assess the practical risks, opportunities and priorities.",
+  "Design a proportionate plan with clear ownership.",
+  "Implement with careful communication and control.",
+  "Support, review and improve as the business changes.",
+];
+
+const commercialOffers = [
+  { title: "Free IT Health Check", href: "/assessments/it-health-check" },
+  { title: "Microsoft 365 Security Assessment", href: "/assessments/microsoft-365-security" },
+  { title: "Cybersecurity Assessment", href: "/assessments/cybersecurity-assessment" },
+  { title: "Cloud Readiness Assessment", href: "/assessments/cloud-readiness" },
+  { title: "Network Assessment", href: "/assessments/network-assessment" },
+];
+
+export function PremiumHome({ services }: PremiumHomeProps) {
+  const engines = resolveEngines(services);
+
+  return (
+    <div className="overflow-hidden bg-[#020817] text-white">
+      <section className="relative isolate border-b border-white/10 bg-[#041635]">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_15%,rgba(38,145,240,0.22),transparent_38%),radial-gradient(circle_at_80%_72%,rgba(6,182,212,0.12),transparent_38%)]" />
+        <div className="absolute inset-0 -z-10 bg-corporate-grid opacity-40" />
+        <div className="mx-auto max-w-7xl px-5 py-24 sm:py-28 lg:px-8 lg:py-36">
+          <div className="max-w-4xl">
+            <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3.5 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-sky-200">
+              <ShieldCheck className="h-4 w-4" />
+              Technology partnership for growing UK organisations
+            </p>
+            <h1 className="max-w-4xl font-outfit text-5xl font-black leading-[0.98] tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Technology that runs quietly. Security that stands up.
+            </h1>
+            <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-300 sm:text-xl">
+              CYVRIX manages, secures and modernises the technology behind ambitious organisations — with ongoing support, expert projects and practical field delivery.
+            </p>
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              <Link
+                href="/assessments"
+                className="inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-[#2691F0] px-7 font-bold text-white shadow-lg shadow-[#2691F0]/20 transition-colors hover:bg-white hover:text-[#041635]"
+              >
+                Choose an assessment <ArrowRight className="h-5 w-5" />
+              </Link>
+              <Link
+                href="/services"
+                className="inline-flex min-h-14 items-center justify-center rounded-md border border-white/20 px-7 font-bold text-white transition-colors hover:border-white/50 hover:bg-white/10"
+              >
+                Explore services
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-white/10 bg-[#020817]">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 divide-y divide-white/10 px-5 sm:grid-cols-3 sm:divide-x sm:divide-y-0 lg:px-8">
+          {[
+            "UK-based technology delivery",
+            "Security-first by design",
+            "Clear commercial ownership",
+          ].map((point) => (
+            <p key={point} className="py-5 text-center text-xs font-bold uppercase tracking-[0.14em] text-slate-400">
+              {point}
+            </p>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-slate-50 py-20 text-slate-900 sm:py-28">
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1678cc]">What we do</p>
+            <h2 className="mt-4 font-outfit text-4xl font-black tracking-tight sm:text-5xl">One accountable partner. Four ways to work with us.</h2>
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              Every engagement sits in one of four models, so you know from the outset how the work is scoped, delivered and bought.
+            </p>
+          </div>
+          <div className="mt-12 grid gap-5 md:grid-cols-2">
+            {engines.map((engine) => {
+              const Icon = engine.icon;
+              return (
+                <article key={engine.title} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-7 shadow-sm transition-shadow hover:shadow-xl">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#2691F0]/10 text-[#1678cc]">
+                      <Icon className="h-6 w-6" />
+                    </div>
+                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.1em] text-slate-500">
+                      {engine.engagement}
+                    </span>
+                  </div>
+
+                  <h3 className="mt-7 font-outfit text-2xl font-black">{engine.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">{engine.description}</p>
+
+                  {engine.includes.length > 0 && (
+                  <ul className="mt-6 flex flex-col gap-px border-t border-slate-100 pt-1">
+                    {engine.includes.map((item) => (
+                      <li key={item.slug}>
+                        <Link
+                          href={`/services/${item.slug}`}
+                          className="group/item flex items-center justify-between gap-3 rounded-lg py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:text-[#1678cc]"
+                        >
+                          {item.title}
+                          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-slate-300 transition-all group-hover/item:translate-x-0.5 group-hover/item:text-[#1678cc]" />
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                  )}
+
+                  <Link
+                    href={engine.href}
+                    className="mt-auto inline-flex items-center gap-2 pt-7 text-sm font-black text-[#1678cc] transition-colors hover:text-[#041635]"
+                  >
+                    {engine.cta} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200 bg-slate-50 py-20 text-slate-900 sm:py-24">
+        <div className="mx-auto max-w-7xl px-5 lg:px-8">
+          <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
+            <div className="max-w-3xl">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1678cc]">Focused starting points</p>
+              <h2 className="mt-4 font-outfit text-4xl font-black tracking-tight sm:text-5xl">Choose an assessment that fits the work ahead.</h2>
+            </div>
+            <Link href="/assessments" className="inline-flex items-center gap-2 text-sm font-black text-[#1678cc] hover:text-[#041635]">
+              View all assessments <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {commercialOffers.map((offer) => (
+              <Link key={offer.title} href={offer.href} className="group flex min-h-40 flex-col justify-between rounded-xl border border-slate-200 bg-white p-5 text-sm font-black shadow-sm transition-all hover:-translate-y-1 hover:border-[#2691F0]/50 hover:shadow-lg">
+                <span>{offer.title}</span>
+                <ArrowRight className="h-4 w-4 text-[#1678cc] transition-transform group-hover:translate-x-1" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-white/10 bg-[#020817] py-20 sm:py-28">
+        <div className="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">A sensible delivery model</p>
+            <h2 className="mt-4 font-outfit text-4xl font-black tracking-tight sm:text-5xl">Calm, clear delivery from first conversation to ongoing improvement.</h2>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-400">
+              The best technology work is measured by the confidence it gives your people — not by a wall of jargon or a dashboard of unsupported numbers.
+            </p>
+          </div>
+          <ol className="grid gap-3 sm:grid-cols-2">
+            {deliverySteps.map((step, index) => (
+              <li key={step} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+                <span className="text-xs font-black tracking-[0.16em] text-sky-300">0{index + 1}</span>
+                <p className="mt-4 text-sm font-semibold leading-6 text-slate-200">{step}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+
+      <section className="bg-[#2691F0] py-20 text-white sm:py-24">
+        <div className="mx-auto max-w-4xl px-5 text-center lg:px-8">
+          <Cloud className="mx-auto h-8 w-8 text-white/75" />
+          <h2 className="mt-5 font-outfit text-4xl font-black tracking-tight sm:text-5xl">Start with the right conversation.</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-50">
+            Tell us what needs attention. We will help you identify the most useful next step.
+          </p>
+          <Link href="/assessments" className="mt-9 inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-white px-7 font-bold text-[#041635] transition-colors hover:bg-[#041635] hover:text-white">
+            Choose an assessment <ArrowRight className="h-5 w-5" />
+          </Link>
+        </div>
+      </section>
+    </div>
+  );
+}

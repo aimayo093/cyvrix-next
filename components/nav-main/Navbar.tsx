@@ -3,8 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Phone, Mail, User, ShieldCheck, ChevronDown } from "lucide-react";
+import { Menu, Phone, Mail, User, ShieldCheck, ChevronDown, Search } from "lucide-react";
 import { Logo } from "./Logo";
 import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
@@ -21,6 +20,39 @@ interface NavbarProps {
   forceFullPageReload?: boolean;
 }
 
+type CustomLinkProps = React.ComponentPropsWithoutRef<typeof Link> & {
+  forceReload?: boolean;
+  onNavigate?: () => void;
+};
+
+const CustomLink = React.forwardRef<HTMLAnchorElement, CustomLinkProps>(
+  ({ href, children, forceReload = false, onNavigate, onClick, ...props }, ref) => {
+    const hrefStr = href ? href.toString() : "";
+    const isInternal = hrefStr && !hrefStr.startsWith("#") && !hrefStr.startsWith("tel:") && !hrefStr.startsWith("mailto:");
+    if (forceReload && isInternal) {
+      return (
+        <a
+          href={hrefStr}
+          ref={ref}
+          onClick={(e) => {
+            onNavigate?.();
+            if (onClick) onClick(e);
+          }}
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
+    return (
+      <Link href={href} ref={ref} onClick={onClick} {...props}>
+        {children}
+      </Link>
+    );
+  }
+);
+CustomLink.displayName = "CustomLink";
+
 export function Navbar({
   navItems,
   logoDefault,
@@ -28,11 +60,10 @@ export function Navbar({
   logoDark,
   logoSticky,
   logoAlt,
-  phone = "0800 123 4567",
-  email = "support@cyvrix.co.uk",
+  phone,
+  email,
   forceFullPageReload = false,
 }: NavbarProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);
   const pathname = usePathname();
@@ -53,41 +84,15 @@ export function Navbar({
 
   // Close menus on path changes
   React.useEffect(() => {
-    setIsOpen(false);
     setActiveDropdown(null);
     if (typeof window !== "undefined") {
       window.scrollTo(0, 0);
+      const mobileNavigationToggle = document.getElementById("cyvrix-mobile-navigation-toggle") as HTMLInputElement | null;
+      if (mobileNavigationToggle) mobileNavigationToggle.checked = false;
     }
   }, [pathname]);
 
-  const CustomLink = React.forwardRef<HTMLAnchorElement, React.ComponentPropsWithoutRef<typeof Link> & { forceReload?: boolean }>(
-    ({ href, children, forceReload = forceFullPageReload, onClick, ...props }, ref) => {
-      const hrefStr = href ? href.toString() : "";
-      const isInternal = hrefStr && !hrefStr.startsWith("#") && !hrefStr.startsWith("tel:") && !hrefStr.startsWith("mailto:");
-      if (forceReload && isInternal) {
-        return (
-          <a
-            href={hrefStr}
-            ref={ref}
-            onClick={(e) => {
-              setIsOpen(false);
-              setActiveDropdown(null);
-              if (onClick) onClick(e);
-            }}
-            {...props}
-          >
-            {children}
-          </a>
-        );
-      }
-      return (
-        <Link href={href} ref={ref} onClick={onClick} {...props}>
-          {children}
-        </Link>
-      );
-    }
-  );
-  CustomLink.displayName = "CustomLink";
+  const closeDropdown = React.useCallback(() => setActiveDropdown(null), []);
 
   // Build hierarchical menu items
   const menuTree = React.useMemo(() => {
@@ -119,28 +124,41 @@ export function Navbar({
   const activeTextClass = scrolled
     ? "text-white border-[#2691F0]"
     : "text-[#041635] border-[#2691F0]";
+  const getCtaLabel = (label?: string) =>
+    label?.trim().toLowerCase() === "get a free it audit"
+      ? "Book a technology review"
+      : label || "Book a technology review";
 
   return (
     <>
       {/* Corporate Top Bar (Static Light Navy) */}
       <div className="hidden lg:flex bg-[#041635] text-slate-300 py-2.5 px-5 lg:px-8 text-xs font-semibold justify-between items-center relative z-50 border-b border-white/5">
         <div className="flex items-center gap-6">
-          <CustomLink href={`tel:${phone.replace(/\s/g, "")}`} className="flex items-center gap-2 hover:text-white transition-colors">
-            <Phone className="h-3.5 w-3.5 text-[#2691F0]" />
-            {phone}
-          </CustomLink>
-          <CustomLink href={`mailto:${email}`} className="flex items-center gap-2 hover:text-white transition-colors">
-            <Mail className="h-3.5 w-3.5 text-[#2691F0]" />
-            {email}
-          </CustomLink>
+          {phone && (
+            <CustomLink href={`tel:${phone.replace(/\s/g, "")}`} forceReload={forceFullPageReload} onNavigate={closeDropdown} className="flex items-center gap-2 hover:text-white transition-colors">
+              <Phone className="h-3.5 w-3.5 text-[#2691F0]" />
+              {phone}
+            </CustomLink>
+          )}
+          {email && (
+            <CustomLink href={`mailto:${email}`} forceReload={forceFullPageReload} onNavigate={closeDropdown} className="flex items-center gap-2 hover:text-white transition-colors">
+              <Mail className="h-3.5 w-3.5 text-[#2691F0]" />
+              {email}
+            </CustomLink>
+          )}
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-            <span>ISO 27001 Certified &amp; ITIL Aligned</span>
+            <span>Security-first delivery</span>
           </div>
           <div className="w-px h-3 bg-slate-700" />
-          <CustomLink href="/login" className="flex items-center gap-2 hover:text-white transition-colors">
+          <CustomLink href="/search" forceReload={forceFullPageReload} onNavigate={closeDropdown} className="flex items-center gap-2 hover:text-white transition-colors">
+            <Search className="h-3.5 w-3.5" />
+            Search
+          </CustomLink>
+          <div className="w-px h-3 bg-slate-700" />
+          <CustomLink href="/login" forceReload={forceFullPageReload} onNavigate={closeDropdown} className="flex items-center gap-2 hover:text-white transition-colors">
             <User className="h-3.5 w-3.5" />
             Client Portal Login
           </CustomLink>
@@ -149,6 +167,12 @@ export function Navbar({
 
       {/* Main Navbar */}
       <header className={cn("sticky top-0 z-40 transition-all duration-300 border-b", headerBgClass)}>
+        <input
+          id="cyvrix-mobile-navigation-toggle"
+          type="checkbox"
+          aria-label="Toggle navigation menu"
+          className="peer sr-only xl:hidden"
+        />
         <div className="max-w-7xl mx-auto px-5 lg:px-8">
           <nav className="flex items-center justify-between">
             <Logo
@@ -161,7 +185,7 @@ export function Navbar({
             />
 
             {/* Desktop Nav */}
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden xl:flex items-center gap-8">
               <div className="flex items-center gap-6">
                 {menuTree.map((item) => {
                   if (item.iconKey === "button-cta") return null;
@@ -189,6 +213,8 @@ export function Navbar({
                       ) : (
                         <CustomLink
                           href={item.url}
+                          forceReload={forceFullPageReload}
+                          onNavigate={closeDropdown}
                           target={item.openInNewTab ? "_blank" : undefined}
                           className={cn(
                             "text-[15px] font-bold transition-all pb-1 border-b-2 border-transparent",
@@ -210,6 +236,8 @@ export function Navbar({
                             <CustomLink
                               key={child.id}
                               href={child.url}
+                              forceReload={forceFullPageReload}
+                              onNavigate={closeDropdown}
                               target={child.openInNewTab ? "_blank" : undefined}
                               className={cn(
                                 "block px-4 py-2.5 rounded-lg text-sm font-bold transition-all",
@@ -239,8 +267,8 @@ export function Navbar({
                         className="bg-[#2691F0] text-white hover:bg-[#041635] hover:text-white rounded font-bold shadow-lg shadow-[#2691F0]/20 transition-all cursor-pointer"
                         asChild
                       >
-                        <CustomLink href={cta.url} target={cta.openInNewTab ? "_blank" : undefined}>
-                          {cta.label}
+                        <CustomLink href={cta.url} forceReload={forceFullPageReload} onNavigate={closeDropdown} target={cta.openInNewTab ? "_blank" : undefined}>
+                          {getCtaLabel(cta.label)}
                         </CustomLink>
                       </Button>
                     );
@@ -250,26 +278,22 @@ export function Navbar({
             </div>
 
             {/* Mobile Menu Button */}
-            <button
+            <label
+              htmlFor="cyvrix-mobile-navigation-toggle"
               className={cn(
-                "lg:hidden p-2 rounded-xl transition-colors cursor-pointer",
+                "xl:hidden p-2 rounded-xl transition-colors cursor-pointer",
                 scrolled ? "text-slate-300 hover:text-white hover:bg-white/10" : "text-slate-600 hover:text-[#041635] hover:bg-slate-100"
               )}
-              onClick={() => setIsOpen(!isOpen)}
             >
-              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </button>
+              <Menu className="h-6 w-6" />
+            </label>
           </nav>
         </div>
 
         {/* Mobile Nav Overlay */}
-        <AnimatePresence>
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              className="lg:hidden bg-[#041635] border-t border-white/5 overflow-hidden"
+            <div
+              id="cyvrix-mobile-navigation"
+              className="hidden peer-checked:block xl:hidden bg-[#041635] border-t border-white/5 overflow-hidden"
             >
               <div className="px-5 py-6 flex flex-col gap-2">
                 {menuTree.map((item) => {
@@ -281,9 +305,10 @@ export function Navbar({
                     <div key={item.id} className="border-b border-white/5 pb-2">
                       <CustomLink
                         href={item.url}
+                        forceReload={forceFullPageReload}
+                        onNavigate={closeDropdown}
                         target={item.openInNewTab ? "_blank" : undefined}
                         className="block py-2.5 text-lg font-bold text-white"
-                        onClick={() => setIsOpen(false)}
                       >
                         {item.label}
                       </CustomLink>
@@ -293,9 +318,10 @@ export function Navbar({
                             <CustomLink
                               key={child.id}
                               href={child.url}
+                              forceReload={forceFullPageReload}
+                              onNavigate={closeDropdown}
                               target={child.openInNewTab ? "_blank" : undefined}
                               className="block py-2 text-sm font-semibold text-slate-400 hover:text-white"
-                              onClick={() => setIsOpen(false)}
                             >
                               {child.label}
                             </CustomLink>
@@ -308,9 +334,20 @@ export function Navbar({
 
                 <div className="pt-6 pb-2 space-y-4">
                   <CustomLink
-                    href="/login"
+                    href="/search"
+                    forceReload={forceFullPageReload}
+                    onNavigate={closeDropdown}
                     className="flex items-center gap-2 text-slate-300 hover:text-white font-bold"
-                    onClick={() => setIsOpen(false)}
+                  >
+                    <Search className="h-5 w-5 text-[#2691F0]" />
+                    Search
+                  </CustomLink>
+
+                  <CustomLink
+                    href="/login"
+                    forceReload={forceFullPageReload}
+                    onNavigate={closeDropdown}
+                    className="flex items-center gap-2 text-slate-300 hover:text-white font-bold"
                   >
                     <User className="h-5 w-5 text-[#2691F0]" />
                     Client Portal Login
@@ -323,10 +360,11 @@ export function Navbar({
                         return (
                           <CustomLink
                             href={cta.url}
+                            forceReload={forceFullPageReload}
+                            onNavigate={closeDropdown}
                             target={cta.openInNewTab ? "_blank" : undefined}
-                            onClick={() => setIsOpen(false)}
                           >
-                            {cta.label}
+                            {getCtaLabel(cta.label)}
                           </CustomLink>
                         );
                       })()}
@@ -334,9 +372,7 @@ export function Navbar({
                   )}
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
       </header>
     </>
   );

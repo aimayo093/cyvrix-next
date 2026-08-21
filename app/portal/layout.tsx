@@ -10,17 +10,19 @@ import {
   User,
   LogOut,
   Bell,
-  HelpCircle,
   FolderOpen
 } from "lucide-react";
-import { Button } from "@/components/shared/Button";
 import { Logo } from "@/components/nav-main/Logo";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
-  title: "Client Portal | CYVRIX",
+  // Overrides the root template so portal tabs stay distinguishable from the public site.
+  title: {
+    default: "CYVRIX Client Portal",
+    template: "%s | CYVRIX Client Portal",
+  },
   description: "Manage your IT services and security with CYVRIX.",
 };
 
@@ -28,7 +30,7 @@ const portalNav = [
   { name: "Overview", href: "/portal", icon: Home },
   { name: "Support Tickets", href: "/portal/support-tickets", icon: MessageSquare },
   { name: "Proposals & Quotes", href: "/portal/quotes-and-proposals", icon: FileText },
-  { name: "Active Services", href: "/portal/services", icon: ShieldCheck },
+  { name: "Services", href: "/portal/services", icon: ShieldCheck },
   { name: "Documents", href: "/portal/documents", icon: FolderOpen },
   { name: "Profile & Company", href: "/portal/profile-and-company", icon: User },
 ];
@@ -94,10 +96,12 @@ async function PortalLayoutContent({
         </nav>
 
         <div className="p-4 border-t border-slate-800">
-          <Link href="/logout" className="flex items-center gap-3 px-3 py-3 rounded-xl text-slate-400 hover:bg-[#ef4444]/10 hover:text-red-400 transition-all font-bold text-sm w-full group">
-            <LogOut className="h-5 w-5 shrink-0" />
-            <span className="hidden lg:block">Log Out</span>
-          </Link>
+          <form action="/api/auth/logout" method="POST">
+            <button type="submit" className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-slate-400 transition-all hover:bg-[#ef4444]/10 hover:text-red-400">
+              <LogOut className="h-5 w-5 shrink-0" />
+              <span className="hidden lg:block">Log Out</span>
+            </button>
+          </form>
         </div>
       </aside>
 
@@ -108,9 +112,9 @@ async function PortalLayoutContent({
           <h2 className="font-outfit text-xl font-black text-[#041635]">Client Workspace</h2>
 
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full text-xs font-black">
-              <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-              Environment Secure
+            <div className="flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-black text-slate-600">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#2691F0]" />
+              Client portal
             </div>
             
             <div className="flex items-center gap-4 border-l border-slate-200 pl-6">

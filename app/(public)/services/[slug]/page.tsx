@@ -1,35 +1,44 @@
 import * as React from "react";
-import { notFound } from "next/navigation";
 import Link from "next/link";
-import { 
-  ArrowLeft, 
-  Check, 
-  HelpCircle, 
-  HelpCircle as QuestionIcon,
-  Shield, 
+import { notFound } from "next/navigation";
+import {
+  ArrowLeft,
   ArrowRight,
-  TrendingUp,
-  Award,
-  Zap,
-  Target
+  CheckCircle2,
+  ClipboardCheck,
+  Compass,
+  ShieldCheck,
+  Target,
 } from "lucide-react";
-import { Button } from "@/components/shared/Button";
 import { findService as findStaticService, services as staticServices } from "@/lib/cyvrix-data";
 import { getPublicServiceDetail } from "@/lib/public-cache";
+import { getServiceJourney } from "@/lib/service-journeys";
 
-interface ServicePageProps {
-  params: Promise<{
-    slug: string;
-  }>;
-}
+type ServicePageProps = {
+  params: Promise<{ slug: string }>;
+};
+
+type ServiceContent = {
+  includes: string[];
+  features: string[];
+  process: string[];
+  faqs: { question: string; answer: string }[];
+  body: string;
+};
 
 export async function generateMetadata({ params }: ServicePageProps) {
   const { slug } = await params;
-  const { service } = await getPublicServiceDetail(slug);
+  const { service: dbService } = await getPublicServiceDetail(slug);
+  const service = dbService ?? findStaticService(slug);
+
   return {
-    title: service ? `${service.title} | CYVRIX Technologies` : "Service Detail",
-    description: service ? service.summary : "Cybersecurity & Technology Services",
+    title: service ? service.title : "Service not found",
+    description: service?.summary ?? "Explore CYVRIX technology services.",
   };
+}
+
+export function generateStaticParams() {
+  return staticServices.map((service) => ({ slug: service.slug }));
 }
 
 export default function ServiceDetailPage(props: ServicePageProps) {
@@ -42,275 +51,193 @@ export default function ServiceDetailPage(props: ServicePageProps) {
 
 async function ServiceDetailContent({ params }: ServicePageProps) {
   const { slug } = await params;
-  const { service, related: relatedDb } = await getPublicServiceDetail(slug);
-  if (!service) notFound();
+  const { service: dbService, related: dbRelated } = await getPublicServiceDetail(slug);
+  const staticService = findStaticService(slug);
+  const service = dbService ?? staticService;
 
-  // Load fallback content arrays (features, process, faqs, includes) if they exist
-  const staticSvc = findStaticService(slug);
-  const content = service.content as any;
-  const features = content?.features?.length ? content.features : (staticSvc?.features || []);
-  const processSteps = content?.process?.length ? content.process : (staticSvc?.process || []);
-  const includes = content?.includes?.length ? content.includes : (staticSvc?.includes || []);
-  const faqs = content?.faqs?.length ? content.faqs : (staticSvc?.faqs || []);
+  if (!service) {
+    notFound();
+  }
 
-  const related = relatedDb.map(r => {
-    const s = findStaticService(r.slug);
-    return { ...r, icon: s?.icon };
-  });
+  const content = readServiceContent(dbService?.content, staticService);
+  const journey = getServiceJourney(service.slug);
+  const related = dbRelated.length > 0
+    ? dbRelated
+    : staticServices.filter((candidate) => candidate.slug !== service.slug).slice(0, 3);
 
   return (
-    <div className="pt-24 pb-20 bg-[#020817] text-white">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b from-[#041635] to-[#0a2a5e] py-20 text-white relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute right-0 bottom-0 w-[500px] h-[500px] bg-[#2691F0]/10 rounded-full blur-[120px]" />
-        
-        <div className="max-w-7xl mx-auto px-5 lg:px-8 relative z-10">
-          <Link 
-            href="/services" 
-            className="inline-flex items-center gap-2 text-sm font-bold text-[#2691F0] hover:text-[#2691F0]/80 transition-colors mb-6 group"
-          >
-            <ArrowLeft className="h-4 w-4 group-hover:-translate-x-1 transition-transform" />
-            Back to All Services
+    <div className="min-h-screen bg-[#020817] text-white">
+      <section className="relative overflow-hidden border-b border-white/10 bg-[#041635] pb-20 pt-32">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(38,145,240,0.24),transparent_34%)]" />
+        <div className="absolute inset-0 bg-corporate-grid opacity-40" />
+        <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
+          <Link href="/services" className="inline-flex items-center gap-2 text-sm font-bold text-sky-300 transition-colors hover:text-white">
+            <ArrowLeft className="h-4 w-4" />
+            All services
           </Link>
-          
-          <div className="max-w-4xl">
-            <span className="text-xs font-black uppercase tracking-[0.2em] text-[#2691F0] bg-[#2691F0]/100/10 px-3 py-1.5 rounded-md border border-[#2691F0]/20">
-              Enterprise Technology
-            </span>
-            <h1 className="font-outfit text-4xl md:text-5.5xl font-black mt-6 tracking-tight leading-tight">
-              {service.title}
-            </h1>
-            <p className="text-slate-300 font-medium text-lg md:text-xl leading-relaxed mt-6 max-w-3xl">
-              {service.summary}
-            </p>
-            
-            <div className="flex flex-wrap gap-4 mt-10">
-              <Link href="/request-quote">
-                <Button variant="premium" className="bg-[#2691F0] text-white hover:bg-blue-600 border-none shadow-lg shadow-blue-500/20">
-                  Request Free Quote
-                </Button>
+          <div className="mt-10 max-w-4xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">{journey.category}</p>
+            <h1 className="mt-4 font-outfit text-5xl font-black tracking-tight sm:text-6xl">{service.title}</h1>
+            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">{service.summary}</p>
+            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+              <Link href={journey.primaryHref} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-[#2691F0] px-6 py-3 text-sm font-black text-white transition-colors hover:bg-white hover:text-[#041635]">
+                {journey.primaryLabel} <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/book-consultation">
-                <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
-                  Book a Consultation
-                </Button>
+              <Link href={journey.secondaryHref} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3 text-sm font-black text-white transition-colors hover:border-sky-300/60 hover:bg-white/10">
+                {journey.secondaryLabel}
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Core Insights: Grid */}
-      <section className="max-w-7xl mx-auto px-5 lg:px-8 py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <Panel title="What is Included" icon={Zap}>
-            <ul className="space-y-4">
-              {includes.map((item: string, idx: number) => (
-                <li key={idx} className="flex gap-3 text-slate-400 text-sm leading-relaxed">
-                  <Check className="h-5 w-5 text-[#2691F0] shrink-0 mt-0.5" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Panel>
+      <section className="mx-auto grid max-w-7xl gap-5 px-5 py-16 sm:grid-cols-2 lg:grid-cols-3 lg:px-8">
+        <InsightPanel icon={ClipboardCheck} title="What the work can include">
+          <BulletList items={content.includes} emptyMessage="The scope is agreed around your current estate, users and project objectives." />
+        </InsightPanel>
+        <InsightPanel icon={Target} title="Where it is most useful">
+          <p className="text-sm leading-7 text-slate-300">{staticService?.audience ?? "Organisations that need a clear, proportionate route through a technology change or operational priority."}</p>
+        </InsightPanel>
+        <InsightPanel icon={Compass} title="Questions it can address">
+          <BulletList items={staticService?.problems ?? []} emptyMessage="We use discovery to understand the operational context and the priority to address first." />
+        </InsightPanel>
+      </section>
 
-          <Panel title="Ideal For" icon={Target}>
-            <p className="text-slate-400 leading-relaxed text-sm">
-              {staticSvc?.audience || "Business"}
-            </p>
-            <div className="mt-8 p-5 bg-[#2691F0]/10/50 rounded-2xl border border-blue-100/50 text-slate-500 text-xs leading-relaxed font-semibold">
-              Leverage custom cybersecurity and robust cloud structures shaped specifically for UK compliance frameworks.
-            </div>
-          </Panel>
-
-          <Panel title="Problems Solved" icon={TrendingUp}>
-            <ul className="space-y-4">
-              {(staticSvc?.problems || []).map((item: string, idx: number) => (
-                <li key={idx} className="flex gap-3 text-slate-400 text-sm leading-relaxed">
-                  <Check className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
-                  <span>{item}</span>
-                </li>
-              ))}
-            </ul>
-          </Panel>
+      <section className="border-y border-white/10 bg-[#041635] py-20">
+        <div className="mx-auto grid max-w-7xl gap-14 px-5 lg:grid-cols-2 lg:px-8">
+          <DetailList eyebrow="Capabilities" heading="Practical detail, shaped around the scope." items={content.features} emptyMessage="The appropriate technical activities are confirmed once the estate, dependencies and delivery constraints are understood." />
+          <DetailList eyebrow="Delivery approach" heading="A clear route from discovery to next steps." items={content.process} emptyMessage="We begin with discovery, agree the priority and then define the most suitable delivery approach." numbered />
         </div>
       </section>
 
-      {/* Detailed Features & Process */}
-      <section className="bg-[#020817] border-y border-white/10 py-20">
-        <div className="max-w-7xl mx-auto px-5 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+      <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+        <div className="rounded-3xl border border-sky-300/20 bg-sky-300/10 p-8 sm:p-10">
+          <div className="max-w-3xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">Security and governance</p>
+            <h2 className="mt-4 font-outfit text-3xl font-black">Consider risk early, then agree the right controls.</h2>
+            <p className="mt-5 text-base leading-7 text-slate-300">{staticService?.compliance ?? "Security, resilience, access control and data handling should be considered in the scope before production work begins."}</p>
+            <p className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-sky-100"><ShieldCheck className="h-4 w-4 text-sky-300" /> Any formal certification, legal advice or independent testing is agreed separately where required.</p>
+          </div>
+        </div>
+      </section>
+
+      {(content.body || content.faqs.length > 0) && (
+        <section className="border-y border-white/10 bg-white/[0.02] py-20">
+          <div className="mx-auto grid max-w-7xl gap-14 px-5 lg:grid-cols-[0.8fr_1.2fr] lg:px-8">
             <div>
-              <div className="flex items-center gap-2 text-[#2691F0] text-xs font-black uppercase tracking-widest mb-4">
-                <Award className="h-4 w-4" /> Professional Architecture
-              </div>
-              <h2 className="font-outfit text-3xl md:text-4xl font-black mb-8 text-white">
-                Key features designed for resiliency
-              </h2>
-              <ul className="space-y-5">
-                {features.map((feature: string, idx: number) => (
-                  <li key={idx} className="flex gap-4 p-5 rounded-2xl bg-[#020817] border border-white/5 hover:border-blue-100 transition-all">
-                    <span className="w-8 h-8 rounded-full bg-[#2691F0]/10 text-[#2691F0] font-black text-xs flex items-center justify-center shrink-0">
-                      {idx + 1}
-                    </span>
-                    <div>
-                      <p className="font-black text-sm text-white">{feature}</p>
-                    </div>
-                  </li>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">Service context</p>
+              <h2 className="mt-4 font-outfit text-3xl font-black">What happens next</h2>
+              <p className="mt-5 text-base leading-7 text-slate-300">{content.body || "Tell us what needs attention. We will use the initial context to identify whether this service, a focused assessment or a scoped project is the right next step."}</p>
+            </div>
+            {content.faqs.length > 0 && (
+              <div className="space-y-3">
+                {content.faqs.map((faq) => (
+                  <details key={faq.question} className="group rounded-2xl border border-white/10 bg-[#020817] p-5">
+                    <summary className="cursor-pointer list-none pr-8 text-sm font-black text-white">{faq.question}</summary>
+                    <p className="mt-4 border-t border-white/10 pt-4 text-sm leading-7 text-slate-400">{faq.answer}</p>
+                  </details>
                 ))}
-              </ul>
-            </div>
-
-            <div>
-              <div className="flex items-center gap-2 text-[#2691F0] text-xs font-black uppercase tracking-widest mb-4">
-                <Shield className="h-4 w-4" /> Operational Method
               </div>
-              <h2 className="font-outfit text-3xl md:text-4xl font-black mb-8 text-white">
-                CYVRIX Delivery Process
-              </h2>
-              <ul className="space-y-5">
-                {processSteps.map((step: string, idx: number) => (
-                  <li key={idx} className="flex gap-4 p-5 rounded-2xl bg-[#2691F0]/10 border border-[#2691F0]/10 hover:border-[#2691F0]/20 transition-all">
-                    <span className="w-8 h-8 rounded-full bg-[#2691F0] text-white font-black text-xs flex items-center justify-center shrink-0">
-                      {idx + 1}
-                    </span>
-                    <div>
-                      <p className="font-black text-sm text-white">{step}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Compliance & Auditing Section */}
-      <section className="max-w-7xl mx-auto px-5 lg:px-8 py-20">
-        <div className="bg-[#041635] text-white rounded-3xl p-10 md:p-14 relative overflow-hidden">
-          <div className="absolute right-0 bottom-0 w-[400px] h-[400px] bg-[#2691F0]/10 rounded-full blur-[100px]" />
-          <div className="relative z-10 max-w-3xl">
-            <span className="text-xs font-black uppercase tracking-widest text-[#2691F0] mb-4 block">
-              Security & Trust Integration
-            </span>
-            <h2 className="font-outfit text-3.5xl font-black mb-6">
-              Assuring compliance and risk protection
-            </h2>
-            <p className="text-slate-300 leading-relaxed text-md font-medium mb-8">
-              {staticSvc?.compliance || "Standard"}
-            </p>
-            <div className="inline-flex items-center gap-2 text-xs font-bold text-slate-400">
-              <Shield className="h-4 w-4 text-emerald-500" />
-              Fully verified in compliance with Cyber Essentials, GDPR, and ISO 27001 requirements.
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Accordion FAQ preview */}
-      <section className="bg-[#020817] py-20 border-t border-white/10">
-        <div className="max-w-4xl mx-auto px-5">
-          <div className="text-center mb-16">
-            <span className="text-xs font-black uppercase tracking-widest text-[#2691F0]">FAQ</span>
-            <h2 className="font-outfit text-3xl font-black text-white mt-3">
-              Frequently Asked Questions
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            {faqs.map((faq: { question: string; answer: string }, idx: number) => (
-              <details 
-                key={idx} 
-                className="group rounded-2xl border border-white/10 p-6 bg-[#020817] hover:border-[#2691F0]/40 transition-all"
-              >
-                <summary className="cursor-pointer font-bold font-outfit text-white list-none flex items-center justify-between">
-                  <span>{faq.question}</span>
-                  <span className="text-slate-400 group-hover:text-[#2691F0] font-bold text-xl leading-none transition-transform group-open:rotate-45">
-                    +
-                  </span>
-                </summary>
-                <p className="mt-4 text-sm leading-relaxed text-slate-400 border-t border-white/5 pt-4">
-                  {faq.answer}
-                </p>
-              </details>
-            ))}
-          </div>
-
-          <div className="prose prose-slate max-w-none text-slate-400 space-y-6 mt-16">
-            {content?.body ? (
-              <div dangerouslySetInnerHTML={{ __html: content.body.replace(/\n/g, '<br/>') }} />
-            ) : (
-              <>
-                <p>
-                  <strong>{service.title}</strong> helps businesses scale securely and efficiently. We provide tailored solutions that align with your strategic objectives, reducing risk and improving operational capabilities.
-                </p>
-                <p>
-                  Our approach goes beyond reactive fixes. We implement proactive measures and robust architectures to ensure your digital environment is resilient and performant. 
-                </p>
-                <p>
-                  Partner with CYVRIX to leverage enterprise-grade technology solutions designed specifically for the unique demands of your industry.
-                </p>
-              </>
             )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
-      {/* Related Services */}
-      <section className="max-w-7xl mx-auto px-5 lg:px-8 py-20">
-        <div className="mb-12">
-          <span className="text-xs font-black uppercase tracking-widest text-[#2691F0]">Explore</span>
-          <h2 className="font-outfit text-3xl font-black text-white mt-3">
-            Often Paired Services
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {related.map((item) => (
-            <Link 
-              key={item.slug} 
-              href={`/services/${item.slug}`} 
-              className="p-6 rounded-2xl border border-white/10 bg-[#020817] hover:border-[#2691F0] hover:shadow-xl transition-all font-bold text-white flex items-center justify-between group"
-            >
-              <span>{item.title}</span>
-              <ArrowRight className="h-4 w-4 text-slate-300 group-hover:text-[#2691F0] group-hover:translate-x-1 transition-all" />
-            </Link>
-          ))}
-        </div>
-      </section>
+      {related.length > 0 && (
+        <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">Related capabilities</p>
+          <h2 className="mt-4 font-outfit text-3xl font-black">Often considered alongside this service.</h2>
+          <div className="mt-10 grid gap-4 md:grid-cols-3">
+            {related.map((item) => (
+              <Link key={item.slug} href={`/services/${item.slug}`} className="group flex min-h-32 flex-col justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-5 transition-colors hover:border-sky-300/50 hover:bg-white/[0.06]">
+                <span className="font-outfit text-xl font-black">{item.title}</span>
+                <ArrowRight className="h-4 w-4 text-sky-300 transition-transform group-hover:translate-x-1" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
+}
+
+function readServiceContent(value: unknown, fallback: ReturnType<typeof findStaticService>): ServiceContent {
+  const content = isRecord(value) ? value : {};
+  return {
+    includes: readStringList(content.includes, fallback?.includes ?? []),
+    features: readStringList(content.features, fallback?.features ?? []),
+    process: readStringList(content.process, fallback?.process ?? []),
+    faqs: readFaqs(content.faqs, fallback?.faqs ?? []),
+    body: readText(content.body),
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function readStringList(value: unknown, fallback: string[]) {
+  if (!Array.isArray(value)) return fallback;
+  const items = value.filter((item): item is string => typeof item === "string").map(readText).filter(Boolean);
+  return items.length > 0 ? items : fallback;
+}
+
+function readFaqs(value: unknown, fallback: { question: string; answer: string }[]) {
+  if (!Array.isArray(value)) return fallback;
+  const items = value.flatMap((item) => {
+    if (!isRecord(item)) return [];
+    const question = readText(item.question);
+    const answer = readText(item.answer);
+    return question && answer ? [{ question, answer }] : [];
+  });
+  return items.length > 0 ? items : fallback;
+}
+
+function readText(value: unknown) {
+  return typeof value === "string"
+    ? value.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()
+    : "";
 }
 
 function ServiceDetailFallback() {
+  return <div className="min-h-screen bg-[#020817]" />;
+}
+
+function InsightPanel({ icon: Icon, title, children }: { icon: typeof ClipboardCheck; title: string; children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#020817] pt-24 text-white">
-      <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8">
-        <div className="h-4 w-36 rounded bg-white/10" />
-        <div className="mt-8 h-16 max-w-3xl rounded bg-white/10" />
-        <div className="mt-6 h-6 max-w-2xl rounded bg-white/10" />
-      </section>
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+      <Icon className="h-5 w-5 text-sky-300" />
+      <h2 className="mt-6 font-outfit text-xl font-black">{title}</h2>
+      <div className="mt-5">{children}</div>
     </div>
   );
 }
 
-function Panel({ 
-  title, 
-  children, 
-  icon: Icon 
-}: { 
-  title: string; 
-  children: React.ReactNode; 
-  icon: React.ComponentType<{ className?: string }> 
-}) {
+function DetailList({ eyebrow, heading, items, emptyMessage, numbered = false }: { eyebrow: string; heading: string; items: string[]; emptyMessage: string; numbered?: boolean }) {
+  const displayItems = items.length > 0 ? items : [emptyMessage];
   return (
-    <div className="rounded-3xl border border-slate-200/80 bg-[#020817] p-8 shadow-sm hover:shadow-md transition-shadow">
-      <div className="w-10 h-10 rounded-xl bg-[#2691F0]/10 text-[#2691F0] flex items-center justify-center mb-6">
-        <Icon className="h-5 w-5" />
-      </div>
-      <h3 className="font-outfit text-xl font-black text-white mb-6">{title}</h3>
-      {children}
+    <div>
+      <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">{eyebrow}</p>
+      <h2 className="mt-4 font-outfit text-3xl font-black">{heading}</h2>
+      <ol className="mt-8 space-y-3">
+        {displayItems.map((item, index) => (
+          <li key={item} className="flex gap-4 rounded-xl border border-white/10 bg-[#020817] p-4 text-sm leading-6 text-slate-300">
+            {numbered ? <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#2691F0] text-xs font-black text-white">{index + 1}</span> : <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-sky-300" />}
+            {item}
+          </li>
+        ))}
+      </ol>
     </div>
+  );
+}
+
+function BulletList({ items, emptyMessage }: { items: string[]; emptyMessage: string }) {
+  const displayItems = items.length > 0 ? items : [emptyMessage];
+  return (
+    <ul className="space-y-3">
+      {displayItems.map((item) => (
+        <li key={item} className="flex gap-3 text-sm leading-6 text-slate-300"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" />{item}</li>
+      ))}
+    </ul>
   );
 }

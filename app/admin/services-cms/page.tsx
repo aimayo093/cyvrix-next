@@ -14,7 +14,7 @@ import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 
-export const metadata = { title: "Services CMS | CYVRIX Admin" };
+export const metadata = { title: "Services CMS" };
 
 export default function ServicesCMSPage(props: any) {
   return (

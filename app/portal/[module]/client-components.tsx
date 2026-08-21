@@ -7,13 +7,8 @@ import {
   Send, 
   CheckCircle2, 
   AlertCircle, 
-  FileText, 
   User, 
-  Lock,
   Loader2,
-  ExternalLink,
-  ChevronRight,
-  ShieldCheck
 } from "lucide-react";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 import { createPortalTicket, replyPortalTicket, acceptPortalProposal, updatePortalProfile } from "@/lib/portal-actions";
@@ -46,9 +41,12 @@ export function ProfileUpdateForm({ initialName }: { initialName: string }) {
 
   React.useEffect(() => {
     if (state?.success) {
-      setSuccessMsg(state.message);
-      const timer = setTimeout(() => setSuccessMsg(null), 5000);
-      return () => clearTimeout(timer);
+      const showTimer = setTimeout(() => setSuccessMsg(state.message), 0);
+      const clearTimer = setTimeout(() => setSuccessMsg(null), 5000);
+      return () => {
+        clearTimeout(showTimer);
+        clearTimeout(clearTimer);
+      };
     }
   }, [state]);
 
@@ -116,8 +114,8 @@ export function ProposalApprovalButton({ proposalId, isAccepted }: { proposalId:
       } else {
         setError(res.message);
       }
-    } catch (err: any) {
-      setError(err.message || "Failed to approve proposal.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to approve proposal.");
     } finally {
       setLoading(false);
     }
@@ -127,7 +125,7 @@ export function ProposalApprovalButton({ proposalId, isAccepted }: { proposalId:
     return (
       <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-full text-xs font-black uppercase tracking-wider">
         <CheckCircle2 className="h-4 w-4" />
-        Approved & SLA Active
+        Proposal accepted
       </div>
     );
   }
@@ -161,10 +159,15 @@ export function PortalTicketForm() {
 
   React.useEffect(() => {
     if (state?.success) {
-      setSuccess(true);
-      formRef.current?.reset();
-      const timer = setTimeout(() => setSuccess(false), 5000);
-      return () => clearTimeout(timer);
+      const showTimer = setTimeout(() => {
+        setSuccess(true);
+        formRef.current?.reset();
+      }, 0);
+      const clearTimer = setTimeout(() => setSuccess(false), 5000);
+      return () => {
+        clearTimeout(showTimer);
+        clearTimeout(clearTimer);
+      };
     }
   }, [state]);
 
@@ -174,7 +177,7 @@ export function PortalTicketForm() {
         <MessageSquare className="h-5 w-5 text-[#2691F0]" />
         Open Support Ticket
       </h3>
-      <p className="text-slate-400 text-xs font-medium">Submit a query to our 24/7 UK Service Operations Center. Most queries are resolved in under 2 hours.</p>
+      <p className="text-slate-400 text-xs font-medium">Submit a request for the CYVRIX team to review. Response times follow your agreed service terms where applicable.</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -204,7 +207,7 @@ export function PortalTicketForm() {
             <option value="LOW">Low (Business convenience)</option>
             <option value="NORMAL">Normal (Standard resolution)</option>
             <option value="HIGH">High (System partial failure)</option>
-            <option value="CRITICAL">Critical (Total operations halt - 24/7 SLA)</option>
+            <option value="CRITICAL">Critical (business-impacting issue)</option>
           </select>
         </div>
       </div>
@@ -247,7 +250,7 @@ export function PortalTicketForm() {
         </div>
       )}
 
-      <SubmitButton label="Launch Urgent Support Request" loadingLabel="Submitting request..." />
+      <SubmitButton label="Open support request" loadingLabel="Submitting request..." />
     </form>
   );
 }
