@@ -46,7 +46,9 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
         "Enquiry and assessment forms: your name, business name, job title, email address, telephone number, and the details you choose to tell us about your organisation and its technology. Assessment forms also ask about matters such as user numbers, locations, cloud platforms and current security arrangements, so that we can respond usefully.",
         "Quote requests: the same contact details, together with the sector, services and requirements you describe.",
         "Newsletter subscription: your email address, the page you subscribed from, and a record that you gave consent.",
-        "Career enquiries: your name, contact details and the information you provide about the role you are interested in. This website does not accept CV or document uploads; we will tell you how to send supporting documents if we take an application forward.",
+        "Career applications: your name, contact details, the role you are applying for, and any CV or supporting document you choose to upload.",
+        "Uploaded documents are scanned before they are accepted. A file is inspected for active content, macros, embedded objects and other unsafe constructs, and is only stored if it passes. A file that fails is rejected outright and is never stored or made available to our staff. We record the file name, size, type and a checksum alongside the scan result.",
+        "Documents you send us are stored in private storage, are not published anywhere on this website, and are accessible only to the CYVRIX staff involved in recruitment.",
         "Client portal: your name, work email address, the organisation you belong to, your role, and the support tickets, documents and service records associated with your account.",
         "Technical information: your IP address, the pages you request, and error diagnostics. Sign-in attempts to the portal and administration areas are recorded, including whether they succeeded and the source address, so that we can detect attempts to guess credentials.",
       ],
@@ -66,6 +68,7 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
       paragraphs: [
         "Enquiry and assessment records are kept for as long as needed to respond and to manage any resulting relationship, and are then reviewed and removed when they are no longer required.",
         "Client records are kept for the duration of the engagement and afterwards for the period required by our legal, tax and insurance obligations.",
+        "Career applications and any uploaded documents are kept for the duration of the recruitment process and for a limited period afterwards so that we can respond to follow-up questions, then deleted. You can ask us to delete your application and CV at any time.",
         "Newsletter records are kept until you unsubscribe, after which we keep a minimal record of the withdrawal so that we do not contact you again in error.",
         "Security and audit records, including sign-in events and administrative actions, are kept for a limited period so that incidents can be investigated, and are then removed.",
       ],

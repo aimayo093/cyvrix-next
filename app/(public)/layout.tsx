@@ -37,6 +37,19 @@ function withoutRetiredHeaderItems<T extends { url?: string | null }>(items: T[]
   });
 }
 
+/**
+ * Header and footer navigation performs a full document load rather than a
+ * client-side transition.
+ *
+ * With `cacheComponents` enabled, Next keeps the previous route mounted in a
+ * hidden React <Activity> subtree so component state survives navigation. That
+ * is good for app-like UIs, but on a content site it means a page can reappear
+ * with its earlier state rather than freshly rendered. A full load guarantees
+ * every page is rendered from scratch, at the cost of client-side navigation
+ * speed.
+ */
+const FORCE_FULL_PAGE_RELOAD = true;
+
 function publicValue(value?: string) {
   if (!value || /set in admin|configured in admin|placeholder/i.test(value)) return undefined;
   return value;
@@ -153,7 +166,7 @@ async function PublicNavbar() {
       logoAlt={logoAlt}
       phone={phone}
       email={email}
-      forceFullPageReload={false}
+      forceFullPageReload={FORCE_FULL_PAGE_RELOAD}
     />
   );
 }
@@ -185,7 +198,7 @@ async function PublicFooter() {
       address={address}
       copyright={copyright}
       complianceCards={complianceCards}
-      forceFullPageReload={false}
+      forceFullPageReload={FORCE_FULL_PAGE_RELOAD}
     />
   );
 }
