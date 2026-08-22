@@ -11,12 +11,15 @@ import {
   updatePageSection,
   deletePageSection,
   reorderPageSections,
+  restoreReviewedPageContent,
 } from "@/lib/admin-actions";
+import { reviewedPages } from "@/lib/reviewed-page-content";
+import { RestoreReviewedContent } from "@/components/admin/RestoreReviewedContent";
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { SectionTypeSelect } from "@/components/admin/SectionTypeSelect";
-import { Plus, Pencil, ArrowUp, ArrowDown, Layers, FileText, Settings, Sparkles, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, ArrowUp, ArrowDown, Layers, FileText, Settings, Sparkles, AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const metadata = { title: "Pages & Core Sections Builder" };
 
@@ -37,6 +40,8 @@ async function PagesCMSPageContent({
     sectionId?: string;
     newSection?: string;
     type?: string;
+    status?: string;
+    message?: string;
   }>;
 }) {
   await connection();
@@ -85,8 +90,42 @@ async function PagesCMSPageContent({
     { type: "faq_hero", name: "FAQ Search Header Banner" },
   ];
 
+  // Pages that have a reviewed version available, with what restoring replaces.
+  const restorablePages = reviewedPages.map((reviewed) => {
+    const existing = pages.find((page) => page.slug === reviewed.slug);
+    return {
+      slug: reviewed.slug,
+      label: reviewed.label,
+      summary: reviewed.summary,
+      reviewedCount: reviewed.sections.length,
+      currentCount: existing ? existing.sections.length : null,
+    };
+  });
+
   return (
     <div className="space-y-8 pb-16">
+      {sp.status && (
+        <div
+          className={`flex items-start gap-3 rounded-xl border p-4 ${
+            sp.status === "success"
+              ? "border-emerald-250 bg-emerald-50 text-emerald-800"
+              : "border-rose-250 bg-rose-50 text-rose-800"
+          }`}
+        >
+          {sp.status === "success" ? (
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+          ) : (
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />
+          )}
+          <div>
+            <h4 className="text-sm font-black">
+              {sp.status === "success" ? "Done" : "Could not complete"}
+            </h4>
+            <p className="mt-0.5 text-xs font-semibold leading-relaxed">{sp.message}</p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -106,6 +145,8 @@ async function PagesCMSPageContent({
           Create Public Page
         </a>
       </div>
+
+      <RestoreReviewedContent pages={restorablePages} action={restoreReviewedPageContent} />
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         {/* Pages Sidebar List */}

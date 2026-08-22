@@ -13,7 +13,8 @@
     "seed": "tsx prisma/seed.ts",
     "test:routes": "node scripts/smoke-routes.mjs",
     "test:scan": "tsx scripts/test-document-scan.mts",
-    "check:env": "tsx scripts/check-env.mts"
+    "check:env": "tsx scripts/check-env.mts",
+    "check:claims": "tsx scripts/check-claims.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",

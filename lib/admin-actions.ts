@@ -4,9 +4,11 @@ import crypto from "node:crypto";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import type { Prisma } from "@/generated/prisma";
 import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
 import { publicContactSettingKeys, publicContactValue } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
+import { getReviewedPage } from "@/lib/reviewed-page-content";
 import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
 import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
@@ -2003,6 +2005,90 @@ export async function deletePageSection(formData: FormData) {
     }
   }
   revalidatePath("/admin/pages-cms");
+}
+
+/**
+ * Replaces a page's CMS sections with the reviewed content for that slug.
+ *
+ * Why this exists: a public page falls back to reviewed static content only
+ * while it has no CMS sections at all. One thin section is enough to shadow the
+ * whole fallback, which is how several pages ended up publishing far less than
+ * the reviewed copy said. This puts the reviewed copy into the CMS as ordinary
+ * sections an administrator can then edit, rather than forcing a choice between
+ * good content and editable content.
+ *
+ * The previous sections are captured into the audit log before deletion, so the
+ * change can be reconstructed. Delete and insert run in one transaction: a page
+ * left with no sections would silently fall back to static content and hide the
+ * failure.
+ */
+export async function restoreReviewedPageContent(formData: FormData) {
+  const admin = await requireAdmin();
+  const slug = (formData.get("slug") as string | null)?.trim() ?? "";
+
+  const reviewed = getReviewedPage(slug);
+  if (!reviewed) {
+    redirect(`/admin/pages-cms?status=error&message=No reviewed content is defined for "${slug}".`);
+  }
+
+  const page = await prisma.cmsPage.findUnique({
+    where: { slug },
+    select: { id: true, sections: true },
+  });
+
+  if (!page) {
+    redirect(`/admin/pages-cms?status=error&message=No CMS page exists with the slug "${slug}".`);
+  }
+
+  const replacedCount = page.sections.length;
+
+  await prisma.$transaction([
+    prisma.auditLog.create({
+      data: {
+        id: crypto.randomUUID(),
+        userId: admin.id,
+        action: "cms_page_restored_from_reviewed",
+        entityType: "CmsPage",
+        entityId: page.id,
+        // The full previous sections, so this is reversible without a backup file.
+        metadata: { slug, replacedCount, previousSections: page.sections as unknown as Prisma.InputJsonValue },
+      },
+    }),
+    prisma.pageSection.deleteMany({ where: { pageId: page.id } }),
+    prisma.pageSection.createMany({
+      data: reviewed.sections.map((section, index) => ({
+        pageId: page.id,
+        sectionType: section.sectionType,
+        title: section.title ?? null,
+        subtitle: section.subtitle ?? null,
+        body: section.body ?? null,
+        mediaId: section.mediaId ?? null,
+        buttonLabel: section.buttonLabel ?? null,
+        buttonUrl: section.buttonUrl ?? null,
+        backgroundStyle: section.backgroundStyle ?? "dark",
+        layoutStyle: section.layoutStyle ?? null,
+        settingsJson: (section.settings ?? {}) as Prisma.InputJsonValue,
+        sortOrder: index + 1,
+        isVisible: true,
+        createdBy: admin.id,
+        updatedBy: admin.id,
+      })),
+    }),
+  ]);
+
+  revalidatePath(`/${slug === "home" ? "" : slug}`);
+  if (slug === "home") {
+    updateHomeCache();
+  } else {
+    updateCmsPageCache();
+  }
+  revalidatePath("/admin/pages-cms");
+
+  redirect(
+    `/admin/pages-cms?status=success&message=${encodeURIComponent(
+      `Restored ${reviewed.sections.length} reviewed section(s) to /${slug}, replacing ${replacedCount}. The previous version is in the audit log.`
+    )}`
+  );
 }
 
 export async function reorderPageSections(formData: FormData) {
