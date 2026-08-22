@@ -2149,22 +2149,37 @@ export async function createPortalUser(formData: FormData) {
   revalidatePath("/admin/client-management");
 }
 
+/**
+ * Where changeAdminPassword may send the browser afterwards.
+ *
+ * An allowlist rather than a validated path: the value arrives in a form field,
+ * and anything reaching `redirect()` from user input is an open redirect
+ * waiting to happen.
+ */
+const PASSWORD_RETURN_PATHS = new Set(["/admin/settings", "/admin/profile"]);
+
 export async function changeAdminPassword(formData: FormData) {
   const admin = await requireAdmin();
   const currentPassword = formData.get("currentPassword") as string || "";
   const newPassword = formData.get("newPassword") as string || "";
   const confirmPassword = formData.get("confirmPassword") as string || "";
 
+  const requestedReturn = formData.get("returnTo");
+  const returnTo =
+    typeof requestedReturn === "string" && PASSWORD_RETURN_PATHS.has(requestedReturn)
+      ? requestedReturn
+      : "/admin/settings";
+
   if (!currentPassword || !newPassword || !confirmPassword) {
-    redirect("/admin/settings?status=error&message=All password fields are required.");
+    redirect(`${returnTo}?status=error&message=All password fields are required.`);
   }
 
   if (newPassword !== confirmPassword) {
-    redirect("/admin/settings?status=error&message=New passwords do not match.");
+    redirect(`${returnTo}?status=error&message=New passwords do not match.`);
   }
 
   if (newPassword.length < 8) {
-    redirect("/admin/settings?status=error&message=New password must be at least 8 characters long.");
+    redirect(`${returnTo}?status=error&message=New password must be at least 8 characters long.`);
   }
 
   const userRecord = await prisma.user.findUnique({
@@ -2172,14 +2187,14 @@ export async function changeAdminPassword(formData: FormData) {
   });
 
   if (!userRecord || !userRecord.passwordHash) {
-    redirect("/admin/settings?status=error&message=User record not found.");
+    redirect(`${returnTo}?status=error&message=User record not found.`);
   }
 
   const { verifyPassword, hashPassword } = await import("./password");
 
   const isOldPasswordCorrect = verifyPassword(currentPassword, userRecord.passwordHash);
   if (!isOldPasswordCorrect) {
-    redirect("/admin/settings?status=error&message=The current password you entered is incorrect.");
+    redirect(`${returnTo}?status=error&message=The current password you entered is incorrect.`);
   }
 
   const newPasswordHash = hashPassword(newPassword);
@@ -2202,7 +2217,42 @@ export async function changeAdminPassword(formData: FormData) {
     },
   });
 
-  redirect("/admin/settings?status=success&message=Password changed successfully.");
+  redirect(`${returnTo}?status=success&message=Password changed successfully.`);
+}
+
+/**
+ * Updates the signed-in administrator's own display name.
+ *
+ * Scoped to `admin.id` rather than an id from the form, so this cannot be used
+ * to edit another account. Email is deliberately not editable here: it is the
+ * sign-in identifier, and changing it needs a verification step this does not
+ * have.
+ */
+export async function updateAdminProfile(formData: FormData) {
+  const admin = await requireAdmin();
+  const name = (formData.get("name") as string | null)?.trim() ?? "";
+
+  if (name.length > 120) {
+    redirect("/admin/profile?status=error&message=Name must be 120 characters or fewer.");
+  }
+
+  await prisma.user.update({
+    where: { id: admin.id },
+    data: { name: name || null, updatedAt: new Date() },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "admin_profile_updated",
+      entityType: "User",
+      metadata: { email: admin.email },
+    },
+  });
+
+  revalidatePath("/admin");
+  redirect("/admin/profile?status=success&message=Profile updated.");
 }
 
 export async function resetPortalUserPassword(formData: FormData) {

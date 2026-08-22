@@ -10,7 +10,6 @@ import {
   Database,
   ShieldCheck,
   LogOut,
-  Bell,
   FileText,
   MessageSquare,
   Star,
@@ -23,8 +22,15 @@ import {
   Mail,
   PhoneCall,
   Menu,
+  CircleUserRound,
 } from "lucide-react";
 import { Logo } from "@/components/nav-main/Logo";
+import {
+  AdminAccountMenu,
+  AdminNotificationsMenu,
+  type AdminIdentity,
+  type AdminNotification,
+} from "@/components/admin/AdminHeaderMenus";
 
 const adminNav = [
   { group: "Overview", items: [
@@ -61,15 +67,25 @@ const adminNav = [
     { name: "Security Center", href: "/admin/security-center", icon: ShieldCheck },
     { name: "Audit Logs", href: "/admin/audit-logs", icon: ShieldCheck },
     { name: "System Status", href: "/admin/status", icon: Activity },
+    { name: "Your Profile", href: "/admin/profile", icon: CircleUserRound },
     { name: "Settings", href: "/admin/settings", icon: Settings },
   ]},
 ];
 
 interface AdminLayoutClientProps {
   children: React.ReactNode;
+  /** The signed-in administrator, so the header stops claiming to be "AD". */
+  identity: AdminIdentity;
+  notifications: AdminNotification[];
+  unreadCount: number;
 }
 
-export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
+export function AdminLayoutClient({
+  children,
+  identity,
+  notifications,
+  unreadCount,
+}: AdminLayoutClientProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const pathname = usePathname();
 
@@ -182,13 +198,8 @@ export function AdminLayoutClient({ children }: AdminLayoutClientProps) {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button className="p-2 text-slate-400 hover:text-[#041635] transition-colors relative">
-              <Bell className="h-4 w-4" />
-              <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full" />
-            </button>
-            <div className="w-7 h-7 rounded-full bg-[#2691F0] flex items-center justify-center text-white font-black text-[10px]">
-              AD
-            </div>
+            <AdminNotificationsMenu notifications={notifications} unreadCount={unreadCount} />
+            <AdminAccountMenu identity={identity} />
           </div>
         </header>
 
