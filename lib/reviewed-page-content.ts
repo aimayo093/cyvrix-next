@@ -19,6 +19,7 @@
  * imagery as its static fallback.
  */
 import { pageHeroes } from "@/lib/page-heroes";
+import { founder, founderCertifications, founderExperience } from "@/lib/founder";
 
 export type ReviewedSection = {
   sectionType: string;
@@ -114,6 +115,24 @@ export const reviewedPages: ReviewedPage[] = [
             },
           ],
         },
+      },
+      {
+        sectionType: "Custom rich text",
+        title: "Who you are actually dealing with",
+        backgroundStyle: "dark",
+        body:
+          `<p><strong>${founder.name}</strong> &mdash; ${founder.role}, ${founder.location}.</p>` +
+          `<p>${founder.summary}</p>` +
+          `<p>${founder.approach}</p>` +
+          `<p><strong>Professional certifications held personally:</strong> ` +
+          `${founderCertifications.map((certification) => certification.name).join(", ")}. ` +
+          "Each is verifiable with the awarding body. These are individual qualifications, not company " +
+          "accreditations &mdash; CYVRIX LIMITED holds no company certifications.</p>" +
+          "<p><strong>Selected experience:</strong> " +
+          founderExperience
+            .map((entry) => `${entry.role} at ${entry.organisation}, ${entry.period}`)
+            .join("; ") +
+          ". End clients are not named, because those were other organisations&rsquo; customers.</p>",
       },
       {
         sectionType: "Image and text",

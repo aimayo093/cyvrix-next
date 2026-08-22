@@ -17,6 +17,7 @@
  *   - `priceRange` and `offers.price`. Pricing is quoted per engagement.
  */
 import { companyFacts } from "@/lib/company-facts";
+import { founder, founderCertifications } from "@/lib/founder";
 
 export const SITE_URL = "https://cyvrix.co.uk";
 
@@ -106,6 +107,21 @@ export function organisationSchema(): JsonLdObject {
       url: `${SITE_URL}/contact`,
       areaServed: "GB",
       availableLanguage: "en-GB",
+    },
+    // A named founder with verifiable credentials is the strongest entity
+    // signal available to a company this size. `hasCredential` sits on the
+    // Person, never on the Organization: these are individual qualifications.
+    founder: {
+      "@type": "Person",
+      name: founder.name,
+      jobTitle: founder.role,
+      sameAs: [founder.linkedIn],
+      hasCredential: founderCertifications.map((certification) => ({
+        "@type": "EducationalOccupationalCredential",
+        credentialCategory: "certificate",
+        name: certification.name,
+        recognizedBy: { "@type": "Organization", name: certification.issuer },
+      })),
     },
   };
 }

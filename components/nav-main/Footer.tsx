@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { ComplianceCard, FooterLink as FooterLinkRecord, FooterSection, SocialLink } from "@/generated/prisma";
 import { Logo } from "./Logo";
 import { OPEN_COOKIE_PREFERENCES_EVENT } from "@/components/shared/CookieConsent";
+import { companyFacts } from "@/lib/company-facts";
 import {
   MessageCircle,
   Mail,
@@ -620,11 +621,29 @@ export function Footer({
           </div>
         </div>
 
+        {/*
+          Statutory trading disclosure.
+
+          Regulations 24 and 25 of the Company, Limited Liability Partnership and
+          Business (Names and Trading Disclosures) Regulations 2015 require a UK
+          company's website to state its registered name, the part of the UK it
+          is registered in, its company number and its registered office address.
+          "Registered in England & Wales" alone did not satisfy that, and this is
+          also the first thing a cautious buyer or procurement team checks.
+        */}
+        <div className="pt-8 border-t border-white/5">
+          <p className="text-slate-500 text-xs font-medium leading-relaxed text-center md:text-left">
+            {companyFacts.registeredName} is a {companyFacts.companyType.toLowerCase()} registered in{" "}
+            {companyFacts.registeredIn}, company number {companyFacts.companyNumber}. Registered office:{" "}
+            {companyFacts.registeredOffice}.
+          </p>
+        </div>
+
         {/* Footer Bottom bar */}
-        <div className="pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="pt-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-slate-500 text-xs font-bold uppercase tracking-wide text-center md:text-left">
             {(copyright || "CYVRIX Technologies Ltd.").replace(/all rights reserved\.?/gi, "").trim()}{" "}
-            <span className="hidden sm:inline">All rights reserved. Registered in England &amp; Wales.</span>
+            <span className="hidden sm:inline">All rights reserved.</span>
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
             <button

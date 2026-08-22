@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Building2, CheckCircle2, Compass, ShieldCheck, Waypoints } from "lucide-react";
 import { SectionRenderer } from "@/components/shared/SectionRenderer";
 import { PageHeroImage } from "@/components/public/PageHeroImage";
+import { FounderProfile } from "@/components/public/FounderProfile";
 import { getPublicPageData, getPublicPageSeoMetadata, getSiteImages, type SiteImages } from "@/lib/public-cache";
 import { companyFacts } from "@/lib/company-facts";
 import { getPageHero } from "@/lib/page-heroes";
@@ -197,8 +198,10 @@ function AboutFallback({ heroImage }: { heroImage?: string }) {
         </div>
       </section>
 
+      <FounderProfile />
+
       {/* How we talk about credentials */}
-      <section className="mx-auto max-w-7xl px-5 pb-16 lg:px-8">
+      <section className="mx-auto max-w-7xl px-5 py-16 lg:px-8">
         <div className="rounded-3xl border border-white/10 bg-[#071126] p-8 md:p-10">
           <div className="flex items-center gap-2 text-[#7ab8f4]">
             <Compass className="h-5 w-5" />

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { certificationStatus, companyFacts, isIcoRegistrationCurrent } from "@/lib/company-facts";
+import { founder, founderCertifications } from "@/lib/founder";
 import { ArrowRight, BadgeCheck, ClipboardCheck, Database, FileText, Hourglass, KeyRound, LockKeyhole, Radar, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -198,10 +199,54 @@ export default function TrustCentrePage() {
           </div>
 
           <p className="mt-8 max-w-3xl text-sm leading-7 text-slate-400">
-            We hold no other certification or accreditation at present. Where a service page describes
-            readiness work for a standard such as Cyber Essentials, that means helping you prepare and
-            remediate; the certification decision rests with the certification body.
+            The company holds no other certification or accreditation at present. Where a service page
+            describes readiness work for a standard such as Cyber Essentials, that means helping you prepare
+            and remediate; the certification decision rests with the certification body.
           </p>
+
+          {/*
+            Individual qualifications, kept visibly separate from the company
+            position above. Conflating the two is the exact move this page exists
+            to avoid: a person holding Security+ does not make the company
+            certified, and a reader should not have to work that out.
+          */}
+          <div className="mt-12 rounded-2xl border border-white/10 bg-[#041635] p-7 sm:p-9">
+            <div className="flex items-center gap-2">
+              <BadgeCheck className="h-5 w-5 text-sky-300" />
+              <p className="text-xs font-black uppercase tracking-[0.14em] text-sky-300">
+                Held by an individual, not by the company
+              </p>
+            </div>
+            <h3 className="mt-6 font-outfit text-2xl font-black text-white">
+              Professional certifications our founder holds.
+            </h3>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
+              {founder.name} holds the qualifications below in his own name. Each is verifiable with the
+              awarding body. They say something real about who does the work, and they are not company
+              accreditations: nothing here means CYVRIX LIMITED is certified to any standard.
+            </p>
+
+            <ul className="mt-7 flex flex-wrap gap-2.5">
+              {founderCertifications.map((certification) => (
+                <li
+                  key={certification.name}
+                  className="rounded-xl border border-white/10 bg-[#020817]/60 px-4 py-2.5 text-sm font-bold text-slate-200"
+                >
+                  {certification.name}
+                  <span className="ml-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                    {certification.issuer}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <Link
+              href="/about"
+              className="mt-8 inline-flex items-center gap-2 text-sm font-black text-sky-300 transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] focus-visible:ring-offset-2 focus-visible:ring-offset-[#041635]"
+            >
+              The full professional record <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
