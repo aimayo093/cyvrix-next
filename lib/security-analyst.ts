@@ -37,8 +37,18 @@ export type AnalystFinding = {
 
 export type PostureBand = "healthy" | "attention" | "at-risk" | "unknown";
 
+/** How old the underlying scan is, so stale data is never read as current. */
+export type ScanFreshness = {
+  ageHours: number;
+  /** True once the scan is old enough that findings may no longer reflect reality. */
+  stale: boolean;
+  /** Human phrase such as "14 minutes ago". */
+  label: string;
+};
+
 export type AnalystReport = {
   generatedAt: string;
+  freshness: ScanFreshness;
   /** Highest severity present among open findings. */
   highestSeverity: Severity | null;
   band: PostureBand;
@@ -292,6 +302,28 @@ function icoRegistrationFinding(): AnalystFinding {
   };
 }
 
+/** A scan older than this may no longer describe the current state. */
+const STALE_AFTER_HOURS = 24;
+
+function describeFreshness(generatedAt: string, now: Date): ScanFreshness {
+  const ageMs = now.getTime() - new Date(generatedAt).getTime();
+  const ageHours = ageMs / (60 * 60 * 1000);
+
+  const minutes = Math.round(ageMs / 60000);
+  let label: string;
+  if (minutes < 1) label = "just now";
+  else if (minutes < 60) label = `${minutes} minute${minutes === 1 ? "" : "s"} ago`;
+  else if (ageHours < 48) {
+    const hours = Math.round(ageHours);
+    label = `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  } else {
+    const days = Math.round(ageHours / 24);
+    label = `${days} day${days === 1 ? "" : "s"} ago`;
+  }
+
+  return { ageHours, stale: ageHours >= STALE_AFTER_HOURS, label };
+}
+
 function bandFor(highest: Severity | null, blindSpots: number): PostureBand {
   if (highest === "critical" || highest === "high") return "at-risk";
   if (highest === "medium") return "attention";
@@ -323,8 +355,16 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
 
   const highestSeverity = triage.length > 0 ? triage[0].severity : null;
 
+  const freshness = describeFreshness(scan.timestamp, new Date());
+  if (freshness.stale) {
+    blindSpots.push(
+      `These findings come from a scan run ${freshness.label}. Re-run the scan to confirm they still reflect the current state.`
+    );
+  }
+
   return {
     generatedAt: scan.timestamp,
+    freshness,
     highestSeverity,
     band: bandFor(highestSeverity, blindSpots.length),
     counts,

@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, Radar } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Radar } from "lucide-react";
 import {
   SEVERITY_ORDER,
   type AnalystFinding,
@@ -57,8 +57,17 @@ export function SecurityAnalystPanel({ report }: { report: AnalystReport }) {
               : `${report.triage.length} finding${report.triage.length === 1 ? "" : "s"} to work through.`}
           </h2>
           <p className="mt-1 text-xs font-semibold text-slate-500">
-            Assessed {assessedAt} &middot; {report.passing} check{report.passing === 1 ? "" : "s"} clear
+            Assessed {assessedAt} ({report.freshness.label}) &middot; {report.passing} check
+            {report.passing === 1 ? "" : "s"} clear
           </p>
+
+          {report.freshness.stale && (
+            <p className="mt-3 inline-flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-semibold leading-5 text-amber-900">
+              <Clock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              These findings are {report.freshness.label} and may no longer reflect the current state.
+              Re-run the scan below.
+            </p>
+          )}
         </div>
 
         <div className={cn("rounded-xl border px-4 py-2.5 text-xs font-black uppercase tracking-widest", band.tone)}>
