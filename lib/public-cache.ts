@@ -95,12 +95,14 @@ export async function getPublicShellData() {
     PUBLIC_CACHE_TAGS.navigation,
     PUBLIC_CACHE_TAGS.footer,
     PUBLIC_CACHE_TAGS.complianceCards,
+    PUBLIC_CACHE_TAGS.contactSettings,
   );
 
   try {
     const [
       brandSettings,
       companySettings,
+      contactSettings,
       brandAssets,
       headerMenu,
       footerSections,
@@ -109,6 +111,10 @@ export async function getPublicShellData() {
     ] = await Promise.all([
       prisma.siteSetting.findUnique({ where: { key: "brand" } }),
       prisma.siteSetting.findUnique({ where: { key: "company" } }),
+      // Contact details are maintained in Contact Us CMS. The footer previously
+      // read only the "company" setting, so a phone number entered there showed
+      // on /contact and nowhere else.
+      prisma.siteSetting.findUnique({ where: { key: "contact_settings" } }),
       prisma.brandAsset.findMany({ where: { isActive: true } }),
       prisma.menu.findUnique({
         where: { location: "header" },
@@ -142,6 +148,7 @@ export async function getPublicShellData() {
     return {
       brandSettings,
       companySettings,
+      contactSettings,
       brandAssets,
       headerMenu,
       footerSections,
@@ -153,6 +160,7 @@ export async function getPublicShellData() {
     return {
       brandSettings: null,
       companySettings: null,
+      contactSettings: null,
       brandAssets: [],
       headerMenu: null,
       footerSections: [],

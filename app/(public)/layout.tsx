@@ -84,6 +84,7 @@ async function getPublicChromeData() {
   const {
     brandSettings,
     companySettings,
+    contactSettings,
     brandAssets,
     headerMenu,
     footerSections,
@@ -95,6 +96,7 @@ async function getPublicChromeData() {
       return {
         brandSettings: null,
         companySettings: null,
+        contactSettings: null,
         brandAssets: [],
         headerMenu: null,
         footerSections: [],
@@ -105,6 +107,7 @@ async function getPublicChromeData() {
 
   const brandData = (brandSettings?.value as Record<string, string>) ?? {};
   const companyData = (companySettings?.value as Record<string, string>) ?? {};
+  const contactData = (contactSettings?.value as Record<string, string>) ?? {};
 
   // Brand Assets in the CMS win; these defaults keep the correct logo variant on
   // each background so the header never falls back to the text placeholder.
@@ -122,9 +125,9 @@ async function getPublicChromeData() {
 
   const logoAlt = brandData.logoAlt || "CYVRIX Technologies";
   const companyDesc = publicValue(brandData.footerDescription);
-  const phone = publicValue(companyData.phone);
-  const email = publicValue(companyData.supportEmail);
-  const address = publicValue(companyData.address);
+  const phone = publicValue(companyData.phone) ?? publicValue(contactData.phone);
+  const email = publicValue(companyData.supportEmail) ?? publicValue(contactData.supportEmail);
+  const address = publicValue(companyData.address) ?? publicValue(contactData.hqAddress);
   const copyright = publicValue(companyData.copyright);
 
   return {
