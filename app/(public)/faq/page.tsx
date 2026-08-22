@@ -7,6 +7,8 @@ import { PageHeroImage } from "@/components/public/PageHeroImage";
 import { getPageHero } from "@/lib/page-heroes";
 import { faqs as staticFaqs } from "@/lib/cyvrix-data";
 import { stripBrandSuffix } from "@/lib/utils";
+import { JsonLd } from "@/components/public/JsonLd";
+import { breadcrumbSchema, faqSchema } from "@/lib/structured-data";
 
 
 export async function generateMetadata() {
@@ -27,6 +29,13 @@ export default async function FAQPage() {
 
   return (
     <div className="min-h-screen bg-[#020817]">
+      {/* Marks up the questions actually shown, whichever source supplied them. */}
+      <JsonLd
+        schema={[
+          breadcrumbSchema([{ name: "FAQ", path: "/faq" }]),
+          ...(faqSchema(activeFaqs) ? [faqSchema(activeFaqs)!] : []),
+        ]}
+      />
       {sections.length > 0 ? <SectionRenderer sections={sections} faqs={faqs} /> : <FaqFallback faqs={activeFaqs} heroImage={siteImages.pages?.faq} />}
     </div>
   );

@@ -15,6 +15,8 @@ import { getPublicServiceDetail, getSiteImages, type SiteImages } from "@/lib/pu
 import { getServiceJourney } from "@/lib/service-journeys";
 import { PageHeroImage } from "@/components/public/PageHeroImage";
 import { getServiceDetailContent } from "@/lib/service-detail-content";
+import { JsonLd } from "@/components/public/JsonLd";
+import { breadcrumbSchema, faqSchema, serviceSchema } from "@/lib/structured-data";
 
 type ServicePageProps = {
   params: Promise<{ slug: string }>;
@@ -73,6 +75,23 @@ async function ServiceDetailContent({ params }: ServicePageProps) {
 
   return (
     <div className="min-h-screen bg-[#020817] text-white">
+      {/* Service, its trail, and the FAQ answers exactly as rendered below. */}
+      <JsonLd
+        schema={[
+          serviceSchema({
+            title: service.title,
+            description: service.summary,
+            slug: service.slug,
+            category: journey.category,
+          }),
+          breadcrumbSchema([
+            { name: "Services", path: "/services" },
+            { name: service.title, path: `/services/${service.slug}` },
+          ]),
+          ...(faqSchema(content.faqs) ? [faqSchema(content.faqs)!] : []),
+        ]}
+      />
+
       <section className="relative overflow-hidden border-b border-white/10 bg-[#041635] pb-20 pt-32">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(38,145,240,0.24),transparent_34%)]" />
         <div className="absolute inset-0 bg-corporate-grid opacity-40" />

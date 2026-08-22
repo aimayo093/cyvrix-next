@@ -2,7 +2,9 @@ import * as React from "react";
 import { Navbar } from "@/components/nav-main/Navbar";
 import { Footer } from "@/components/nav-main/Footer";
 import { CookieConsent } from "@/components/shared/CookieConsent";
+import { JsonLd } from "@/components/public/JsonLd";
 import { getPublicShellData } from "@/lib/public-cache";
+import { organisationSchema, webSiteSchema } from "@/lib/structured-data";
 
 /**
  * Primary navigation is kept deliberately short. Careers, Case Studies and
@@ -62,6 +64,10 @@ export default function PublicLayout({
 }) {
   return (
     <>
+      {/* Emitted once for the whole public site; individual pages add their own
+          page-level graphs (Service, FAQPage, BreadcrumbList) on top. */}
+      <JsonLd schema={[organisationSchema(), webSiteSchema()]} />
+
       <React.Suspense fallback={<PublicNavbarFallback />}>
         <PublicNavbar />
       </React.Suspense>

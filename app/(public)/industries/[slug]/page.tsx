@@ -3,6 +3,8 @@ import { IndustryClient } from "./IndustryClient";
 import { getPublicIndustryDetail, getSiteImages, type SiteImages } from "@/lib/public-cache";
 import { getStaticPublicIndustry, toPublicIndustry } from "@/lib/public-industry";
 import { industries as staticIndustries } from "@/lib/cyvrix-data";
+import { JsonLd } from "@/components/public/JsonLd";
+import { breadcrumbSchema } from "@/lib/structured-data";
 
 interface IndustryPageProps {
   params: Promise<{
@@ -37,5 +39,15 @@ export default async function IndustryDetailPage({ params }: IndustryPageProps) 
     : getStaticPublicIndustry(slug, imageOverride);
   if (!industry) notFound();
 
-  return <IndustryClient industry={industry} />;
+  return (
+    <>
+      <JsonLd
+        schema={breadcrumbSchema([
+          { name: "Industries", path: "/industries" },
+          { name: industry.title, path: `/industries/${industry.slug}` },
+        ])}
+      />
+      <IndustryClient industry={industry} />
+    </>
+  );
 }
