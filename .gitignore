@@ -46,3 +46,7 @@ next-env.d.ts
 # claude code / agent tooling
 .claude/worktrees/
 .codex/
+
+# Database backups taken before migrations. Contain site content, not secrets,
+# but they are point-in-time dumps and do not belong in version control.
+backups/
