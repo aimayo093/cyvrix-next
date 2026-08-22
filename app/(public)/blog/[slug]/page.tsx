@@ -12,6 +12,9 @@ import {
   toPublicInsight,
 } from "@/lib/public-insight";
 import { stripBrandSuffix } from "@/lib/utils";
+import { insightHeadingText, isInsightHeading } from "@/lib/insight-content";
+import { JsonLd } from "@/components/public/JsonLd";
+import { articleSchema, breadcrumbSchema } from "@/lib/structured-data";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -46,20 +49,22 @@ export default async function BlogPostDetailPage({ params }: BlogPostPageProps) 
   const post = await resolveInsight(slug);
   if (!post) notFound();
 
-  const articleSchema = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: post.title,
-    description: post.excerpt,
-    author: { "@type": "Organization", name: post.author },
-    publisher: { "@type": "Organization", name: "CYVRIX Technologies" },
-    ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
-    mainEntityOfPage: `https://cyvrix.co.uk/blog/${post.slug}`,
-  };
-
   return (
     <div className="min-h-screen bg-[#020817] pb-24 pt-24 text-white">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
+      <JsonLd
+        schema={[
+          articleSchema({
+            title: post.title,
+            excerpt: post.excerpt,
+            slug: post.slug,
+            publishedAt: post.publishedAt,
+          }),
+          breadcrumbSchema([
+            { name: "Insights", path: "/blog" },
+            { name: post.title, path: `/blog/${post.slug}` },
+          ]),
+        ]}
+      />
 
       <section className="border-b border-white/10 bg-[radial-gradient(ellipse_at_top_right,_rgba(38,145,240,0.2),transparent_48%),linear-gradient(180deg,#071b3d_0%,#020817_100%)] py-16 md:py-20">
         <div className="mx-auto max-w-4xl px-5">
@@ -97,9 +102,19 @@ export default async function BlogPostDetailPage({ params }: BlogPostPageProps) 
       <main className="mx-auto grid max-w-5xl gap-10 px-5 py-14 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start">
         <article className="rounded-3xl border border-white/10 bg-[#071126] p-7 shadow-2xl shadow-blue-950/20 md:p-10">
           <div className="space-y-6 text-base font-medium leading-8 text-slate-200 md:text-lg">
-            {post.body.map((paragraph) => (
-              <p key={paragraph}>{paragraph}</p>
-            ))}
+            {post.body.map((entry) =>
+              isInsightHeading(entry) ? (
+                <h2
+                  key={entry}
+                  id={insightHeadingText(entry).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}
+                  className="scroll-mt-28 pt-4 font-outfit text-2xl font-black tracking-tight text-white md:text-3xl"
+                >
+                  {insightHeadingText(entry)}
+                </h2>
+              ) : (
+                <p key={entry}>{entry}</p>
+              )
+            )}
           </div>
 
           {post.tags.length > 0 && (

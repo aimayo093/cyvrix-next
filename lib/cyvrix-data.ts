@@ -351,56 +351,9 @@ export const faqs = [
   { category: "Hardware Support", question: "Can you help with hardware procurement and repair?", answer: "Yes. CYVRIX can triage issues, advise on repair or replacement, and coordinate warranties or field support." },
 ];
 
-export const blogPosts = [
-  {
-    slug: "microsoft-365-security-baseline-uk-smes",
-    title: "A Microsoft 365 Security Baseline for UK SMEs",
-    category: "Cybersecurity",
-    author: "CYVRIX Editorial",
-    excerpt: "The controls most growing businesses should review first: multi-factor authentication, administrator roles, sharing defaults, email authentication and recovery.",
-    tags: ["Microsoft 365", "SME security", "MFA"],
-    published: "2026-05-07",
-    body: [
-      "A useful Microsoft 365 security baseline starts with a reliable picture of who can sign in, which accounts hold elevated permissions and how devices are managed. It should be understandable to the people responsible for the service, not just a list of settings.",
-      "Start with identity. Multi-factor authentication, sensible authentication methods and a reviewed process for joiners, movers and leavers help reduce avoidable account risk. Privileged roles deserve particular attention, with access kept to the people who genuinely need it.",
-      "Next, review collaboration and email. Sharing defaults, external access, mailbox forwarding and email authentication should match the way the organisation works. The aim is to make secure choices practical for users rather than relying on informal workarounds.",
-      "Device management and recovery complete the picture. Keep a clear view of enrolled devices, supported software and recovery arrangements. A backup plan is only useful when responsibilities, restoration steps and the systems that need to come back first are understood.",
-      "Turn the review into a short, prioritised plan. Record the decisions, assign owners and revisit the baseline when the organisation changes. That makes security improvement a manageable operational routine rather than a one-off exercise.",
-    ],
-  },
-  {
-    slug: "backup-is-not-business-continuity",
-    title: "Backup Is Not the Same as Business Continuity",
-    category: "Business Continuity",
-    author: "CYVRIX Editorial",
-    excerpt: "A backup only helps when it can be restored in time. Here is how to connect recovery objectives, dependencies and realistic testing.",
-    tags: ["Backup", "Disaster recovery", "Continuity"],
-    published: "2026-05-07",
-    body: [
-      "Backup protects copies of data. Business continuity is the wider plan for keeping essential work moving when a system, supplier, site or connection is unavailable. The two should inform each other, but they are not interchangeable.",
-      "Begin by identifying the services that the organisation cannot operate without. That might include communication, customer records, finance, order processing or line-of-business platforms. For each one, agree what a tolerable interruption looks like and who makes recovery decisions.",
-      "Then look beyond the backup itself. A restoration may rely on identities, administrator access, devices, network connectivity, application licences or a third-party supplier. Those dependencies need to be visible before an incident puts them under pressure.",
-      "Testing should confirm more than whether a file can be recovered. Use a proportionate scenario to check that the right people can access the restored service, that the data is usable and that communications and workarounds are clear.",
-      "A concise continuity plan gives teams a practical order of operations: what to restore first, who to contact, how to record decisions and when to update stakeholders. Review it after material technology or organisational change.",
-    ],
-  },
-  {
-    slug: "questions-before-outsourcing-it-support",
-    title: "Questions to Ask Before Outsourcing IT Support",
-    category: "Managed IT",
-    author: "CYVRIX Editorial",
-    excerpt: "A practical checklist for choosing an IT partner that can support security, operations and growth without losing sight of day-to-day service.",
-    tags: ["Managed IT", "Procurement", "Support"],
-    published: "2026-05-07",
-    body: [
-      "Choosing an outsourced IT partner is not only about the helpdesk. It is a decision about responsibility: who understands the estate, who coordinates suppliers and who helps the business make technology decisions when priorities compete.",
-      "Ask how discovery and onboarding will work. A considered provider should want to understand users, devices, identities, systems, suppliers, existing risks and the work that is already planned. That gives both sides a clearer starting point.",
-      "Clarify what sits inside the service and what is treated as a project or specialist engagement. Useful conversations cover support hours, escalation routes, on-site requirements, documentation, change control, vendor coordination and commercial reporting.",
-      "Use realistic scenarios when comparing options. For example, ask how a lost device, a failed internet connection, an urgent new starter or a suspected mailbox compromise would be handled. The responses reveal how the operating model works in practice.",
-      "Finally, look for clear communication and a shared improvement rhythm. A good service relationship should make responsibilities visible, give decision-makers useful context and leave room to adapt as the organisation grows.",
-    ],
-  },
-];
+import { insightArticles } from "@/lib/insight-content";
+
+export { insightArticles as blogPosts };
 
 export const legalPages = [
   { slug: "privacy-policy", title: "Privacy Policy", summary: "How CYVRIX Technologies handles personal data, enquiries, client records, and website information.", sections: ["Data collected through website forms", "Client and support records", "Retention and access controls", "Processor and supplier considerations", "Your rights under UK GDPR"] },
@@ -462,7 +415,7 @@ export const adminModuleDetails = [
   {
     name: "Blog and Insights",
     description: "Publish practical security, cloud, MSP, continuity, and UK SME IT guidance.",
-    records: blogPosts.map((post) => post.title),
+    records: insightArticles.map((post) => post.title),
     fields: ["Title", "Slug", "Excerpt", "Body", "Author", "Category", "Tags", "Featured image", "Publish date", "SEO"],
   },
   {
