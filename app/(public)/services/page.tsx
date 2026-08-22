@@ -54,7 +54,7 @@ export default async function ServicesPage() {
                     src={engine.image}
                     alt={engine.imageAlt}
                     fill
-                    sizes="(min-width: 1024px) 40vw, 100vw"
+                    sizes="(min-width: 1280px) 540px, (min-width: 1024px) 40vw, 100vw"
                     className="object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#020817] via-[#020817]/30 to-transparent" />

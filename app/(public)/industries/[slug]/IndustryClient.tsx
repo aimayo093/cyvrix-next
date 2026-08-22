@@ -38,7 +38,7 @@ export function IndustryClient({ industry }: { industry: PublicIndustry }) {
                   src={industry.content.image}
                   alt={industry.content.imageAlt}
                   fill
-                  sizes="(min-width: 1024px) 45vw, 100vw"
+                  sizes="(min-width: 1280px) 620px, (min-width: 1024px) 45vw, 100vw"
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#041635]/55 via-transparent to-transparent" />

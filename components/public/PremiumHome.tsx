@@ -88,7 +88,7 @@ export function PremiumHome({
                   alt="Two CYVRIX specialists reviewing technical work together on a laptop"
                   fill
                   priority
-                  sizes="(min-width: 1024px) 45vw, 100vw"
+                  sizes="(min-width: 1280px) 620px, (min-width: 1024px) 45vw, 100vw"
                   className="object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-tr from-[#041635]/55 via-transparent to-transparent" />
@@ -131,7 +131,7 @@ export function PremiumHome({
                       src={engine.image}
                       alt={engine.imageAlt}
                       fill
-                      sizes="(min-width: 768px) 50vw, 100vw"
+                      sizes="(min-width: 1280px) 620px, (min-width: 768px) 50vw, 100vw"
                       className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#041635]/70 via-[#041635]/10 to-transparent" />
