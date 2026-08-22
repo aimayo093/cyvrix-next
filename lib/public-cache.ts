@@ -587,6 +587,8 @@ export type SiteImages = {
   industries: Record<string, string | undefined>;
   /** Page key -> hero image URL, for pages that are not services or industries. */
   pages?: Record<string, string | undefined>;
+  /** Service slug -> image URL, for the individual service pages. */
+  services?: Record<string, string | undefined>;
 };
 
 function readImageMap(value: unknown): Record<string, string> {
@@ -619,6 +621,7 @@ export async function getSiteImages(): Promise<SiteImages> {
       engines: readImageMap(root.engines),
       industries: readImageMap(root.industries),
       pages: readImageMap(root.pages),
+      services: readImageMap(root.services),
       hero,
     };
   } catch (error) {

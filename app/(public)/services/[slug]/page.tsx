@@ -11,8 +11,10 @@ import {
   Target,
 } from "lucide-react";
 import { findService as findStaticService, services as staticServices } from "@/lib/cyvrix-data";
-import { getPublicServiceDetail } from "@/lib/public-cache";
+import { getPublicServiceDetail, getSiteImages, type SiteImages } from "@/lib/public-cache";
 import { getServiceJourney } from "@/lib/service-journeys";
+import { PageHeroImage } from "@/components/public/PageHeroImage";
+import { getServiceDetailContent } from "@/lib/service-detail-content";
 
 type ServicePageProps = {
   params: Promise<{ slug: string }>;
@@ -51,7 +53,10 @@ export default function ServiceDetailPage(props: ServicePageProps) {
 
 async function ServiceDetailContent({ params }: ServicePageProps) {
   const { slug } = await params;
-  const { service: dbService, related: dbRelated } = await getPublicServiceDetail(slug);
+  const [{ service: dbService, related: dbRelated }, siteImages] = await Promise.all([
+    getPublicServiceDetail(slug),
+    getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} })),
+  ]);
   const staticService = findStaticService(slug);
   const service = dbService ?? staticService;
 
@@ -61,6 +66,7 @@ async function ServiceDetailContent({ params }: ServicePageProps) {
 
   const content = readServiceContent(dbService?.content, staticService);
   const journey = getServiceJourney(service.slug);
+  const detail = getServiceDetailContent(service.slug, siteImages.services?.[service.slug]);
   const related = dbRelated.length > 0
     ? dbRelated
     : staticServices.filter((candidate) => candidate.slug !== service.slug).slice(0, 3);
@@ -75,18 +81,51 @@ async function ServiceDetailContent({ params }: ServicePageProps) {
             <ArrowLeft className="h-4 w-4" />
             All services
           </Link>
-          <div className="mt-10 max-w-4xl">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">{journey.category}</p>
-            <h1 className="mt-4 font-outfit text-5xl font-black tracking-tight sm:text-6xl">{service.title}</h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-300">{service.summary}</p>
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row">
-              <Link href={journey.primaryHref} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-[#2691F0] px-6 py-3 text-sm font-black text-white transition-colors hover:bg-white hover:text-[#041635]">
-                {journey.primaryLabel} <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href={journey.secondaryHref} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3 text-sm font-black text-white transition-colors hover:border-sky-300/60 hover:bg-white/10">
-                {journey.secondaryLabel}
-              </Link>
+          <div className="mt-10 grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">{journey.category}</p>
+              <h1 className="mt-4 font-outfit text-4xl font-black tracking-tight sm:text-5xl">{service.title}</h1>
+              <p className="mt-6 text-lg leading-8 text-slate-300">{service.summary}</p>
+              <div className="mt-10 flex flex-col gap-3 sm:flex-row">
+                <Link href={journey.primaryHref} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl bg-[#2691F0] px-6 py-3 text-sm font-black text-white transition-colors hover:bg-white hover:text-[#041635]">
+                  {journey.primaryLabel} <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link href={journey.secondaryHref} className="inline-flex min-h-13 items-center justify-center gap-2 rounded-xl border border-white/20 px-6 py-3 text-sm font-black text-white transition-colors hover:border-sky-300/60 hover:bg-white/10">
+                  {journey.secondaryLabel}
+                </Link>
+              </div>
             </div>
+            <PageHeroImage src={detail.image} alt={detail.imageAlt} priority />
+          </div>
+        </div>
+      </section>
+
+      {/* Why this service exists, in plain terms. */}
+      <section className="border-b border-white/10 py-16 sm:py-20">
+        <div className="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">What this is for</p>
+            <h2 className="mt-4 font-outfit text-3xl font-black tracking-tight sm:text-4xl">
+              The problem behind the requirement.
+            </h2>
+            <div className="mt-7 space-y-5">
+              {detail.overview.map((paragraph) => (
+                <p key={paragraph} className="text-base leading-8 text-slate-300">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-7 lg:mt-16">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">This is the right conversation when</p>
+            <ul className="mt-6 space-y-4">
+              {detail.rightWhen.map((signal) => (
+                <li key={signal} className="flex gap-3 text-sm leading-6 text-slate-300">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-sky-300" />
+                  {signal}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
