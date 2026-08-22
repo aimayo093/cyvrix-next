@@ -13,7 +13,10 @@ export type PageHeroKey =
   | "faq"
   | "request-quote"
   | "book-consultation"
-  | "contact";
+  | "contact"
+  | "careers"
+  | "support"
+  | "insights";
 
 export type PageHero = {
   image: string;
@@ -46,6 +49,18 @@ export const pageHeroes: Record<PageHeroKey, PageHero> = {
   contact: {
     image: `${UPLOADS}/1780433230805-42051091-christina-wocintechchat-com-m-6Dv3pe-JnSg-unsplash.jpg`,
     imageAlt: "A technical team working together at a desk",
+  },
+  careers: {
+    image: `${UPLOADS}/1780429502666-526249160-clay-banks-LjqARJaJotc-unsplash.jpg`,
+    imageAlt: "Colleagues bringing their hands together over a table",
+  },
+  support: {
+    image: `${UPLOADS}/1780430640273-875077484-jon-tyson-nzUTgSH3gfo-unsplash.jpg`,
+    imageAlt: "A question mark, representing a support enquiry",
+  },
+  insights: {
+    image: `${UPLOADS}/1780431111133-917002523-markus-winkler-48CkLuEGgWU-unsplash.jpg`,
+    imageAlt: "Written notes and analysis",
   },
 };
 
