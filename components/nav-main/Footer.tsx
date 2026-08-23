@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { ComplianceCard, FooterLink as FooterLinkRecord, FooterSection, SocialLink } from "@/generated/prisma";
 import { Logo } from "./Logo";
 import { OPEN_COOKIE_PREFERENCES_EVENT } from "@/components/shared/CookieConsent";
-import { companyFacts } from "@/lib/company-facts";
+import { companyFacts, registeredCompanyLine } from "@/lib/company-facts";
 import {
   MessageCircle,
   Mail,
@@ -676,14 +676,15 @@ export function Footer({
           Business (Names and Trading Disclosures) Regulations 2015 require a UK
           company's website to state its registered name, the part of the UK it
           is registered in, its company number and its registered office address.
-          "Registered in England & Wales" alone did not satisfy that, and this is
-          also the first thing a cautious buyer or procurement team checks.
+          "Registered in England & Wales" alone did not satisfy that.
+
+          The registered office is residential and is withheld by the company's
+          own decision, so this line carries the other particulars and states the
+          trading location instead. See registeredCompanyLine.
         */}
         <div className="pt-8 border-t border-white/5">
           <p className="text-slate-500 text-xs font-medium leading-relaxed text-center md:text-left">
-            {companyFacts.registeredName} is a {companyFacts.companyType.toLowerCase()} registered in{" "}
-            {companyFacts.registeredIn}, company number {companyFacts.companyNumber}. Registered office:{" "}
-            {companyFacts.registeredOffice}.
+            {registeredCompanyLine()}
           </p>
         </div>
 

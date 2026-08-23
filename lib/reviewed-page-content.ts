@@ -139,7 +139,7 @@ export const reviewedPages: ReviewedPage[] = [
         subtitle: "Registered and accountable",
         title: "The details you can check for yourself.",
         body:
-          "CYVRIX LIMITED is company number 15902542, incorporated on 17 August 2024, with its registered office at 44 Addison Road, Neath, Wales, SA11 2AY. We are registered with the Information Commissioner's Office under reference ZC075683. Every one of those is verifiable against a public register without asking us.",
+          "CYVRIX LIMITED is company number 15902542, incorporated on 17 August 2024, registered in England and Wales and based in Neath. We are registered with the Information Commissioner's Office under reference ZC075683. Every one of those is verifiable against a public register without asking us.",
         mediaId: heroImage("about"),
         buttonLabel: "Open the Trust Centre",
         buttonUrl: "/trust",
@@ -149,7 +149,7 @@ export const reviewedPages: ReviewedPage[] = [
           points: [
             "Companies House number 15902542",
             "ICO registration ZC075683",
-            "Registered in England and Wales",
+            "Registered in England and Wales, based in Neath",
             "ISO 27001 in progress, not yet held, and not claimed",
           ],
         },

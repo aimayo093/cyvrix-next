@@ -9,9 +9,9 @@
  *
  * Deliberately NOT emitted:
  *   - `LocalBusiness` / `ProfessionalService`. Those types describe a place
- *     customers visit. 44 Addison Road is the registered office, not a
+ *     customers visit. The filed address is a registered office, not a
  *     storefront, and an address mismatch is worse for search than no markup.
- *     `Organization` with a `PostalAddress` says the true thing.
+ *     `Organization` with a locality-level `PostalAddress` says the true thing.
  *   - `aggregateRating`, `review`, `numberOfEmployees`, `award`. No evidence.
  *   - `hasCredential` for ISO 27001. Not held. See `certificationStatus`.
  *   - `priceRange` and `offers.price`. Pricing is quoted per engagement.
@@ -52,17 +52,35 @@ function toIsoDate(readable: string): string | undefined {
   return `${year}-${String(month + 1).padStart(2, "0")}-${day.padStart(2, "0")}`;
 }
 
-/** "44 Addison Road, Neath, Wales, SA11 2AY" split into its schema.org parts. */
+/**
+ * The company's address for schema.org.
+ *
+ * The filed registered office is residential and withheld from the public site,
+ * so no street line or postcode is emitted. Leaving them in JSON-LD would put
+ * the address in the page source, which is not withholding it. Locality and
+ * region are published, which is true and enough for a search engine to place
+ * the company.
+ */
 function registeredAddress(): JsonLdObject {
-  const parts = companyFacts.registeredOffice.split(",").map((part) => part.trim());
-  const [street, locality, region, postcode] = parts;
+  if (companyFacts.publishRegisteredOffice) {
+    const [street, locality, region, postcode] = companyFacts.registeredOffice
+      .split(",")
+      .map((part) => part.trim());
+
+    return {
+      "@type": "PostalAddress",
+      streetAddress: street,
+      addressLocality: locality,
+      addressRegion: region,
+      postalCode: postcode,
+      addressCountry: "GB",
+    };
+  }
 
   return {
     "@type": "PostalAddress",
-    streetAddress: street,
-    addressLocality: locality,
-    addressRegion: region,
-    postalCode: postcode,
+    addressLocality: companyFacts.registeredTown,
+    addressRegion: "Wales",
     addressCountry: "GB",
   };
 }

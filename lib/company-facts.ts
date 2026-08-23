@@ -18,9 +18,22 @@ export const companyFacts = {
   companyNumber: "15902542",
   incorporatedOn: "17 August 2024",
   registeredIn: "England and Wales",
+  /**
+   * The registered office as filed at Companies House.
+   *
+   * WITHHELD FROM THE PUBLIC SITE. It is a residential address, and
+   * `publishRegisteredOffice` is false, so nothing may render this value:
+   * not the footer, not a page, not JSON-LD. `scripts/check-claims.mts`
+   * enforces that. It stays here because it is the true filed fact and the
+   * site should not pretend otherwise internally.
+   */
   registeredOffice: "44 Addison Road, Neath, Wales, SA11 2AY",
+  publishRegisteredOffice: false,
+
   /** Where we are based, for places a full postal address is more than is wanted. */
   registeredTown: "Neath",
+  /** The public-facing location, used wherever the postal address is withheld. */
+  registeredLocation: "Neath, Wales",
   companyType: "Private limited company",
   /** SIC codes recorded against the company that describe the technology business. */
   natureOfBusiness: [
@@ -105,6 +118,21 @@ export const unverifiedDetails = [
 ] as const;
 
 /** Registered-company statement required on UK business websites. */
+/**
+ * The company's registration statement for public display.
+ *
+ * Regulations 24 and 25 of the Company, Limited Liability Partnership and
+ * Business (Names and Trading Disclosures) Regulations 2015 list the registered
+ * office address among the particulars a UK company's website must carry. That
+ * address is residential here and has been withheld by the company's own
+ * decision, so this line carries the registered name, the part of the UK the
+ * company is registered in and the company number, and states the trading
+ * location instead of the filed address.
+ */
 export function registeredCompanyLine(): string {
-  return `${companyFacts.registeredName} is a ${companyFacts.companyType.toLowerCase()} registered in ${companyFacts.registeredIn}, company number ${companyFacts.companyNumber}, with its registered office at ${companyFacts.registeredOffice}.`;
+  const office = companyFacts.publishRegisteredOffice
+    ? `, with its registered office at ${companyFacts.registeredOffice}`
+    : `, based in ${companyFacts.registeredLocation}`;
+
+  return `${companyFacts.registeredName} is a ${companyFacts.companyType.toLowerCase()} registered in ${companyFacts.registeredIn}, company number ${companyFacts.companyNumber}${office}.`;
 }

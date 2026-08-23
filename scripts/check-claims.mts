@@ -15,6 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { reviewedPages, findDisallowedSections } from "../lib/reviewed-page-content";
 import { founder } from "../lib/founder";
+import { companyFacts } from "../lib/company-facts";
 
 type Rule = { name: string; pattern: RegExp; note: string };
 
@@ -114,34 +115,51 @@ for (const page of reviewedPages) {
   }
 }
 
-// The founder's personal name is withheld by preference. Catch it being typed
-// straight into public copy, which is how a withheld name usually comes back:
-// not through the guarded `founder.name` reference, but through someone writing
-// it into a heading or a CMS section because it read better.
-if (!founder.publishName) {
-  const publicDirs = ["app", "components", "lib"];
-  const skip = new Set([path.join("lib", "founder.ts")]);
+// Details withheld by the company's own decision. Each is caught being typed
+// straight into source, which is how a withheld value usually comes back: not
+// through the guarded reference, but through someone writing it into a heading
+// or a CMS section because it read better.
+type Withheld = { withheld: boolean; needles: string[]; owner: string; rule: string; note: string };
 
-  const walk = (dir: string): string[] =>
-    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-      const full = path.join(dir, entry.name);
-      if (entry.isDirectory()) return entry.name === "node_modules" ? [] : walk(full);
-      return /\.(ts|tsx)$/.test(entry.name) ? [full] : [];
-    });
+const WITHHELD: Withheld[] = [
+  {
+    withheld: !founder.publishName,
+    needles: [founder.name],
+    owner: path.join("lib", "founder.ts"),
+    rule: "withheld founder name",
+    note: "founder.publishName is false, so the personal name must not be written into source. Use founderPublicLabel(), or set publishName to true if it should be published.",
+  },
+  {
+    withheld: !companyFacts.publishRegisteredOffice,
+    // The street line and the postcode, either of which identifies the property.
+    needles: ["44 Addison Road", "SA11 2AY"],
+    owner: path.join("lib", "company-facts.ts"),
+    rule: "withheld registered office",
+    note: "companyFacts.publishRegisteredOffice is false. The filed address is residential. Use companyFacts.registeredLocation, or set the flag to true if it should be published.",
+  },
+];
 
-  for (const dir of publicDirs) {
-    const root = path.join(process.cwd(), dir);
-    if (!fs.existsSync(root)) continue;
-    for (const file of walk(root)) {
-      const relative = path.relative(process.cwd(), file);
-      if (skip.has(relative)) continue;
-      if (!fs.readFileSync(file, "utf8").includes(founder.name)) continue;
-      failures.push({
-        where: relative,
-        rule: "withheld founder name",
-        excerpt: founder.name,
-        note: "founder.publishName is false, so the personal name must not be written into source. Use founderPublicLabel(), or set publishName to true if it should be published.",
-      });
+const walk = (dir: string): string[] =>
+  fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return entry.name === "node_modules" ? [] : walk(full);
+    return /\.(ts|tsx)$/.test(entry.name) ? [full] : [];
+  });
+
+const sourceFiles = ["app", "components", "lib"]
+  .map((dir) => path.join(process.cwd(), dir))
+  .filter((root) => fs.existsSync(root))
+  .flatMap(walk);
+
+for (const entry of WITHHELD) {
+  if (!entry.withheld) continue;
+  for (const file of sourceFiles) {
+    const relative = path.relative(process.cwd(), file);
+    if (relative === entry.owner) continue;
+    const contents = fs.readFileSync(file, "utf8");
+    for (const needle of entry.needles) {
+      if (!contents.includes(needle)) continue;
+      failures.push({ where: relative, rule: entry.rule, excerpt: needle, note: entry.note });
     }
   }
 }

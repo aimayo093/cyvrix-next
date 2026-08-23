@@ -146,8 +146,13 @@ function AboutFallback({ heroImage }: { heroImage?: string }) {
                 <dd className="mt-1 font-semibold text-slate-200">{companyFacts.incorporatedOn}</dd>
               </div>
               <div>
-                <dt className="font-black uppercase tracking-wider text-slate-500">Registered office</dt>
-                <dd className="mt-1 font-semibold leading-6 text-slate-200">{companyFacts.registeredOffice}</dd>
+                {/* The filed registered office is residential and withheld. */}
+                <dt className="font-black uppercase tracking-wider text-slate-500">Based in</dt>
+                <dd className="mt-1 font-semibold leading-6 text-slate-200">
+                  {companyFacts.publishRegisteredOffice
+                    ? companyFacts.registeredOffice
+                    : companyFacts.registeredLocation}
+                </dd>
               </div>
             </dl>
             <p className="mt-6 border-t border-white/10 pt-5 text-xs leading-6 text-slate-400">
