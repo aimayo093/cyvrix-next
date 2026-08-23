@@ -25,12 +25,7 @@ import {
   CircleUserRound,
 } from "lucide-react";
 import { Logo } from "@/components/nav-main/Logo";
-import {
-  AdminAccountMenu,
-  AdminNotificationsMenu,
-  type AdminIdentity,
-  type AdminNotification,
-} from "@/components/admin/AdminHeaderMenus";
+import { AdminAccountMenu, type AdminIdentity } from "@/components/admin/AdminHeaderMenus";
 
 const adminNav = [
   { group: "Overview", items: [
@@ -76,15 +71,17 @@ interface AdminLayoutClientProps {
   children: React.ReactNode;
   /** The signed-in administrator, so the header stops claiming to be "AD". */
   identity: AdminIdentity;
-  notifications: AdminNotification[];
-  unreadCount: number;
+  /**
+   * The notification control, passed in already wrapped in its own Suspense
+   * boundary so a slow query cannot hold up the rest of the header.
+   */
+  notificationsSlot: React.ReactNode;
 }
 
 export function AdminLayoutClient({
   children,
   identity,
-  notifications,
-  unreadCount,
+  notificationsSlot,
 }: AdminLayoutClientProps) {
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const pathname = usePathname();
@@ -198,7 +195,7 @@ export function AdminLayoutClient({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <AdminNotificationsMenu notifications={notifications} unreadCount={unreadCount} />
+            {notificationsSlot}
             <AdminAccountMenu identity={identity} />
           </div>
         </header>

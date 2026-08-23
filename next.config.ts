@@ -37,6 +37,16 @@ const nextConfig: NextConfig = {
   experimental: {
     // Required for the forbidden()/unauthorized() interrupts used by app/forbidden.tsx.
     authInterrupts: true,
+
+    // Static generation workers, capped to protect the database connection
+    // budget. The build reaches Supabase through the session-mode pooler on
+    // port 5432, which accepts 15 clients in total, and the default worker
+    // count saturated it: pages fell back to static content mid-build and
+    // published without their CMS data, silently. Four workers against a pool
+    // of three connections each stays inside the limit.
+    //
+    // Remove this once DATABASE_URL points at the transaction pooler on 6543.
+    cpus: 4,
   },
   images: {
     remotePatterns: [

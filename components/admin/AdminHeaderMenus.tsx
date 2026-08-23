@@ -80,6 +80,27 @@ function useDismissable(onDismiss: () => void) {
 }
 
 /**
+ * The bell as it appears before the notifications query returns.
+ *
+ * Rendered rather than nothing, so the control never disappears from the header
+ * while data is in flight. It carries no unread indicator because at that point
+ * the count is genuinely unknown, and a dot shown on spec would be the same
+ * fabricated status the real bell was fixed to stop showing.
+ */
+export function AdminNotificationsButtonFallback() {
+  return (
+    <button
+      type="button"
+      disabled
+      aria-label="Notifications, loading"
+      className="rounded-lg p-2 text-slate-300"
+    >
+      <Bell className="h-4 w-4" />
+    </button>
+  );
+}
+
+/**
  * Notification bell.
  *
  * The unread dot is driven by the actual notification rows. It previously
