@@ -19,6 +19,8 @@ export const companyFacts = {
   incorporatedOn: "17 August 2024",
   registeredIn: "England and Wales",
   registeredOffice: "44 Addison Road, Neath, Wales, SA11 2AY",
+  /** Where we are based, for places a full postal address is more than is wanted. */
+  registeredTown: "Neath",
   companyType: "Private limited company",
   /** SIC codes recorded against the company that describe the technology business. */
   natureOfBusiness: [

@@ -13,6 +13,7 @@ import {
   ShieldCheck,
   MapPin,
   Phone,
+  Clock,
   LockKeyhole,
   LifeBuoy,
   Send,
@@ -389,7 +390,8 @@ interface FooterProps {
   companyDesc?: string;
   phone?: string;
   email?: string;
-  address?: string;
+  /** Support hours from Contact Us CMS, e.g. "Mon-Fri: 8am - 6pm". */
+  phoneHours?: string;
   copyright?: string;
   complianceCards?: ComplianceCard[];
   forceFullPageReload?: boolean;
@@ -416,7 +418,7 @@ export function Footer({
   companyDesc = "CYVRIX helps organisations manage, secure and modernise the technology their people rely on.",
   phone,
   email,
-  address,
+  phoneHours,
   copyright,
   complianceCards = [],
   forceFullPageReload = false,
@@ -465,12 +467,15 @@ export function Footer({
             
             {/* Contact Details */}
             <div className="space-y-3 pt-2 text-xs font-semibold text-slate-300">
-              {address && (
-                <div className="flex items-center gap-2.5">
-                  <MapPin className="h-4 w-4 text-[#2691F0] shrink-0" />
-                  <span>{address}</span>
-                </div>
-              )}
+              {/*
+                Town only. The full postal address is a statutory disclosure and
+                appears once at the bottom of the footer; repeating it here made
+                the contact block read like a letterhead.
+              */}
+              <div className="flex items-center gap-2.5">
+                <MapPin className="h-4 w-4 text-[#2691F0] shrink-0" />
+                <span>{companyFacts.registeredTown}</span>
+              </div>
               {phone && (
                 <div className="flex items-center gap-2.5">
                   <Phone className="h-4 w-4 text-[#2691F0] shrink-0" />
@@ -508,11 +513,6 @@ export function Footer({
                 );
               })}
             </div>
-
-            {/* Newsletter */}
-            <div className="pt-2">
-              <NewsletterForm />
-            </div>
           </div>
 
           {/* Dynamic Footer Columns & Compliance Trust Section */}
@@ -543,6 +543,54 @@ export function Footer({
                   </ul>
                 </div>
               ))}
+            </div>
+
+            {/*
+              Everything used to stack in the brand column, leaving the right
+              two thirds empty below the nav links. The signup sits in the
+              centre third and the support hours fill the right, so the footer
+              balances instead of running down one side.
+            */}
+            <div className="grid grid-cols-1 gap-8 border-t border-white/5 pt-8 md:grid-cols-2">
+              <NewsletterForm />
+
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">
+                  When we are available
+                </p>
+                <div className="mt-4 space-y-3 text-xs font-semibold text-slate-300">
+                  {phoneHours && (
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="h-4 w-4 shrink-0 text-[#2691F0]" />
+                      <span>{phoneHours}</span>
+                    </div>
+                  )}
+                  {phone && (
+                    <div className="flex items-center gap-2.5">
+                      <Phone className="h-4 w-4 shrink-0 text-[#2691F0]" />
+                      <FooterNavLink
+                        href={`tel:${phone.replace(/\s/g, "")}`}
+                        forceReload={forceFullPageReload}
+                        className="transition-colors hover:text-white"
+                      >
+                        {phone}
+                      </FooterNavLink>
+                    </div>
+                  )}
+                </div>
+                <p className="mt-4 text-xs font-medium leading-relaxed text-slate-500">
+                  Outside these hours, existing clients should use the support route agreed for their
+                  service.
+                </p>
+                <FooterNavLink
+                  href="/support"
+                  forceReload={forceFullPageReload}
+                  className="mt-4 inline-flex items-center text-xs font-black uppercase tracking-wide text-[#2691F0] transition-colors hover:text-white"
+                >
+                  How support works
+                  <ArrowRight className="ml-1.5 h-3 w-3" />
+                </FooterNavLink>
+              </div>
             </div>
 
             {/* Compliance & Trust Section */}

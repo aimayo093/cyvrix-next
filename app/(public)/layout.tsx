@@ -127,7 +127,10 @@ async function getPublicChromeData() {
   const companyDesc = publicValue(brandData.footerDescription);
   const phone = publicValue(companyData.phone) ?? publicValue(contactData.phone);
   const email = publicValue(companyData.supportEmail) ?? publicValue(contactData.supportEmail);
-  const address = publicValue(companyData.address) ?? publicValue(contactData.hqAddress);
+  // The footer shows the town from companyFacts, and the full registered
+  // office appears once in the statutory disclosure, so no CMS address is
+  // resolved for the site chrome. /contact still renders hqAddress itself.
+  const phoneHours = publicValue(contactData.phoneHours);
   const copyright = publicValue(companyData.copyright);
 
   return {
@@ -144,7 +147,7 @@ async function getPublicChromeData() {
     companyDesc,
     phone,
     email,
-    address,
+    phoneHours,
     copyright,
   };
 }
@@ -190,7 +193,7 @@ async function PublicFooter() {
     companyDesc,
     phone,
     email,
-    address,
+    phoneHours,
     copyright,
     complianceCards,
   } = await getPublicChromeData();
@@ -204,7 +207,7 @@ async function PublicFooter() {
       companyDesc={companyDesc}
       phone={phone}
       email={email}
-      address={address}
+      phoneHours={phoneHours}
       copyright={copyright}
       complianceCards={complianceCards}
       forceFullPageReload={FORCE_FULL_PAGE_RELOAD}
