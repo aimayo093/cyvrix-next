@@ -213,7 +213,7 @@ export const defaultCookiePolicy: PublicLegalDocument = {
       heading: "Analytics cookies",
       paragraphs: [
         "These help us understand which pages are useful. They are optional, and the analytics script is not loaded at all until you allow this category.",
-        "If you allow analytics, we use Vercel Analytics to record aggregate page views and basic performance information. If you do not allow it, no analytics script is loaded and no analytics cookie is set.",
+        "If you allow analytics, we use our analytics to record aggregate page views and basic performance information. It is provided by our hosting platform, which acts as our processor, and it collects aggregate figures rather than anything that identifies you. If you do not allow it, no analytics script is loaded and no analytics cookie is set.",
       ],
     },
     {

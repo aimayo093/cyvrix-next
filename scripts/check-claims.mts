@@ -164,6 +164,42 @@ for (const entry of WITHHELD) {
   }
 }
 
+// The hosting platform is not named in public copy. It says nothing useful to a
+// visitor, and the company would rather its supplier chain were not advertised
+// on the site. Admin pages are exempt: those mentions are setup instructions
+// that only work if they name where to put the setting.
+{
+  const vendor = "Vercel";
+  const exemptPrefixes = [path.join("app", "admin"), path.join("app", "portal")];
+
+  for (const file of sourceFiles) {
+    const relative = path.relative(process.cwd(), file);
+    if (exemptPrefixes.some((prefix) => relative.startsWith(prefix))) continue;
+
+    // Strip technical references before looking for prose. Package specifiers
+    // like "@vercel/analytics/react" and environment variables like
+    // VERCEL_PROJECT_PRODUCTION_URL are identifiers the platform defines; a
+    // visitor never sees them and renaming them would break the code.
+    const contents = fs
+      .readFileSync(file, "utf8")
+      .replace(/@vercel\/[\w/.-]+/g, "")
+      .replace(/\bVERCEL_[A-Z0-9_]+/g, "");
+
+    // A substring test rather than a word-boundary regex built from a template
+    // literal. In a template literal `\b` is the backspace character, not a
+    // word boundary, so that pattern matches nothing and the check passes
+    // forever without ever looking at anything.
+    if (!contents.toLowerCase().includes(vendor.toLowerCase())) continue;
+
+    failures.push({
+      where: relative,
+      rule: "hosting platform named in public copy",
+      excerpt: vendor,
+      note: "Public copy refers to \"our analytics\" and \"our hosting platform\" rather than naming the supplier. Admin pages under app/admin are exempt.",
+    });
+  }
+}
+
 const disallowed = findDisallowedSections();
 for (const entry of disallowed) {
   failures.push({

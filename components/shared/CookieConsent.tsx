@@ -232,7 +232,7 @@ export function CookieConsent() {
             </div>
             <ConsentOption
               checked={choices.analytics}
-              description="Helps us understand how the public site is used. Vercel Analytics is only loaded after you allow this category."
+              description="Helps us understand how the public site is used. Our analytics is only loaded after you allow this category."
               id="analytics"
               label="Analytics"
               onChange={updateChoice}
