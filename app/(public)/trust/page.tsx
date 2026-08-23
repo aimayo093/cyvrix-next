@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { connection } from "next/server";
 import { certificationStatus, companyFacts, isIcoRegistrationCurrent } from "@/lib/company-facts";
-import { founder, founderCertifications } from "@/lib/founder";
+import { founderCertifications } from "@/lib/founder";
 import { ArrowRight, BadgeCheck, ClipboardCheck, Database, FileText, Hourglass, KeyRound, LockKeyhole, Radar, ShieldCheck } from "lucide-react";
 
 export const metadata: Metadata = {
@@ -221,8 +221,8 @@ export default function TrustCentrePage() {
               Professional certifications our founder holds.
             </h3>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-300">
-              {founder.name} holds the qualifications below in his own name. Each is verifiable with the
-              awarding body. They say something real about who does the work, and they are not company
+              Our founder holds the qualifications below in his own name, and we will evidence any of
+              them on request. They say something real about who does the work, and they are not company
               accreditations: nothing here means CYVRIX LIMITED is certified to any standard.
             </p>
 

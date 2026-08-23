@@ -121,7 +121,7 @@ export const reviewedPages: ReviewedPage[] = [
         title: "Who you are actually dealing with",
         backgroundStyle: "dark",
         body:
-          `<p><strong>${founder.name}</strong> &mdash; ${founder.role}, ${founder.location}.</p>` +
+          `<p><strong>${founder.role}</strong>, ${founder.location}.</p>` +
           `<p>${founder.summary}</p>` +
           `<p>${founder.approach}</p>` +
           `<p><strong>Professional certifications held personally:</strong> ` +

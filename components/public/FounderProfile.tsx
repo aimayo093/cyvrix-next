@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Award, BadgeCheck, Briefcase, GraduationCap, MapPin } from "lucide-react";
 import {
+  canPublishFounderIdentity,
   founder,
   founderCapabilities,
   founderCertifications,
@@ -18,6 +19,11 @@ import {
  * The individual/company distinction is made explicitly rather than left to the
  * reader. These certifications belong to a person. CYVRIX LIMITED holds no
  * company accreditations, and this section must never be read as implying one.
+ *
+ * The founder's personal name is withheld by preference. Nothing here renders
+ * it, and the LinkedIn link is omitted with it because that URL contains the
+ * name. Because a stranger therefore cannot run the verification checks
+ * unaided, the copy offers evidence on request instead of implying they can.
  */
 export function FounderProfile() {
   return (
@@ -28,7 +34,7 @@ export function FounderProfile() {
             Who you are dealing with
           </span>
           <h2 className="mt-4 font-outfit text-3xl font-black leading-tight tracking-tight text-white md:text-4xl">
-            {founder.name}
+            {canPublishFounderIdentity() ? founder.name : "The engineer behind CYVRIX."}
           </h2>
           <p className="mt-2 text-sm font-black uppercase tracking-wider text-[#7ab8f4]">
             {founder.role}
@@ -87,7 +93,8 @@ export function FounderProfile() {
                 Professional certifications
               </h3>
               <p className="mt-2 text-sm font-medium leading-relaxed text-slate-300">
-                Held personally by {founder.shortName}, and verifiable with the awarding bodies.
+                Held personally by our founder. We will evidence any of them on request, and
+                certificate details go to a prospective client who asks.
               </p>
 
               <ul className="mt-6 space-y-2.5">
@@ -128,15 +135,17 @@ export function FounderProfile() {
                 ))}
               </ul>
 
-              <a
-                href={founder.linkedIn}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-7 inline-flex items-center gap-2 border-t border-white/10 pt-5 text-sm font-black text-[#7ab8f4] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] focus-visible:ring-offset-2 focus-visible:ring-offset-[#071126]"
-              >
-                <Award className="h-4 w-4" />
-                Professional profile on LinkedIn
-              </a>
+              {canPublishFounderIdentity() && (
+                <a
+                  href={founder.linkedIn}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-7 inline-flex items-center gap-2 border-t border-white/10 pt-5 text-sm font-black text-[#7ab8f4] transition-colors hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] focus-visible:ring-offset-2 focus-visible:ring-offset-[#071126]"
+                >
+                  <Award className="h-4 w-4" />
+                  Professional profile on LinkedIn
+                </a>
+              )}
             </div>
           </div>
         </div>

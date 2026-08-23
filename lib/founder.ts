@@ -15,7 +15,15 @@
  *
  * Prior roles are the founder's own employment history, not CYVRIX client work.
  * Describing the Getronics year as a CYVRIX contract would be a misstatement —
- * it was a role he held, and it is written that way throughout.
+ * it was a role held, and it is written that way throughout.
+ *
+ * NAME PRIVACY. `publishName` decides whether the founder's personal name
+ * reaches the public site at all. While it is false, nothing may render
+ * `founder.name` or `founder.linkedIn`: the LinkedIn URL contains the name, and
+ * removing a name from visible copy while leaving it in JSON-LD or an href
+ * would not be withholding it. `scripts/check-claims.mts` enforces this.
+ *
+ * Use `founderPublicLabel()` for anything a visitor sees.
  */
 
 export type ProfessionalCertification = {
@@ -33,28 +41,54 @@ export type CareerEntry = {
 };
 
 export const founder = {
+  /**
+   * Set to true to publish the personal name and LinkedIn profile. While false,
+   * neither may appear anywhere a visitor or a crawler can read them.
+   */
+  publishName: false,
+
+  /** Withheld from the public site while `publishName` is false. */
   name: "Paul Aimayo Iyangbe",
-  /** Used where a short form reads better. */
-  shortName: "Paul Iyangbe",
+  /** Withheld from the public site while `publishName` is false. */
+  linkedIn: "https://www.linkedin.com/in/paul-iyangbe",
+
   role: "Founder and Principal Engineer",
   location: "Neath, Wales",
-  linkedIn: "https://www.linkedin.com/in/paul-iyangbe",
 
   /** First year of professional IT work, per the professional record. */
   careerStartYear: 2009,
 
   summary:
-    "Paul has worked in IT since 2009, delivering second and third line support and infrastructure engineering across managed service, enterprise, healthcare and public sector environments in the UK and internationally. He founded CYVRIX in 2024 to do that work directly for organisations that want a named engineer rather than a ticket queue.",
+    "CYVRIX is led by its founder, a senior infrastructure and cloud engineer who has worked in IT since 2009, delivering second and third line support and infrastructure engineering across managed service, enterprise, healthcare and public sector environments in the UK and internationally. CYVRIX was set up in 2024 to do that work directly for organisations that want an engineer who knows their environment rather than a ticket queue.",
 
   approach:
     "When you contact CYVRIX, the person who answers is the person who understands your environment. That is the advantage a firm this size has over a consolidator's call centre, and it is deliberate rather than a stage we are trying to grow out of.",
 } as const;
 
 /**
+ * How the founder is referred to in public copy.
+ *
+ * Returns the personal name only when `publishName` is true, so a single flag
+ * governs every public surface instead of each page deciding for itself.
+ */
+export function founderPublicLabel(): string {
+  return founder.publishName ? founder.name : "our founder";
+}
+
+/** True when the personal name and profile link may be rendered publicly. */
+export function canPublishFounderIdentity(): boolean {
+  return founder.publishName;
+}
+
+/**
  * Individual professional certifications the founder holds.
  *
  * Each is verifiable by the issuing body. CompTIA operates a public credential
  * verification service; ITIL Foundation is verifiable through PeopleCert.
+ *
+ * While the founder's name is withheld a stranger cannot run those checks
+ * unaided, so public copy offers evidence on request rather than implying
+ * independent verification is available to anyone who looks.
  */
 export const founderCertifications: ProfessionalCertification[] = [
   { name: "CompTIA Security+", issuer: "CompTIA", verifiableAt: "CompTIA credential verification" },

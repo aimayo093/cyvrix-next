@@ -17,7 +17,7 @@
  *   - `priceRange` and `offers.price`. Pricing is quoted per engagement.
  */
 import { companyFacts } from "@/lib/company-facts";
-import { founder, founderCertifications } from "@/lib/founder";
+import { canPublishFounderIdentity, founder, founderCertifications } from "@/lib/founder";
 
 export const SITE_URL = "https://cyvrix.co.uk";
 
@@ -108,21 +108,26 @@ export function organisationSchema(): JsonLdObject {
       areaServed: "GB",
       availableLanguage: "en-GB",
     },
-    // A named founder with verifiable credentials is the strongest entity
-    // signal available to a company this size. `hasCredential` sits on the
-    // Person, never on the Organization: these are individual qualifications.
-    founder: {
-      "@type": "Person",
-      name: founder.name,
-      jobTitle: founder.role,
-      sameAs: [founder.linkedIn],
-      hasCredential: founderCertifications.map((certification) => ({
-        "@type": "EducationalOccupationalCredential",
-        credentialCategory: "certificate",
-        name: certification.name,
-        recognizedBy: { "@type": "Organization", name: certification.issuer },
-      })),
-    },
+    // A named founder with verifiable credentials is the strongest entity signal
+    // available to a company this size, but schema.org Person requires a name and
+    // the founder's is withheld by preference. Emitting the node anyway would put
+    // the name in the page source, which is not withholding it. So the whole node
+    // is omitted until `publishName` is turned on, rather than shipping a
+    // half-anonymous Person that leaks the thing it is meant to protect.
+    founder: canPublishFounderIdentity()
+      ? {
+          "@type": "Person",
+          name: founder.name,
+          jobTitle: founder.role,
+          sameAs: [founder.linkedIn],
+          hasCredential: founderCertifications.map((certification) => ({
+            "@type": "EducationalOccupationalCredential",
+            credentialCategory: "certificate",
+            name: certification.name,
+            recognizedBy: { "@type": "Organization", name: certification.issuer },
+          })),
+        }
+      : undefined,
   };
 }
 

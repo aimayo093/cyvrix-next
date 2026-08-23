@@ -14,6 +14,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { reviewedPages, findDisallowedSections } from "../lib/reviewed-page-content";
+import { founder } from "../lib/founder";
 
 type Rule = { name: string; pattern: RegExp; note: string };
 
@@ -110,6 +111,38 @@ for (const page of reviewedPages) {
       excerpt: section.sectionType,
       note: `SectionRenderer has no case for this, so it would render nothing. Known types: ${[...handled].sort().join(", ")}`,
     });
+  }
+}
+
+// The founder's personal name is withheld by preference. Catch it being typed
+// straight into public copy, which is how a withheld name usually comes back:
+// not through the guarded `founder.name` reference, but through someone writing
+// it into a heading or a CMS section because it read better.
+if (!founder.publishName) {
+  const publicDirs = ["app", "components", "lib"];
+  const skip = new Set([path.join("lib", "founder.ts")]);
+
+  const walk = (dir: string): string[] =>
+    fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) return entry.name === "node_modules" ? [] : walk(full);
+      return /\.(ts|tsx)$/.test(entry.name) ? [full] : [];
+    });
+
+  for (const dir of publicDirs) {
+    const root = path.join(process.cwd(), dir);
+    if (!fs.existsSync(root)) continue;
+    for (const file of walk(root)) {
+      const relative = path.relative(process.cwd(), file);
+      if (skip.has(relative)) continue;
+      if (!fs.readFileSync(file, "utf8").includes(founder.name)) continue;
+      failures.push({
+        where: relative,
+        rule: "withheld founder name",
+        excerpt: founder.name,
+        note: "founder.publishName is false, so the personal name must not be written into source. Use founderPublicLabel(), or set publishName to true if it should be published.",
+      });
+    }
   }
 }
 
