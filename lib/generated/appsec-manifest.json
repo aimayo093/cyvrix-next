@@ -1,0 +1,163 @@
+{
+  "generatedAt": "2026-08-25T08:45:30.023Z",
+  "fileCount": 173,
+  "apiRouteCount": 11,
+  "mutatingRouteCount": 9,
+  "findings": [
+    {
+      "id": "appsec_xss",
+      "label": "Cross-site scripting sinks",
+      "status": "pass",
+      "method": "Searched every source file for dangerouslySetInnerHTML.",
+      "detail": "2 file(s) inject raw HTML. 0 of them are outside the reviewed set.",
+      "limitation": "Finds the sink, not the source. React escapes everything else by default, but this cannot tell whether a value reaching one of these is attacker-controlled.",
+      "evidence": [
+        "components/shared/SectionRenderer.tsx",
+        "components/public/JsonLd.tsx"
+      ]
+    },
+    {
+      "id": "appsec_csrf",
+      "label": "Cross-site request forgery",
+      "status": "warn",
+      "method": "Checked 9 state-changing API route(s) for an origin, referer or CSRF token check.",
+      "detail": "8 state-changing route(s) verify no origin or token. Server actions are covered separately by the framework.",
+      "limitation": "Server actions carry framework CSRF protection and are not counted here. The session cookie is SameSite, which already blocks the cross-site form post this describes, so an unflagged route is not necessarily exploitable.",
+      "evidence": [
+        "app/api/auth/logout/route.ts",
+        "app/api/admin/cms/[module]/route.ts",
+        "app/api/admin/upload/route.ts",
+        "app/api/submit-contact/route.ts",
+        "app/api/submit-ticket/route.ts",
+        "app/api/subscribe/route.ts",
+        "app/api/unsubscribe/route.ts",
+        "app/api/privacy-request/route.ts"
+      ]
+    },
+    {
+      "id": "appsec_uploads",
+      "label": "File upload validation",
+      "status": "pass",
+      "method": "Examined 2 route(s) that read request bodies as form data or binary.",
+      "detail": "Every upload route checks type or size before accepting a file.",
+      "limitation": "Presence of a check is not correctness of a check. Content sniffing beats an extension test, and this cannot tell which is used.",
+      "evidence": []
+    },
+    {
+      "id": "appsec_path_traversal",
+      "label": "Path traversal",
+      "status": "pass",
+      "method": "Searched for filesystem paths built from request parameters.",
+      "detail": "No filesystem path is constructed from request input.",
+      "limitation": "Only direct construction is visible. A request value passed through a variable or helper first would not be matched.",
+      "evidence": []
+    },
+    {
+      "id": "appsec_ssrf",
+      "label": "Server-side request forgery",
+      "status": "warn",
+      "method": "Searched for outbound fetch calls to a non-literal URL in files that also read request input.",
+      "detail": "3 file(s) fetch a non-literal URL and also read request data. Worth confirming the two are unrelated.",
+      "limitation": "Coarse. A file can legitimately do both without the request value reaching the fetch. Treat as a prompt to read the code, not a defect.",
+      "evidence": [
+        "lib/document-scan.ts",
+        "lib/security-scan.ts",
+        "lib/appsec-checks.ts"
+      ]
+    },
+    {
+      "id": "appsec_password_reset",
+      "label": "Password reset flow",
+      "status": "unknown",
+      "method": "Looked for a self-service password reset and, if present, whether its tokens expire and are single use.",
+      "detail": "No self-service password reset exists. Nothing to attack, and nothing for a locked-out administrator either.",
+      "limitation": "Cannot verify token entropy, or that the reset email goes only to a verified address.",
+      "evidence": []
+    },
+    {
+      "id": "appsec_session",
+      "label": "Session cookie hardening",
+      "status": "pass",
+      "method": "Read the session cookie options in lib/auth.ts.",
+      "detail": "httpOnly set, sameSite set, secure set. Lifetime: 60 * 60 * 8.",
+      "limitation": "Says nothing about session rotation on privilege change, or whether sessions are revoked when an account is disabled.",
+      "evidence": [
+        "lib/auth.ts"
+      ]
+    },
+    {
+      "id": "appsec_signing_secret",
+      "label": "Session signing secret",
+      "status": "pass",
+      "method": "Checked whether the signing secret has a hardcoded fallback and whether production refuses to start without a real one.",
+      "detail": "Production throws when the secret is absent. A development-only fallback exists and is not reachable in production.",
+      "limitation": "Cannot judge the strength of the configured secret from here; that is checked at runtime.",
+      "evidence": [
+        "lib/auth.ts"
+      ]
+    },
+    {
+      "id": "appsec_rate_limits",
+      "label": "Rate limiting on public endpoints",
+      "status": "warn",
+      "method": "Checked 6 public state-changing route(s) for a rate limit call.",
+      "detail": "2 public route(s) accept writes with no rate limit.",
+      "limitation": "Does not evaluate whether the configured limits are appropriate, nor cover server actions.",
+      "evidence": [
+        "app/api/auth/logout/route.ts",
+        "app/api/unsubscribe/route.ts"
+      ]
+    },
+    {
+      "id": "appsec_env_exposure",
+      "label": "Secrets reaching the browser",
+      "status": "pass",
+      "method": "Looked for secret-shaped NEXT_PUBLIC_ variables, and for server-only environment values read inside client components.",
+      "detail": "No secret-shaped value is exposed to the browser bundle.",
+      "limitation": "Judges names, not contents. A secret stored under an innocuous NEXT_PUBLIC_ name would not be caught.",
+      "evidence": []
+    },
+    {
+      "id": "appsec_webhooks",
+      "label": "Webhook signature verification",
+      "status": "unknown",
+      "method": "Looked for inbound webhook routes and whether each verifies a signature.",
+      "detail": "No inbound webhook endpoint exists, so there is no unsigned webhook to exploit.",
+      "limitation": "Identifies routes by name. A webhook under a different name would be missed.",
+      "evidence": []
+    },
+    {
+      "id": "appsec_idor",
+      "label": "Object-level authorisation",
+      "status": "warn",
+      "method": "Looked for record lookups keyed on request input that do not also require a session or scope the query to the owner.",
+      "detail": "2 file(s) look up records from request input without an evident authorisation check.",
+      "limitation": "The weakest check here. Authorisation can be enforced a layer away, in middleware or a helper, and this only sees one file at a time.",
+      "evidence": [
+        "app/api/subscribe/route.ts",
+        "app/api/unsubscribe/route.ts"
+      ]
+    },
+    {
+      "id": "appsec_input_validation",
+      "label": "Request body validation",
+      "status": "warn",
+      "method": "Checked 6 state-changing route(s) that read a request body for schema validation. Routes with no body are excluded.",
+      "detail": "2 route(s) read a request body without schema validation.",
+      "limitation": "Presence of a schema is not the same as a schema that constrains the right things.",
+      "evidence": [
+        "app/api/admin/cms/[module]/route.ts",
+        "app/api/admin/upload/route.ts"
+      ]
+    },
+    {
+      "id": "appsec_log_exposure",
+      "label": "Sensitive values in logs",
+      "status": "pass",
+      "method": "Searched every log statement for credential-shaped variable names.",
+      "detail": "No log statement writes a credential-shaped value.",
+      "limitation": "Matches names. Logging a whole request or user object that happens to contain a secret would not be caught.",
+      "evidence": []
+    }
+  ]
+}

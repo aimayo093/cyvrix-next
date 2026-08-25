@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { Prisma } from "@/generated/prisma";
+import { appSecManifestAge, liveAppSecChecks, staticAppSecChecks } from "@/lib/appsec-checks";
 import { prisma } from "@/lib/prisma";
 import { getEmailIdentity, normaliseEmailRecipients } from "@/lib/email-config";
 
@@ -404,6 +405,37 @@ export async function runSecurityScan(options: {
 
   if (settings.dependencyScanEnabled) {
     await checkDependencyFreshness(checks);
+  }
+
+  // Application-security checks. The source analysis is precomputed by
+  // `npm run scan:code`; the probes ask the running site directly.
+  checks.push(...staticAppSecChecks());
+
+  const appSecRequest = withTimeout(12_000);
+  try {
+    checks.push(...(await liveAppSecChecks(options.requestOrigin, appSecRequest.controller.signal)));
+  } catch {
+    checks.push({
+      id: "appsec_live",
+      label: "Live application-security probes",
+      status: "warn",
+      category: "security",
+      detail: "The live probes could not complete, so exposed source maps, exposed files, CORS and error detail were not assessed on this run.",
+    });
+  } finally {
+    appSecRequest.done();
+  }
+
+  // A stale manifest describes code that may have moved on.
+  const manifestAge = appSecManifestAge(Date.now());
+  if (manifestAge.ageDays > 30) {
+    checks.push({
+      id: "appsec_manifest_age",
+      label: "Application-security analysis freshness",
+      status: "warn",
+      category: "security",
+      detail: `The source analysis behind the checks above was generated ${manifestAge.ageDays} days ago and may not describe the current code. Run npm run scan:code.`,
+    });
   }
 
   const passCount = checks.filter((check) => check.status === "pass").length;
