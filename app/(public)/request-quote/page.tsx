@@ -86,10 +86,11 @@ export default function RequestQuotePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-xs font-black text-white uppercase tracking-widest">
+              <label htmlFor="challenge" className="text-xs font-black text-white uppercase tracking-widest">
                 Primary technical or continuity challenges
               </label>
               <textarea 
+                id="challenge"
                 name="challenge" 
                 required 
                 rows={5} 
@@ -142,10 +143,17 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-xs font-black text-white uppercase tracking-widest">
+      {/*
+        htmlFor and a matching id, because a <label> without them is only a
+        visual caption: assistive technology reads nothing, leaving a placeholder
+        as the sole hint, and placeholders disappear as soon as anyone types.
+        Field names are unique within this form, so they serve as the id.
+      */}
+      <label htmlFor={name} className="text-xs font-black text-white uppercase tracking-widest">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input 
+        id={name}
         name={name} 
         type={type} 
         required={required} 
@@ -171,10 +179,11 @@ function Select({
 }) {
   return (
     <div className="space-y-2">
-      <label className="text-xs font-black text-white uppercase tracking-widest">
+      <label htmlFor={name} className="text-xs font-black text-white uppercase tracking-widest">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <select 
+        id={name}
         name={name} 
         required={required} 
         defaultValue={placeholder ? "" : undefined}

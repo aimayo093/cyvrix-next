@@ -127,6 +127,8 @@ function RequestForm() {
       method="post"
       className="rounded-3xl border border-white/10 bg-[#071126] p-7 md:p-10"
     >
+            {/* Honeypot: hidden from people, filled in by bots. */}
+            <input name="_hp" type="text" className="hidden" tabIndex={-1} autoComplete="off" aria-hidden="true" />
       <fieldset>
         <legend className="text-sm font-black text-white">What would you like us to do?</legend>
         <div className="mt-5 space-y-2.5">

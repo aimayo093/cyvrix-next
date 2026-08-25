@@ -178,6 +178,9 @@ function NewsletterForm() {
   const [consent, setConsent] = React.useState(false);
   const [state, setState] = React.useState<"idle" | "loading" | "done" | "error">("idle");
   const [msg, setMsg] = React.useState("");
+  // useId rather than a fixed string: the footer is one instance today, but a
+  // duplicated id would silently break the label association if it ever is not.
+  const emailFieldId = React.useId();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -216,11 +219,22 @@ function NewsletterForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
-      <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Stay informed</p>
+      {/*
+        The heading is the field's label rather than a caption above it. It was a
+        <p>, which left the input with only a placeholder for a name: assistive
+        technology announced nothing, and the hint vanished as soon as anyone
+        started typing.
+      */}
+      <label htmlFor={emailFieldId} className="block text-[10px] font-black text-slate-500 uppercase tracking-widest">
+        Stay informed
+      </label>
       <div className="flex gap-2">
         {/* honeypot */}
         <input name="_hp" type="text" className="hidden" tabIndex={-1} autoComplete="off" />
         <input
+          id={emailFieldId}
+          name="email"
+          autoComplete="email"
           type="email"
           required
           value={email}

@@ -11,6 +11,8 @@ const schema = z.object({
   details: z.string().trim().max(4000).default(""),
   // Explicit acknowledgement, matching the other public forms.
   consent: z.literal("on", { message: "Please confirm you have read the Privacy Policy." }),
+  // Must stay empty. A field a person never sees and a bot fills in.
+  _hp: z.string().max(0).optional(),
 });
 
 function redirectWithError(request: Request, message: string, status = 303) {
@@ -31,7 +33,18 @@ export async function POST(request: Request) {
     enforceRateLimit(`privacy-request:ip:${clientAddress}`, { limit: 5, windowMs: 60 * 60_000 });
 
     const formData = await request.formData();
-    const parsed = schema.safeParse(Object.fromEntries(formData));
+    const raw = Object.fromEntries(formData);
+
+    // Honeypot, matching submit-contact, submit-ticket and subscribe. This was
+    // the one public POST route without it. Answer as though it succeeded, so a
+    // bot gets no signal about which field gave it away.
+    if (raw._hp) {
+      return wantsJson
+        ? NextResponse.json({ ok: true }, { status: 200 })
+        : NextResponse.redirect(new URL("/privacy-request?status=success", request.url), 303);
+    }
+
+    const parsed = schema.safeParse(raw);
 
     if (!parsed.success) {
       const message = parsed.error.issues[0]?.message ?? "Please check the form and try again.";
