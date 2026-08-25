@@ -55,6 +55,8 @@ export function staticAppSecChecks(): SecurityScanCheck[] {
     label: finding.label,
     status: toStatus(finding.status),
     category: "security" as const,
+    // An unanswerable question is not a failing one.
+    assessed: finding.status !== "unknown",
     detail:
       finding.status === "unknown"
         ? `Not assessed. ${describe(finding)}`
@@ -97,6 +99,7 @@ export async function liveAppSecChecks(origin: string, signal: AbortSignal): Pro
       label: "Exposed source maps",
       status: scriptUrls.length === 0 ? "warn" : servedMaps > 0 ? "fail" : "pass",
       category: "security",
+      assessed: scriptUrls.length > 0,
       detail:
         scriptUrls.length === 0
           ? "Could not identify any client bundle to test. Not assessed."

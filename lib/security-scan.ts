@@ -20,6 +20,14 @@ export interface SecurityScanCheck {
   status: SecurityCheckStatus;
   detail: string;
   category: SecurityCheckCategory;
+  /**
+   * False when the question could not be answered at all, rather than answered
+   * badly. "No webhook endpoint exists" is not a failure to fix; counting it
+   * against the score would penalise not having a feature.
+   *
+   * Defaults to true, so existing checks are unaffected.
+   */
+  assessed?: boolean;
 }
 
 export interface SecurityScanResult {
@@ -441,7 +449,27 @@ export async function runSecurityScan(options: {
   const passCount = checks.filter((check) => check.status === "pass").length;
   const failCount = checks.filter((check) => check.status === "fail").length;
   const warnCount = checks.filter((check) => check.status === "warn").length;
-  const score = Math.round((passCount / checks.length) * 100);
+
+  /*
+   * Scored over the checks that could actually be answered, with a warning
+   * worth half a pass.
+   *
+   * The previous rule was passes divided by total checks. That had two faults
+   * which only became visible once the scan grew: a question nobody could
+   * answer, such as "are webhooks signed" when no webhook exists, counted the
+   * same as a real failure; and adding checks lowered the score even when
+   * nothing about the site had changed, which punishes measuring more. A
+   * dashboard that drops when you look harder teaches people not to look.
+   *
+   * A warning is "worth reading", not "broken", so it earns partial credit.
+   * A failure earns none.
+   */
+  const assessed = checks.filter((check) => check.assessed !== false);
+  const earned = assessed.reduce(
+    (total, check) => total + (check.status === "pass" ? 1 : check.status === "warn" ? 0.5 : 0),
+    0
+  );
+  const score = assessed.length === 0 ? 0 : Math.round((earned / assessed.length) * 100);
   const overallStatus: SecurityCheckStatus = failCount > 0 ? "fail" : warnCount > 0 || score < 85 ? "warn" : "pass";
 
   const result: SecurityScanResult = {
