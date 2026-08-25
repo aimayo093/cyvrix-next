@@ -23,6 +23,7 @@ import {
   PhoneCall,
   Menu,
   CircleUserRound,
+  Image as ImageIcon,
 } from "lucide-react";
 import { Logo } from "@/components/nav-main/Logo";
 import { AdminAccountMenu, type AdminIdentity } from "@/components/admin/AdminHeaderMenus";
@@ -37,6 +38,7 @@ const adminNav = [
     { name: "Navigation", href: "/admin/navigation", icon: Layers },
     { name: "Footer Builder", href: "/admin/footer-builder", icon: Layers },
     { name: "Brand Assets", href: "/admin/brand-assets", icon: Settings },
+    { name: "Site Images", href: "/admin/site-images", icon: ImageIcon },
     { name: "Social Links", href: "/admin/social-links", icon: Globe },
     { name: "Partner Logos", href: "/admin/partner-logos", icon: Star },
     { name: "Trusted Logos", href: "/admin/trusted-logos", icon: Users },

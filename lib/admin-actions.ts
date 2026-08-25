@@ -9,6 +9,7 @@ import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
 import { publicContactSettingKeys, publicContactValue } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
+import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slots";
 import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
 import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
@@ -2022,6 +2023,70 @@ export async function deletePageSection(formData: FormData) {
  * left with no sections would silently fall back to static content and hide the
  * failure.
  */
+/**
+ * Saves the replaceable site imagery.
+ *
+ * Every hero across services, industries, pages and the four engines already
+ * read from this setting, but nothing wrote to it: the images were editable in
+ * principle and unreachable in practice.
+ *
+ * Only fields the slot registry declares are accepted, so a crafted post cannot
+ * write arbitrary keys into the setting. Empty values are dropped rather than
+ * stored, which is what makes clearing a field restore the reviewed default
+ * instead of leaving a page with no image.
+ */
+export async function updateSiteImages(formData: FormData) {
+  const admin = await requireAdmin();
+
+  const submitted: Array<[string, string]> = [];
+  for (const [field, value] of formData.entries()) {
+    if (typeof value !== "string") continue;
+    if (!siteImageFieldNames.has(field)) continue;
+    submitted.push([field, value]);
+  }
+
+  const value = buildSiteImagesValue(submitted);
+  const overrideCount = Object.values(value).reduce<number>(
+    (total, entry) => total + (typeof entry === "string" ? 1 : Object.keys(entry as object).length),
+    0
+  );
+
+  await prisma.siteSetting.upsert({
+    where: { key: "site_images" },
+    create: { key: "site_images", value: value as Prisma.InputJsonValue, updatedAt: new Date() },
+    update: { value: value as Prisma.InputJsonValue, updatedAt: new Date() },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "site_images_updated",
+      entityType: "SiteSetting",
+      entityId: "site_images",
+      metadata: { overrideCount },
+    },
+  });
+
+  // Imagery appears on the home page, service pages, industry pages and the
+  // shared page heroes, so every public surface that reads it has to be dropped.
+  updatePublicCacheTags(
+    PUBLIC_CACHE_TAGS.siteImages,
+    PUBLIC_CACHE_TAGS.home,
+    PUBLIC_CACHE_TAGS.services,
+    PUBLIC_CACHE_TAGS.industries,
+    PUBLIC_CACHE_TAGS.cmsPages,
+  );
+  revalidatePath("/", "layout");
+  revalidatePath("/admin/site-images");
+
+  redirect(
+    `/admin/site-images?status=success&message=${encodeURIComponent(
+      `Saved. ${overrideCount} image${overrideCount === 1 ? "" : "s"} replaced; the rest use the reviewed default.`
+    )}`
+  );
+}
+
 export async function restoreReviewedPageContent(formData: FormData) {
   const admin = await requireAdmin();
   const slug = (formData.get("slug") as string | null)?.trim() ?? "";
