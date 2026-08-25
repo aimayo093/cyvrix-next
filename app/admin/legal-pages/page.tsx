@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { connection } from "next/server";
-import { ExternalLink, FileText, ShieldCheck } from "lucide-react";
+import { AlertCircle, CheckCircle2, ExternalLink, FileText, RotateCcw, ShieldCheck } from "lucide-react";
 import { requireAdmin } from "@/lib/auth";
-import { saveLegalPage } from "@/lib/admin-actions";
+import { saveLegalPage, restoreReviewedLegalPage } from "@/lib/admin-actions";
+import { getDefaultLegalDocument } from "@/lib/legal-content";
+import { toPublicLegalDocument } from "@/lib/public-legal";
 import { findPublicLegalPageDefinition, publicLegalPageDefinitions } from "@/lib/legal-page-definitions";
 import { prisma } from "@/lib/prisma";
 
@@ -13,7 +15,7 @@ const defaultReviewNotice = "Final legal documents should be reviewed by a quali
 export default async function LegalPagesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; status?: string; message?: string }>;
 }) {
   await connection();
   await requireAdmin();
@@ -30,6 +32,13 @@ export default async function LegalPagesPage({
 
   return (
     <div className="space-y-8 pb-16">
+      {params.status && (
+        <div className={`flex items-start gap-3 rounded-xl border p-4 ${params.status === "success" ? "border-emerald-250 bg-emerald-50 text-emerald-800" : "border-rose-250 bg-rose-50 text-rose-800"}`}>
+          {params.status === "success" ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" /> : <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-rose-600" />}
+          <p className="text-xs font-semibold leading-relaxed">{params.message}</p>
+        </div>
+      )}
+
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="flex items-center gap-3 font-outfit text-3xl font-black text-[#041635]"><FileText className="h-8 w-8 text-[#2691F0]" />Legal Pages</h1>
@@ -55,6 +64,32 @@ export default async function LegalPagesPage({
                         <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${record?.status === "PUBLISHED" ? "border-emerald-100 bg-emerald-50 text-emerald-600" : "border-amber-100 bg-amber-50 text-amber-600"}`}>{record?.status === "PUBLISHED" ? "Published" : record ? "Draft" : "Not created"}</span>
                       </div>
                       <p className="mt-1 text-xs leading-5 text-slate-500">{page.description}</p>
+                      {/*
+                        What the record holds versus what the route serves.
+                        toPublicLegalDocument rejects anything under 240
+                        characters, so a stub in the CMS leaves the public page
+                        showing the reviewed wording instead, and an edit here
+                        looks like it did nothing.
+                      */}
+                      {record && !toPublicLegalDocument(record) && getDefaultLegalDocument(page.slug) && (
+                        <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+                          <p className="text-[11px] font-bold leading-5 text-amber-900">
+                            This record is too short to publish, so {page.route} is serving the reviewed
+                            wording instead. What you edit here is not what visitors see.
+                          </p>
+                          <form action={restoreReviewedLegalPage} className="mt-2">
+                            <input type="hidden" name="slug" value={page.slug} />
+                            <button
+                              type="submit"
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-[11px] font-black text-amber-900 transition-colors hover:bg-amber-100"
+                            >
+                              <RotateCcw className="h-3 w-3" />
+                              Load the reviewed wording into this record
+                            </button>
+                          </form>
+                        </div>
+                      )}
+
                       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-bold">
                         <Link href={`/admin/legal-pages?edit=${page.slug}`} className="text-[#2691F0] hover:text-[#041635]">Edit document</Link>
                         <Link href={page.route} target="_blank" className="inline-flex items-center gap-1 text-slate-500 hover:text-[#041635]">View public route <ExternalLink className="h-3.5 w-3.5" /></Link>

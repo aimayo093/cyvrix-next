@@ -10,6 +10,7 @@ import { publicContactSettingKeys, publicContactValue } from "@/lib/contact-sett
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
 import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slots";
+import { getDefaultLegalDocument } from "@/lib/legal-content";
 import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
 import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
@@ -2035,6 +2036,73 @@ export async function deletePageSection(formData: FormData) {
  * stored, which is what makes clearing a field restore the reviewed default
  * instead of leaving a page with no image.
  */
+/**
+ * Writes the reviewed legal wording into the CMS record for a policy.
+ *
+ * The legal pages had the opposite problem to the page sections. Their CMS
+ * records held nine to twenty-two word stubs, and toPublicLegalDocument
+ * deliberately rejects anything under 240 characters so a placeholder can never
+ * be published as an approved policy. The site therefore showed the reviewed
+ * wording while Legal Pages in the admin showed a stub, and editing it appeared
+ * to do nothing because the fallback kept winning.
+ *
+ * This makes the CMS hold what the site actually serves, so the two agree and
+ * an edit has a visible effect.
+ */
+export async function restoreReviewedLegalPage(formData: FormData) {
+  const admin = await requireAdmin();
+  const slug = (formData.get("slug") as string | null)?.trim() ?? "";
+
+  const reviewed = getDefaultLegalDocument(slug);
+  if (!reviewed) {
+    redirect(`/admin/legal-pages?status=error&message=${encodeURIComponent(`No reviewed wording exists for "${slug}".`)}`);
+  }
+
+  const existing = await prisma.legalPage.findUnique({ where: { slug } });
+  if (!existing) {
+    redirect(`/admin/legal-pages?status=error&message=${encodeURIComponent(`No legal page exists with the slug "${slug}".`)}`);
+  }
+
+  // Sections carry the headings; paragraphs are the plain fallback. Blank lines
+  // separate paragraphs, which is what readParagraphs splits on.
+  const PARAGRAPH_BREAK = "\n\n";
+  const body = reviewed.sections?.length
+    ? reviewed.sections
+        .map((section) => [section.heading, ...section.paragraphs].join(PARAGRAPH_BREAK))
+        .join(PARAGRAPH_BREAK)
+    : reviewed.paragraphs.join(PARAGRAPH_BREAK);
+
+  await prisma.$transaction([
+    prisma.auditLog.create({
+      data: {
+        id: crypto.randomUUID(),
+        userId: admin.id,
+        action: "legal_page_restored_from_reviewed",
+        entityType: "LegalPage",
+        entityId: existing.id,
+        // The previous wording, so this is reversible without a backup file.
+        metadata: { slug, previousTitle: existing.title, previousBody: existing.body ?? "" },
+      },
+    }),
+    prisma.legalPage.update({
+      where: { slug },
+      data: { title: reviewed.title, body, updatedAt: new Date() },
+    }),
+  ]);
+
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.legalPages, PUBLIC_CACHE_TAGS.seo);
+  revalidatePath("/admin/legal-pages");
+  revalidatePath("/privacy-policy");
+  revalidatePath("/terms");
+  revalidatePath("/cookie-policy");
+
+  redirect(
+    `/admin/legal-pages?status=success&message=${encodeURIComponent(
+      `Restored the reviewed wording for ${reviewed.title}. The previous version is in the audit log.`
+    )}`
+  );
+}
+
 export async function updateSiteImages(formData: FormData) {
   const admin = await requireAdmin();
 
