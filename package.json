@@ -16,6 +16,7 @@
     "check:env": "tsx scripts/check-env.mts",
     "check:claims": "tsx scripts/check-claims.mts",
     "check:cms": "tsx scripts/check-cms.mts",
+    "test:ticket-access": "tsx scripts/test-ticket-access.mts",
     "test:totp": "tsx scripts/test-totp.mts",
     "scan:code": "tsx scripts/analyse-appsec.mts",
     "test:mfa": "tsx scripts/test-mfa-storage.mts"

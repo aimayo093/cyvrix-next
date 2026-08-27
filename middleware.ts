@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ADMIN_ROLES } from "@/lib/roles";
 import type { NextRequest } from "next/server";
 import { verifySessionToken } from "@/lib/auth-edge";
 
@@ -31,15 +32,8 @@ const PROTECTED_ROUTES = ["/portal", "/admin"];
 // Routes that require an internal/admin role
 const ADMIN_ROUTES = ["/admin"];
 
-// Must mirror ADMIN_ROLES in lib/auth.ts
-const ADMIN_ROLES = [
-  "SUPER_ADMIN",
-  "ADMIN",
-  "SUPPORT_AGENT",
-  "SALES_CRM_USER",
-  "CONTENT_MANAGER",
-  "FINANCE_VIEWER",
-];
+// Imported rather than mirrored. lib/roles.ts has no Prisma or
+// server-only import, so it is safe here.
 
 function getClientAddress(request: NextRequest) {
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();

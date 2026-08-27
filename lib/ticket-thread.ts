@@ -20,14 +20,10 @@
  * One module, one answer to each.
  */
 import { prisma } from "@/lib/prisma";
-import { isAdminRole } from "@/lib/auth";
-import type { UserRole } from "@/generated/prisma";
+import { canAccessTicket, visibilityFilterFor, type ThreadViewer } from "@/lib/ticket-access";
 
-export type ThreadViewer = {
-  id: string;
-  role: UserRole;
-  clientCompanyId: string | null;
-};
+// Re-exported so callers have one import for "read a ticket thread".
+export { canAccessTicket, visibilityFilterFor, type ThreadViewer };
 
 export type ThreadMessage = {
   id: string;
@@ -38,28 +34,6 @@ export type ThreadMessage = {
   createdAt: Date;
   fromClient: boolean;
 };
-
-/**
- * Whether this person may see this ticket at all.
- *
- * Staff may see any ticket. A client may see one only when their company and
- * the ticket's company are both set and equal — "both set" is the part that was
- * missing, and without it every company-less ticket was readable by every
- * company-less user.
- */
-export function canAccessTicket(
-  viewer: ThreadViewer,
-  ticket: { clientCompanyId: string | null } | null
-): boolean {
-  if (!ticket) return false;
-  if (isAdminRole(viewer.role)) return true;
-  return Boolean(viewer.clientCompanyId) && ticket.clientCompanyId === viewer.clientCompanyId;
-}
-
-/** Staff see internal notes. Clients see only what was addressed to them. */
-export function visibilityFilterFor(viewer: ThreadViewer) {
-  return isAdminRole(viewer.role) ? {} : { visibility: "client" };
-}
 
 /**
  * The thread, oldest first, with author names resolved.

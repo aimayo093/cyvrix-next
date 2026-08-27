@@ -5,19 +5,13 @@ import { forbidden, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createHmac } from "node:crypto";
 import { prisma } from "@/lib/prisma";
+import { ADMIN_ROLES, isAdminRole } from "@/lib/roles";
 import type { User, UserRole } from "@/generated/prisma";
 export { hashPassword, verifyPassword } from "@/lib/password";
 
 const SESSION_COOKIE = "cyvrix_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
-const ADMIN_ROLES: UserRole[] = [
-  "SUPER_ADMIN",
-  "ADMIN",
-  "SUPPORT_AGENT",
-  "SALES_CRM_USER",
-  "CONTENT_MANAGER",
-  "FINANCE_VIEWER",
-];
+
 
 type SessionPayload = {
   sub: string;
@@ -165,9 +159,8 @@ export async function requireSuperAdmin() {
   return user;
 }
 
-export function isAdminRole(role: UserRole) {
-  return ADMIN_ROLES.includes(role);
-}
+// Re-exported so existing imports from "@/lib/auth" keep working.
+export { isAdminRole };
 
 export function canManageSecurityCenter(role: UserRole) {
   return role === "SUPER_ADMIN" || role === "ADMIN";

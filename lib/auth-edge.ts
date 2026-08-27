@@ -7,15 +7,19 @@
  * Format:  base64url(JSON payload) . base64url(HMAC-SHA256 signature)
  */
 
-export type UserRole =
-  | "SUPER_ADMIN"
-  | "ADMIN"
-  | "SUPPORT_AGENT"
-  | "SALES_CRM_USER"
-  | "CONTENT_MANAGER"
-  | "FINANCE_VIEWER"
-  | "CLIENT_ADMIN"
-  | "CLIENT_USER";
+/**
+ * The role type, taken from the schema rather than written out again.
+ *
+ * This was a hand-written union and it had drifted: it listed CLIENT_ADMIN and
+ * CLIENT_USER, neither of which the database has ever been able to produce. The
+ * real client role is CLIENT. Nothing branched on the wrong two, so nothing
+ * broke — the next thing to branch on them would simply never have matched.
+ *
+ * `import type` is erased at compile time, so this pulls no Prisma runtime into
+ * the edge bundle.
+ */
+export type { UserRole } from "@/generated/prisma";
+import type { UserRole } from "@/generated/prisma";
 
 export type SessionPayload = {
   sub: string;
