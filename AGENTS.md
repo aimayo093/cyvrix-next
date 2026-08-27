@@ -6,7 +6,8 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Before changing this repository
 
-Read `DESIGN.md` and `docs/DECISIONS.md` first. DESIGN.md is the visual
+Read `PRODUCT.md`, `DESIGN.md` and `docs/DECISIONS.md` first.
+PRODUCT.md is who the site is for and what is actually deliverable. DESIGN.md is the visual
 system the site already uses - palette, type, components, radii, motion.
 DECISIONS.md is why things are as they are.
 
