@@ -836,9 +836,22 @@ exports.Prisma.UserScalarFieldEnum = {
   active: 'active',
   emailVerified: 'emailVerified',
   twoFactorReady: 'twoFactorReady',
+  twoFactorSecret: 'twoFactorSecret',
+  twoFactorEnrolledAt: 'twoFactorEnrolledAt',
+  twoFactorRecoveryCodes: 'twoFactorRecoveryCodes',
+  twoFactorLastCounter: 'twoFactorLastCounter',
   clientCompanyId: 'clientCompanyId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.VerificationTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  email: 'email',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
 };
 
 exports.Prisma.WebsiteSectionScalarFieldEnum = {
@@ -1556,6 +1569,7 @@ exports.Prisma.ModelName = {
   TicketAttachment: 'TicketAttachment',
   TicketMessage: 'TicketMessage',
   User: 'User',
+  VerificationToken: 'VerificationToken',
   WebsiteSection: 'WebsiteSection',
   audit_logs: 'audit_logs',
   blog_categories: 'blog_categories',
