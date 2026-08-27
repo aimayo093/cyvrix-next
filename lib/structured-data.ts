@@ -106,7 +106,13 @@ export function organisationSchema(): JsonLdObject {
       "CYVRIX LIMITED is a UK managed IT and cybersecurity company providing managed services, cloud and security consulting, field engineering and professional services.",
     foundingDate: toIsoDate(companyFacts.incorporatedOn),
     address: registeredAddress(),
-    areaServed: { "@type": "Country", name: "United Kingdom" },
+    // Both are true and they are not the same claim. On-site and field work is
+    // South Wales; remote managed services reach the whole country. Saying only
+    // "United Kingdom" hides the thing a local competitor cannot match.
+    areaServed: [
+      { "@type": "AdministrativeArea", name: "South Wales" },
+      { "@type": "Country", name: "United Kingdom" },
+    ],
     identifier: [
       {
         "@type": "PropertyValue",

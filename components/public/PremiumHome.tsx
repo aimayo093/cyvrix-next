@@ -40,9 +40,9 @@ type PremiumHomeProps = {
 
 /** The reviewed hero, used wherever the CMS leaves a field empty. */
 const DEFAULT_HERO = {
-  eyebrow: "Technology partnership for growing UK organisations",
+  eyebrow: "South Wales technology partner, working across the UK",
   title: "Technology that runs quietly. Security that stands up.",
-  body: "CYVRIX manages, secures and modernises the technology behind ambitious organisations — with ongoing support, expert projects and practical field delivery.",
+  body: "CYVRIX manages, secures and modernises the technology growing organisations depend on. On site across South Wales, and supporting UK-wide teams remotely.",
   primaryLabel: "Choose an assessment",
   primaryUrl: "/assessments",
   secondaryLabel: "Explore services",

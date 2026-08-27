@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     title: {
       absolute: page?.seoTitle || "CYVRIX Technologies | Managed IT, Cloud & Cybersecurity",
     },
-    description: page?.seoDescription || "Managed services, cloud and cybersecurity, field engineering and professional technology projects for growing UK organisations.",
+    description: page?.seoDescription || "Managed IT, cloud and cybersecurity for growing organisations. On-site engineering across South Wales, remote support UK-wide.",
   };
 }
 

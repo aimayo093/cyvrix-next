@@ -9,7 +9,7 @@ import { findUnmappedServices, resolveEngines } from "@/lib/service-engines";
 export const metadata: Metadata = {
   title: "Technology Services",
   description:
-    "Managed services, cloud and cybersecurity, field engineering and professional technology projects for growing UK organisations.",
+    "Managed services, cloud and cybersecurity, field engineering and technology projects. On site across South Wales, remote across the UK.",
 };
 
 export default async function ServicesPage() {

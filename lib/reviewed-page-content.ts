@@ -60,7 +60,7 @@ export const reviewedPages: ReviewedPage[] = [
         subtitle: "About CYVRIX",
         title: "A technology partner that explains its reasoning.",
         body:
-          "CYVRIX LIMITED is a UK managed IT and cybersecurity company, incorporated in August 2024 and registered in England and Wales. We look after the systems businesses depend on every day, and we work in a way that treats the client as someone entitled to understand their own environment.",
+          "CYVRIX LIMITED is a managed IT and cybersecurity company based in Neath, incorporated in August 2024 and registered in England and Wales. We work on site across South Wales and support teams remotely UK-wide. We look after the systems businesses depend on every day, and we work in a way that treats the client as someone entitled to understand their own environment.",
         buttonLabel: "Book a Free Review",
         buttonUrl: "/book-consultation",
         backgroundStyle: "dark",
