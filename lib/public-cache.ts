@@ -103,6 +103,7 @@ export async function getPublicShellData() {
       brandSettings,
       companySettings,
       contactSettings,
+      cmsPages,
       brandAssets,
       headerMenu,
       footerSections,
@@ -115,6 +116,11 @@ export async function getPublicShellData() {
       // read only the "company" setting, so a phone number entered there showed
       // on /contact and nowhere else.
       prisma.siteSetting.findUnique({ where: { key: "contact_settings" } }),
+      // Navigation and Footer Builder both let an administrator pick a CMS page
+      // instead of typing a URL, which stores a pageId. Neither renderer read
+      // it, so choosing a page produced a link to nowhere. Slugs are loaded
+      // here so the id can be resolved to a real href.
+      prisma.cmsPage.findMany({ select: { id: true, slug: true } }),
       prisma.brandAsset.findMany({ where: { isActive: true } }),
       prisma.menu.findUnique({
         where: { location: "header" },
@@ -145,13 +151,42 @@ export async function getPublicShellData() {
       }),
     ]);
 
+    const pageHref = new Map(
+      cmsPages.map((page) => [page.id, page.slug === "home" ? "/" : `/${page.slug}`])
+    );
+
+    /**
+     * The destination a menu item or footer link actually points at.
+     *
+     * A typed URL wins. Otherwise the chosen page is resolved to its route.
+     * Null means neither was set, and the caller drops the item rather than
+     * rendering a link that goes nowhere.
+     */
+    const resolveHref = (item: { url?: string | null; pageId?: string | null }): string | null => {
+      if (item.url && item.url.trim()) return item.url.trim();
+      if (item.pageId) return pageHref.get(item.pageId) ?? null;
+      return null;
+    };
+
     return {
       brandSettings,
       companySettings,
       contactSettings,
       brandAssets,
-      headerMenu,
-      footerSections,
+      headerMenu: headerMenu
+        ? {
+            ...headerMenu,
+            items: headerMenu.items
+              .map((item) => ({ ...item, url: resolveHref(item) }))
+              .filter((item): item is typeof item & { url: string } => item.url !== null),
+          }
+        : null,
+      footerSections: footerSections.map((section) => ({
+        ...section,
+        links: section.links
+          .map((link) => ({ ...link, url: resolveHref(link) }))
+          .filter((link): link is typeof link & { url: string } => link.url !== null),
+      })),
       socialLinks,
       complianceCards,
     };
