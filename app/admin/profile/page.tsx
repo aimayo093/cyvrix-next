@@ -5,13 +5,15 @@ import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { changeAdminPassword, updateAdminProfile } from "@/lib/admin-actions";
+import { TwoFactorPanel } from "@/components/admin/TwoFactorPanel";
+import { beginEnrolment, getTwoFactorState, takeRecoveryCodes, type EnrolmentOffer } from "@/lib/two-factor";
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 
 export const metadata = { title: "Your Profile" };
 
 type ProfilePageProps = {
-  searchParams: Promise<{ status?: string; message?: string }>;
+  searchParams: Promise<{ status?: string; message?: string; enrol?: string }>;
 };
 
 export default function AdminProfilePage(props: ProfilePageProps) {
@@ -35,6 +37,19 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
 
   // requireAdmin returns the session projection; the audit trail and account
   // dates come from the record itself.
+  const twoFactor = await getTwoFactorState(admin.id);
+
+  // The enrolment screen needs the QR again on every render while it is open,
+  // and beginEnrolment issues a fresh secret each time it is called, so it is
+  // only called when the pending secret has not yet been confirmed.
+  let enrolmentOffer: EnrolmentOffer | null = null;
+  if (sp.enrol === "2fa" && !twoFactor.enrolled) {
+    enrolmentOffer = await beginEnrolment(admin.id, admin.email);
+  }
+
+  // Read once and cleared, so a refresh does not show them again.
+  const recoveryCodes = await takeRecoveryCodes();
+
   const [record, recentActivity] = await Promise.all([
     prisma.user.findUnique({
       where: { id: admin.id },
@@ -131,6 +146,13 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
             </form>
           </section>
 
+          <TwoFactorPanel
+            state={twoFactor}
+            offer={enrolmentOffer}
+            recoveryCodes={recoveryCodes}
+            error={sp.status === "error" ? (sp.message ?? null) : null}
+          />
+
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-start gap-3">
               <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-[#2691F0]" />
@@ -213,7 +235,7 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
               <div className="flex items-center justify-between gap-3">
                 <dt className="font-semibold text-slate-500">Two-factor</dt>
                 <dd className="font-black text-[#041635]">
-                  {record?.twoFactorReady ? "Enrolled" : "Not enrolled"}
+                  {twoFactor.enrolled ? "Enrolled" : "Not enrolled"}
                 </dd>
               </div>
               <div className="flex items-center justify-between gap-3">

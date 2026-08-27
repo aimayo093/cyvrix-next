@@ -65,6 +65,57 @@ export function verifySessionToken(token?: string): SessionPayload | null {
   return payload;
 }
 
+const PENDING_2FA_COOKIE = "cyvrix_2fa_pending";
+const PENDING_2FA_TTL_SECONDS = 5 * 60;
+
+type PendingPayload = { sub: string; exp: number };
+
+/**
+ * A short-lived marker that the password was accepted but the second factor is
+ * still owed.
+ *
+ * Deliberately not a session: it carries no role and `getSession` will not read
+ * it, so holding one grants nothing. It is signed with the same HMAC as a real
+ * session so it cannot be forged, and expires in five minutes so an abandoned
+ * challenge does not leave a usable half-login behind.
+ */
+export async function setPendingTwoFactor(userId: string) {
+  const payload: PendingPayload = { sub: userId, exp: Math.floor(Date.now() / 1000) + PENDING_2FA_TTL_SECONDS };
+  const body = base64url(JSON.stringify(payload));
+  const cookieStore = await cookies();
+  cookieStore.set(PENDING_2FA_COOKIE, `${body}.${sign(body)}`, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: PENDING_2FA_TTL_SECONDS,
+    path: "/",
+  });
+}
+
+/** The account owing a second factor, or null. */
+export async function readPendingTwoFactor(): Promise<string | null> {
+  await connection();
+  const cookieStore = await cookies();
+  const token = cookieStore.get(PENDING_2FA_COOKIE)?.value;
+  if (!token) return null;
+
+  const [body, signature] = token.split(".");
+  if (!body || !signature || sign(body) !== signature) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(body, "base64url").toString()) as PendingPayload;
+    if (payload.exp * 1000 < Date.now()) return null;
+    return payload.sub;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearPendingTwoFactor() {
+  const cookieStore = await cookies();
+  cookieStore.delete(PENDING_2FA_COOKIE);
+}
+
 export async function setSession(user: Pick<User, "id" | "email" | "role">) {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, createSessionToken(user), {

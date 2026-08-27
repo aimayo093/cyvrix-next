@@ -8,6 +8,11 @@ export const AUTH_EVENT_ACTIONS = [
   "auth.sign_in_failed",
   "auth.sign_in_succeeded",
   "auth.sign_in_throttled",
+  // A password was accepted but the account owes a second factor. Recorded
+  // separately from a completed sign-in: a run of these without a matching
+  // success means someone holds a working password and not the phone.
+  "auth.second_factor_required",
+  "auth.second_factor_failed",
 ] as const;
 
 export type AuthEventAction = (typeof AUTH_EVENT_ACTIONS)[number];

@@ -11,6 +11,13 @@ import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
 import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slots";
 import { getDefaultLegalDocument } from "@/lib/legal-content";
+import {
+  beginEnrolment,
+  confirmEnrolment,
+  disableTwoFactor as clearTwoFactor,
+  flashRecoveryCodes,
+  regenerateRecoveryCodes,
+} from "@/lib/two-factor";
 import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
 import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
@@ -2447,6 +2454,91 @@ export async function changeAdminPassword(formData: FormData) {
  * sign-in identifier, and changing it needs a verification step this does not
  * have.
  */
+/**
+ * Starts two-factor enrolment for the signed-in administrator.
+ *
+ * Scoped to the session's own account. There is no path here to enrol anyone
+ * else, because a second factor somebody else set up is not a second factor.
+ */
+export async function startTwoFactorEnrolment() {
+  const admin = await requireAdmin();
+  await beginEnrolment(admin.id, admin.email);
+  redirect("/admin/profile?enrol=2fa");
+}
+
+/** Confirms enrolment with a live code, and returns the recovery codes once. */
+export async function confirmTwoFactorEnrolment(formData: FormData) {
+  const admin = await requireAdmin();
+  const code = (formData.get("code") as string | null)?.trim() ?? "";
+
+  const result = await confirmEnrolment(admin.id, code);
+
+  if (!result.ok) {
+    const message =
+      result.reason === "bad_code"
+        ? "That code was not accepted. Check the time on your phone and try the current code."
+        : result.reason === "rate_limited"
+          ? "Too many attempts. Wait a few minutes and try again."
+          : "Start the setup again.";
+    redirect(`/admin/profile?enrol=2fa&status=error&message=${encodeURIComponent(message)}`);
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "admin_two_factor_enabled",
+      entityType: "User",
+      entityId: admin.id,
+      metadata: { email: admin.email },
+    },
+  });
+
+  // Handed over in a one-time httpOnly cookie rather than the URL: a query
+  // string would put ten working credentials into browser history and logs.
+  await flashRecoveryCodes(result.recoveryCodes);
+  redirect("/admin/profile");
+}
+
+/** Turns two-factor off for the signed-in administrator. */
+export async function turnOffTwoFactor() {
+  const admin = await requireAdmin();
+  await clearTwoFactor(admin.id);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "admin_two_factor_disabled",
+      entityType: "User",
+      entityId: admin.id,
+      metadata: { email: admin.email },
+    },
+  });
+
+  redirect("/admin/profile?status=success&message=Two-factor authentication is off.");
+}
+
+/** Issues a fresh set of recovery codes, invalidating the previous ones. */
+export async function issueNewRecoveryCodes() {
+  const admin = await requireAdmin();
+  const codes = await regenerateRecoveryCodes(admin.id);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "admin_recovery_codes_regenerated",
+      entityType: "User",
+      entityId: admin.id,
+      metadata: { email: admin.email },
+    },
+  });
+
+  await flashRecoveryCodes(codes);
+  redirect("/admin/profile");
+}
+
 export async function updateAdminProfile(formData: FormData) {
   const admin = await requireAdmin();
   const name = (formData.get("name") as string | null)?.trim() ?? "";

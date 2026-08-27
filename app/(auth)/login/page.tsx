@@ -5,10 +5,10 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { Shield, ArrowLeft, Mail, Loader2, AlertCircle, LockKeyhole, ServerCog } from "lucide-react";
+import { Shield, ArrowLeft, Mail, Loader2, AlertCircle, LockKeyhole, ServerCog , ShieldCheck } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
-import { login } from "./actions";
+import { login, submitTwoFactor } from "./actions";
 
 function getSafeDestination(next: string | null, fallback: string) {
   if (!next) return fallback;
@@ -27,6 +27,8 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // Set once a password is accepted on an account that owes a second factor.
+  const [awaitingCode, setAwaitingCode] = React.useState(false);
   const next = searchParams.get("next");
   const message = searchParams.get("message");
 
@@ -36,12 +38,21 @@ function LoginForm() {
     setError(null);
 
     const formData = new FormData(event.currentTarget);
-    const result = await login(formData);
+    const result = awaitingCode ? await submitTwoFactor(formData) : await login(formData);
 
-    if (result.error) {
+    if ("error" in result && result.error) {
       setError(result.error);
       setIsLoading(false);
-    } else if (result.success && result.destination) {
+      return;
+    }
+
+    if ("twoFactorRequired" in result && result.twoFactorRequired) {
+      setAwaitingCode(true);
+      setIsLoading(false);
+      return;
+    }
+
+    if ("success" in result && result.success && result.destination) {
       router.push(getSafeDestination(next, result.destination));
     }
   }
@@ -95,6 +106,37 @@ function LoginForm() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
+            {awaitingCode ? (
+              /*
+                The password was accepted and a short-lived marker is held
+                server-side. The email and password fields are gone: resubmitting
+                them here would do nothing, since only the code completes it.
+              */
+              <div className="space-y-2">
+                <label htmlFor="code" className="ml-1 block text-xs font-black uppercase tracking-widest text-slate-400">
+                  Authentication code
+                </label>
+                <div className="relative">
+                  <ShieldCheck className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+                  <input
+                    id="code"
+                    type="text"
+                    name="code"
+                    required
+                    autoFocus
+                    inputMode="text"
+                    autoComplete="one-time-code"
+                    placeholder="6-digit code, or a recovery code"
+                    className="autofill-dark w-full rounded-xl border border-white/10 bg-white/5 py-3.5 pl-12 pr-4 tracking-[0.2em] text-white caret-white outline-none transition-all placeholder-slate-500 placeholder:tracking-normal focus:border-transparent focus:ring-2 focus:ring-[#2691F0]"
+                  />
+                </div>
+                <p className="ml-1 pt-1 text-xs font-medium leading-relaxed text-slate-500">
+                  Open your authenticator app for the current code. If you have lost the device, enter one
+                  of the recovery codes saved when you set this up.
+                </p>
+              </div>
+            ) : (
+              <>
             <div className="space-y-2">
               <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Email Address</label>
               <div className="relative">
@@ -127,6 +169,8 @@ function LoginForm() {
                 className="py-3.5"
               />
             </div>
+              </>
+            )}
 
             <Button 
               type="submit" 
