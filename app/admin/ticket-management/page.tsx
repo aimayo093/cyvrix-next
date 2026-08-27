@@ -3,10 +3,13 @@ import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { updateTicketStatus, assignTicket, addTicketNote, closeTicket } from "@/lib/admin-actions";
+import { updateTicketStatus, assignTicket, closeTicket } from "@/lib/admin-actions";
+import { AdminTicketThread } from "@/components/admin/AdminTicketThread";
+import { loadTicketThread } from "@/lib/ticket-thread";
 import { formatDistanceToNow } from "date-fns";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { MessageSquare } from "lucide-react";
+import { TicketStatus } from "@/generated/prisma";
 
 export const metadata = { title: "Ticket Management" };
 
@@ -17,11 +20,42 @@ const PRIORITY_COLORS: Record<string, string> = {
   CRITICAL: "bg-rose-50 text-rose-600 border-rose-100",
 };
 
-const STATUS_COLORS: Record<string, string> = {
+/**
+ * The ticket statuses, in the order a ticket moves through them.
+ *
+ * Taken from the Prisma enum rather than written out again, because writing
+ * them out again is how this page came to offer "AWAITING_CLIENT" — a value the
+ * database has never had. Selecting it in the queue wrote an invalid enum and
+ * the update threw; the filter tab of the same name failed the query outright.
+ * Meanwhile the two real statuses missing from the list, WAITING_ON_CLIENT and
+ * ESCALATED, could not be set at all.
+ */
+const STATUS_ORDER = [
+  TicketStatus.NEW,
+  TicketStatus.OPEN,
+  TicketStatus.IN_PROGRESS,
+  TicketStatus.WAITING_ON_CLIENT,
+  TicketStatus.ESCALATED,
+  TicketStatus.RESOLVED,
+  TicketStatus.CLOSED,
+] as const;
+
+const STATUS_LABELS: Record<TicketStatus, string> = {
+  NEW: "New",
+  OPEN: "Open",
+  IN_PROGRESS: "In progress",
+  WAITING_ON_CLIENT: "Awaiting client",
+  ESCALATED: "Escalated",
+  RESOLVED: "Resolved",
+  CLOSED: "Closed",
+};
+
+const STATUS_COLORS: Record<TicketStatus, string> = {
   NEW: "bg-blue-50 text-blue-600 border-blue-100",
   OPEN: "bg-indigo-50 text-indigo-600 border-indigo-100",
   IN_PROGRESS: "bg-violet-50 text-violet-600 border-violet-100",
-  AWAITING_CLIENT: "bg-amber-50 text-amber-600 border-amber-100",
+  WAITING_ON_CLIENT: "bg-amber-50 text-amber-600 border-amber-100",
+  ESCALATED: "bg-rose-50 text-rose-600 border-rose-100",
   RESOLVED: "bg-emerald-50 text-emerald-600 border-emerald-100",
   CLOSED: "bg-slate-50 text-slate-400 border-slate-100",
 };
@@ -40,12 +74,15 @@ async function TicketManagementPageContent({
   searchParams: Promise<{ view?: string; filter?: string }>;
 }) {
   await connection();
-  await requireAdmin();
+  const admin = await requireAdmin();
   const sp = await searchParams;
-  const filter = sp.filter ?? "all";
+  // An unrecognised filter falls back to the open queue rather than reaching
+  // Prisma and failing the whole page.
+  const requested = sp.filter ?? "all";
+  const filter = (STATUS_ORDER as readonly string[]).includes(requested) ? requested : "all";
 
   const tickets = await prisma.ticket.findMany({
-    where: filter !== "all" ? { status: filter as any } : { status: { not: "CLOSED" } },
+    where: filter !== "all" ? { status: filter as TicketStatus } : { status: { not: TicketStatus.CLOSED } },
     orderBy: { createdAt: "desc" },
     include: {
       TicketMessage: { orderBy: { createdAt: "desc" } },
@@ -54,6 +91,16 @@ async function TicketManagementPageContent({
   });
 
   const viewing = sp.view ? tickets.find((t) => t.id === sp.view) ?? null : null;
+
+  // Loaded through the shared reader so the analyst and the client are looking
+  // at the same conversation, ordered the same way. The queue query above sorts
+  // messages newest-first for the row summary; a thread reads oldest-first.
+  const viewingThread = viewing
+    ? await loadTicketThread(viewing.id, admin).then((thread) => ({
+        messages: thread.map((message) => ({ ...message, createdAt: message.createdAt.toISOString() })),
+        cursor: (thread.at(-1)?.createdAt ?? viewing.updatedAt).toISOString(),
+      }))
+    : { messages: [], cursor: new Date(0).toISOString() };
 
   const counts = await prisma.ticket.groupBy({
     by: ["status"],
@@ -73,12 +120,8 @@ async function TicketManagementPageContent({
       {/* Status filter tabs */}
       <div className="flex flex-wrap gap-2">
         {[
-          { label: "Open", value: "all" },
-          { label: "New", value: "NEW" },
-          { label: "In Progress", value: "IN_PROGRESS" },
-          { label: "Awaiting Client", value: "AWAITING_CLIENT" },
-          { label: "Resolved", value: "RESOLVED" },
-          { label: "Closed", value: "CLOSED" },
+          { label: "All open", value: "all" },
+          ...STATUS_ORDER.map((status) => ({ label: STATUS_LABELS[status], value: status as string })),
         ].map((tab) => (
           <a key={tab.value} href={`/admin/ticket-management?filter=${tab.value}`}
             className={`px-4 py-1.5 rounded-full text-xs font-black border transition-colors ${
@@ -127,7 +170,7 @@ async function TicketManagementPageContent({
                       <AutoSubmitSelect
                         name="status"
                         defaultValue={ticket.status}
-                        options={Object.keys(STATUS_COLORS).map(s => ({ value: s, label: s.replace(/_/g, " ") }))}
+                        options={STATUS_ORDER.map((status) => ({ value: status, label: STATUS_LABELS[status] }))}
                         className="text-xs font-black rounded-lg border border-slate-200 px-2 py-1 text-[#041635] bg-white focus:ring-2 focus:ring-[#2691F0] focus:outline-none cursor-pointer"
                       />
                     </form>
@@ -181,32 +224,13 @@ async function TicketManagementPageContent({
                   </button>
                 </form>
 
-                {/* Internal note */}
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-2">Thread ({viewing.TicketMessage.length} messages)</p>
-                  <div className="space-y-2 max-h-40 overflow-y-auto mb-3">
-                    {viewing.TicketMessage.map((msg) => (
-                      <div key={msg.id} className={`rounded-lg px-3 py-2 text-xs ${msg.visibility === "internal" ? "bg-amber-50 border border-amber-100" : "bg-blue-50 border border-blue-100"}`}>
-                        <p className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-1">{msg.visibility === "internal" ? "Internal Note" : "Reply to Client"}</p>
-                        <p className="text-slate-700">{msg.body}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <form action={addTicketNote} className="space-y-2">
-                    <input type="hidden" name="ticketId" value={viewing.id} />
-                    <textarea name="body" required rows={2} placeholder="Internal note or reply..."
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none resize-none" />
-                    <div className="flex gap-2">
-                      <select name="visibility" className="text-xs font-bold rounded-lg border border-slate-200 px-2 py-1.5 text-[#041635] bg-white focus:ring-2 focus:ring-[#2691F0] focus:outline-none">
-                        <option value="internal">Internal note</option>
-                        <option value="client">Reply to client</option>
-                      </select>
-                      <button type="submit" className="flex-1 bg-[#041635] text-white text-xs font-bold px-3 py-1.5 rounded-xl hover:bg-[#2691F0] transition-colors">
-                        Add
-                      </button>
-                    </div>
-                  </form>
-                </div>
+                {/* Thread and reply. Polls, so a client's reply arrives here
+                    without the analyst reloading the page. */}
+                <AdminTicketThread
+                  ticketId={viewing.id}
+                  initialMessages={viewingThread.messages}
+                  initialCursor={viewingThread.cursor}
+                />
 
                 {/* Close ticket */}
                 {viewing.status !== "CLOSED" && (

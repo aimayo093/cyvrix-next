@@ -1,4 +1,6 @@
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { canAccessTicket, loadTicketThread } from "@/lib/ticket-thread";
+import type { PolledMessage } from "@/components/shared/useTicketThread";
 import { connection } from "next/server";
 import * as React from "react";
 import Link from "next/link";
@@ -34,13 +36,8 @@ interface PageProps {
 
 type TicketWithMessages = Ticket & { TicketMessage: TicketMessage[] };
 type ProposalWithItems = Proposal & { ProposalItem: ProposalItem[] };
-type PortalMessage = {
-  id: string;
-  authorId: string | null;
-  body: string;
-  createdAt: Date;
-  authorName: string;
-};
+/** Serialised for the client component, which polls for more of the same. */
+type PortalMessage = PolledMessage;
 
 export default function PortalModulePage(props: PageProps) {
   return (
@@ -72,6 +69,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
   // Pre-load data based on active module to keep JSX exceptionally clean and standard-compliant
   let selectedTicket: TicketWithMessages | null = null;
   let initialMessages: PortalMessage[] = [];
+  let ticketCursor = new Date(0).toISOString();
   let tickets: Ticket[] = [];
   let proposals: ProposalWithItems[] = [];
   let documents: ClientDocument[] = [];
@@ -85,32 +83,19 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
         include: { TicketMessage: { orderBy: { createdAt: "asc" } } }
       });
 
-      if (selectedTicket && selectedTicket.clientCompanyId === user.clientCompanyId) {
-        initialMessages = await Promise.all(
-          selectedTicket.TicketMessage.map(async (msg) => {
-            let authorName = "CYVRIX Support";
-            if (msg.authorId === user.id) {
-              authorName = "You";
-            } else if (msg.authorId) {
-              const authorUser = await prisma.user.findUnique({
-                where: { id: msg.authorId },
-                select: { name: true, role: true }
-              });
-              if (authorUser) {
-                authorName = authorUser.role === "CLIENT" 
-                  ? (authorUser.name || "Client User") 
-                  : `CYVRIX Analyst (${authorUser.name || "Operations Desk"})`;
-              }
-            }
-            return {
-              id: msg.id,
-              authorId: msg.authorId,
-              body: msg.body,
-              createdAt: msg.createdAt,
-              authorName
-            };
-          })
-        );
+      // `canAccessTicket` rather than comparing the two company ids directly:
+      // a ticket raised through the public contact form has no company, and so
+      // does a portal user without one, so the direct comparison let one read
+      // the other's ticket. It also loads only messages marked for the client,
+      // which is what stops staff notes written as "Internal note" appearing
+      // here.
+      if (canAccessTicket(user, selectedTicket)) {
+        const thread = await loadTicketThread(String(id), user);
+        initialMessages = thread.map((message) => ({
+          ...message,
+          createdAt: message.createdAt.toISOString(),
+        }));
+        ticketCursor = (thread.at(-1)?.createdAt ?? selectedTicket!.updatedAt).toISOString();
       }
     } else {
       tickets = await prisma.ticket.findMany({
@@ -250,7 +235,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
           {/* List and View Section */}
           <div className="lg:col-span-2 space-y-6">
             {id ? (
-              selectedTicket && selectedTicket.clientCompanyId === user.clientCompanyId ? (
+              canAccessTicket(user, selectedTicket) && selectedTicket ? (
                 <div className="space-y-6">
                   <div className="bg-white p-6 rounded-3xl border border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
@@ -283,7 +268,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
                     <p className="text-sm leading-relaxed text-slate-600 font-medium whitespace-pre-wrap">{selectedTicket.description}</p>
                   </div>
 
-                  <PortalTicketChat ticketId={selectedTicket.id} initialMessages={initialMessages} />
+                  <PortalTicketChat ticketId={selectedTicket.id} initialMessages={initialMessages} initialCursor={ticketCursor} />
                 </div>
               ) : (
                 <div className="p-8 text-center bg-white border border-slate-200 rounded-3xl text-slate-500 font-bold">

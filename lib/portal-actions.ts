@@ -1,6 +1,7 @@
 "use server";
 
 import crypto from "node:crypto";
+import { canAccessTicket } from "@/lib/ticket-thread";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -107,12 +108,18 @@ export async function replyPortalTicket(_prevState: unknown, formData: FormData)
     const raw = Object.fromEntries(formData.entries());
     const data = replySchema.parse(raw);
     
-    // Fetch ticket to verify ownership
+    // Fetch ticket to verify ownership.
+    //
+    // Through `canAccessTicket`, which requires the client's company to be set
+    // rather than merely equal. The previous test skipped the comparison
+    // entirely when the ticket had no company - which is every ticket raised
+    // through the public contact form - so any signed-in portal user could post
+    // a reply into one.
     const ticket = await prisma.ticket.findUnique({
       where: { id: data.ticketId }
     });
-    
-    if (!ticket || (ticket.clientCompanyId && ticket.clientCompanyId !== user.clientCompanyId)) {
+
+    if (!canAccessTicket(user, ticket)) {
       return { success: false, message: "Unauthorized or invalid ticket." };
     }
 
@@ -126,12 +133,15 @@ export async function replyPortalTicket(_prevState: unknown, formData: FormData)
       }
     });
 
-    // Update ticket modified timestamp
+    // Touch the ticket, and hand it back to the queue only if it was actually
+    // waiting on the client. This used to force every ticket to OPEN on any
+    // client reply, so answering a question on a ticket someone was actively
+    // working pulled it out of IN_PROGRESS and back into the general queue.
     await prisma.ticket.update({
       where: { id: data.ticketId },
-      data: { 
+      data: {
         updatedAt: new Date(),
-        status: "OPEN" // transition back to OPEN if WAITING_ON_CLIENT or similar
+        ...(ticket!.status === "WAITING_ON_CLIENT" ? { status: "OPEN" as const } : {}),
       }
     });
 

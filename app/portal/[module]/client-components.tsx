@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 import { createPortalTicket, replyPortalTicket, acceptPortalProposal, updatePortalProfile } from "@/lib/portal-actions";
+import { useTicketThread, type PolledMessage } from "@/components/shared/useTicketThread";
 
 // Generic Submit Button with Loading State
 function SubmitButton({ label, loadingLabel = "Processing..." }: { label: string; loadingLabel?: string }) {
@@ -256,36 +257,35 @@ export function PortalTicketForm() {
 }
 
 // 4. Portal Ticket Chat / Replies Panel
-export function PortalTicketChat({ 
-  ticketId, 
-  initialMessages 
-}: { 
-  ticketId: string; 
-  initialMessages: { id: string; authorId: string | null; body: string; createdAt: Date; authorName: string }[] 
+export function PortalTicketChat({
+  ticketId,
+  initialMessages,
+  initialCursor,
+}: {
+  ticketId: string;
+  initialMessages: PolledMessage[];
+  initialCursor: string;
 }) {
   const [state, formAction] = useFormState(replyPortalTicket, null);
-  const [messages, setMessages] = React.useState(initialMessages);
+  const { messages, refresh } = useTicketThread(ticketId, initialMessages, initialCursor);
   const formRef = React.useRef<HTMLFormElement>(null);
+  const scrollRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
-    if (state?.success) {
-      formRef.current?.reset();
-      // Smoothly update local state or let server component fetch it. Since server component revalidates, we update state:
-      const rawText = new FormData(formRef.current || undefined).get("message") as string;
-      if (rawText) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            id: Math.random().toString(),
-            authorId: "current-user",
-            authorName: "You",
-            body: rawText,
-            createdAt: new Date(),
-          }
-        ]);
-      }
-    }
-  }, [state]);
+    if (!state?.success) return;
+    formRef.current?.reset();
+    // Fetch the message that was actually written rather than reconstructing
+    // it. The previous version read the text out of the form after resetting
+    // the form, so the value was always empty and the sender's own message did
+    // not appear until they reloaded.
+    void refresh();
+  }, [state, refresh]);
+
+  // Follow the conversation down as it grows, the way a chat is expected to.
+  React.useEffect(() => {
+    const container = scrollRef.current;
+    if (container) container.scrollTop = container.scrollHeight;
+  }, [messages.length]);
 
   return (
     <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden flex flex-col h-[550px]">
@@ -296,7 +296,7 @@ export function PortalTicketChat({
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50/50">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
             <MessageSquare className="h-8 w-8 opacity-50" />
@@ -304,7 +304,11 @@ export function PortalTicketChat({
           </div>
         ) : (
           messages.map((msg) => {
-            const isMe = msg.authorId !== null && msg.authorId !== "agent";
+            // Whether the message came from this side of the conversation, as
+            // the server judged it. The old test asked whether an author id was
+            // set, which put every staff reply written through the admin - all
+            // of which have no author id - on the wrong side only by accident.
+            const isMe = msg.fromClient;
             return (
               <div 
                 key={msg.id} 

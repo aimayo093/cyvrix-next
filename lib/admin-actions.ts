@@ -5,6 +5,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
+import { TicketStatus } from "@/generated/prisma";
 import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
 import { publicContactSettingKeys, publicContactValue } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
@@ -707,7 +708,12 @@ export async function updateTicketStatus(formData: FormData) {
   const id = formData.get("id") as string;
   const status = formData.get("status") as string;
 
-  await prisma.ticket.update({ where: { id }, data: { status: status as any, updatedAt: new Date() } });
+  // Checked against the enum rather than cast through `any`. The queue used to
+  // offer a status the database has never had, and writing it threw from inside
+  // a server action - which surfaces as a page that simply stops responding.
+  if (!Object.values(TicketStatus).includes(status as TicketStatus)) return;
+
+  await prisma.ticket.update({ where: { id }, data: { status: status as TicketStatus, updatedAt: new Date() } });
 
   // Trigger automatic survey if configured
   try {
@@ -743,17 +749,42 @@ export async function assignTicket(formData: FormData) {
   revalidatePath("/admin/ticket-management");
 }
 
-export async function addTicketNote(formData: FormData) {
+/**
+ * Add an internal note, or a reply the client will see.
+ *
+ * Returns a result so the thread can fetch what was written the moment it
+ * lands, rather than the analyst wondering whether the form did anything.
+ *
+ * `visibility` decides who sees it and the default is deliberately `internal`:
+ * an unlabelled note is a private one. The portal now filters on this. It did
+ * not, which meant every note written here was visible to the client.
+ */
+export async function addTicketNote(_prevState: unknown, formData: FormData) {
   await requireAdmin();
   const ticketId = formData.get("ticketId") as string;
-  const body = sanitize(formData.get("body") as string || "");
-  const visibility = (formData.get("visibility") as string) || "internal";
+  const body = sanitize((formData.get("body") as string) || "");
+  const visibility = (formData.get("visibility") as string) === "client" ? "client" : "internal";
+
+  if (!ticketId || !body) {
+    return { success: false, message: "A ticket and a message are both required." };
+  }
+
+  const ticket = await prisma.ticket.findUnique({ where: { id: ticketId }, select: { id: true } });
+  if (!ticket) {
+    return { success: false, message: "That ticket no longer exists." };
+  }
 
   await prisma.ticketMessage.create({
     data: { id: crypto.randomUUID(), ticketId, body, visibility },
   });
 
+  // So the queue's "age" column reflects the last activity rather than the last
+  // status change.
+  await prisma.ticket.update({ where: { id: ticketId }, data: { updatedAt: new Date() } });
+
   revalidatePath("/admin/ticket-management");
+  revalidatePath("/portal/support-tickets");
+  return { success: true, message: visibility === "client" ? "Reply sent." : "Internal note added." };
 }
 
 export async function closeTicket(formData: FormData) {
