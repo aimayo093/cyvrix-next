@@ -12,12 +12,42 @@ type Service = {
 const DEFAULT_HERO_IMAGE =
   "/uploads/1780490490158-59620428-christina-wocintechchat-com-m-bPVM4nOy0Rg-unsplash.jpg";
 
+/**
+ * Hero content an administrator can change in Home Page CMS.
+ *
+ * Every field falls back to the reviewed wording, so an empty CMS renders the
+ * page as written rather than an empty hero. Home Page CMS previously wrote
+ * these into page sections that this component never read, so editing them
+ * changed nothing.
+ */
+export type HomeHeroContent = {
+  eyebrow?: string;
+  title?: string;
+  body?: string;
+  primaryLabel?: string;
+  primaryUrl?: string;
+  secondaryLabel?: string;
+  secondaryUrl?: string;
+};
+
 type PremiumHomeProps = {
   services: Service[];
   engineImages?: EngineImageOverrides;
   /** Replaceable from the CMS via the `site_images` setting. */
   heroImage?: string;
+  hero?: HomeHeroContent;
 };
+
+/** The reviewed hero, used wherever the CMS leaves a field empty. */
+const DEFAULT_HERO = {
+  eyebrow: "Technology partnership for growing UK organisations",
+  title: "Technology that runs quietly. Security that stands up.",
+  body: "CYVRIX manages, secures and modernises the technology behind ambitious organisations — with ongoing support, expert projects and practical field delivery.",
+  primaryLabel: "Choose an assessment",
+  primaryUrl: "/assessments",
+  secondaryLabel: "Explore services",
+  secondaryUrl: "/services",
+} as const;
 
 const deliverySteps = [
   "Discover the business context and current estate.",
@@ -39,8 +69,21 @@ export function PremiumHome({
   services,
   engineImages = {},
   heroImage = DEFAULT_HERO_IMAGE,
+  hero,
 }: PremiumHomeProps) {
   const engines = resolveEngines(services, engineImages);
+
+  // A blank CMS field means "unset", not "render nothing".
+  const pick = (value: string | undefined, fallback: string) => (value?.trim() ? value.trim() : fallback);
+  const heroContent = {
+    eyebrow: pick(hero?.eyebrow, DEFAULT_HERO.eyebrow),
+    title: pick(hero?.title, DEFAULT_HERO.title),
+    body: pick(hero?.body, DEFAULT_HERO.body),
+    primaryLabel: pick(hero?.primaryLabel, DEFAULT_HERO.primaryLabel),
+    primaryUrl: pick(hero?.primaryUrl, DEFAULT_HERO.primaryUrl),
+    secondaryLabel: pick(hero?.secondaryLabel, DEFAULT_HERO.secondaryLabel),
+    secondaryUrl: pick(hero?.secondaryUrl, DEFAULT_HERO.secondaryUrl),
+  };
 
   return (
     <div className="overflow-hidden bg-[#020817] text-white">
@@ -52,26 +95,26 @@ export function PremiumHome({
             <div>
               <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/10 px-3.5 py-1.5 text-xs font-black uppercase tracking-[0.16em] text-sky-200">
                 <ShieldCheck className="h-4 w-4" />
-                Technology partnership for growing UK organisations
+                {heroContent.eyebrow}
               </p>
               <h1 className="font-outfit text-5xl font-black leading-[0.98] tracking-tight text-white sm:text-6xl">
-                Technology that runs quietly. Security that stands up.
+                {heroContent.title}
               </h1>
               <p className="mt-7 max-w-xl text-lg leading-8 text-slate-300">
-                CYVRIX manages, secures and modernises the technology behind ambitious organisations — with ongoing support, expert projects and practical field delivery.
+                {heroContent.body}
               </p>
               <div className="mt-10 flex flex-col gap-4 sm:flex-row">
                 <Link
-                  href="/assessments"
+                  href={heroContent.primaryUrl}
                   className="inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-[#2691F0] px-7 font-bold text-white shadow-lg shadow-[#2691F0]/20 transition-colors hover:bg-white hover:text-[#041635]"
                 >
-                  Choose an assessment <ArrowRight className="h-5 w-5" />
+                  {heroContent.primaryLabel} <ArrowRight className="h-5 w-5" />
                 </Link>
                 <Link
-                  href="/services"
+                  href={heroContent.secondaryUrl}
                   className="inline-flex min-h-14 items-center justify-center rounded-md border border-white/20 px-7 font-bold text-white transition-colors hover:border-white/50 hover:bg-white/10"
                 >
-                  Explore services
+                  {heroContent.secondaryLabel}
                 </Link>
               </div>
             </div>

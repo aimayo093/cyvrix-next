@@ -28,20 +28,43 @@ export default async function HomePage() {
 
   const {
     services,
+    pageData,
   } = await getHomePageData().catch((error) => {
     console.error("[home-page] failed to load cached homepage data", error);
     return {
       services: [],
+      pageData: null,
     };
   });
 
   const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} }));
 
+  /*
+   * The Hero section Home Page CMS writes.
+   *
+   * This page used to ignore it entirely, so every field on that form -
+   * eyebrow, title, description, both buttons, the background image - was
+   * saved and discarded, and the admin showed copy the site never rendered.
+   * Empty fields fall through to the reviewed wording inside PremiumHome.
+   */
+  const heroSection = pageData?.sections.find((section) => section.sectionType === "Hero");
+  const heroSettings = (heroSection?.settingsJson ?? {}) as Record<string, unknown>;
+  const asText = (value: unknown) => (typeof value === "string" ? value : undefined);
+
   return (
     <PremiumHome
       services={services.length > 0 ? services : staticServices}
       engineImages={siteImages.engines}
-      heroImage={siteImages.hero}
+      heroImage={heroSection?.mediaId || siteImages.hero}
+      hero={{
+        eyebrow: heroSection?.subtitle ?? undefined,
+        title: heroSection?.title ?? undefined,
+        body: heroSection?.body ?? undefined,
+        primaryLabel: heroSection?.buttonLabel ?? undefined,
+        primaryUrl: heroSection?.buttonUrl ?? undefined,
+        secondaryLabel: asText(heroSettings.secondaryCtaLabel),
+        secondaryUrl: asText(heroSettings.secondaryCtaUrl),
+      }}
     />
   );
 }
