@@ -12,11 +12,69 @@
   --radius-xl: 1rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
+
+  /*
+   * Easing.
+   *
+   * Every transition on the site was running the browser default, which is
+   * `ease` - a symmetric curve that is neither an entrance nor an exit. Things
+   * arriving should decelerate into place; things moving between two states
+   * should ease at both ends. The difference is small per element and
+   * noticeable across a page.
+   */
+  --ease-entrance: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-move: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 }
 
 @layer base {
   * {
     @apply border-slate-200;
+  }
+
+  /*
+   * Interactive elements decelerate into their hover and focus states rather
+   * than easing symmetrically. Applied at the base layer so the 190-odd
+   * `transition-*` utilities across the site inherit it without each one
+   * having to opt in.
+   */
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"] {
+    transition-timing-function: var(--ease-entrance);
+  }
+
+  /*
+   * Headings break on meaning rather than on the container edge, so a
+   * two-line title does not leave one orphaned word.
+   */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /*
+   * Motion is a preference the operating system already carries, and for
+   * people with vestibular disorders it is a medical one. The site had 193
+   * transitions and honoured it nowhere.
+   *
+   * Transitions are reduced to a single frame rather than removed: state still
+   * changes, it just stops moving. Removing them entirely makes interfaces
+   * feel broken rather than calm.
+   */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
   body {
     @apply bg-[#020817] text-slate-300 overflow-x-hidden selection:bg-[#2691F0]/30 selection:text-white;
