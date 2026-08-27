@@ -1,6 +1,7 @@
 "use server";
 
 import crypto from "node:crypto";
+import { reserveTicketNumber } from "@/lib/ticket-number";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -134,9 +135,11 @@ async function notify(template: string, to: string, subject: string, body: strin
   });
 }
 
-function ticketNumber() {
-  const suffix = Math.floor(Date.now() / 1000).toString().slice(-6);
-  return `CYV-TKT-${suffix.padStart(6, "0")}`;
+/** One generator for all three entry points; see lib/ticket-number.ts. */
+async function ticketNumber() {
+  return reserveTicketNumber(async (candidate) =>
+    (await prisma.ticket.count({ where: { ticketNumber: candidate } })) > 0
+  );
 }
 
 function done(type: SubmissionType) {
@@ -281,7 +284,7 @@ export async function submitTicket(formData: FormData) {
   try {
     const data = parse(ticketSchema, formData);
     await limitSubmission("ticket", data.email, 3, 5);
-    const number = ticketNumber();
+    const number = await ticketNumber();
     await prisma.ticket.create({
       data: {
         id: crypto.randomUUID(),

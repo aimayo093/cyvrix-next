@@ -1,13 +1,15 @@
 "use server";
 
 import crypto from "node:crypto";
+import { reserveTicketNumber } from "@/lib/ticket-number";
 import { canAccessTicket } from "@/lib/ticket-thread";
+import { canAccessClientRecord } from "@/lib/client-access";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
-import { hashPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 
 const ticketSchema = z.object({
   subject: z.string().trim().min(5).max(200).transform(sanitize),
@@ -23,6 +25,11 @@ const replySchema = z.object({
 
 const profileSchema = z.object({
   name: z.string().trim().min(2).max(100).transform(sanitize),
+  // Changing a password requires proving you know the current one. The admin
+  // side has always required this; the portal did not, so anyone holding a live
+  // session - a borrowed laptop, a stolen cookie - could take the account over
+  // and lock the owner out of it.
+  currentPassword: z.string().max(100).optional().or(z.literal("")),
   password: z.string().min(8).max(100).optional().or(z.literal("")),
 });
 
@@ -30,9 +37,11 @@ function sanitize(value: string) {
   return value.replace(/[<>]/g, "").slice(0, 5000);
 }
 
-function ticketNumber() {
-  const suffix = Math.floor(Date.now() / 1000).toString().slice(-6);
-  return `CYV-TKT-${suffix.padStart(6, "0")}`;
+/** One generator for all three entry points; see lib/ticket-number.ts. */
+async function ticketNumber() {
+  return reserveTicketNumber(async (candidate) =>
+    (await prisma.ticket.count({ where: { ticketNumber: candidate } })) > 0
+  );
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -72,7 +81,7 @@ export async function createPortalTicket(_prevState: unknown, formData: FormData
       }
     }
 
-    const tktNumber = ticketNumber();
+    const tktNumber = await ticketNumber();
     
     await prisma.ticket.create({
       data: {
@@ -163,11 +172,15 @@ export async function acceptPortalProposal(proposalId: string) {
       where: { id: proposalId }
     });
     
-    if (!proposal || (proposal.clientCompanyId && proposal.clientCompanyId !== user.clientCompanyId)) {
+    // The same guard as tickets, and it had the same hole. Accepting a proposal
+    // is a commercial commitment, and the previous check let any signed-in
+    // portal user accept one belonging to no company - which is every proposal
+    // raised against a quote request from the public site.
+    if (!canAccessClientRecord(user, proposal)) {
       throw new Error("Unauthorized or invalid proposal.");
     }
     
-    if (proposal.status === "accepted") {
+    if (proposal!.status === "accepted") {
       return { success: true, message: "Proposal has already been accepted." };
     }
 
@@ -195,25 +208,51 @@ export async function updatePortalProfile(_prevState: unknown, formData: FormDat
     
     const raw = Object.fromEntries(formData.entries());
     const data = profileSchema.parse(raw);
-    
-    const updateData = data.password
-      ? {
-          name: data.name,
-          passwordHash: await hashPassword(data.password),
-          updatedAt: new Date(),
-        }
-      : {
-          name: data.name,
-          updatedAt: new Date(),
-        };
+
+    const updateData: { name: string; updatedAt: Date; passwordHash?: string } = {
+      name: data.name,
+      updatedAt: new Date(),
+    };
+
+    if (data.password) {
+      if (!data.currentPassword) {
+        return { success: false, message: "Enter your current password to set a new one." };
+      }
+
+      const record = await prisma.user.findUnique({ where: { id: user.id } });
+      if (!record?.passwordHash || !verifyPassword(data.currentPassword, record.passwordHash)) {
+        // The same wording whether the record is missing or the password is
+        // wrong, so a failed attempt says nothing about the account.
+        return { success: false, message: "The current password you entered is incorrect." };
+      }
+
+      updateData.passwordHash = hashPassword(data.password);
+    }
 
     await prisma.user.update({
       where: { id: user.id },
       data: updateData
     });
 
+    if (updateData.passwordHash) {
+      await prisma.auditLog.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId: user.id,
+          action: "portal_password_changed",
+          entityType: "User",
+          metadata: { email: user.email },
+        },
+      });
+    }
+
     revalidatePath("/portal/profile-and-company");
-    return { success: true, message: "Profile successfully updated." };
+    return {
+      success: true,
+      message: updateData.passwordHash
+        ? "Profile and password updated."
+        : "Profile successfully updated.",
+    };
   } catch (error) {
     if (isNextRedirect(error)) throw error;
     console.error("Profile update error:", error);

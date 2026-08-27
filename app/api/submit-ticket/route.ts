@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { reserveTicketNumber } from "@/lib/ticket-number";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -20,8 +21,11 @@ const schema = z.object({
   _hp: z.string().max(0).optional(),
 });
 
-function ticketNumber() {
-  return `CYV-TKT-${String(Math.floor(Date.now() / 1000)).slice(-6).padStart(6, "0")}`;
+/** One generator for all three entry points; see lib/ticket-number.ts. */
+async function ticketNumber() {
+  return reserveTicketNumber(async (candidate) =>
+    (await prisma.ticket.count({ where: { ticketNumber: candidate } })) > 0
+  );
 }
 
 async function notify(to: string, subject: string, body: string) {
@@ -64,7 +68,7 @@ export async function POST(req: Request) {
 
     const data = parsed.data;
     enforcePublicSubmissionRateLimit("ticket", data.email, req.headers, { ipLimit: 5, emailLimit: 3 });
-    const number = ticketNumber();
+    const number = await ticketNumber();
 
     await prisma.ticket.create({
       data: {

@@ -8,34 +8,18 @@
  * is a rule nobody exercises.
  */
 import { isAdminRole } from "@/lib/roles";
-import type { UserRole } from "@/generated/prisma";
+import { canAccessClientRecord, type ClientViewer } from "@/lib/client-access";
 
-export type ThreadViewer = {
-  id: string;
-  role: UserRole;
-  clientCompanyId: string | null;
-};
+/** A ticket is a client-owned record like any other; the viewer shape is shared. */
+export type ThreadViewer = ClientViewer;
 
 /**
  * Whether this person may see this ticket at all.
  *
- * Staff may see any ticket. A client may see one only when their company and
- * the ticket's company are **both set** and equal.
- *
- * "Both set" is the part that was missing. The previous check read
- * `ticket.clientCompanyId && ticket.clientCompanyId !== user.clientCompanyId`,
- * which skips the comparison entirely for a ticket with no company — and every
- * ticket raised through the public contact form has none. A portal user without
- * a company of their own could read those, and post replies into them.
+ * The general rule lives in `client-access.ts` because the same guard governs
+ * proposal acceptance, and the same mistake had been made in both.
  */
-export function canAccessTicket(
-  viewer: ThreadViewer,
-  ticket: { clientCompanyId: string | null } | null
-): boolean {
-  if (!ticket) return false;
-  if (isAdminRole(viewer.role)) return true;
-  return Boolean(viewer.clientCompanyId) && ticket.clientCompanyId === viewer.clientCompanyId;
-}
+export const canAccessTicket = canAccessClientRecord;
 
 /**
  * Staff see internal notes. Clients see only what was addressed to them.

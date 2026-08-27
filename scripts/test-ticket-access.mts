@@ -11,6 +11,7 @@
  * Run with `npx tsx scripts/test-ticket-access.mts`.
  */
 import { canAccessTicket, visibilityFilterFor, type ThreadViewer } from "../lib/ticket-access";
+import { canAccessClientRecord } from "../lib/client-access";
 
 type Case = {
   name: string;
@@ -104,7 +105,45 @@ if (!staffFilterOk) failures += 1;
 console.log(`  ${clientFilterOk ? "pass" : "FAIL"}  a client's query is restricted to client-visible messages`);
 console.log(`  ${staffFilterOk ? "pass" : "FAIL"}  staff see every message including internal notes`);
 
-const total = cases.length + 2;
+// The same predicate guards proposal acceptance, where the consequence of
+// getting it wrong is a commercial commitment rather than a message. Exercised
+// through its own name so a future refactor cannot quietly unhook one caller.
+const proposalCases: Array<{ name: string; viewer: ThreadViewer; record: { clientCompanyId: string | null } | null; expected: boolean }> = [
+  {
+    name: "client accepts their own company's proposal",
+    viewer: client(ACME),
+    record: { clientCompanyId: ACME },
+    expected: true,
+  },
+  {
+    name: "client cannot accept a company-less proposal",
+    viewer: client(ACME),
+    record: { clientCompanyId: null },
+    expected: false,
+  },
+  {
+    name: "client with no company cannot accept a company-less proposal",
+    viewer: client(null),
+    record: { clientCompanyId: null },
+    expected: false,
+  },
+  {
+    name: "client cannot accept another company's proposal",
+    viewer: client(ACME),
+    record: { clientCompanyId: OTHER },
+    expected: false,
+  },
+];
+
+for (const testCase of proposalCases) {
+  const actual = canAccessClientRecord(testCase.viewer, testCase.record);
+  const ok = actual === testCase.expected;
+  if (!ok) failures += 1;
+  console.log(`  ${ok ? "pass" : "FAIL"}  ${testCase.name}`);
+  if (!ok) console.log(`          expected ${testCase.expected}, got ${actual}`);
+}
+
+const total = cases.length + proposalCases.length + 2;
 if (failures > 0) {
   console.error(`\n  ${failures} of ${total} checks failed.\n`);
   process.exit(1);

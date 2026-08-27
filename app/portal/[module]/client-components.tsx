@@ -54,29 +54,57 @@ export function ProfileUpdateForm({ initialName }: { initialName: string }) {
   return (
     <form action={formAction} className="space-y-6">
       <div className="space-y-2">
-        <label className="text-xs font-black text-[#041635] uppercase tracking-wider block">Full Name</label>
+        {/* htmlFor and a matching id, not a label sitting next to an input.
+            A visual label with no programmatic association announces nothing. */}
+        <label htmlFor="portal-profile-name" className="text-xs font-black text-[#041635] uppercase tracking-wider block">
+          Full name
+        </label>
         <div className="relative">
-          <User className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
+          <User className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" aria-hidden="true" />
           <input
+            id="portal-profile-name"
             type="text"
             name="name"
             defaultValue={initialName}
             required
+            autoComplete="name"
             className="w-full pl-12 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2691F0] focus:bg-white transition-all text-sm"
             placeholder="John Doe"
           />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-xs font-black text-[#041635] uppercase tracking-wider block">Change Password (Optional)</label>
-        <PasswordInput
-          name="password"
-          hasLeftIcon
-          className="w-full bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2691F0] focus:bg-white transition-all text-sm py-3"
-          placeholder="Leave blank to keep current"
-        />
-        <p className="text-[10px] font-bold text-slate-400">Must be at least 8 characters long if provided.</p>
+      <div className="space-y-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+        <p className="text-xs font-black text-[#041635] uppercase tracking-wider">Change password (optional)</p>
+
+        <div className="space-y-2">
+          <label htmlFor="portal-profile-current-password" className="text-[11px] font-black text-slate-600 block">
+            Current password
+          </label>
+          <PasswordInput
+            id="portal-profile-current-password"
+            name="currentPassword"
+            autoComplete="current-password"
+            className="w-full bg-white border border-slate-200 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2691F0] transition-all text-sm py-3"
+            placeholder="Required only to set a new password"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label htmlFor="portal-profile-new-password" className="text-[11px] font-black text-slate-600 block">
+            New password
+          </label>
+          <PasswordInput
+            id="portal-profile-new-password"
+            name="password"
+            autoComplete="new-password"
+            className="w-full bg-white border border-slate-200 rounded-xl font-bold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#2691F0] transition-all text-sm py-3"
+            placeholder="Leave blank to keep your current password"
+          />
+          <p className="text-[10px] font-bold text-slate-400">
+            At least 8 characters. You will be asked for your current password.
+          </p>
+        </div>
       </div>
 
       {state && !state.success && (
