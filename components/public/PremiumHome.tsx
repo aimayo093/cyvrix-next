@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Check, Cloud, ShieldCheck } from "lucide-react";
 import { resolveEngines, type EngineImageOverrides } from "@/lib/service-engines";
+import { SectionRenderer } from "@/components/shared/SectionRenderer";
 
 type Service = {
   slug: string;
@@ -53,6 +54,22 @@ type PremiumHomeProps = {
   /** Replaceable from the CMS via the `site_images` setting. */
   heroImage?: string;
   content?: HomeContent;
+  /**
+   * Home Page CMS rows this component lays out no band for — today the partner
+   * logos, testimonials and trusted client logos.
+   *
+   * They are handed to SectionRenderer rather than left unrendered, which is
+   * the same treatment /contact gives its leftovers. All three are trust
+   * content, and SectionRenderer suppresses every trust section behind one
+   * switch until the verification workflow exists, so this renders nothing
+   * today. That is the point: when the switch flips, the rows an administrator
+   * has been editing all along appear, instead of someone having to remember
+   * that the home page needed wiring too.
+   */
+  additionalSections?: any[];
+  testimonials?: any[];
+  partners?: any[];
+  trustedLogos?: any[];
 };
 
 /** The reviewed copy, used wherever the CMS leaves a field empty. */
@@ -104,6 +121,10 @@ export function PremiumHome({
   engineImages = {},
   heroImage = DEFAULT_HERO_IMAGE,
   content,
+  additionalSections = [],
+  testimonials = [],
+  partners = [],
+  trustedLogos = [],
 }: PremiumHomeProps) {
   const engines = resolveEngines(services, engineImages);
 
@@ -363,6 +384,15 @@ export function PremiumHome({
         </div>
       </section>
 
+
+      {additionalSections.length > 0 && (
+        <SectionRenderer
+          sections={additionalSections}
+          testimonials={testimonials}
+          partners={partners}
+          trustedLogos={trustedLogos}
+        />
+      )}
 
       <section className="bg-[#2691F0] py-20 text-white sm:py-24">
         <div className="mx-auto max-w-4xl px-5 text-center lg:px-8">

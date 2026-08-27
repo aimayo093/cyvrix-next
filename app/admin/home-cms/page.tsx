@@ -215,6 +215,19 @@ async function HomeCmsPageContent({
             <h2 className="font-outfit font-black text-[#041635]">Testimonials Section</h2>
           </div>
           <div className="p-6 space-y-4">
+            {/*
+              Said plainly, because a form that saves and shows nothing looks
+              broken. It is not: trust content stays unpublished site-wide until
+              a record can be checked for evidence, permission and expiry. The
+              heading below is stored and will be used the moment that happens.
+            */}
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold leading-5 text-amber-900">
+              This band is not currently shown on the home page. Testimonials,
+              partner logos and client logos stay unpublished across the whole
+              site until each record has been verified for evidence, permission
+              to name the client, and expiry. What you enter here is saved and
+              will appear when that verification is in place.
+            </p>
             <label className="block text-sm font-bold text-slate-700">
               Testimonials Title
               <input name="testimonials.title" defaultValue={testimonials?.title ?? ""} placeholder="Client Success" className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" />

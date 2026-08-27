@@ -29,11 +29,17 @@ export default async function HomePage() {
   const {
     services,
     pageData,
+    testimonials,
+    partners,
+    trustedLogos,
   } = await getHomePageData().catch((error) => {
     console.error("[home-page] failed to load cached homepage data", error);
     return {
       services: [],
       pageData: null,
+      testimonials: [],
+      partners: [],
+      trustedLogos: [],
     };
   });
 
@@ -66,11 +72,26 @@ export default async function HomePage() {
 
   const heroSettings = settingsOf(heroSection);
 
+  /*
+   * Everything the bands above do not lay out.
+   *
+   * Today that is Partner logos, Testimonials and Trusted logos - all trust
+   * content, all suppressed inside SectionRenderer until the verification
+   * workflow exists. Passing them through means the rows stay connected to the
+   * page rather than being edited into nothing.
+   */
+  const laidOut = new Set([heroSection?.id, servicesSection?.id, deliverySection?.id, ctaSection?.id].filter(Boolean));
+  const additionalSections = (pageData?.sections ?? []).filter((section) => !laidOut.has(section.id));
+
   return (
     <PremiumHome
       services={services.length > 0 ? services : staticServices}
       engineImages={siteImages.engines}
       heroImage={heroSection?.mediaId || siteImages.hero}
+      additionalSections={additionalSections}
+      testimonials={testimonials}
+      partners={partners}
+      trustedLogos={trustedLogos}
       content={{
         hero: {
           eyebrow: heroSection?.subtitle ?? undefined,
