@@ -9,6 +9,22 @@ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const MAX_REQUESTS = 60; // 60 requests per minute
 const MAX_TRACKED_CLIENTS = 10_000;
 
+/**
+ * Ticket threads poll for new messages, and the limiter counts by IP.
+ *
+ * One open conversation is fifteen requests a minute. A client and an analyst
+ * both watching a ticket from the same office - one NAT address - is thirty
+ * before anyone loads a page, and the general ceiling is sixty. The chat would
+ * have stopped updating with no visible error, which is precisely the symptom
+ * this polling was added to fix.
+ *
+ * A separate bucket rather than a raised general ceiling: this endpoint is
+ * authenticated, read-only, and answers an indexed query, so it can afford a
+ * higher allowance than the public form handlers sharing the default.
+ */
+const POLLING_PREFIX = "/api/tickets/";
+const MAX_POLLING_REQUESTS = 240;
+
 // Routes that require authentication (any role)
 const PROTECTED_ROUTES = ["/portal", "/admin"];
 
@@ -52,13 +68,18 @@ export async function middleware(request: NextRequest) {
   if (pathname.startsWith("/api")) {
     const ip = getClientAddress(request);
     const now = Date.now();
+    const polling = pathname.startsWith(POLLING_PREFIX);
+    // Separate keys, so a busy conversation cannot exhaust the allowance a
+    // contact form submission needs, or the other way round.
+    const key = polling ? `poll:${ip}` : ip;
+    const ceiling = polling ? MAX_POLLING_REQUESTS : MAX_REQUESTS;
 
-    const record = rateLimitMap.get(ip);
+    const record = rateLimitMap.get(key);
     if (!record || record.resetAt <= now) {
       pruneRateLimitMap(now);
-      rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+      rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
     } else {
-      if (record.count >= MAX_REQUESTS) {
+      if (record.count >= ceiling) {
         return new NextResponse(
           JSON.stringify({ error: "Too many requests. Please try again later." }),
           {
