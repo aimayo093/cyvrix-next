@@ -195,6 +195,22 @@ shadowed by `.env.local` line 11. Once that is corrected, remove the `cpus` cap.
 `npm run check:env` reports which value actually takes effect. Run it before any
 write operation: a local dev server reaches the **production** database.
 
+### Writing to the database directly does not update the site
+
+Public pages are cached with `use cache` and a `cacheTag`, and the tag is only
+invalidated by the admin server actions in `lib/admin-actions.ts`
+(`updateHomeCache`, `updateCmsPageCache`). A script that writes to the database
+directly — a seed, a restore, a one-off correction — changes the data and leaves
+the site serving the previous version for up to the `cacheLife` window.
+
+There is no public revalidation endpoint, and deliberately so. The two ways to
+flush after an out-of-band write are to make the same edit through the admin, or
+to redeploy.
+
+This is not a bug to fix by adding a webhook. A cache that only an authenticated
+action can invalidate is the correct posture for a site whose claims are gated;
+the thing to remember is that the write and the flush are separate steps.
+
 ---
 
 ## 8. Rendering and layout notes
