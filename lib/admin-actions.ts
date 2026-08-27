@@ -11,6 +11,8 @@ import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
 import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slots";
 import { getDefaultLegalDocument } from "@/lib/legal-content";
+import { sendVerificationEmail } from "@/lib/email-verification";
+import { SITE_URL } from "@/lib/structured-data";
 import {
   beginEnrolment,
   confirmEnrolment,
@@ -2460,6 +2462,29 @@ export async function changeAdminPassword(formData: FormData) {
  * Scoped to the session's own account. There is no path here to enrol anyone
  * else, because a second factor somebody else set up is not a second factor.
  */
+/** Sends the signed-in administrator a link to confirm their own address. */
+export async function requestEmailVerification() {
+  const admin = await requireAdmin();
+  const result = await sendVerificationEmail(admin.id, SITE_URL);
+
+  if (result.ok) {
+    redirect(
+      `/admin/profile?status=success&message=${encodeURIComponent(
+        `Check ${admin.email}. The link expires in 24 hours.`
+      )}`
+    );
+  }
+
+  const message =
+    result.reason === "already_verified"
+      ? "That address is already verified."
+      : result.reason === "no_transport"
+        ? "No email transport is configured, so nothing could be sent. Set this up in Settings."
+        : "The message could not be sent. Check the email settings and try again.";
+
+  redirect(`/admin/profile?status=error&message=${encodeURIComponent(message)}`);
+}
+
 export async function startTwoFactorEnrolment() {
   const admin = await requireAdmin();
   await beginEnrolment(admin.id, admin.email);

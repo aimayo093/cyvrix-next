@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, KeyRound, Save, ShieldCheck, UserRound } fro
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { changeAdminPassword, updateAdminProfile } from "@/lib/admin-actions";
+import { changeAdminPassword, requestEmailVerification, updateAdminProfile } from "@/lib/admin-actions";
 import { TwoFactorPanel } from "@/components/admin/TwoFactorPanel";
 import { beginEnrolment, getTwoFactorState, takeRecoveryCodes, type EnrolmentOffer } from "@/lib/two-factor";
 import { Button } from "@/components/shared/Button";
@@ -242,6 +242,24 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
                 <dt className="font-semibold text-slate-500">Email verified</dt>
                 <dd className="font-black text-[#041635]">{record?.emailVerified ? "Yes" : "No"}</dd>
               </div>
+              {!record?.emailVerified && (
+                <div className="border-t border-slate-100 pt-3">
+                  {/* Recovery and security notices are only worth anything if
+                      the mailbox is known to belong to the account holder. */}
+                  <p className="text-xs font-medium leading-relaxed text-slate-500">
+                    Confirming your address means password recovery and security notices reach a mailbox
+                    we know is yours.
+                  </p>
+                  <form action={requestEmailVerification} className="mt-3">
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-[#2691F0]/30 bg-[#2691F0]/5 px-3 py-1.5 text-xs font-black text-[#0f5aab] transition-colors hover:bg-[#2691F0] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
+                    >
+                      Send me a confirmation link
+                    </button>
+                  </form>
+                </div>
+              )}
               {record?.createdAt && (
                 <div className="flex items-center justify-between gap-3">
                   <dt className="font-semibold text-slate-500">Account created</dt>

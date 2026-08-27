@@ -1053,6 +1053,20 @@ model User {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+/// Email verification links. The token is never stored, only its SHA-256 hash.
+model VerificationToken {
+  id        String   @id
+  userId    String
+  tokenHash String   @unique
+  /// The address the link was sent to, so a changed email invalidates it.
+  email     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@schema("public")
+}
+
 model WebsiteSection {
   id        String        @id
   area      String
