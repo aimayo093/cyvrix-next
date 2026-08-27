@@ -40,30 +40,70 @@ export default async function HomePage() {
   const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} }));
 
   /*
-   * The Hero section Home Page CMS writes.
+   * The four bands Home Page CMS writes.
    *
-   * This page used to ignore it entirely, so every field on that form -
-   * eyebrow, title, description, both buttons, the background image - was
-   * saved and discarded, and the admin showed copy the site never rendered.
-   * Empty fields fall through to the reviewed wording inside PremiumHome.
+   * This page used to read the Hero and nothing else, so the Services Grid,
+   * Why Choose Us and Final Call-to-Action forms saved cleanly, showed the new
+   * copy back in the admin, and changed nothing on the site. That is what made
+   * the home page and its CMS look like two different products.
+   *
+   * The section types are the ones Home Page CMS looks up by name, so the two
+   * modules read the same rows. Empty fields fall through to the reviewed
+   * wording inside PremiumHome.
    */
-  const heroSection = pageData?.sections.find((section) => section.sectionType === "Hero");
-  const heroSettings = (heroSection?.settingsJson ?? {}) as Record<string, unknown>;
+  const sectionOfType = (type: string) => pageData?.sections.find((section) => section.sectionType === type);
+  const heroSection = sectionOfType("Hero");
+  const servicesSection = sectionOfType("Service cards");
+  const deliverySection = sectionOfType("Image and text");
+  const ctaSection = sectionOfType("CTA section");
+
+  const settingsOf = (section: { settingsJson?: unknown } | undefined) =>
+    (section?.settingsJson ?? {}) as Record<string, unknown>;
   const asText = (value: unknown) => (typeof value === "string" ? value : undefined);
+  /** `points` is stored as an array of strings; anything else is ignored. */
+  const asPoints = (value: unknown) =>
+    Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : undefined;
+
+  const heroSettings = settingsOf(heroSection);
 
   return (
     <PremiumHome
       services={services.length > 0 ? services : staticServices}
       engineImages={siteImages.engines}
       heroImage={heroSection?.mediaId || siteImages.hero}
-      hero={{
-        eyebrow: heroSection?.subtitle ?? undefined,
-        title: heroSection?.title ?? undefined,
-        body: heroSection?.body ?? undefined,
-        primaryLabel: heroSection?.buttonLabel ?? undefined,
-        primaryUrl: heroSection?.buttonUrl ?? undefined,
-        secondaryLabel: asText(heroSettings.secondaryCtaLabel),
-        secondaryUrl: asText(heroSettings.secondaryCtaUrl),
+      content={{
+        hero: {
+          eyebrow: heroSection?.subtitle ?? undefined,
+          title: heroSection?.title ?? undefined,
+          body: heroSection?.body ?? undefined,
+          primaryLabel: heroSection?.buttonLabel ?? undefined,
+          primaryUrl: heroSection?.buttonUrl ?? undefined,
+          secondaryLabel: asText(heroSettings.secondaryCtaLabel),
+          secondaryUrl: asText(heroSettings.secondaryCtaUrl),
+        },
+        services: {
+          // Home Page CMS labels these "Section Title" and "Section Subtitle",
+          // and the band leads with an eyebrow above the heading — so the
+          // heading is `title` and the paragraph under it is `subtitle`.
+          title: servicesSection?.title ?? undefined,
+          body: servicesSection?.subtitle ?? undefined,
+          primaryLabel: servicesSection?.buttonLabel ?? undefined,
+          primaryUrl: servicesSection?.buttonUrl ?? undefined,
+        },
+        delivery: {
+          eyebrow: deliverySection?.subtitle ?? undefined,
+          title: deliverySection?.title ?? undefined,
+          body: deliverySection?.body ?? undefined,
+          points: asPoints(settingsOf(deliverySection).points),
+          primaryLabel: deliverySection?.buttonLabel ?? undefined,
+          primaryUrl: deliverySection?.buttonUrl ?? undefined,
+        },
+        cta: {
+          title: ctaSection?.title ?? undefined,
+          body: ctaSection?.body ?? undefined,
+          primaryLabel: ctaSection?.buttonLabel ?? undefined,
+          primaryUrl: ctaSection?.buttonUrl ?? undefined,
+        },
       }}
     />
   );

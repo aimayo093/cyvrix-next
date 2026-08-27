@@ -1937,54 +1937,67 @@ export async function createPageSection(formData: FormData) {
   revalidatePath("/admin/pages-cms");
 }
 
+/**
+ * Update a section, changing only the fields the submitted form actually
+ * carried.
+ *
+ * This used to read every column unconditionally and write the result, which
+ * quietly destroyed content. The section form is not one form: heroes get a
+ * dedicated set of inputs with no `subtitle` field and no raw settings
+ * textarea, so saving a hero wrote `subtitle: ""` over the eyebrow text and
+ * replaced `settingsJson` with only the keys that happened to have a matching
+ * input. Editing the home hero deleted its `backgroundImage` and nothing said
+ * so.
+ *
+ * The rule now is that an absent field means "leave it alone" and an empty
+ * field means "clear it" — which is what an editor expects, and the only
+ * reading under which two different forms can safely write the same row.
+ */
 export async function updatePageSection(formData: FormData) {
   await requireAdmin();
   const id = formData.get("id") as string;
-  const title = sanitize(formData.get("title") as string || "");
-  const subtitle = sanitize(formData.get("subtitle") as string || "");
-  const body = sanitize(formData.get("body") as string || "");
-  const mediaId = formData.get("mediaId") as string || null;
-  const buttonLabel = sanitize(formData.get("buttonLabel") as string || "");
-  const buttonUrl = sanitize(formData.get("buttonUrl") as string || "");
-  const backgroundStyle = sanitize(formData.get("backgroundStyle") as string || "");
-  const layoutStyle = sanitize(formData.get("layoutStyle") as string || "");
-  const settingsJsonRaw = formData.get("settingsJson") as string || "{}";
-  const isVisible = formData.get("isVisible") !== "false";
-
-  let settingsJson: Record<string, any> = {};
-  try {
-    settingsJson = JSON.parse(settingsJsonRaw);
-  } catch (e) {}
-
-  for (const [key, value] of formData.entries()) {
-    if (key.startsWith("settingsJson_") && typeof value === "string") {
-      const propName = key.slice("settingsJson_".length);
-      if (propName === "overlayOpacity") {
-        settingsJson[propName] = parseFloat(value) || 0.65;
-      } else {
-        settingsJson[propName] = sanitize(value);
-      }
-    }
-  }
 
   const existing = await prisma.pageSection.findUnique({ where: { id } });
   if (!existing) return;
 
-  await prisma.pageSection.update({
-    where: { id },
-    data: {
-      title,
-      subtitle,
-      body,
-      mediaId,
-      buttonLabel,
-      buttonUrl,
-      backgroundStyle,
-      layoutStyle,
-      settingsJson,
-      isVisible,
-    },
-  });
+  const data: Record<string, unknown> = {};
+
+  const textField = (field: string) => {
+    if (!formData.has(field)) return;
+    data[field] = sanitize((formData.get(field) as string) || "");
+  };
+  for (const field of ["title", "subtitle", "body", "buttonLabel", "buttonUrl", "backgroundStyle", "layoutStyle"]) {
+    textField(field);
+  }
+  if (formData.has("mediaId")) data.mediaId = (formData.get("mediaId") as string) || null;
+  if (formData.has("isVisible")) data.isVisible = formData.get("isVisible") !== "false";
+
+  // Settings start from what is already stored rather than from an empty
+  // object, so a form that shows six of a section's ten keys cannot delete the
+  // other four. The raw JSON textarea, where present, is authoritative for the
+  // keys it names; the individual `settingsJson_*` inputs then layer on top.
+  const settingsJson: Record<string, any> = { ...((existing.settingsJson as Record<string, any>) || {}) };
+
+  if (formData.has("settingsJson")) {
+    try {
+      const parsed = JSON.parse((formData.get("settingsJson") as string) || "{}");
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        Object.assign(settingsJson, parsed);
+      }
+    } catch {
+      // Malformed JSON leaves the stored settings untouched. Silently replacing
+      // them with `{}` is how a typo used to wipe a section's feature cards.
+    }
+  }
+
+  for (const [key, value] of formData.entries()) {
+    if (!key.startsWith("settingsJson_") || typeof value !== "string") continue;
+    const propName = key.slice("settingsJson_".length);
+    settingsJson[propName] = propName === "overlayOpacity" ? parseFloat(value) || 0.65 : sanitize(value);
+  }
+  data.settingsJson = settingsJson;
+
+  await prisma.pageSection.update({ where: { id }, data });
 
   const page = await prisma.cmsPage.findUnique({ where: { id: existing.pageId } });
   if (page) {

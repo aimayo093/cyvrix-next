@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { SectionRenderer } from "@/components/shared/SectionRenderer";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -30,6 +31,7 @@ interface Service {
 }
 
 interface ContactPageSection {
+  id: string;
   sectionType?: string | null;
   subtitle?: string | null;
   title?: string | null;
@@ -103,6 +105,17 @@ export function ContactClient({ pageData, services = [], contactSettings, heroIm
     const type = s.sectionType?.toLowerCase() || "";
     return type === "contact section" || type === "contact_form";
   });
+
+  /*
+   * Anything this page does not lay out itself.
+   *
+   * The hero and the form heading are woven into the bespoke layout above, but
+   * a third section had been added in the CMS — a Feature cards block — and
+   * nothing rendered it. Passing the remainder to SectionRenderer means a
+   * section added here appears on the page instead of being silently dropped.
+   */
+  const bespokeSectionIds = new Set([heroSection?.id, contactSection?.id].filter(Boolean));
+  const remainingSections = (pageData?.sections ?? []).filter((s) => !bespokeSectionIds.has(s.id));
 
   const heroTag = heroSection?.subtitle || "Connect with CYVRIX";
   const heroTitleText = heroSection?.title || "Start a practical technology conversation.";
@@ -696,6 +709,12 @@ export function ContactClient({ pageData, services = [], contactSettings, heroIm
         </div>
 
       </div>
+
+      {remainingSections.length > 0 && (
+        <div className="relative z-10 mt-24">
+          <SectionRenderer sections={remainingSections} />
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { withSanitisedRichText } from "@/lib/rich-text";
 import type { ServiceProduct, ServiceProductPriceDisplayMode } from "@/lib/cyvrix-data";
 
 export const PUBLIC_CACHE_TAGS = {
@@ -268,7 +269,7 @@ export async function getHomePageData() {
     ]);
 
     return {
-      pageData,
+      pageData: pageData && { ...pageData, sections: withSanitisedRichText(pageData.sections) },
       services,
       testimonials,
       partners,
@@ -361,7 +362,7 @@ export async function getPublicPageData(slug: string) {
     ]);
 
     return {
-      pageData,
+      pageData: pageData && { ...pageData, sections: withSanitisedRichText(pageData.sections) },
       services,
       testimonials,
       partners,

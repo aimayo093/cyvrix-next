@@ -13,14 +13,12 @@ const DEFAULT_HERO_IMAGE =
   "/uploads/1780490490158-59620428-christina-wocintechchat-com-m-bPVM4nOy0Rg-unsplash.jpg";
 
 /**
- * Hero content an administrator can change in Home Page CMS.
+ * One band of the home page, as an administrator edits it in Home Page CMS.
  *
  * Every field falls back to the reviewed wording, so an empty CMS renders the
- * page as written rather than an empty hero. Home Page CMS previously wrote
- * these into page sections that this component never read, so editing them
- * changed nothing.
+ * page as written rather than an empty band.
  */
-export type HomeHeroContent = {
+export type HomeSectionContent = {
   eyebrow?: string;
   title?: string;
   body?: string;
@@ -28,6 +26,25 @@ export type HomeHeroContent = {
   primaryUrl?: string;
   secondaryLabel?: string;
   secondaryUrl?: string;
+  points?: string[];
+};
+
+/** Kept as the old name for the hero, which other callers still refer to. */
+export type HomeHeroContent = HomeSectionContent;
+
+/**
+ * The four bands of this page that Home Page CMS can change.
+ *
+ * All four forms existed in the admin and only the hero was ever read. Editing
+ * the services heading, the delivery copy or the closing call to action saved
+ * cleanly, showed the new text back in the admin, and changed nothing on the
+ * page — which is why the CMS and the home page did not resemble each other.
+ */
+export type HomeContent = {
+  hero?: HomeSectionContent;
+  services?: HomeSectionContent;
+  delivery?: HomeSectionContent;
+  cta?: HomeSectionContent;
 };
 
 type PremiumHomeProps = {
@@ -35,27 +52,44 @@ type PremiumHomeProps = {
   engineImages?: EngineImageOverrides;
   /** Replaceable from the CMS via the `site_images` setting. */
   heroImage?: string;
-  hero?: HomeHeroContent;
+  content?: HomeContent;
 };
 
-/** The reviewed hero, used wherever the CMS leaves a field empty. */
-const DEFAULT_HERO = {
-  eyebrow: "South Wales technology partner, working across the UK",
-  title: "Technology that runs quietly. Security that stands up.",
-  body: "CYVRIX manages, secures and modernises the technology growing organisations depend on. On site across South Wales, and supporting UK-wide teams remotely.",
-  primaryLabel: "Choose an assessment",
-  primaryUrl: "/assessments",
-  secondaryLabel: "Explore services",
-  secondaryUrl: "/services",
+/** The reviewed copy, used wherever the CMS leaves a field empty. */
+const DEFAULTS = {
+  hero: {
+    eyebrow: "South Wales technology partner, working across the UK",
+    title: "Technology that runs quietly. Security that stands up.",
+    body: "CYVRIX manages, secures and modernises the technology growing organisations depend on. On site across South Wales, and supporting UK-wide teams remotely.",
+    primaryLabel: "Choose an assessment",
+    primaryUrl: "/assessments",
+    secondaryLabel: "Explore services",
+    secondaryUrl: "/services",
+  },
+  services: {
+    eyebrow: "What we do",
+    title: "One accountable partner. Four ways to work with us.",
+    body: "Every engagement sits in one of four models, so you know from the outset how the work is scoped, delivered and bought.",
+  },
+  delivery: {
+    eyebrow: "A sensible delivery model",
+    title: "Calm, clear delivery from first conversation to ongoing improvement.",
+    body: "The best technology work is measured by the confidence it gives your people — not by a wall of jargon or a dashboard of unsupported numbers.",
+    points: [
+      "Discover the business context and current estate.",
+      "Assess the practical risks, opportunities and priorities.",
+      "Design a proportionate plan with clear ownership.",
+      "Implement with careful communication and control.",
+      "Support, review and improve as the business changes.",
+    ],
+  },
+  cta: {
+    title: "Start with the right conversation.",
+    body: "Tell us what needs attention. We will help you identify the most useful next step.",
+    primaryLabel: "Choose an assessment",
+    primaryUrl: "/assessments",
+  },
 } as const;
-
-const deliverySteps = [
-  "Discover the business context and current estate.",
-  "Assess the practical risks, opportunities and priorities.",
-  "Design a proportionate plan with clear ownership.",
-  "Implement with careful communication and control.",
-  "Support, review and improve as the business changes.",
-];
 
 const commercialOffers = [
   { title: "Free IT Health Check", href: "/assessments/it-health-check" },
@@ -69,20 +103,49 @@ export function PremiumHome({
   services,
   engineImages = {},
   heroImage = DEFAULT_HERO_IMAGE,
-  hero,
+  content,
 }: PremiumHomeProps) {
   const engines = resolveEngines(services, engineImages);
 
   // A blank CMS field means "unset", not "render nothing".
   const pick = (value: string | undefined, fallback: string) => (value?.trim() ? value.trim() : fallback);
-  const heroContent = {
-    eyebrow: pick(hero?.eyebrow, DEFAULT_HERO.eyebrow),
-    title: pick(hero?.title, DEFAULT_HERO.title),
-    body: pick(hero?.body, DEFAULT_HERO.body),
-    primaryLabel: pick(hero?.primaryLabel, DEFAULT_HERO.primaryLabel),
-    primaryUrl: pick(hero?.primaryUrl, DEFAULT_HERO.primaryUrl),
-    secondaryLabel: pick(hero?.secondaryLabel, DEFAULT_HERO.secondaryLabel),
-    secondaryUrl: pick(hero?.secondaryUrl, DEFAULT_HERO.secondaryUrl),
+  /** A CMS button appears only when it has both a label and a destination. */
+  const link = (label?: string, url?: string) =>
+    label?.trim() && url?.trim() ? { label: label.trim(), url: url.trim() } : null;
+
+  const hero = {
+    eyebrow: pick(content?.hero?.eyebrow, DEFAULTS.hero.eyebrow),
+    title: pick(content?.hero?.title, DEFAULTS.hero.title),
+    body: pick(content?.hero?.body, DEFAULTS.hero.body),
+    primaryLabel: pick(content?.hero?.primaryLabel, DEFAULTS.hero.primaryLabel),
+    primaryUrl: pick(content?.hero?.primaryUrl, DEFAULTS.hero.primaryUrl),
+    secondaryLabel: pick(content?.hero?.secondaryLabel, DEFAULTS.hero.secondaryLabel),
+    secondaryUrl: pick(content?.hero?.secondaryUrl, DEFAULTS.hero.secondaryUrl),
+  };
+  const heroContent = hero;
+
+  const servicesBand = {
+    eyebrow: pick(content?.services?.eyebrow, DEFAULTS.services.eyebrow),
+    title: pick(content?.services?.title, DEFAULTS.services.title),
+    body: pick(content?.services?.body, DEFAULTS.services.body),
+    cta: link(content?.services?.primaryLabel, content?.services?.primaryUrl),
+  };
+
+  const deliveryPoints =
+    content?.delivery?.points?.filter((point) => point.trim()) ?? [];
+  const delivery = {
+    eyebrow: pick(content?.delivery?.eyebrow, DEFAULTS.delivery.eyebrow),
+    title: pick(content?.delivery?.title, DEFAULTS.delivery.title),
+    body: pick(content?.delivery?.body, DEFAULTS.delivery.body),
+    points: deliveryPoints.length > 0 ? deliveryPoints : [...DEFAULTS.delivery.points],
+    cta: link(content?.delivery?.primaryLabel, content?.delivery?.primaryUrl),
+  };
+
+  const closing = {
+    title: pick(content?.cta?.title, DEFAULTS.cta.title),
+    body: pick(content?.cta?.body, DEFAULTS.cta.body),
+    primaryLabel: pick(content?.cta?.primaryLabel, DEFAULTS.cta.primaryLabel),
+    primaryUrl: pick(content?.cta?.primaryUrl, DEFAULTS.cta.primaryUrl),
   };
 
   return (
@@ -158,11 +221,17 @@ export function PremiumHome({
       <section className="bg-slate-50 py-20 text-slate-900 sm:py-28">
         <div className="mx-auto max-w-7xl px-5 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1678cc]">What we do</p>
-            <h2 className="mt-4 font-outfit text-4xl font-black tracking-tight sm:text-5xl">One accountable partner. Four ways to work with us.</h2>
-            <p className="mt-5 text-lg leading-8 text-slate-600">
-              Every engagement sits in one of four models, so you know from the outset how the work is scoped, delivered and bought.
-            </p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-[#1678cc]">{servicesBand.eyebrow}</p>
+            <h2 className="mt-4 font-outfit text-4xl font-black tracking-tight sm:text-5xl">{servicesBand.title}</h2>
+            <p className="mt-5 text-lg leading-8 text-slate-600">{servicesBand.body}</p>
+            {servicesBand.cta && (
+              <Link
+                href={servicesBand.cta.url}
+                className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-xl border border-slate-300 px-6 font-bold text-[#041635] transition-colors hover:border-[#2691F0] hover:text-[#1678cc]"
+              >
+                {servicesBand.cta.label} <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </div>
           <div className="mt-12 grid gap-5 md:grid-cols-2">
             {engines.map((engine) => {
@@ -271,14 +340,20 @@ export function PremiumHome({
       <section className="border-y border-white/10 bg-[#020817] py-20 sm:py-28">
         <div className="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-[0.9fr_1.1fr] lg:px-8">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">A sensible delivery model</p>
-            <h2 className="mt-4 font-outfit text-4xl font-black tracking-tight sm:text-5xl">Calm, clear delivery from first conversation to ongoing improvement.</h2>
-            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-400">
-              The best technology work is measured by the confidence it gives your people — not by a wall of jargon or a dashboard of unsupported numbers.
-            </p>
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-sky-300">{delivery.eyebrow}</p>
+            <h2 className="mt-4 font-outfit text-4xl font-black tracking-tight sm:text-5xl">{delivery.title}</h2>
+            <p className="mt-6 max-w-xl text-lg leading-8 text-slate-400">{delivery.body}</p>
+            {delivery.cta && (
+              <Link
+                href={delivery.cta.url}
+                className="mt-7 inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/15 px-6 font-bold text-white transition-colors hover:bg-white/10"
+              >
+                {delivery.cta.label} <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </div>
           <ol className="grid gap-3 sm:grid-cols-2">
-            {deliverySteps.map((step, index) => (
+            {delivery.points.map((step, index) => (
               <li key={step} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
                 <span className="text-xs font-black tracking-[0.16em] text-sky-300">0{index + 1}</span>
                 <p className="mt-4 text-sm font-semibold leading-6 text-slate-200">{step}</p>
@@ -292,12 +367,10 @@ export function PremiumHome({
       <section className="bg-[#2691F0] py-20 text-white sm:py-24">
         <div className="mx-auto max-w-4xl px-5 text-center lg:px-8">
           <Cloud className="mx-auto h-8 w-8 text-white/75" />
-          <h2 className="mt-5 font-outfit text-4xl font-black tracking-tight sm:text-5xl">Start with the right conversation.</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-50">
-            Tell us what needs attention. We will help you identify the most useful next step.
-          </p>
-          <Link href="/assessments" className="mt-9 inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-white px-7 font-bold text-[#041635] transition-colors hover:bg-[#041635] hover:text-white">
-            Choose an assessment <ArrowRight className="h-5 w-5" />
+          <h2 className="mt-5 font-outfit text-4xl font-black tracking-tight sm:text-5xl">{closing.title}</h2>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-blue-50">{closing.body}</p>
+          <Link href={closing.primaryUrl} className="mt-9 inline-flex min-h-14 items-center justify-center gap-2 rounded-md bg-white px-7 font-bold text-[#041635] transition-colors hover:bg-[#041635] hover:text-white">
+            {closing.primaryLabel} <ArrowRight className="h-5 w-5" />
           </Link>
         </div>
       </section>

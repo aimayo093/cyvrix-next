@@ -67,23 +67,38 @@ async function PagesCMSPageContent({
 
   const isCreatingSection = sp.newSection === "true" && editingPage;
 
-  // Available Section Types mapping
+  // Every section type the public renderer can draw, and nothing else.
+  //
+  // This list and `normalizeSectionType` in SectionRenderer have to agree, and
+  // for a long time they did not. Three entries here — an About block, a
+  // Mission block and a job listing list — had no matching branch in the
+  // renderer, so adding one produced a section that saved cleanly, appeared in
+  // this admin, and drew nothing on the page. Six types the renderer does
+  // support were missing, so a CTA or an image-and-text block could be deleted
+  // and never added back.
+  //
+  // `npm run check:cms` fails the build if the two ever diverge again.
   const sectionTypes = [
     { type: "hero", name: "Hero Banner" },
-    { type: "accredited_partners", name: "Accredited Partners Logos" },
-    { type: "trusted_businesses", name: "Trusted Clients Slider" },
-    { type: "services_grid", name: "Services Highlight Grid" },
-    { type: "compliance_cards", name: "Compliance & Security Trust Cards" },
+    { type: "text_block", name: "Text Block (plain)" },
+    { type: "custom_rich_text", name: "Rich Text Block (HTML)" },
+    { type: "image_and_text", name: "Image and Text (split)" },
     { type: "features", name: "Features Grid" },
-    { type: "statistics", name: "Numerical Statistics Grid" },
-    { type: "testimonials", name: "Client Testimonials Grid" },
+    { type: "services_grid", name: "Services Highlight Grid" },
+    { type: "industry_cards", name: "Industry Cards Grid" },
+    { type: "process", name: "Process / Timeline Steps" },
+    { type: "cta_section", name: "Call to Action Band" },
+    { type: "contact_form", name: "Interactive Contact Form" },
     { type: "faq", name: "FAQ Accordion List" },
     { type: "pricing", name: "Pricing Tiers Grid" },
-    { type: "text_block", name: "Custom Rich Text/Body Block" },
-    { type: "contact_form", name: "Interactive Contact Forms" },
-    { type: "about_company", name: "About CYVRIX Company Block" },
-    { type: "mission", name: "Mission & Values Block" },
-    { type: "careers_list", name: "Active Job Listings list" },
+    { type: "career_openings", name: "Active Job Listings" },
+    { type: "media_gallery", name: "Media Gallery" },
+    { type: "compliance_cards", name: "Compliance & Security Trust Cards" },
+    { type: "accredited_partners", name: "Accredited Partners Logos" },
+    { type: "trusted_businesses", name: "Trusted Clients Slider" },
+    { type: "testimonials", name: "Client Testimonials Grid" },
+    { type: "case_study_preview", name: "Case Study Preview" },
+    { type: "statistics", name: "Numerical Statistics Grid" },
     { type: "pricing_hero", name: "Pricing Header Banner" },
     { type: "contact_hero", name: "Contact Header Info Block" },
     { type: "support_hero", name: "Support Hub Header Banner" },

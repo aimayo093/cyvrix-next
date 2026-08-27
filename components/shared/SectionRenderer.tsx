@@ -58,10 +58,28 @@ function resolveColor(value?: string | null, defaultClass: string = "") {
   return { className: trimmed, style: {} };
 }
 
+/**
+ * The secondary button on a Hero or CTA band, under either of the two names the
+ * settings have been written with.
+ *
+ * The admin form writes `secondaryCtaLabel` / `secondaryCtaUrl`; the seeded CTA
+ * rows carry `secondaryBtnLabel` / `secondaryBtnUrl`. The Hero branch had
+ * already grown an `||` chain to cope, but the CTA branch read only the `Btn`
+ * spelling — so filling in a CTA's secondary button through the admin saved the
+ * values and rendered no button. One reader for both, so the next section to
+ * need it cannot pick the wrong half.
+ */
+function secondaryCta(settings: Record<string, any>): { label: string; url: string } | null {
+  const label = settings.secondaryCtaLabel || settings.secondaryBtnLabel || "";
+  const url = settings.secondaryCtaUrl || settings.secondaryBtnUrl || "";
+  return label && url ? { label, url } : null;
+}
+
 function normalizeSectionType(type: string): string {
   const t = type?.toLowerCase() || "";
   if (t === "hero" || t === "pricing_hero" || t === "contact_hero" || t === "support_hero" || t === "faq_hero") return "Hero";
-  if (t === "text_block" || t === "text block" || t === "custom rich text" || t === "custom_rich_text") return "Text block";
+  if (t === "text_block" || t === "text block") return "Text block";
+  if (t === "custom rich text" || t === "custom_rich_text") return "Custom rich text";
   if (t === "image_and_text" || t === "image and text") return "Image and text";
   if (t === "features" || t === "feature_cards" || t === "feature cards") return "Feature cards";
   if (t === "services_grid" || t === "service_cards" || t === "service cards") return "Service cards";
@@ -78,7 +96,11 @@ function normalizeSectionType(type: string): string {
   if (t === "statistics" || t === "stats") return "Statistics";
   if (t === "process/timeline" || t === "process" || t === "timeline") return "Process/timeline";
   if (t === "media_gallery" || t === "media gallery") return "Media gallery";
-  if (t === "career_openings" || t === "career openings" || t === "careers" || t === "jobs") return "Career openings";
+  if (t === "career_openings" || t === "career openings" || t === "careers" || t === "jobs" || t === "careers_list") return "Career openings";
+  // Retired from the admin picker because neither ever had a renderer branch.
+  // Kept here so any row created while they were offered draws as a text block
+  // instead of disappearing.
+  if (t === "about_company" || t === "mission") return "Text block";
   return type; // Fall back to original
 }
 
@@ -220,6 +242,15 @@ export function SectionRenderer({
               <section key={sec.id} className={cn("relative pt-24 pb-20 lg:pt-36 lg:pb-32 overflow-hidden", bgClass)}>
                 {sec.mediaId ? (
                   <div
+                    /*
+                     * The hero image is a CSS background, so there is no `alt`
+                     * attribute to carry the description the admin types into
+                     * "Alt text". Where one is given the image is being treated
+                     * as meaningful, and role="img" plus aria-label is how a
+                     * background image gets announced. Left blank it stays
+                     * decorative, which is the right default for a backdrop.
+                     */
+                    {...(settings.altText ? { role: "img", "aria-label": settings.altText } : { "aria-hidden": true })}
                     className={cn(
                       "absolute inset-0 z-0 bg-cover transition-opacity duration-500",
                       isLightTheme ? "mix-blend-normal" : "mix-blend-multiply",
@@ -849,15 +880,19 @@ export function SectionRenderer({
                         )}
                       </Button>
                     )}
-                    {settings.secondaryBtnLabel && settings.secondaryBtnUrl && (
-                      <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded font-bold h-14 px-8 transition-colors cursor-pointer" asChild>
-                        {settings.secondaryBtnUrl.startsWith("#") ? (
-                          <a href={settings.secondaryBtnUrl}>{settings.secondaryBtnLabel}</a>
-                        ) : (
-                          <CustomLink href={settings.secondaryBtnUrl}>{settings.secondaryBtnLabel}</CustomLink>
-                        )}
-                      </Button>
-                    )}
+                    {(() => {
+                      const secondary = secondaryCta(settings);
+                      if (!secondary) return null;
+                      return (
+                        <Button size="lg" variant="outline" className="border-white/20 text-white hover:bg-white/10 rounded font-bold h-14 px-8 transition-colors cursor-pointer" asChild>
+                          {secondary.url.startsWith("#") ? (
+                            <a href={secondary.url}>{secondary.label}</a>
+                          ) : (
+                            <CustomLink href={secondary.url}>{secondary.label}</CustomLink>
+                          )}
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </div>
               </section>
