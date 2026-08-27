@@ -8,16 +8,43 @@ import { formatDistanceToNow } from "date-fns";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { Trash2, StickyNote } from "lucide-react";
+import { LeadStatus } from "@/generated/prisma";
 
 export const metadata = { title: "Leads CRM" };
 
-const STATUS_OPTIONS = ["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST", "ARCHIVED"];
+/**
+ * From the Prisma enum, not written out again.
+ *
+ * This list said "PROPOSAL". The enum says PROPOSAL_SENT, and the write went
+ * through `as any`, so choosing it in the dropdown sent a value the database
+ * rejects and the update threw from inside a server action — the same defect
+ * the Ticket Management queue had with AWAITING_CLIENT.
+ */
+const STATUS_OPTIONS = [
+  LeadStatus.NEW,
+  LeadStatus.CONTACTED,
+  LeadStatus.QUALIFIED,
+  LeadStatus.PROPOSAL_SENT,
+  LeadStatus.WON,
+  LeadStatus.LOST,
+  LeadStatus.ARCHIVED,
+];
 
-const STATUS_COLORS: Record<string, string> = {
+const STATUS_LABELS: Record<LeadStatus, string> = {
+  NEW: "New",
+  CONTACTED: "Contacted",
+  QUALIFIED: "Qualified",
+  PROPOSAL_SENT: "Proposal sent",
+  WON: "Won",
+  LOST: "Lost",
+  ARCHIVED: "Archived",
+};
+
+const STATUS_COLORS: Record<LeadStatus, string> = {
   NEW: "bg-blue-50 text-blue-600 border-blue-100",
   CONTACTED: "bg-indigo-50 text-indigo-600 border-indigo-100",
   QUALIFIED: "bg-violet-50 text-violet-600 border-violet-100",
-  PROPOSAL: "bg-amber-50 text-amber-600 border-amber-100",
+  PROPOSAL_SENT: "bg-amber-50 text-amber-600 border-amber-100",
   WON: "bg-emerald-50 text-emerald-600 border-emerald-100",
   LOST: "bg-rose-50 text-rose-600 border-rose-100",
   ARCHIVED: "bg-slate-50 text-slate-400 border-slate-100",
@@ -59,12 +86,12 @@ async function LeadsCRMPageContent({
 
       {/* Summary counts */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        {["NEW", "CONTACTED", "QUALIFIED", "WON"].map((s) => {
+        {[LeadStatus.NEW, LeadStatus.CONTACTED, LeadStatus.QUALIFIED, LeadStatus.WON].map((s) => {
           const count = leads.filter((l) => l.status === s).length;
           return (
             <div key={s} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
               <p className="text-2xl font-black text-[#041635]">{count}</p>
-              <p className="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">{s}</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400 mt-1">{STATUS_LABELS[s]}</p>
             </div>
           );
         })}
@@ -96,7 +123,7 @@ async function LeadsCRMPageContent({
                       <AutoSubmitSelect 
                         name="status" 
                         defaultValue={lead.status} 
-                        options={STATUS_OPTIONS}
+                        options={STATUS_OPTIONS.map((status) => ({ value: status, label: STATUS_LABELS[status] }))}
                         className="text-xs font-black rounded-lg border border-slate-200 px-2 py-1 text-[#041635] bg-white focus:ring-2 focus:ring-[#2691F0] focus:outline-none cursor-pointer" 
                       />
                     </form>
@@ -135,7 +162,7 @@ async function LeadsCRMPageContent({
                   <p className="text-sm text-slate-500">{viewing.email}</p>
                   {viewing.company && <p className="text-sm text-slate-400">{viewing.company}</p>}
                   <span className={`mt-2 inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${STATUS_COLORS[viewing.status] ?? STATUS_COLORS.NEW}`}>
-                    {viewing.status}
+                    {STATUS_LABELS[viewing.status] ?? viewing.status}
                   </span>
                 </div>
 

@@ -5,7 +5,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
-import { TicketStatus } from "@/generated/prisma";
+import { LeadStatus, TicketStatus } from "@/generated/prisma";
 import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
 import { publicContactSettingKeys, publicContactValue } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
@@ -673,7 +673,12 @@ export async function updateLeadStatus(formData: FormData) {
   const id = formData.get("id") as string;
   const status = formData.get("status") as string;
 
-  await prisma.lead.update({ where: { id }, data: { status: status as any, updatedAt: new Date() } });
+  // Validated against the enum rather than cast through `any`. The CRM offered
+  // a status called "PROPOSAL"; the enum is PROPOSAL_SENT, and the cast let the
+  // mismatch reach the database, where the update threw.
+  if (!Object.values(LeadStatus).includes(status as LeadStatus)) return;
+
+  await prisma.lead.update({ where: { id }, data: { status: status as LeadStatus, updatedAt: new Date() } });
 
   await prisma.auditLog.create({
     data: { id: crypto.randomUUID(), action: "lead_status_updated", entityType: "Lead", entityId: id, metadata: { status } },

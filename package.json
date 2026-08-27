@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "node --env-file-if-exists=.env --env-file-if-exists=.env.local ./node_modules/prisma/build/index.js generate && npm run scan:code && npm run check:cms && next build --webpack",
+    "build": "node --env-file-if-exists=.env --env-file-if-exists=.env.local ./node_modules/prisma/build/index.js generate && npm run scan:code && npm run check:cms && npm run check:enums && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
@@ -16,6 +16,7 @@
     "check:env": "tsx scripts/check-env.mts",
     "check:claims": "tsx scripts/check-claims.mts",
     "check:cms": "tsx scripts/check-cms.mts",
+    "check:enums": "tsx scripts/check-enum-literals.mts",
     "test:ticket-access": "tsx scripts/test-ticket-access.mts",
     "test:totp": "tsx scripts/test-totp.mts",
     "scan:code": "tsx scripts/analyse-appsec.mts",
