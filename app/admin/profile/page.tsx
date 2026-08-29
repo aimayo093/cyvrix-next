@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { changeAdminPassword, requestEmailVerification, updateAdminProfile } from "@/lib/admin-actions";
 import { TwoFactorPanel } from "@/components/admin/TwoFactorPanel";
-import { beginEnrolment, getTwoFactorState, takeRecoveryCodes, type EnrolmentOffer } from "@/lib/two-factor";
+import { beginEnrolment, getTwoFactorState, peekRecoveryCodes, type EnrolmentOffer } from "@/lib/two-factor";
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 
@@ -47,8 +47,10 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
     enrolmentOffer = await beginEnrolment(admin.id, admin.email);
   }
 
-  // Read once and cleared, so a refresh does not show them again.
-  const recoveryCodes = await takeRecoveryCodes();
+  // Read without clearing. Cookies may only be modified in an action, and the
+  // clear that used to happen here is why this page returned a 500 on the one
+  // render that mattered. "I have saved them" clears it.
+  const recoveryCodes = await peekRecoveryCodes();
 
   const [record, recentActivity] = await Promise.all([
     prisma.user.findUnique({

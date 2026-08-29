@@ -245,13 +245,32 @@ export async function flashRecoveryCodes(codes: string[]) {
   });
 }
 
-/** Reads and clears the codes. Returns null when there are none to show. */
-export async function takeRecoveryCodes(): Promise<string[] | null> {
+/**
+ * Reads the codes without clearing them. Returns null when there are none.
+ *
+ * **Reading only, deliberately.** This runs while the profile page renders, and
+ * Next.js permits cookies to be modified only in a Server Action or a Route
+ * Handler — a `delete` here throws, and the throw becomes a 500.
+ *
+ * That is exactly what happened: enrolment succeeded, the codes were generated
+ * and stored, and the redirect landed on a page that crashed trying to clear the
+ * cookie. So the one render that was supposed to show ten recovery codes showed
+ * an error instead, and the codes are hashed and cannot be read back.
+ *
+ * `dismissRecoveryCodes` does the clearing, from an action, where it is legal.
+ * The sixty-second `maxAge` is the backstop if the reader never gets that far.
+ */
+export async function peekRecoveryCodes(): Promise<string[] | null> {
   const cookieStore = await cookies();
   const raw = cookieStore.get(RECOVERY_FLASH_COOKIE)?.value;
   if (!raw) return null;
 
-  cookieStore.delete({ name: RECOVERY_FLASH_COOKIE, path: "/admin" });
   const codes = raw.split(",").filter(Boolean);
   return codes.length > 0 ? codes : null;
+}
+
+/** Clears the codes once the administrator says they have saved them. */
+export async function clearRecoveryCodeFlash(): Promise<void> {
+  const cookieStore = await cookies();
+  cookieStore.delete({ name: RECOVERY_FLASH_COOKIE, path: "/admin" });
 }

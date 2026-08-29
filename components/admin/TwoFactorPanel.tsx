@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { KeyRound, ShieldAlert, ShieldCheck, Smartphone } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import {
   confirmTwoFactorEnrolment,
+  dismissRecoveryCodes,
   issueNewRecoveryCodes,
   startTwoFactorEnrolment,
   turnOffTwoFactor,
@@ -57,12 +57,17 @@ export function TwoFactorPanel({
           ))}
         </ul>
 
-        <Link
-          href="/admin/profile"
-          className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-700 px-5 py-2.5 text-sm font-black text-white transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2"
-        >
-          I have saved them
-        </Link>
+        {/* A form, not a link. Navigating away used to leave the clearing to
+            the next render, and a render cannot clear a cookie — which is what
+            produced a 500 on the one screen these codes are ever shown. */}
+        <form action={dismissRecoveryCodes}>
+          <button
+            type="submit"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-amber-700 px-5 py-2.5 text-sm font-black text-white transition-colors hover:bg-amber-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2"
+          >
+            I have saved them
+          </button>
+        </form>
       </section>
     );
   }

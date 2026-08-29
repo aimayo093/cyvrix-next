@@ -16,6 +16,7 @@ import { sendVerificationEmail } from "@/lib/email-verification";
 import { SITE_URL } from "@/lib/structured-data";
 import {
   beginEnrolment,
+  clearRecoveryCodeFlash,
   confirmEnrolment,
   disableTwoFactor as clearTwoFactor,
   flashRecoveryCodes,
@@ -2583,6 +2584,19 @@ export async function confirmTwoFactorEnrolment(formData: FormData) {
   // Handed over in a one-time httpOnly cookie rather than the URL: a query
   // string would put ten working credentials into browser history and logs.
   await flashRecoveryCodes(result.recoveryCodes);
+  redirect("/admin/profile");
+}
+
+/**
+ * Clears the one-time recovery-code display.
+ *
+ * A Server Action rather than part of the page render, because Next.js permits
+ * cookies to be modified only here. Doing it during the render is what turned
+ * the render after a successful enrolment into a 500.
+ */
+export async function dismissRecoveryCodes() {
+  await requireAdmin();
+  await clearRecoveryCodeFlash();
   redirect("/admin/profile");
 }
 
