@@ -2541,7 +2541,9 @@ export async function requestEmailVerification() {
     result.reason === "already_verified"
       ? "That address is already verified."
       : result.reason === "no_transport"
-        ? "No email transport is configured, so nothing could be sent. Set this up in Settings."
+        ? "No email transport is configured, so nothing could be sent. This is set in the " +
+          "deployment's environment variables (SMTP_HOST, SMTP_USER and SMTP_PASSWORD, or " +
+          "RESEND_API_KEY) rather than in Settings, which only holds the from address."
         : "The message could not be sent. Check the email settings and try again.";
 
   redirect(`/admin/profile?status=error&message=${encodeURIComponent(message)}`);

@@ -20,9 +20,8 @@ import "server-only";
  * verifying an address nobody proved.
  */
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
-import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
+import { availableTransports, sendEmail } from "@/lib/send-email";
 
 const TOKEN_TTL_MS = 24 * 60 * 60_000;
 
@@ -49,8 +48,9 @@ export async function sendVerificationEmail(userId: string, siteUrl: string): Pr
   if (!user) return { ok: false, reason: "send_failed" };
   if (user.emailVerified) return { ok: false, reason: "already_verified" };
 
-  const smtp = getServerSmtpConfig();
-  if (!smtp) return { ok: false, reason: "no_transport" };
+  // Asked before a token is minted, so a send that cannot happen does not
+  // invalidate the link already in the administrator's inbox.
+  if (availableTransports().length === 0) return { ok: false, reason: "no_transport" };
 
   const token = randomBytes(32).toString("base64url");
 
@@ -68,18 +68,9 @@ export async function sendVerificationEmail(userId: string, siteUrl: string): Pr
   ]);
 
   const link = `${siteUrl.replace(/\/$/, "")}/verify-email?token=${token}`;
-  const identity = await getEmailIdentity("CYVRIX");
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtp.host,
-      port: smtp.port,
-      secure: smtp.port === 465,
-      auth: { user: smtp.user, pass: smtp.password },
-    });
-
-    await transporter.sendMail({
-      from: identity.from,
+    const result = await sendEmail({
       to: user.email,
       subject: "Confirm your CYVRIX email address",
       text: [
@@ -92,6 +83,11 @@ export async function sendVerificationEmail(userId: string, siteUrl: string): Pr
         "If you did not expect this, you can ignore it. Nothing changes unless the link is opened.",
       ].join("\n"),
     });
+
+    if (!result.sent) {
+      console.error("[email-verification] send failed", result.detail);
+      return { ok: false, reason: result.reason === "no_transport" ? "no_transport" : "send_failed" };
+    }
 
     return { ok: true };
   } catch (error) {
