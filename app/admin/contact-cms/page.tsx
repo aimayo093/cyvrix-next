@@ -10,17 +10,30 @@ import { PhoneCall, MapPin, Headphones, Sparkles } from "lucide-react";
 
 export const metadata = { title: "Contact Us CMS" };
 
-export default function ContactCMSPage() {
+export default function ContactCMSPage(props: {
+  searchParams: Promise<{ status?: string; message?: string }>;
+}) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
-      <ContactCMSPageContent />
+      <ContactCMSPageContent {...props} />
     </React.Suspense>
   );
 }
 
-async function ContactCMSPageContent() {
+async function ContactCMSPageContent({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; message?: string }>;
+}) {
   await connection();
   await requireAdmin();
+
+  const sp = await searchParams;
+  // Only the two states this page produces. A status read straight from the URL
+  // would let anyone hand an administrator a link that shows whatever banner
+  // they chose.
+  const status = sp.status === "success" || sp.status === "error" ? sp.status : null;
+  const message = status ? (sp.message ?? "").slice(0, 300) : null;
 
   const settingsRecord = await prisma.siteSetting.findUnique({
     where: { key: "contact_settings" },
@@ -41,6 +54,19 @@ async function ContactCMSPageContent() {
           </p>
         </div>
       </div>
+
+      {status && message && (
+        <div
+          role="status"
+          className={
+            status === "success"
+              ? "rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-semibold leading-6 text-emerald-900"
+              : "rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-semibold leading-6 text-rose-900"
+          }
+        >
+          {message}
+        </div>
+      )}
 
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden p-6 lg:p-8">
         <form action={updateContactSettings} className="space-y-8">

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
 import { LeadStatus, TicketStatus } from "@/generated/prisma";
 import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
-import { publicContactSettingKeys, publicContactValue } from "@/lib/contact-settings";
+import { contactValueProblem, publicContactSettingKeys } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
 import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slots";
@@ -149,9 +149,16 @@ export async function updateContactSettings(formData: FormData) {
     publicContactSettingKeys.map((key) => [key, sanitize((formData.get(`value.${key}`) as string) || "")]),
   ) as Record<string, string>;
 
-  for (const [key, value] of Object.entries(contactSettings)) {
-    if (value && !publicContactValue(value)) {
-      throw new Error(`Replace the unapproved ${key} default before saving public contact details.`);
+  // Redirect with the reason rather than throwing.
+  //
+  // A thrown server action reaches Next's error boundary, so a rejected contact
+  // detail looked like the application had broken. Getting one of these wrong is
+  // an ordinary mistake and deserves a sentence, not a crash — and the crash was
+  // worse than useless because it never said which field it objected to.
+  for (const key of publicContactSettingKeys) {
+    const problem = contactValueProblem(key, contactSettings[key] ?? "");
+    if (problem) {
+      redirect(`/admin/contact-cms?status=error&message=${encodeURIComponent(problem)}`);
     }
   }
 
@@ -171,6 +178,11 @@ export async function updateContactSettings(formData: FormData) {
   updatePublicShellCache();
   updateHomeCache(PUBLIC_CACHE_TAGS.contactSettings);
   updatePublicCacheTags(PUBLIC_CACHE_TAGS.contactSettings, PUBLIC_CACHE_TAGS.cmsPages);
+
+  // These values are public the moment they are saved, so the confirmation says
+  // so rather than a bare "saved".
+  redirect("/admin/contact-cms?status=success&message=" +
+    encodeURIComponent("Contact details saved. They are now live on the public Contact page."));
 }
 
 export async function saveLegalPage(formData: FormData) {
