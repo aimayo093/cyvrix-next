@@ -99,7 +99,13 @@ async function SecurityCenterPageContent() {
    * three days ago read as the current state of the site - and did, for three
    * days, while the findings it listed were being fixed.
    */
-  const scanAgeHours = lastResult ? (Date.now() - Date.parse(lastResult.timestamp)) / 3_600_000 : null;
+  // Read once and shared. Every call is a fresh value mid-render, and the ages
+  // below should all be measured from the same instant anyway.
+  const now = Date.now();
+  const scanAgeHours = lastResult ? (now - Date.parse(lastResult.timestamp)) / 3_600_000 : null;
+  const backgroundScanAgeHours = lastBackgroundScan
+    ? (now - lastBackgroundScan.createdAt.getTime()) / 3_600_000
+    : null;
   // The schedule is daily, so past a day and a half it has missed one.
   const scanIsStale = scanAgeHours !== null && scanAgeHours > 36;
   const analyst = lastResult ? await buildAnalystReport(lastResult) : null;
@@ -241,9 +247,30 @@ async function SecurityCenterPageContent() {
                 />
               </label>
 
-              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-800">
-                Set `CRON_SECRET` in Vercel environment variables. Vercel Cron calls `/api/cron/security-scan` daily with `Authorization: Bearer CRON_SECRET`.
-              </div>
+              {/*
+                * Setup instructions styled as a warning read as a warning. This
+                * box was unconditional, so it kept telling the reader to set
+                * CRON_SECRET long after they had set it, and there was no way
+                * to make it go away by doing what it asked. Anything drawn in
+                * amber has to be able to stop being amber.
+                */}
+              {lastBackgroundScan ? (
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs font-semibold leading-relaxed text-emerald-800">
+                  The daily schedule is running. Last automatic scan{" "}
+                  {formatScanAge(backgroundScanAgeHours ?? 0)}, at{" "}
+                  {lastBackgroundScan.createdAt.toLocaleString()}. Vercel Cron calls{" "}
+                  <code className="font-mono">/api/cron/security-scan</code> with{" "}
+                  <code className="font-mono">Authorization: Bearer CRON_SECRET</code>.
+                </div>
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs font-semibold leading-relaxed text-amber-800">
+                  Set <code className="font-mono">CRON_SECRET</code> in Vercel environment variables,
+                  then redeploy - Vercel applies environment variables per deployment, so an existing
+                  one keeps the values it was built with. Vercel Cron calls{" "}
+                  <code className="font-mono">/api/cron/security-scan</code> daily with{" "}
+                  <code className="font-mono">Authorization: Bearer CRON_SECRET</code>.
+                </div>
+              )}
 
               <Button type="submit" className="flex items-center gap-2 rounded-xl bg-[#041635] px-6 py-2.5 font-bold text-white hover:bg-[#2691F0]">
                 <Save className="h-4 w-4" />
