@@ -15,7 +15,7 @@
  * gate specifically, and one asserts a differently-named gate is caught too,
  * because the next model to need review will not reuse these column names.
  */
-import { filterWritableFields, refusalMessage } from "../lib/cms-writable-fields.ts";
+import { filterWritableFields, refusalMessage } from "../lib/cms-writable-fields";
 
 type Case = { name: string; body: Record<string, unknown>; writable: string[]; refused: string[] };
 
