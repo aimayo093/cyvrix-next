@@ -234,27 +234,33 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
         const request = withTimeout(2500);
         try {
           const response = await fetch(registryUrl(name), { signal: request.controller.signal });
-          if (!response.ok) return null;
+          if (!response.ok) return { name, unreachable: true as const };
           const data = (await response.json()) as { "dist-tags"?: { latest?: string } };
           const latest = data["dist-tags"]?.latest;
-          if (!latest || isPrerelease(latest)) return null;
+          // A prerelease latest is a real answer: there is no stable release
+          // ahead of what is installed, so the package is not behind.
+          if (!latest) return { name, unreachable: true as const };
+          if (isPrerelease(latest)) return null;
           if (compareVersions(current, latest) >= 0) return null;
           const major = cleanVersion(current).split(".")[0] !== cleanVersion(latest).split(".")[0];
-          return { name, current, latest, major };
+          return { name, current, latest, major, unreachable: false as const };
         } catch {
-          return null;
+          // A lookup that timed out is not a package that is up to date.
+          // Returning null here counted the failure as a pass, which is how
+          // typescript 6 -> 7 and @types/node 20 -> 26 went unreported: 35
+          // registry fetches share a 2.5s budget and the slowest ones lose.
+          return { name, unreachable: true as const };
         } finally {
           request.done();
         }
       }),
     );
 
-    const outdated = results.filter(Boolean) as Array<{
-      name: string;
-      current: string;
-      latest: string;
-      major: boolean;
-    }>;
+    type Checked = { name: string; current: string; latest: string; major: boolean; unreachable: false };
+    type Unreachable = { name: string; unreachable: true };
+    const settled = results.filter(Boolean) as Array<Checked | Unreachable>;
+    const unreachable = settled.filter((item): item is Unreachable => item.unreachable);
+    const outdated = settled.filter((item): item is Checked => !item.unreachable);
     const majors = outdated.filter((item) => item.major);
     const minors = outdated.filter((item) => !item.major);
 
@@ -272,15 +278,25 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
       label: "Outdated Dependencies",
       status: outdated.length ? "warn" : "pass",
       category: "dependencies",
-      assessed: installedVersions !== null,
-      detail: outdated.length
-        ? `${outdated.length} of ${entries.length} direct packages are behind the registry (${summary}): ${outdated
-            .slice(0, 8)
-            .map((item) => `${item.name} ${item.current} -> ${item.latest}${item.major ? " (major)" : ""}`)
-            .join(", ")}${outdated.length > 8 ? ", ..." : ""}. Compared against installed versions${
-            installedVersions ? "" : " could not be read, so declared ranges were used instead"
-          }.`
-        : `All ${entries.length} direct packages are at the registry's latest release. Compared against installed versions from package-lock.json; prerelease tags are ignored.`,
+      // Every package failing its lookup means nothing was established.
+      assessed: installedVersions !== null && unreachable.length < entries.length,
+      detail: `${
+        outdated.length
+          ? `${outdated.length} of ${entries.length} direct packages are behind the registry (${summary}): ${outdated
+              .slice(0, 8)
+              .map((item) => `${item.name} ${item.current} -> ${item.latest}${item.major ? " (major)" : ""}`)
+              .join(", ")}${outdated.length > 8 ? ", ..." : ""}.`
+          : `The ${entries.length - unreachable.length} direct packages that could be checked are at the registry's latest release.`
+      }${
+        unreachable.length
+          ? ` ${unreachable.length} could not be checked: the registry did not answer within the timeout, so those are unknown rather than current (${unreachable
+              .slice(0, 5)
+              .map((item) => item.name)
+              .join(", ")}${unreachable.length > 5 ? ", ..." : ""}).`
+          : ""
+      } Compared against installed versions${
+        installedVersions ? " from package-lock.json" : " could not be read, so declared ranges were used instead"
+      }; prerelease tags are ignored.`,
     });
   } catch {
     checks.push({
