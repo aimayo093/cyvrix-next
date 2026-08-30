@@ -162,6 +162,44 @@ function registryUrl(packageName: string) {
   return `https://registry.npmjs.org/${encodeURIComponent(packageName).replace("%2F", "%2f")}`;
 }
 
+/**
+ * What is actually installed, read from the lockfile.
+ *
+ * The freshness check used to compare the floor of each declared range against
+ * the registry: "^10.58.0" was read as 10.58.0 and reported outdated against
+ * 10.72.0 while 10.72.0 was the version installed. Most of the packages it
+ * named were exactly current - @radix-ui/react-slot was reported as ^1.3.0 ->
+ * 1.3.3 with 1.3.3 installed.
+ *
+ * The deeper fault was that upgrading could not clear it. npm update leaves a
+ * caret range alone when the new version still satisfies it, so a pass was only
+ * reachable by rewriting package.json on every upstream release. A warning that
+ * doing the right thing cannot clear is one people learn to scroll past, which
+ * costs more than the warning was ever worth.
+ */
+async function readInstalledVersions(): Promise<Record<string, string> | null> {
+  try {
+    const lockPath = path.join(process.cwd(), "package-lock.json");
+    const lock = JSON.parse(await fs.readFile(lockPath, "utf8")) as {
+      packages?: Record<string, { version?: string }>;
+    };
+    const installed: Record<string, string> = {};
+    for (const [key, value] of Object.entries(lock.packages ?? {})) {
+      if (key.startsWith("node_modules/") && value?.version) {
+        installed[key.slice("node_modules/".length)] = value.version;
+      }
+    }
+    return Object.keys(installed).length > 0 ? installed : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A release candidate is not an upgrade to recommend. */
+function isPrerelease(version: string) {
+  return /\d+\.\d+\.\d+-/.test(version);
+}
+
 async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
   try {
     const pkgPath = path.join(process.cwd(), "package.json");
@@ -186,16 +224,23 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
       return;
     }
 
+    const installedVersions = await readInstalledVersions();
+
     const results = await Promise.all(
-      entries.map(async ([name, current]) => {
+      entries.map(async ([name, range]) => {
+        // The lockfile is the truth. The declared range is the fallback, and
+        // reading it as a version is what produced the false reports.
+        const current = installedVersions?.[name] ?? cleanVersion(range);
         const request = withTimeout(2500);
         try {
           const response = await fetch(registryUrl(name), { signal: request.controller.signal });
           if (!response.ok) return null;
           const data = (await response.json()) as { "dist-tags"?: { latest?: string } };
           const latest = data["dist-tags"]?.latest;
-          if (!latest) return null;
-          return compareVersions(current, latest) < 0 ? { name, current, latest } : null;
+          if (!latest || isPrerelease(latest)) return null;
+          if (compareVersions(current, latest) >= 0) return null;
+          const major = cleanVersion(current).split(".")[0] !== cleanVersion(latest).split(".")[0];
+          return { name, current, latest, major };
         } catch {
           return null;
         } finally {
@@ -204,18 +249,38 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
       }),
     );
 
-    const outdated = results.filter(Boolean) as Array<{ name: string; current: string; latest: string }>;
+    const outdated = results.filter(Boolean) as Array<{
+      name: string;
+      current: string;
+      latest: string;
+      major: boolean;
+    }>;
+    const majors = outdated.filter((item) => item.major);
+    const minors = outdated.filter((item) => !item.major);
+
+    // A major behind needs a migration; a patch behind needs an install. Saying
+    // which is which is the difference between a number and something to act on.
+    const summary = [
+      majors.length ? `${majors.length} behind by a major version` : "",
+      minors.length ? `${minors.length} behind within the current major` : "",
+    ]
+      .filter(Boolean)
+      .join(", ");
+
     checks.push({
       id: "dep_outdated",
       label: "Outdated Dependencies",
       status: outdated.length ? "warn" : "pass",
       category: "dependencies",
+      assessed: installedVersions !== null,
       detail: outdated.length
-        ? `${outdated.length} package${outdated.length === 1 ? "" : "s"} appear outdated: ${outdated
+        ? `${outdated.length} of ${entries.length} direct packages are behind the registry (${summary}): ${outdated
             .slice(0, 8)
-            .map((item) => `${item.name} ${item.current} -> ${item.latest}`)
-            .join(", ")}${outdated.length > 8 ? ", ..." : ""}`
-        : `${entries.length} direct package${entries.length === 1 ? "" : "s"} checked against npm latest versions.`,
+            .map((item) => `${item.name} ${item.current} -> ${item.latest}${item.major ? " (major)" : ""}`)
+            .join(", ")}${outdated.length > 8 ? ", ..." : ""}. Compared against installed versions${
+            installedVersions ? "" : " could not be read, so declared ranges were used instead"
+          }.`
+        : `All ${entries.length} direct packages are at the registry's latest release. Compared against installed versions from package-lock.json; prerelease tags are ignored.`,
     });
   } catch {
     checks.push({
