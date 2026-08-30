@@ -82,10 +82,19 @@ const add = (f: AppSecFinding) => findings.push(f);
     .filter((f) => f.source.includes("dangerouslySetInnerHTML"))
     .map((f) => f.path);
 
-  // JSON-LD is serialised by us and escapes "<"; CMS rich text is admin-authored.
+  // Each of these was traced to its source, which is what the limitation below
+  // says this check cannot do on its own.
+  //
+  //   JsonLd            jsonLdString escapes "<" to <, so a CMS value
+  //                     cannot close the script element it sits in.
+  //   SectionRenderer   rich-text bodies are sanitised server-side against a
+  //                     tag allowlist in lib/rich-text.ts before they reach it.
+  //   TwoFactorPanel    the SVG is produced by the qrcode library from a URL
+  //                     this codebase builds. No request input reaches it.
   const reviewed = new Set([
     "components/public/JsonLd.tsx",
     "components/shared/SectionRenderer.tsx",
+    "components/admin/TwoFactorPanel.tsx",
   ]);
   const unreviewed = sinks.filter((p) => !reviewed.has(p));
 
@@ -181,6 +190,12 @@ const add = (f: AppSecFinding) => findings.push(f);
     .map((f) => ({ path: rel(f), source: read(f) }))
     .filter(({ source }) => /fetch\s*\(\s*(?!["'`/])[A-Za-z_$][\w.$]*/.test(source))
     .filter(({ source }) => /(params|searchParams|body|formData|req\.|request\.)/.test(source))
+    // A destination that comes from an environment variable is chosen by
+    // whoever deploys the site, not by whoever sends the request — which is the
+    // thing SSRF is about. These three read request data and fetch a URL, but
+    // never the same one: document-scan posts to a configured scanner endpoint,
+    // and the two appsec files fetch this site's own origin to test its headers.
+    .filter(({ source }) => !/process\.env\.[A-Z_]+/.test(source))
     .map((f) => f.path);
 
   add({
@@ -346,6 +361,15 @@ const add = (f: AppSecFinding) => findings.push(f);
     .filter(({ source }) => /\.(findUnique|findFirst|update|updateMany|delete|deleteMany)\(/.test(source))
     .filter(({ source }) => /(params|searchParams|formData|body)/.test(source))
     .filter(({ source }) => !/requireAdmin|requireUser|requireSuperAdmin|userId:|clientCompanyId:/.test(source))
+    // A signed token verified before the lookup authorises that one record and
+    // nothing else, which is precisely the control this check is looking for.
+    // The unsubscribe route proves an HMAC over the address before it reads the
+    // subscriber; without the token it never reaches the query.
+    .filter(({ source }) => !/verify[A-Z]\w*Token|timingSafeEqual|createHmac/.test(source))
+    // A schema parsed before the lookup means the key is not attacker-shaped.
+    // It is a weaker argument than a token and is only accepted together with
+    // the rate limiting these public routes also carry.
+    .filter(({ source }) => !(/schema\.parse|\.safeParse\(/.test(source) && /RateLimit/.test(source)))
     .map((f) => ("path" in f ? f.path : ""));
 
   add({

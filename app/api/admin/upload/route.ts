@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rejectCrossOrigin } from "@/lib/same-origin";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
@@ -51,6 +52,10 @@ function clientIp(req: Request) {
 }
 
 export async function POST(req: Request) {
+  // Refused before anything else runs. See lib/same-origin.ts.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
+
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });

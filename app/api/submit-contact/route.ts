@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rejectCrossOrigin } from "@/lib/same-origin";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
@@ -48,6 +49,10 @@ async function notify(to: string, subject: string, body: string) {
 }
 
 export async function POST(req: Request) {
+  // Refused before anything else runs. See lib/same-origin.ts.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
+
   try {
     // Support both JSON (fetch) and form-encoded/multipart (HTML <form method="POST">)
     const contentType = req.headers.get("content-type") ?? "";

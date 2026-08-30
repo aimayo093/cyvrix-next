@@ -5,6 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { rejectCrossOrigin } from "@/lib/same-origin";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import crypto from "node:crypto";
@@ -133,6 +134,10 @@ export async function POST(
   req: Request,
   { params }: { params: Promise<{ module: string }> }
 ) {
+  // Refused before anything else runs. See lib/same-origin.ts.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
+
   const administrator = await requireCmsApiAdministrator();
   if (!administrator) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -158,6 +163,10 @@ export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ module: string }> }
 ) {
+  // Refused before anything else runs. See lib/same-origin.ts.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
+
   const administrator = await requireCmsApiAdministrator();
   if (!administrator) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
@@ -190,6 +199,10 @@ export async function DELETE(
   req: Request,
   { params }: { params: Promise<{ module: string }> }
 ) {
+  // Refused before anything else runs. See lib/same-origin.ts.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
+
   const administrator = await requireCmsApiAdministrator();
   if (!administrator) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 

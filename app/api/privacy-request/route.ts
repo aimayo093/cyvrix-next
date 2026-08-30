@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rejectCrossOrigin } from "@/lib/same-origin";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { enforceRateLimit, getClientAddress, RateLimitError } from "@/lib/rate-limit";
@@ -23,6 +24,10 @@ function redirectWithError(request: Request, message: string, status = 303) {
 }
 
 export async function POST(request: Request) {
+  // Refused before anything else runs. See lib/same-origin.ts.
+  const crossOrigin = rejectCrossOrigin(request);
+  if (crossOrigin) return crossOrigin;
+
   const requestHeaders = await headers();
   const clientAddress = getClientAddress(requestHeaders);
   const wantsJson = request.headers.get("accept")?.includes("application/json") ?? false;

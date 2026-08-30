@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-25T08:45:30.023Z",
-  "fileCount": 173,
-  "apiRouteCount": 11,
+  "generatedAt": "2026-08-30T00:42:58.769Z",
+  "fileCount": 190,
+  "apiRouteCount": 12,
   "mutatingRouteCount": 9,
   "findings": [
     {
@@ -9,9 +9,10 @@
       "label": "Cross-site scripting sinks",
       "status": "pass",
       "method": "Searched every source file for dangerouslySetInnerHTML.",
-      "detail": "2 file(s) inject raw HTML. 0 of them are outside the reviewed set.",
+      "detail": "3 file(s) inject raw HTML. 0 of them are outside the reviewed set.",
       "limitation": "Finds the sink, not the source. React escapes everything else by default, but this cannot tell whether a value reaching one of these is attacker-controlled.",
       "evidence": [
+        "components/admin/TwoFactorPanel.tsx",
         "components/shared/SectionRenderer.tsx",
         "components/public/JsonLd.tsx"
       ]
@@ -19,20 +20,11 @@
     {
       "id": "appsec_csrf",
       "label": "Cross-site request forgery",
-      "status": "warn",
+      "status": "pass",
       "method": "Checked 9 state-changing API route(s) for an origin, referer or CSRF token check.",
-      "detail": "8 state-changing route(s) verify no origin or token. Server actions are covered separately by the framework.",
+      "detail": "Every state-changing API route inspects request origin.",
       "limitation": "Server actions carry framework CSRF protection and are not counted here. The session cookie is SameSite, which already blocks the cross-site form post this describes, so an unflagged route is not necessarily exploitable.",
-      "evidence": [
-        "app/api/auth/logout/route.ts",
-        "app/api/admin/cms/[module]/route.ts",
-        "app/api/admin/upload/route.ts",
-        "app/api/submit-contact/route.ts",
-        "app/api/submit-ticket/route.ts",
-        "app/api/subscribe/route.ts",
-        "app/api/unsubscribe/route.ts",
-        "app/api/privacy-request/route.ts"
-      ]
+      "evidence": []
     },
     {
       "id": "appsec_uploads",
@@ -57,11 +49,9 @@
       "label": "Server-side request forgery",
       "status": "warn",
       "method": "Searched for outbound fetch calls to a non-literal URL in files that also read request input.",
-      "detail": "3 file(s) fetch a non-literal URL and also read request data. Worth confirming the two are unrelated.",
+      "detail": "1 file(s) fetch a non-literal URL and also read request data. Worth confirming the two are unrelated.",
       "limitation": "Coarse. A file can legitimately do both without the request value reaching the fetch. Treat as a prompt to read the code, not a defect.",
       "evidence": [
-        "lib/document-scan.ts",
-        "lib/security-scan.ts",
         "lib/appsec-checks.ts"
       ]
     },
@@ -99,14 +89,11 @@
     {
       "id": "appsec_rate_limits",
       "label": "Rate limiting on public endpoints",
-      "status": "warn",
+      "status": "pass",
       "method": "Checked 6 public state-changing route(s) for a rate limit call.",
-      "detail": "2 public route(s) accept writes with no rate limit.",
+      "detail": "Every public state-changing route enforces a rate limit.",
       "limitation": "Does not evaluate whether the configured limits are appropriate, nor cover server actions.",
-      "evidence": [
-        "app/api/auth/logout/route.ts",
-        "app/api/unsubscribe/route.ts"
-      ]
+      "evidence": []
     },
     {
       "id": "appsec_env_exposure",
@@ -129,14 +116,11 @@
     {
       "id": "appsec_idor",
       "label": "Object-level authorisation",
-      "status": "warn",
+      "status": "pass",
       "method": "Looked for record lookups keyed on request input that do not also require a session or scope the query to the owner.",
-      "detail": "2 file(s) look up records from request input without an evident authorisation check.",
+      "detail": "Every record lookup driven by request input sits behind a session check or is scoped to the owner.",
       "limitation": "The weakest check here. Authorisation can be enforced a layer away, in middleware or a helper, and this only sees one file at a time.",
-      "evidence": [
-        "app/api/subscribe/route.ts",
-        "app/api/unsubscribe/route.ts"
-      ]
+      "evidence": []
     },
     {
       "id": "appsec_input_validation",

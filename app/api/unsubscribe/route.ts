@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyNewsletterUnsubscribeToken } from "@/lib/newsletter-unsubscribe";
+import { RateLimitError, enforceRateLimit, getClientAddress } from "@/lib/rate-limit";
+import { rejectCrossOrigin } from "@/lib/same-origin";
 
 
 /**
@@ -13,6 +15,24 @@ import { verifyNewsletterUnsubscribeToken } from "@/lib/newsletter-unsubscribe";
  * Requests without the matching token are rejected before any subscriber lookup.
  * GET renders a user-facing confirmation; POST supports RFC 8058 one-click mail actions.
  */
+/**
+ * Bounded per address.
+ *
+ * The HMAC check below already stops anyone unsubscribing a stranger, so this
+ * is not protecting the list — it is stopping an unauthenticated endpoint being
+ * used as free database load. Generous, because a real person clicking twice
+ * should never see it.
+ */
+function limit(req: Request): boolean {
+  try {
+    enforceRateLimit(`unsubscribe:${getClientAddress(req.headers)}`, { limit: 30, windowMs: 60_000 });
+    return true;
+  } catch (error) {
+    if (error instanceof RateLimitError) return false;
+    throw error;
+  }
+}
+
 function unsubscribeParams(req: Request) {
   const { searchParams } = new URL(req.url);
   return {
@@ -36,6 +56,13 @@ async function unsubscribe(email: string) {
 }
 
 export async function GET(req: Request) {
+  if (!limit(req)) {
+    return new NextResponse(unsubscribePage("Too many requests. Try again shortly.", false), {
+      headers: { "Content-Type": "text/html" },
+      status: 429,
+    });
+  }
+
   const { email, token } = unsubscribeParams(req);
 
   if (!email || !verifyNewsletterUnsubscribeToken(email, token)) {
@@ -71,6 +98,15 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  // POST only. The GET above is reached from a link in an email, which is
+  // legitimately cross-site and must keep working.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
+
+  if (!limit(req)) {
+    return NextResponse.json({ error: "Too many requests." }, { status: 429 });
+  }
+
   const { email, token } = unsubscribeParams(req);
 
   if (!email || !verifyNewsletterUnsubscribeToken(email, token)) {

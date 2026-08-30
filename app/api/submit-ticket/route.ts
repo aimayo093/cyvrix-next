@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { rejectCrossOrigin } from "@/lib/same-origin";
 import { reserveTicketNumber } from "@/lib/ticket-number";
 import crypto from "node:crypto";
 import { z } from "zod";
@@ -46,6 +47,10 @@ async function notify(to: string, subject: string, body: string) {
 }
 
 export async function POST(req: Request) {
+  // Refused before anything else runs. See lib/same-origin.ts.
+  const crossOrigin = rejectCrossOrigin(req);
+  if (crossOrigin) return crossOrigin;
+
   const isJson = req.headers.get("content-type")?.includes("application/json");
   try {
     const raw: Record<string, string> = isJson
