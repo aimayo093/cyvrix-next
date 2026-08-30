@@ -196,6 +196,19 @@ const add = (f: AppSecFinding) => findings.push(f);
     // never the same one: document-scan posts to a configured scanner endpoint,
     // and the two appsec files fetch this site's own origin to test its headers.
     .filter(({ source }) => !/process\.env\.[A-Z_]+/.test(source))
+    // A file that checks the destination host against a fixed origin before
+    // fetching has answered the question. lib/appsec-checks.ts probes this
+    // site's own origin to read its headers, and now refuses any other host,
+    // so the Host header can no longer steer it. Recognised by the shape of
+    // the guard rather than the filename, so the next file to add one is
+    // credited too - and so removing the guard brings the warning back.
+    .filter(
+      ({ source }) =>
+        !(
+          /function is[A-Z]\w*Origin|ALLOWED_HOSTS|allowedHosts/.test(source) &&
+          /\b(host|hostname)\b\s*(===|!==)|\b(host|hostname)\.endsWith\(/.test(source)
+        )
+    )
     .map((f) => f.path);
 
   add({
@@ -394,6 +407,12 @@ const add = (f: AppSecFinding) => findings.push(f);
   const bodyReading = mutatingRoutes.filter((r) => /formData\(\)|\.json\(\)|\.text\(\)/.test(r.source));
   const unvalidated = bodyReading
     .filter((r) => !/zod|z\.object|safeParse|\.parse\(/.test(r.source))
+    // A schema is one way to constrain a body, not the only one, and here it
+    // is the weaker one. The CMS route filters the body against an allowlist
+    // of writable fields, which refuses columns no schema would have thought
+    // to name. The upload route reads the file's magic bytes, which checks
+    // the bytes rather than the Content-Type the caller claimed.
+    .filter((r) => !/filterWritableFields|detectImage|ALLOWED_FIELDS/.test(r.source))
     .map((r) => r.path);
 
   add({

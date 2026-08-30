@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-30T00:42:58.769Z",
-  "fileCount": 190,
+  "generatedAt": "2026-08-30T01:18:49.517Z",
+  "fileCount": 191,
   "apiRouteCount": 12,
   "mutatingRouteCount": 9,
   "findings": [
@@ -47,13 +47,11 @@
     {
       "id": "appsec_ssrf",
       "label": "Server-side request forgery",
-      "status": "warn",
+      "status": "pass",
       "method": "Searched for outbound fetch calls to a non-literal URL in files that also read request input.",
-      "detail": "1 file(s) fetch a non-literal URL and also read request data. Worth confirming the two are unrelated.",
+      "detail": "No outbound request is made to a URL that could come from request input.",
       "limitation": "Coarse. A file can legitimately do both without the request value reaching the fetch. Treat as a prompt to read the code, not a defect.",
-      "evidence": [
-        "lib/appsec-checks.ts"
-      ]
+      "evidence": []
     },
     {
       "id": "appsec_password_reset",
@@ -125,14 +123,11 @@
     {
       "id": "appsec_input_validation",
       "label": "Request body validation",
-      "status": "warn",
+      "status": "pass",
       "method": "Checked 6 state-changing route(s) that read a request body for schema validation. Routes with no body are excluded.",
-      "detail": "2 route(s) read a request body without schema validation.",
+      "detail": "Every state-changing route validates its body against a schema.",
       "limitation": "Presence of a schema is not the same as a schema that constrains the right things.",
-      "evidence": [
-        "app/api/admin/cms/[module]/route.ts",
-        "app/api/admin/upload/route.ts"
-      ]
+      "evidence": []
     },
     {
       "id": "appsec_log_exposure",

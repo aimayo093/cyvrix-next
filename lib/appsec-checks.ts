@@ -16,6 +16,7 @@
  * class of bug is absent, which none of this establishes.
  */
 import manifest from "@/lib/generated/appsec-manifest.json";
+import { SITE_URL } from "@/lib/structured-data";
 import type { SecurityScanCheck, SecurityCheckStatus } from "@/lib/security-scan";
 
 type ManifestFinding = {
@@ -64,7 +65,36 @@ export function staticAppSecChecks(): SecurityScanCheck[] {
   }));
 }
 
+/**
+ * Hosts this probe may reach.
+ *
+ * The origin it is given is derived from the incoming request, which means the
+ * Host header has a say in it — and a scan that can be pointed at an arbitrary
+ * host by a header is a request-forgery primitive, however narrow. It needs an
+ * administrator and a platform that forwards an unvalidated Host, so it is not
+ * a likely attack; it is also not one worth leaving open in a file whose whole
+ * purpose is finding this class of thing.
+ *
+ * Localhost is allowed so the scan works in development.
+ */
+function isOwnOrigin(url: string): boolean {
+  try {
+    const { host, protocol } = new URL(url);
+    if (protocol !== "https:" && protocol !== "http:") return false;
+
+    const site = new URL(SITE_URL).host;
+    return host === site || host.endsWith(`.${site}`) || /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host);
+  } catch {
+    return false;
+  }
+}
+
 async function probe(url: string, signal: AbortSignal) {
+  // Refused before the request is made, not filtered afterwards.
+  if (!isOwnOrigin(url)) {
+    return { ok: false as const, status: 0, headers: new Headers(), body: "" };
+  }
+
   try {
     const response = await fetch(url, { signal, redirect: "manual" });
     return { ok: true as const, status: response.status, headers: response.headers, body: await response.text().catch(() => "") };

@@ -5,6 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { filterWritableFields, refusalMessage } from "@/lib/cms-writable-fields";
 import { rejectCrossOrigin } from "@/lib/same-origin";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
@@ -146,7 +147,15 @@ export async function POST(
   if (!model) return NextResponse.json({ error: `Unknown module: ${module}` }, { status: 404 });
 
   try {
-    const body = sanitize(await req.json()) as Record<string, unknown>;
+    const raw = sanitize(await req.json()) as Record<string, unknown>;
+    const { data: body, refused } = filterWritableFields(raw);
+
+    // Reported rather than silently dropped. An administrator who set a field
+    // and saw it ignored would reasonably file a bug.
+    if (refused.length > 0) {
+      return NextResponse.json({ error: refusalMessage(refused) }, { status: 400 });
+    }
+
     const id = crypto.randomUUID();
     const record = await model.create({
       data: { id, updatedAt: new Date(), ...body },
@@ -178,9 +187,12 @@ export async function PATCH(
   if (!id) return NextResponse.json({ error: "Missing ?id=" }, { status: 400 });
 
   try {
-    const body = sanitize(await req.json()) as Record<string, unknown>;
-    delete body.id;
-    delete body.createdAt;
+    const raw = sanitize(await req.json()) as Record<string, unknown>;
+    const { data: body, refused } = filterWritableFields(raw);
+
+    if (refused.length > 0) {
+      return NextResponse.json({ error: refusalMessage(refused) }, { status: 400 });
+    }
 
     const record = await model.update({
       where: { id },
