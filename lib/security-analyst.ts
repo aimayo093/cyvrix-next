@@ -151,7 +151,37 @@ const DEFAULT_GUIDANCE = {
   remediation: "Review the check detail and confirm whether the underlying configuration is intentional.",
 };
 
+/**
+ * What to say about a question that was never answered.
+ *
+ * A check carrying assessed: false reaches here with warn as its nearest
+ * status, so it was picking up DEFAULT_GUIDANCE and being told to the reader as
+ * "this check did not pass", ranked among the things to work through, with a
+ * next step asking them to confirm the configuration was intentional. There is
+ * nothing to confirm. "No inbound webhook endpoint exists" is not a fault, and
+ * putting it in a numbered queue of work spends the reader's attention on the
+ * items that are not real and buries the one that is.
+ */
+/*
+ * Deliberately not added to blindSpots. bandFor degrades the posture band to
+ * "Incomplete picture" whenever a blind spot exists, and these two conditions -
+ * no self-service password reset, no inbound webhook - cannot ever clear. A
+ * banner that can never go green is one people stop reading, which is the same
+ * failure that had overallStatus pinned at warn. They stay visible as findings
+ * carrying a Not assessed badge, which is where a reader would look for them.
+ */
+const NOT_ASSESSED_GUIDANCE = {
+  impact:
+    "This question could not be answered, so it is a gap in what the scan can tell you rather than a fault to fix.",
+  remediation:
+    "Nothing to action. If the underlying feature is added later, re-run the scan so the question becomes answerable.",
+};
+
 function severityForCheck(check: SecurityScanCheck): Severity {
+  // Not assessed is not a finding. It leaves the triage queue and is carried
+  // as a blind spot instead, where the reader can see what went unexamined.
+  if (check.assessed === false) return "info";
+
   const guidance = CHECK_GUIDANCE[check.id] ?? DEFAULT_GUIDANCE;
   if (check.status === "fail") return guidance.failSeverity;
   if (check.status === "warn") return guidance.warnSeverity;
@@ -159,7 +189,8 @@ function severityForCheck(check: SecurityScanCheck): Severity {
 }
 
 function toFinding(check: SecurityScanCheck): AnalystFinding {
-  const guidance = CHECK_GUIDANCE[check.id] ?? DEFAULT_GUIDANCE;
+  const unknown = check.assessed === false;
+  const guidance = unknown ? NOT_ASSESSED_GUIDANCE : CHECK_GUIDANCE[check.id] ?? DEFAULT_GUIDANCE;
   return {
     id: check.id,
     title: check.label,
@@ -168,6 +199,7 @@ function toFinding(check: SecurityScanCheck): AnalystFinding {
     observation: check.detail,
     impact: guidance.impact,
     remediation: guidance.remediation,
+    unknown,
   };
 }
 
@@ -343,6 +375,7 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
 
   const findings = [...scanFindings, ...hygiene.findings, ...auth.findings, icoRegistrationFinding()];
   const blindSpots = [...hygiene.blindSpots, ...auth.blindSpots];
+
 
   const counts = SEVERITY_ORDER.reduce(
     (acc, severity) => ({ ...acc, [severity]: findings.filter((f) => f.severity === severity).length }),
