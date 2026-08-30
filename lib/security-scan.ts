@@ -448,7 +448,23 @@ export async function runSecurityScan(options: {
 
   const passCount = checks.filter((check) => check.status === "pass").length;
   const failCount = checks.filter((check) => check.status === "fail").length;
-  const warnCount = checks.filter((check) => check.status === "warn").length;
+
+  /*
+   * Only answered questions count as warnings.
+   *
+   * A check that could not be assessed carries warn as its nearest status, but
+   * counting it here had two consequences worth avoiding. The dashboard could
+   * never reach "pass", because "no webhook endpoint exists" is permanent - and
+   * an amber banner that can never clear teaches the reader to stop looking at
+   * it. And shouldNotifyForScan alerts on a warning overall status, so once the
+   * daily schedule works it would have emailed every morning to report that
+   * there is still nothing there to attack.
+   *
+   * The blind spots are still on the page, in their own group, where the reader
+   * can see exactly what was not examined.
+   */
+  const notAssessedCount = checks.filter((check) => check.assessed === false).length;
+  const warnCount = checks.filter((check) => check.status === "warn" && check.assessed !== false).length;
 
   /*
    * Scored over the checks that could actually be answered, with a warning
@@ -494,6 +510,7 @@ export async function runSecurityScan(options: {
           passCount,
           warnCount,
           failCount,
+          notAssessedCount,
           overallStatus,
           trigger: options.trigger,
           result,

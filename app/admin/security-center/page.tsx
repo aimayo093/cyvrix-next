@@ -1,6 +1,6 @@
 import * as React from "react";
 import { connection } from "next/server";
-import { AlertCircle, BellRing, CheckCircle2, Clock, LockKeyhole, Radar, Save, ShieldCheck, Siren, XCircle } from "lucide-react";
+import { AlertCircle, BellRing, CheckCircle2, Clock, HelpCircle, LockKeyhole, Radar, Save, ShieldCheck, Siren, XCircle } from "lucide-react";
 import { canManageSecurityCenter, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateSiteSetting } from "@/lib/admin-actions";
@@ -22,6 +22,15 @@ import { redirect } from "next/navigation";
 
 export const metadata = { title: "Security Center" };
 
+/** Drawn in grey: a question nobody answered is not a fault to fix. */
+const NOT_ASSESSED_META = { icon: HelpCircle, label: "Not assessed", color: "text-slate-400", bg: "bg-slate-50 border-slate-200" };
+
+function formatScanAge(hours: number): string {
+  if (hours < 1) return `${Math.max(1, Math.round(hours * 60))} minutes ago`;
+  if (hours < 48) return `${Math.round(hours)} hours ago`;
+  return `${Math.round(hours / 24)} days ago`;
+}
+
 const STATUS_META = {
   pass: { icon: CheckCircle2, label: "Checks passed", color: "text-emerald-600", bg: "bg-emerald-50 border-emerald-200" },
   warn: { icon: AlertCircle, label: "Review", color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
@@ -41,11 +50,19 @@ async function SecurityCenterPageContent() {
   const administrator = await requireAdmin();
   if (!canManageSecurityCenter(administrator.role)) redirect("/admin");
 
-  const [securitySetting, lastScan, alertEvents] = await Promise.all([
+  const [securitySetting, lastScan, lastBackgroundScan, alertEvents] = await Promise.all([
     prisma.siteSetting.findUnique({ where: { key: "securityCenter" } }),
     prisma.auditLog.findFirst({
       where: { action: "SECURITY_SCAN_RUN" },
       orderBy: { createdAt: "desc" },
+    }),
+    // Whether the daily schedule has ever actually produced a result. The
+    // toggle below defaults to on, which is a statement about intent, not
+    // about anything having run.
+    prisma.auditLog.findFirst({
+      where: { action: "SECURITY_SCAN_RUN", metadata: { path: ["trigger"], equals: "background" } },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
     }),
     prisma.auditLog.findMany({
       where: { action: { in: ["SECURITY_SCAN_ALERT_SENT", "SECURITY_SCAN_ALERT_SKIPPED"] } },
@@ -57,8 +74,34 @@ async function SecurityCenterPageContent() {
   const settings = parseSecurityCenterSettings(securitySetting?.value);
   const lastResult = readScanResult(lastScan?.metadata);
   const statusMeta = lastResult ? STATUS_META[lastResult.overallStatus] : null;
+  /*
+   * "Not assessed" is neither a pass nor a warning.
+   *
+   * A question that could not be answered - "no webhook endpoint exists, so
+   * there is no unsigned webhook to exploit" - was being counted in the
+   * warning total. That inflates the number of things apparently wrong and
+   * buries the findings that are real: this page reported nine warnings when
+   * two of them were "there is nothing here to attack".
+   *
+   * It must not become a pass either. A blind spot shown as green is the one
+   * mistake a security dashboard cannot make. So it gets its own count and its
+   * own group, and the score goes on ignoring it.
+   */
   const failures = lastResult?.checks.filter((check) => check.status === "fail") ?? [];
-  const warnings = lastResult?.checks.filter((check) => check.status === "warn") ?? [];
+  const warnings = lastResult?.checks.filter((check) => check.status === "warn" && check.assessed !== false) ?? [];
+  const notAssessed = lastResult?.checks.filter((check) => check.assessed === false) ?? [];
+
+  /*
+   * How old the displayed result is.
+   *
+   * Everything on this page is a snapshot of whenever a scan last ran. The
+   * headline score used to be printed with no date on it, so a result from
+   * three days ago read as the current state of the site - and did, for three
+   * days, while the findings it listed were being fixed.
+   */
+  const scanAgeHours = lastResult ? (Date.now() - Date.parse(lastResult.timestamp)) / 3_600_000 : null;
+  // The schedule is daily, so past a day and a half it has missed one.
+  const scanIsStale = scanAgeHours !== null && scanAgeHours > 36;
   const analyst = lastResult ? await buildAnalystReport(lastResult) : null;
 
   return (
@@ -85,12 +128,41 @@ async function SecurityCenterPageContent() {
                 </p>
                 <p className="mt-0.5 text-sm font-black text-[#041635]">
                   {lastResult.score}% check score - {failures.length} failures - {warnings.length} warnings
+                  {notAssessed.length > 0 && ` - ${notAssessed.length} not assessed`}
+                </p>
+                <p className={cn("mt-1 text-[11px] font-bold", scanIsStale ? "text-rose-600" : "text-slate-500")}>
+                  {scanIsStale ? "This result is " : "Scanned "}
+                  {formatScanAge(scanAgeHours ?? 0)}
+                  {scanIsStale ? " and describes the site as it was then, not as it is now." : "."}
                 </p>
               </div>
             </div>
           </div>
         )}
       </div>
+
+      {/*
+        * Automatic scanning is on by default, which describes an intention. It
+        * says nothing about whether the schedule has ever run - and it had not,
+        * because the cron route refuses the request when CRON_SECRET is unset,
+        * which is also its behaviour when the variable was simply never added.
+        * A dashboard that implies monitoring it is not doing is worse than one
+        * that admits it, so this states the position either way.
+        */}
+      {settings.automaticScanEnabled && !lastBackgroundScan && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4">
+          <p className="text-xs font-black uppercase tracking-widest text-amber-800">
+            Automatic scans are enabled but have never run
+          </p>
+          <p className="mt-1.5 text-sm font-semibold leading-relaxed text-amber-900">
+            Every result on this page was produced by someone pressing Run Scan. The daily schedule
+            calls <code className="font-mono text-xs">/api/cron/security-scan</code> with a bearer token
+            and is refused whenever <code className="font-mono text-xs">CRON_SECRET</code> is missing, so
+            nothing is being checked between manual runs. Set that variable in Vercel to turn the
+            schedule on, or switch the toggle off so this page stops implying cover it does not have.
+          </p>
+        </div>
+      )}
 
       {analyst ? <SecurityAnalystPanel report={analyst} /> : <SecurityAnalystEmptyState />}
 
@@ -205,7 +277,10 @@ async function SecurityCenterPageContent() {
               </div>
               <div className="divide-y divide-slate-100">
                 {lastResult.checks.map((check) => {
-                  const meta = STATUS_META[check.status];
+                  // An unanswered question is drawn as a blind spot, not as a
+                  // fault, so the eye goes to the findings that are real.
+                  const unanswered = check.assessed === false;
+                  const meta = unanswered ? NOT_ASSESSED_META : STATUS_META[check.status];
                   return (
                     <div key={check.id} className="flex items-start gap-3 px-6 py-4">
                       <meta.icon className={cn("mt-0.5 h-4 w-4 shrink-0", meta.color)} />
@@ -215,6 +290,11 @@ async function SecurityCenterPageContent() {
                           <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-500">
                             {check.category}
                           </span>
+                          {unanswered && (
+                            <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[9px] font-black uppercase tracking-widest text-slate-600">
+                              Not assessed
+                            </span>
+                          )}
                         </div>
                         <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-500">{check.detail}</p>
                       </div>
