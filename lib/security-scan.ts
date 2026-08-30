@@ -158,8 +158,21 @@ function compareVersions(a: string, b: string) {
   return 0;
 }
 
+/**
+ * The single latest manifest, not the package's entire history.
+ *
+ * This used to request the full packument, which carries the metadata of every
+ * version ever published: 68MB for @prisma/client, 43MB for prisma, 31MB for
+ * next, 15MB for typescript. Around 170MB in total, downloaded to read 35
+ * version strings, against a 2.5s per-request budget. The four largest were
+ * exactly the four that timed out, and a timeout was being read as "up to
+ * date", so the biggest and most security-relevant packages in the project
+ * were the ones the check could never report on.
+ *
+ * The /latest endpoint returns a few kilobytes in a few hundred milliseconds.
+ */
 function registryUrl(packageName: string) {
-  return `https://registry.npmjs.org/${encodeURIComponent(packageName).replace("%2F", "%2f")}`;
+  return `https://registry.npmjs.org/${encodeURIComponent(packageName).replace("%2F", "%2f")}/latest`;
 }
 
 /**
@@ -235,8 +248,8 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
         try {
           const response = await fetch(registryUrl(name), { signal: request.controller.signal });
           if (!response.ok) return { name, unreachable: true as const };
-          const data = (await response.json()) as { "dist-tags"?: { latest?: string } };
-          const latest = data["dist-tags"]?.latest;
+          const data = (await response.json()) as { version?: string };
+          const latest = data.version;
           // A prerelease latest is a real answer: there is no stable release
           // ahead of what is installed, so the package is not behind.
           if (!latest) return { name, unreachable: true as const };
