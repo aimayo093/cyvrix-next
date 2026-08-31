@@ -288,7 +288,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
                           {selectedTicket.ticketNumber}
                         </span>
                         <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded ${
-                          selectedTicket.status === "CLOSED" ? "bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-600"
+                          selectedTicket.status === "CLOSED" ? "bg-slate-100 text-slate-600" : "bg-emerald-50 text-emerald-700"
                         }`}>
                           {selectedTicket.status}
                         </span>
@@ -367,7 +367,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
                             </td>
                             <td className="px-6 py-4">
                               <span className={`text-[10px] px-2 py-0.5 rounded font-black ${
-                                tkt.status === "CLOSED" ? "bg-slate-100 text-slate-500" : "bg-emerald-50 text-emerald-600"
+                                tkt.status === "CLOSED" ? "bg-slate-100 text-slate-600" : "bg-emerald-50 text-emerald-700"
                               }`}>
                                 {tkt.status}
                               </span>
@@ -591,7 +591,7 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
               {notifications.map((notif) => (
                 <div key={notif.id} className="py-4 first:pt-0 last:pb-0 flex items-start gap-4 hover:bg-slate-50/20 px-4 rounded-xl transition-all">
                   <div className={`p-2 rounded-xl mt-1 shrink-0 ${
-                    notif.readAt ? "bg-slate-50 text-slate-400" : "bg-blue-50 text-[#2691F0]"
+                    notif.readAt ? "bg-slate-50 text-slate-500" : "bg-blue-50 text-[#2691F0]"
                   }`}>
                     <Bell className="h-4 w-4" />
                   </div>
