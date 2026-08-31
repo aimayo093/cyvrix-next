@@ -14,6 +14,7 @@ import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slot
 import { getDefaultLegalDocument } from "@/lib/legal-content";
 import { sendPortalWelcomeEmail, sendVerificationEmail } from "@/lib/email-verification";
 import { sendEmail } from "@/lib/send-email";
+import { notifyTicketMessage } from "@/lib/ticket-notifications";
 import { SITE_URL } from "@/lib/structured-data";
 import {
   beginEnrolment,
@@ -799,6 +800,11 @@ export async function addTicketNote(_prevState: unknown, formData: FormData) {
   // So the queue's "age" column reflects the last activity rather than the last
   // status change.
   await prisma.ticket.update({ where: { id: ticketId }, data: { updatedAt: new Date() } });
+
+  // Only a client-visible reply notifies. notifyTicketMessage checks this too;
+  // passing the flag through rather than assuming keeps the decision in one
+  // place if a third visibility is ever added.
+  await notifyTicketMessage({ ticketId, direction: "to_client", visibility, body });
 
   revalidatePath("/admin/ticket-management");
   revalidatePath("/portal/support-tickets");

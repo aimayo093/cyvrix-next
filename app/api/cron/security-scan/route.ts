@@ -4,6 +4,7 @@ import {
   runSecurityScan,
   shouldNotifyForScan,
 } from "@/lib/security-scan";
+import { sendSecurityReminders } from "@/lib/security-reminders";
 import {
   createSecurityNotifications,
   recordSecurityAlertDelivery,
@@ -48,11 +49,26 @@ export async function GET(req: Request) {
     await recordSecurityAlertDelivery(result, alertDelivery);
   }
 
+  /*
+   * Ask the people who can act on it, not just the dashboard.
+   *
+   * The scan above counts accounts with no confirmed address and no second
+   * factor. Counting them changes nothing on its own, so the same run nudges
+   * the account holders - at most once a week each, and not at all once they
+   * are verified and enrolled.
+   *
+   * It rides on this schedule rather than its own because the two answer the
+   * same question a day apart, and a second cron is a second thing to notice
+   * has stopped running.
+   */
+  const reminders = await sendSecurityReminders();
+
   return NextResponse.json({
     ok: true,
     score: result.score,
     overallStatus: result.overallStatus,
     checks: result.checks.length,
     alert: alertDelivery,
+    reminders,
   });
 }

@@ -13,6 +13,7 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { SITE_URL } from "@/lib/structured-data";
 import { enforceRateLimit, RateLimitError } from "@/lib/rate-limit";
+import { notifyTicketMessage } from "@/lib/ticket-notifications";
 import {
   beginEnrolment,
   clearRecoveryCodeFlash,
@@ -163,6 +164,16 @@ export async function replyPortalTicket(_prevState: unknown, formData: FormData)
         updatedAt: new Date(),
         ...(ticket!.status === "WAITING_ON_CLIENT" ? { status: "OPEN" as const } : {}),
       }
+    });
+
+    // Staff learned about a client reply the next time somebody opened the
+    // queue. A client message is always client-visible, so there is no note to
+    // leak here - the direction is the other way.
+    await notifyTicketMessage({
+      ticketId: data.ticketId,
+      direction: "to_staff",
+      visibility: "client",
+      body: data.message,
     });
 
     revalidatePath(`/portal/support-tickets`);
