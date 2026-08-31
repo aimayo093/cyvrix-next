@@ -10,6 +10,9 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { sendVerificationEmail } from "@/lib/email-verification";
+import { SITE_URL } from "@/lib/structured-data";
+import { enforceRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 const ticketSchema = z.object({
   subject: z.string().trim().min(5).max(200).transform(sanitize),
@@ -323,3 +326,60 @@ export async function submitPortalTestimonial(formData: FormData) {
   }
 }
 
+/**
+ * Lets a signed-in client ask for their confirmation link again.
+ *
+ * Deliberately not a public endpoint. A "resend verification" form that takes
+ * an address from an anonymous caller answers two questions it should not: it
+ * tells the caller whether an account exists, and it hands anyone a button that
+ * sends mail to a stranger. Doing it from inside the portal removes both -
+ * the account is already known from the session, and an unverified address does
+ * not block signing in, so anyone who needs this can reach it.
+ *
+ * Rate limited per user because the send is free to the caller and not to us.
+ */
+export async function requestMyVerificationEmail() {
+  const user = await requireUser();
+
+  const record = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { id: true, emailVerified: true },
+  });
+
+  if (!record) return { ok: false as const, message: "Account not found." };
+  if (record.emailVerified) {
+    return { ok: false as const, message: "Your email address is already confirmed." };
+  }
+
+  try {
+    enforceRateLimit(`verify-resend:${record.id}`, { limit: 3, windowMs: 60 * 60_000 });
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return {
+        ok: false as const,
+        message: "A link was sent recently. Check your inbox and spam folder, then try again in an hour.",
+      };
+    }
+    throw error;
+  }
+
+  const delivery = await sendVerificationEmail(record.id, SITE_URL);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: record.id,
+      action: delivery.ok ? "verification_email_sent" : "verification_email_failed",
+      entityType: "User",
+      entityId: record.id,
+      metadata: { trigger: "client_request", reason: delivery.ok ? null : delivery.reason },
+    },
+  });
+
+  if (!delivery.ok) {
+    return { ok: false as const, message: "We could not send the link just now. Please try again shortly." };
+  }
+
+  revalidatePath("/portal");
+  return { ok: true as const, message: "Sent. Check your inbox, and your spam folder if it is not there." };
+}

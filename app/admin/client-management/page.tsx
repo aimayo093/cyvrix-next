@@ -3,10 +3,10 @@ import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { createClientCompany, updateClientCompany, deactivateClient, createPortalUser, resetPortalUserPassword } from "@/lib/admin-actions";
+import { createClientCompany, updateClientCompany, deactivateClient, createPortalUser, resetPortalUserPassword, sendPortalUserVerification } from "@/lib/admin-actions";
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
-import { Plus, Pencil, Power, UserPlus, Users, KeyRound } from "lucide-react";
+import { Plus, Pencil, Power, UserPlus, Users, KeyRound, MailCheck } from "lucide-react";
 
 export const metadata = { title: "Client Management" };
 
@@ -156,12 +156,37 @@ async function ClientManagementPageContent({
                               <p className="font-bold text-slate-700">{user.name || "Anonymous User"}</p>
                               <p className="text-[10px] text-slate-400 font-semibold">{user.email}</p>
                             </div>
-                            <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase border ${
-                              user.active ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
-                            }`}>
-                              {user.active ? "Active" : "Disabled"}
-                            </span>
+                            <div className="flex items-center gap-1">
+                              <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase border ${
+                                user.active ? "bg-emerald-50 text-emerald-600 border-emerald-100" : "bg-rose-50 text-rose-600 border-rose-100"
+                              }`}>
+                                {user.active ? "Active" : "Disabled"}
+                              </span>
+                              {/* Whether the address has been proved, not just typed in. */}
+                              <span className={`inline-flex px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase border ${
+                                user.emailVerified
+                                  ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                                  : "bg-amber-50 text-amber-700 border-amber-200"
+                              }`}>
+                                {user.emailVerified ? "Verified" : "Unverified"}
+                              </span>
+                            </div>
                           </div>
+
+                          {/* Only offered where it can do something. */}
+                          {!user.emailVerified && (
+                            <form action={sendPortalUserVerification} className="pt-2">
+                              <input type="hidden" name="userId" value={user.id} />
+                              <input type="hidden" name="clientId" value={editing.id} />
+                              <button
+                                type="submit"
+                                title="Email this user a confirmation link"
+                                className="w-full bg-amber-500 hover:bg-amber-600 text-white text-[9px] font-bold px-2 py-1.5 rounded-lg transition-colors flex items-center justify-center gap-1"
+                              >
+                                <MailCheck className="h-3 w-3" /> Send verification link
+                              </button>
+                            </form>
+                          )}
 
                           {/* Reset Password mini form */}
                           <form action={resetPortalUserPassword} className="pt-2 border-t border-slate-200/50 flex gap-2 items-center">

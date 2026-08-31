@@ -2436,7 +2436,86 @@ export async function createPortalUser(formData: FormData) {
     },
   });
 
+  /*
+   * Send the confirmation link straight away.
+   *
+   * An address nobody has proved belongs to the account holder is not somewhere
+   * to send a password reset or a security notice, and asking an administrator
+   * to remember a second step is how accounts stay unverified for months.
+   *
+   * A failure here does not fail the request. The account exists, the password
+   * works, and the link can be sent again from the client list - losing the
+   * account because a mail server was briefly unreachable would be worse than
+   * an unverified address.
+   */
+  const created = await prisma.user.findUnique({ where: { email }, select: { id: true } });
+  if (created) {
+    const delivery = await sendVerificationEmail(created.id, SITE_URL);
+    if (!delivery.ok) {
+      console.error("[createPortalUser] verification email not sent", delivery.reason);
+    }
+    await prisma.auditLog.create({
+      data: {
+        id: crypto.randomUUID(),
+        action: delivery.ok ? "verification_email_sent" : "verification_email_failed",
+        entityType: "User",
+        entityId: created.id,
+        metadata: { email, trigger: "account_created", reason: delivery.ok ? null : delivery.reason },
+      },
+    });
+  }
+
   revalidatePath("/admin/client-management");
+}
+
+/**
+ * Sends a portal user their confirmation link again.
+ *
+ * sendVerificationEmail has always worked for any user id; nothing ever called
+ * it with anyone other than the signed-in administrator's own, so an
+ * unverified client could not be helped from the admin at all. The address is
+ * read from the record rather than the form, so this cannot be pointed at an
+ * arbitrary mailbox.
+ */
+export async function sendPortalUserVerification(formData: FormData) {
+  const administrator = await requireAdmin();
+  const userId = String(formData.get("userId") ?? "");
+  const clientId = String(formData.get("clientId") ?? "");
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, role: true, emailVerified: true },
+  });
+
+  if (!user || user.role !== "CLIENT") {
+    throw new Error("That portal user does not exist.");
+  }
+  if (user.emailVerified) {
+    throw new Error("That address is already verified.");
+  }
+
+  const delivery = await sendVerificationEmail(user.id, SITE_URL);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: administrator.id,
+      action: delivery.ok ? "verification_email_sent" : "verification_email_failed",
+      entityType: "User",
+      entityId: user.id,
+      metadata: { email: user.email, trigger: "admin_resend", reason: delivery.ok ? null : delivery.reason },
+    },
+  });
+
+  if (!delivery.ok) {
+    throw new Error(
+      delivery.reason === "no_transport"
+        ? "No email transport is configured, so nothing was sent."
+        : "The confirmation link could not be sent. Try again shortly."
+    );
+  }
+
+  if (clientId) revalidatePath("/admin/client-management");
 }
 
 /**

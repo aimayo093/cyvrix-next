@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { VerifyEmailNotice } from "@/components/portal/VerifyEmailNotice";
 import { getPortalStats } from "@/lib/data-fetchers";
 import { submitPortalTestimonial } from "@/lib/portal-actions";
 
@@ -44,6 +46,13 @@ async function PortalOverviewContent({ searchParams }: PortalOverviewProps) {
   const session = await requireUser();
   const sp = await searchParams;
   const stats = await getPortalStats(session.clientCompanyId || undefined);
+  // Read fresh rather than from the session, which is minted at sign-in and
+  // would keep claiming the address is unverified for the rest of the session
+  // after the link is opened.
+  const account = await prisma.user.findUnique({
+    where: { id: session.id },
+    select: { email: true, emailVerified: true },
+  });
   const feedbackStatus = sp.status === "success" || sp.status === "error" ? sp.status : null;
 
   const recordsSummary = stats
@@ -52,6 +61,8 @@ async function PortalOverviewContent({ searchParams }: PortalOverviewProps) {
 
   return (
     <div className="space-y-8 pb-12">
+      {account && !account.emailVerified && <VerifyEmailNotice email={account.email} />}
+
       {feedbackStatus && (
         <div
           className={`relative z-10 flex items-start gap-3 rounded-3xl border p-4 ${
