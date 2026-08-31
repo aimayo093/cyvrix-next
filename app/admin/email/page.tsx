@@ -31,13 +31,24 @@ async function EmailBroadcastPageContent({
 
   async function handleSendEmail(formData: FormData) {
     "use server";
+
+    /*
+     * The success redirect must sit outside the try.
+     *
+     * redirect() signals by throwing an error carrying a NEXT_REDIRECT digest.
+     * With the success call inside the try, the catch below - which exists to
+     * report send failures - caught that instead, read its message, and sent
+     * the administrator to the error banner reading "NEXT_REDIRECT" on a mail
+     * that had in fact been delivered.
+     */
     try {
       await sendAdminEmail(formData);
-      redirect("/admin/email?status=success&message=Email sent successfully");
-    } catch (err: any) {
-      const msg = encodeURIComponent(err.message || "Failed to send email");
-      redirect(`/admin/email?status=error&message=${msg}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to send email.";
+      redirect(`/admin/email?status=error&message=${encodeURIComponent(message)}`);
     }
+
+    redirect("/admin/email?status=success&message=Email sent successfully");
   }
 
   return (
