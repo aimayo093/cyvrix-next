@@ -497,6 +497,58 @@ export async function runSecurityScan(options: {
       category: "security",
       detail: `Active SUPER_ADMIN accounts: ${superAdmins}.`,
     });
+
+    /*
+     * Who has not finished securing their account.
+     *
+     * The dashboard counted privileged accounts but said nothing about whether
+     * those accounts were actually protected. An unverified address cannot
+     * receive a password reset or a breach notice, and an account with only a
+     * password is one credential away from being someone else's - both are
+     * account-level facts the scan can see and nobody was being told about.
+     *
+     * Staff and clients are separated because the exposure differs. A staff
+     * account reaches the CMS and every client record; a client account
+     * reaches one company's tickets and documents.
+     */
+    const [staffTotal, staffUnverified, staffNo2fa, clientTotal, clientUnverified, clientNo2fa] =
+      await Promise.all([
+        prisma.user.count({ where: { active: true, role: { not: "CLIENT" } } }),
+        prisma.user.count({ where: { active: true, role: { not: "CLIENT" }, emailVerified: null } }),
+        prisma.user.count({ where: { active: true, role: { not: "CLIENT" }, twoFactorReady: false } }),
+        prisma.user.count({ where: { active: true, role: "CLIENT" } }),
+        prisma.user.count({ where: { active: true, role: "CLIENT", emailVerified: null } }),
+        prisma.user.count({ where: { active: true, role: "CLIENT", twoFactorReady: false } }),
+      ]);
+
+    const unverified = staffUnverified + clientUnverified;
+    checks.push({
+      id: "sec_email_verified",
+      label: "Confirmed email addresses",
+      status: staffUnverified > 0 ? "fail" : unverified > 0 ? "warn" : "pass",
+      category: "security",
+      detail:
+        unverified === 0
+          ? `All ${staffTotal + clientTotal} active accounts have a confirmed address.`
+          : `${unverified} active account(s) have never confirmed their email: ${staffUnverified} staff, ${clientUnverified} client. ` +
+            `An unconfirmed address cannot be relied on for password recovery or security notices. ` +
+            `Staff count as a failure rather than a warning because those accounts reach every client record.`,
+    });
+
+    // Staff 2FA is a failure when missing; client 2FA is offered, not imposed,
+    // so its absence is reported without being counted against the score.
+    checks.push({
+      id: "sec_two_factor",
+      label: "Two-factor authentication coverage",
+      status: staffNo2fa > 0 ? "fail" : clientNo2fa > 0 ? "warn" : "pass",
+      category: "security",
+      detail:
+        staffNo2fa === 0 && clientNo2fa === 0
+          ? `Every active account has two-factor enrolled.`
+          : `${staffNo2fa} of ${staffTotal} staff and ${clientNo2fa} of ${clientTotal} client account(s) have no second factor. ` +
+            `Staff accounts reach the CMS and every client record, so one without a second factor is one password away from full access. ` +
+            `Clients can enrol themselves from the portal; staff from /admin/profile.`,
+    });
   } catch {
     checks.push({ id: "sec_privilege", label: "Privileged Account Audit", status: "warn", category: "security", detail: "Could not audit privileged accounts." });
   }

@@ -13,6 +13,14 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { SITE_URL } from "@/lib/structured-data";
 import { enforceRateLimit, RateLimitError } from "@/lib/rate-limit";
+import {
+  beginEnrolment,
+  clearRecoveryCodeFlash,
+  confirmEnrolment,
+  disableTwoFactor,
+  flashRecoveryCodes,
+  regenerateRecoveryCodes,
+} from "@/lib/two-factor";
 
 const ticketSchema = z.object({
   subject: z.string().trim().min(5).max(200).transform(sanitize),
@@ -382,4 +390,99 @@ export async function requestMyVerificationEmail() {
 
   revalidatePath("/portal");
   return { ok: true as const, message: "Sent. Check your inbox, and your spam folder if it is not there." };
+}
+
+/*
+ * Two-factor authentication for portal clients.
+ *
+ * Mirrors the administrator flow against the same code in lib/two-factor. The
+ * enrolment, the code check, the rate limit and the hashed recovery codes are
+ * all shared; only where the browser lands afterwards and what the audit row
+ * says differ, which is why these are separate actions rather than the admin
+ * ones with a role check bolted on.
+ *
+ * Clients hold ticket history, documents and proposals. An account protected
+ * only by a password an administrator typed once is worth less than one the
+ * client can put a second factor on themselves.
+ */
+const PORTAL_PROFILE = "/portal/profile-and-company";
+
+export async function startClientTwoFactorEnrolment() {
+  const user = await requireUser();
+  await beginEnrolment(user.id, user.email);
+  redirect(`${PORTAL_PROFILE}?enrol=2fa`);
+}
+
+export async function confirmClientTwoFactorEnrolment(formData: FormData) {
+  const user = await requireUser();
+  const code = (formData.get("code") as string | null)?.trim() ?? "";
+
+  const result = await confirmEnrolment(user.id, code);
+
+  if (!result.ok) {
+    const message =
+      result.reason === "bad_code"
+        ? "That code was not accepted. Check the time on your phone and try the current code."
+        : result.reason === "rate_limited"
+          ? "Too many attempts. Wait a few minutes and try again."
+          : "Start the setup again.";
+    redirect(`${PORTAL_PROFILE}?enrol=2fa&status=error&message=${encodeURIComponent(message)}`);
+  }
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: user.id,
+      action: "client_two_factor_enabled",
+      entityType: "User",
+      entityId: user.id,
+      metadata: { email: user.email },
+    },
+  });
+
+  // One-time httpOnly cookie, not the URL: a query string would put ten working
+  // credentials into browser history and any log that records the path.
+  await flashRecoveryCodes(result.recoveryCodes);
+  redirect(PORTAL_PROFILE);
+}
+
+export async function dismissClientRecoveryCodes() {
+  await requireUser();
+  await clearRecoveryCodeFlash();
+  redirect(PORTAL_PROFILE);
+}
+
+export async function issueNewClientRecoveryCodes() {
+  const user = await requireUser();
+  const codes = await regenerateRecoveryCodes(user.id);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: user.id,
+      action: "client_recovery_codes_reissued",
+      entityType: "User",
+      entityId: user.id,
+    },
+  });
+
+  await flashRecoveryCodes(codes);
+  redirect(PORTAL_PROFILE);
+}
+
+export async function turnOffClientTwoFactor() {
+  const user = await requireUser();
+  await disableTwoFactor(user.id);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: user.id,
+      action: "client_two_factor_disabled",
+      entityType: "User",
+      entityId: user.id,
+    },
+  });
+
+  redirect(PORTAL_PROFILE);
 }

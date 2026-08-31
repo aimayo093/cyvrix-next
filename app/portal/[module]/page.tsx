@@ -20,6 +20,15 @@ import {
   Bell
 } from "lucide-react";
 import { requireUser } from "@/lib/auth";
+import { TwoFactorPanel } from "@/components/shared/TwoFactorPanel";
+import { beginEnrolment, getTwoFactorState, peekRecoveryCodes, type EnrolmentOffer } from "@/lib/two-factor";
+import {
+  confirmClientTwoFactorEnrolment,
+  dismissClientRecoveryCodes,
+  issueNewClientRecoveryCodes,
+  startClientTwoFactorEnrolment,
+  turnOffClientTwoFactor,
+} from "@/lib/portal-actions";
 import { prisma } from "@/lib/prisma";
 import type { ClientDocument, Notification, Proposal, ProposalItem, Ticket, TicketMessage } from "@/generated/prisma";
 import { 
@@ -50,8 +59,21 @@ export default function PortalModulePage(props: PageProps) {
 async function PortalModulePageContent({ params, searchParams }: PageProps) {
   await connection();
   const { module } = await params;
-  const { id } = await searchParams;
+  const { id, enrol, status, message } = await searchParams;
   const user = await requireUser();
+
+  // Two-factor state for the profile module. beginEnrolment mints a fresh
+  // secret on every call, so it is only called while enrolment is actually
+  // open and unconfirmed - otherwise reloading the page would invalidate the
+  // QR code the client is part-way through scanning.
+  const twoFactor = await getTwoFactorState(user.id);
+  let enrolmentOffer: EnrolmentOffer | null = null;
+  if (enrol === "2fa" && !twoFactor.enrolled) {
+    enrolmentOffer = await beginEnrolment(user.id, user.email);
+  }
+  // Read without clearing: cookies may only be modified in a Server Action,
+  // and clearing during render is what turned the admin page into a 500.
+  const recoveryCodes = await peekRecoveryCodes();
 
   // Verify that the module is a valid one
   const validModules = ["profile-and-company", "support-tickets", "quotes-and-proposals", "services", "documents", "notifications"];
@@ -225,6 +247,28 @@ async function PortalModulePageContent({ params, searchParams }: PageProps) {
                 <p className="font-bold text-sm">No client company associated with your account.</p>
               </div>
             )}
+          </div>
+
+          {/*
+            * Two-factor on the client's own account.
+            *
+            * Full width under the two cards: enrolment shows a QR code and then
+            * ten recovery codes, neither of which reads well in half a column.
+            */}
+          <div className="lg:col-span-2">
+            <TwoFactorPanel
+              state={twoFactor}
+              offer={enrolmentOffer}
+              recoveryCodes={recoveryCodes}
+              error={status === "error" && typeof message === "string" ? message : null}
+              actions={{
+                start: startClientTwoFactorEnrolment,
+                confirm: confirmClientTwoFactorEnrolment,
+                turnOff: turnOffClientTwoFactor,
+                dismissCodes: dismissClientRecoveryCodes,
+                issueNewCodes: issueNewClientRecoveryCodes,
+              }}
+            />
           </div>
         </div>
       )}

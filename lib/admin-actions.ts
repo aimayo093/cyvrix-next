@@ -12,7 +12,7 @@ import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
 import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slots";
 import { getDefaultLegalDocument } from "@/lib/legal-content";
-import { sendVerificationEmail } from "@/lib/email-verification";
+import { sendPortalWelcomeEmail, sendVerificationEmail } from "@/lib/email-verification";
 import { sendEmail } from "@/lib/send-email";
 import { SITE_URL } from "@/lib/structured-data";
 import {
@@ -2450,16 +2450,21 @@ export async function createPortalUser(formData: FormData) {
    */
   const created = await prisma.user.findUnique({ where: { email }, select: { id: true } });
   if (created) {
-    const delivery = await sendVerificationEmail(created.id, SITE_URL);
+    // One email carrying both. Sending sign-in details and the confirmation
+    // link separately is two messages to an address nobody has confirmed yet,
+    // which is two chances for one to go missing.
+    const delivery = await sendPortalWelcomeEmail(created.id, password, SITE_URL);
     if (!delivery.ok) {
-      console.error("[createPortalUser] verification email not sent", delivery.reason);
+      console.error("[createPortalUser] welcome email not sent", delivery.reason);
     }
     await prisma.auditLog.create({
       data: {
         id: crypto.randomUUID(),
-        action: delivery.ok ? "verification_email_sent" : "verification_email_failed",
+        action: delivery.ok ? "portal_welcome_sent" : "portal_welcome_failed",
         entityType: "User",
         entityId: created.id,
+        // The password is deliberately absent. It reaches the client's inbox
+        // because it has to; it does not also need to sit in the audit log.
         metadata: { email, trigger: "account_created", reason: delivery.ok ? null : delivery.reason },
       },
     });

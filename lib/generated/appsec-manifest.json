@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-31T00:26:10.925Z",
+  "generatedAt": "2026-08-31T00:53:53.599Z",
   "fileCount": 192,
   "apiRouteCount": 12,
   "mutatingRouteCount": 9,
@@ -12,8 +12,8 @@
       "detail": "3 file(s) inject raw HTML. 0 of them are outside the reviewed set.",
       "limitation": "Finds the sink, not the source. React escapes everything else by default, but this cannot tell whether a value reaching one of these is attacker-controlled.",
       "evidence": [
-        "components/admin/TwoFactorPanel.tsx",
         "components/shared/SectionRenderer.tsx",
+        "components/shared/TwoFactorPanel.tsx",
         "components/public/JsonLd.tsx"
       ]
     },

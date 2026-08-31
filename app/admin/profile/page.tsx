@@ -4,8 +4,17 @@ import { AlertCircle, CheckCircle2, KeyRound, Save, ShieldCheck, UserRound } fro
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { changeAdminPassword, requestEmailVerification, updateAdminProfile } from "@/lib/admin-actions";
-import { TwoFactorPanel } from "@/components/admin/TwoFactorPanel";
+import {
+  changeAdminPassword,
+  confirmTwoFactorEnrolment,
+  dismissRecoveryCodes,
+  issueNewRecoveryCodes,
+  requestEmailVerification,
+  startTwoFactorEnrolment,
+  turnOffTwoFactor,
+  updateAdminProfile,
+} from "@/lib/admin-actions";
+import { TwoFactorPanel } from "@/components/shared/TwoFactorPanel";
 import { beginEnrolment, getTwoFactorState, peekRecoveryCodes, type EnrolmentOffer } from "@/lib/two-factor";
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
@@ -153,6 +162,13 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
             offer={enrolmentOffer}
             recoveryCodes={recoveryCodes}
             error={sp.status === "error" ? (sp.message ?? null) : null}
+            actions={{
+              start: startTwoFactorEnrolment,
+              confirm: confirmTwoFactorEnrolment,
+              turnOff: turnOffTwoFactor,
+              dismissCodes: dismissRecoveryCodes,
+              issueNewCodes: issueNewRecoveryCodes,
+            }}
           />
 
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

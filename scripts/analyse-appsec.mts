@@ -94,7 +94,7 @@ const add = (f: AppSecFinding) => findings.push(f);
   const reviewed = new Set([
     "components/public/JsonLd.tsx",
     "components/shared/SectionRenderer.tsx",
-    "components/admin/TwoFactorPanel.tsx",
+    "components/shared/TwoFactorPanel.tsx",
   ]);
   const unreviewed = sinks.filter((p) => !reviewed.has(p));
 

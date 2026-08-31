@@ -34,6 +34,118 @@ export type SendResult =
   | { ok: false; reason: "already_verified" | "no_transport" | "send_failed" };
 
 /**
+ * Mints a fresh confirmation link for an account.
+ *
+ * Split out because two emails need one: the plain confirmation message, and
+ * the welcome message a new portal user gets with their sign-in details. Both
+ * must invalidate any earlier token, and having that rule written once means
+ * the two cannot drift into disagreeing about it.
+ */
+export type IssuedLink =
+  | { ok: true; link: string; email: string; name: string | null }
+  | { ok: false; reason: "already_verified" | "no_transport" | "send_failed" };
+
+export async function issueVerificationLink(userId: string, siteUrl: string): Promise<IssuedLink> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, name: true, emailVerified: true },
+  });
+
+  if (!user) return { ok: false, reason: "send_failed" };
+  if (user.emailVerified) return { ok: false, reason: "already_verified" };
+
+  // Asked before a token is minted, so a send that cannot happen does not
+  // invalidate the link already in the recipient's inbox.
+  if (availableTransports().length === 0) return { ok: false, reason: "no_transport" };
+
+  const token = randomBytes(32).toString("base64url");
+
+  await prisma.$transaction([
+    prisma.verificationToken.deleteMany({ where: { userId } }),
+    prisma.verificationToken.create({
+      data: {
+        id: crypto.randomUUID(),
+        userId,
+        tokenHash: hashToken(token),
+        email: user.email,
+        expiresAt: new Date(Date.now() + TOKEN_TTL_MS),
+      },
+    }),
+  ]);
+
+  return {
+    ok: true,
+    link: `${siteUrl.replace(/\/$/, "")}/verify-email?token=${token}`,
+    email: user.email,
+    name: user.name,
+  };
+}
+
+/**
+ * The email a new portal user receives when their account is created.
+ *
+ * Carries the sign-in details and the confirmation link together, because two
+ * separate emails arriving at an address nobody has confirmed yet is two
+ * chances to lose one.
+ *
+ * The password is included because the administrator chose it and has to pass
+ * it on somehow; an email is no worse than the alternatives they would
+ * otherwise use. It is described as temporary and the message says to change
+ * it, since a password sitting in a mailbox indefinitely is the part that
+ * ages badly. An invite link that lets the client set their own, which nobody
+ * would ever know, would be better still.
+ */
+export async function sendPortalWelcomeEmail(
+  userId: string,
+  temporaryPassword: string,
+  siteUrl: string
+): Promise<SendResult> {
+  const issued = await issueVerificationLink(userId, siteUrl);
+  if (!issued.ok) return { ok: false, reason: issued.reason };
+
+  const base = siteUrl.replace(/\/$/, "");
+
+  try {
+    const result = await sendEmail({
+      to: issued.email,
+      subject: "Your CYVRIX client portal account",
+      text: [
+        `Hello${issued.name ? ` ${issued.name}` : ""},`,
+        "",
+        "An account has been created for you on the CYVRIX client portal.",
+        "",
+        "Sign in at:",
+        `  ${base}/login`,
+        "",
+        `  Username:            ${issued.email}`,
+        `  Temporary password:  ${temporaryPassword}`,
+        "",
+        "Please change this password after signing in, under Profile in the portal.",
+        "It is temporary and was chosen by an administrator, not by you.",
+        "",
+        "Confirm this email address by opening the link below. It expires in 24 hours.",
+        "",
+        `  ${issued.link}`,
+        "",
+        "Until it is confirmed we cannot use this address for password recovery or",
+        "security notices.",
+        "",
+        "If you were not expecting this, please contact us before signing in.",
+      ].join("\n"),
+    });
+
+    if (!result.sent) {
+      console.error("[portal-welcome] send failed", result.detail);
+      return { ok: false, reason: result.reason === "no_transport" ? "no_transport" : "send_failed" };
+    }
+    return { ok: true };
+  } catch (error) {
+    console.error("[portal-welcome] send failed", error);
+    return { ok: false, reason: "send_failed" };
+  }
+}
+
+/**
  * Issues a token and emails the link.
  *
  * Any previous unused token for the account is discarded, so a fresh request
