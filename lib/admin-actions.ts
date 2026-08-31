@@ -13,6 +13,7 @@ import { getReviewedPage } from "@/lib/reviewed-page-content";
 import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slots";
 import { getDefaultLegalDocument } from "@/lib/legal-content";
 import { sendVerificationEmail } from "@/lib/email-verification";
+import { sendEmail } from "@/lib/send-email";
 import { SITE_URL } from "@/lib/structured-data";
 import {
   beginEnrolment,
@@ -24,7 +25,6 @@ import {
 } from "@/lib/two-factor";
 import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
-import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
 import xss from "xss";
 import { z } from "zod";
 
@@ -2800,35 +2800,26 @@ export async function sendAdminEmail(formData: FormData) {
   }
   const { to, subject, body: messageBody } = parsed.data;
 
-  const smtp = getServerSmtpConfig();
-  if (!smtp) {
-    throw new Error("Server-managed SMTP is not configured. Ask a Super Admin to configure the approved environment secrets.");
+  // Was hard-wired to SMTP: it built its own nodemailer transport and refused
+  // to send at all when SMTP_HOST was absent, telling the administrator to ask
+  // a Super Admin for secrets. This deployment has no SMTP server and sends
+  // through Resend, so the page was unusable while the site's other email was
+  // going out fine. Same fault the verification flow had, same fix.
+  const result = await sendEmail({ to, subject, text: messageBody });
+
+  if (!result.sent) {
+    throw new Error(result.detail);
   }
 
-  const nodemailer = (await import("nodemailer")).default;
-
-  const transporter = nodemailer.createTransport({
-    host: smtp.host,
-    port: smtp.port,
-    secure: smtp.port === 465,
-    auth: {
-      user: smtp.user,
-      pass: smtp.password,
-    },
-  });
-
-  const identity = await getEmailIdentity("CYVRIX Admin");
-  const fromAddress = identity.from || smtp.user;
-
-  await transporter.sendMail({
-    from: fromAddress,
-    to,
-    subject,
-    text: messageBody,
-  });
-
   await prisma.auditLog.create({
-    data: { id: crypto.randomUUID(), userId: administrator.id, action: "admin_email_sent", entityType: "Email", metadata: { to, subject } },
+    data: {
+      id: crypto.randomUUID(),
+      userId: administrator.id,
+      action: "admin_email_sent",
+      entityType: "Email",
+      // Which transport carried it, so a delivery question can be answered later.
+      metadata: { to, subject, transport: result.transport },
+    },
   });
 }
 
