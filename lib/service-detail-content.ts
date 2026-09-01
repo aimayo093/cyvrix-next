@@ -77,6 +77,20 @@ export const serviceDetailContent: Record<string, ServiceDetailContent> = {
       "A move, expansion or refit is coming and the network needs planning",
     ],
   },
+  "structured-cabling": {
+    image: `${UPLOADS}/1780489287611-46531032-kirill-sh-eVWWr6nmDf8-unsplash.jpg`,
+    imageAlt: "Structured cabling terminated into a patch panel in an equipment rack",
+    overview: [
+      "Cabling is the one part of an installation nobody looks at until it fails, and by then the people who put it in have usually gone. The faults it causes rarely announce themselves as cabling: a link that negotiates at a lower speed, a camera that drops overnight, a desk that works until someone moves it.",
+      "We supply, install, test and commission copper and fibre, and hand over the evidence: every link tested, both ends labelled, and as-built records that let the next person trace a run without pulling ceiling tiles. Afterwards it can be supported as it changes, because installations always do.",
+    ],
+    rightWhen: [
+      "A move, refit or expansion needs cabling planned rather than improvised",
+      "Nobody can say with certainty where an existing run goes",
+      "Faults keep being blamed on the network without evidence either way",
+      "The original installation was never tested, labelled or documented",
+    ],
+  },
   "it-consultancy": {
     image: `${UPLOADS}/1780500728760-978494894-mario-gogh-VBLHICVh-lI-unsplash.jpg`,
     imageAlt: "A consultancy team working through a plan",

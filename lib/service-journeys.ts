@@ -63,6 +63,13 @@ const journeys: Record<string, ServiceJourney> = {
     secondaryHref: "/assessments/network-assessment",
     secondaryLabel: "Start a network assessment",
   },
+  "structured-cabling": {
+    category: "Infrastructure",
+    primaryHref: "/book-consultation?service=Infrastructure",
+    primaryLabel: "Discuss a cabling installation",
+    secondaryHref: "/request-quote",
+    secondaryLabel: "Request a quote",
+  },
   "voip-business-communications": {
     category: "Infrastructure",
     primaryHref: "/book-consultation?service=Infrastructure",

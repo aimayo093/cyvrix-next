@@ -45,7 +45,28 @@ export function generateStaticParams() {
   return staticServices.map((service) => ({ slug: service.slug }));
 }
 
-export default function ServiceDetailPage(props: ServicePageProps) {
+/**
+ * Whether the slug exists has to be settled before anything streams.
+ *
+ * notFound() used to be called inside ServiceDetailContent, which sits behind
+ * the Suspense boundary below. Under cacheComponents the shell is sent as soon
+ * as it is ready, so the 200 was already on the wire by the time the lookup
+ * finished, and every missing service answered "Service not found" with an HTTP
+ * 200 - a soft 404. Search engines index those, and uptime monitoring cannot
+ * tell a missing page from a present one.
+ *
+ * The lookup here is the same cached call the content makes, so this costs a
+ * cache read rather than a second query, and the heavy work - images, related
+ * services, journey content - still streams.
+ */
+export default async function ServiceDetailPage(props: ServicePageProps) {
+  const { slug } = await props.params;
+  const { service: dbService } = await getPublicServiceDetail(slug);
+
+  if (!dbService && !findStaticService(slug)) {
+    notFound();
+  }
+
   return (
     <React.Suspense fallback={<ServiceDetailFallback />}>
       <ServiceDetailContent {...props} />
