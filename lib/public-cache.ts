@@ -192,17 +192,24 @@ export async function getPublicShellData() {
       complianceCards,
     };
   } catch (error) {
+    /*
+     * Rethrown rather than answered with empty data.
+     *
+     * This function is "use cache" with cacheLife("hours"), so returning a
+     * fallback here stored that fallback. One transient database failure was
+     * enough to serve brandAssets: [], an empty header menu and no footer
+     * sections for hours, from a cache entry nothing would refill until it
+     * expired. The visible symptom was the site reverting to the hardcoded
+     * logo files and ignoring anything uploaded through the CMS - and no
+     * amount of re-uploading could shift it, because the upload was never
+     * what was being read.
+     *
+     * The caller in (public)/layout.tsx already catches this and renders the
+     * same fallback for that one request. Letting the error out means the bad
+     * result is never what gets cached, so the next request tries again.
+     */
     console.warn("[public-cache] failed to load public shell data", error);
-    return {
-      brandSettings: null,
-      companySettings: null,
-      contactSettings: null,
-      brandAssets: [],
-      headerMenu: null,
-      footerSections: [],
-      socialLinks: [],
-      complianceCards: [],
-    };
+    throw error;
   }
 }
 
