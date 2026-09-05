@@ -10,6 +10,48 @@ import { Settings, AlertTriangle, ShieldCheck, Image as ImageIcon } from "lucide
 
 export const metadata = { title: "Brand Assets CMS" };
 
+
+/**
+ * What each slot actually drives, and what happens when it is empty.
+ *
+ * The page listed nine keys - logo_default, logo_admin, logo_icon, logo_dark,
+ * logo_footer, logo_sticky, logo_mobile, logo_white, favicon - with no
+ * indication of which one the public header reads. A new logo was uploaded to
+ * logo_admin and logo_icon, the site kept showing the old one, and nothing on
+ * the screen explained why. The upload worked; the labelling did not.
+ *
+ * `fallback` is what app/(public)/layout.tsx resolves to when the slot is
+ * empty, so an empty-but-active row can say what is being served instead of
+ * leaving the reader to guess.
+ */
+const ASSET_ROLES: Record<string, { where: string; fallback?: string; primary?: boolean }> = {
+  logo_default: {
+    where: "The main logo in the public site header. This is the one visitors see first.",
+    fallback: "/brand/cyvrix-logo-color.png",
+    primary: true,
+  },
+  logo_white: {
+    where: "Headers over dark or image backgrounds, where the colour logo would not read.",
+    fallback: "/brand/cyvrix-logo-white.png",
+  },
+  logo_dark: {
+    where: "Light backgrounds that need the darker treatment.",
+    fallback: "/brand/cyvrix-logo-color.png",
+  },
+  logo_footer: {
+    where: "The footer, which sits on the dark navy band.",
+    fallback: "/brand/cyvrix-logo-white.png",
+  },
+  logo_sticky: {
+    where: "The compact header after the page scrolls.",
+    fallback: "/brand/cyvrix-logo-white.png",
+  },
+  logo_mobile: { where: "Narrow screens, where the full wordmark does not fit." },
+  logo_admin: { where: "The admin dashboard sidebar. Not shown to visitors." },
+  logo_icon: { where: "The square mark used where a wordmark will not fit." },
+  favicon: { where: "The browser tab icon." },
+};
+
 export default function BrandAssetsCMSPage(props: any) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
@@ -27,7 +69,7 @@ async function BrandAssetsCMSPageContent({
   await requireAdmin();
   const sp = await searchParams;
 
-  let assets = await prisma.brandAsset.findMany({
+  const assets = await prisma.brandAsset.findMany({
     orderBy: { assetKey: "asc" },
   });
 
@@ -113,6 +155,11 @@ async function BrandAssetsCMSPageContent({
                     <span className="text-[10px] font-mono bg-slate-100 text-slate-500 px-2 py-0.5 rounded">
                       {asset.assetKey}
                     </span>
+                    {ASSET_ROLES[asset.assetKey]?.primary && (
+                      <span className="bg-[#2691F0]/10 text-[#0f5aab] text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+                        Main site logo
+                      </span>
+                    )}
                     {asset.isActive ? (
                       <span className="bg-emerald-500/10 text-emerald-600 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
                         Active
@@ -123,8 +170,22 @@ async function BrandAssetsCMSPageContent({
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-slate-400">{asset.usageContext || "General brand asset."}</p>
-                  
+                  <p className="text-xs font-semibold text-slate-600">
+                    {ASSET_ROLES[asset.assetKey]?.where ?? asset.usageContext ?? "General brand asset."}
+                  </p>
+
+                  {/*
+                    * Active with nothing in it is the case that misleads. The row
+                    * used to say "No asset URL configured" in red, which reads as
+                    * broken, when in fact a fallback file is being served.
+                    */}
+                  {asset.isActive && !asset.mediaUrl && ASSET_ROLES[asset.assetKey]?.fallback && (
+                    <p className="text-xs font-semibold text-amber-700">
+                      Nothing uploaded, so the site is serving{" "}
+                      <code className="font-mono">{ASSET_ROLES[asset.assetKey]?.fallback}</code> instead.
+                    </p>
+                  )}
+
                   {asset.mediaUrl ? (
                     <div className="flex items-center gap-2 text-xs text-[#2691F0] font-semibold pt-1">
                       <ImageIcon className="h-3.5 w-3.5" />
@@ -174,6 +235,16 @@ async function BrandAssetsCMSPageContent({
                   </h3>
                   <p className="text-xs text-slate-400 font-semibold">
                     Key: <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">{editing.assetKey}</code>
+                  </p>
+                  {/* Repeated here so the answer is in front of you at the moment
+                    * you choose a file, not only back on the list you came from. */}
+                  {ASSET_ROLES[editing.assetKey]?.where && (
+                    <p className="mt-2 rounded-lg border border-[#2691F0]/20 bg-[#2691F0]/5 px-3 py-2 text-xs font-semibold leading-relaxed text-[#0f5aab]">
+                      {ASSET_ROLES[editing.assetKey]?.where}
+                    </p>
+                  )}
+                  <p className="mt-2 text-xs font-semibold text-slate-500">
+                    PNG, JPEG or WebP, up to 5MB. SVG is not accepted.
                   </p>
                 </div>
 
