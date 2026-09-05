@@ -47,9 +47,20 @@ async function AdminLayoutContent({
   // with no sidebar and no header.
   const user = await requireAdmin();
 
+  // The logo_admin brand asset. Nothing read it before, so replacing the image
+  // in the CMS changed nothing on screen. Failure is not fatal: the chrome
+  // falls back to the wordmark rather than refusing to render.
+  const adminLogo = await prisma.brandAsset
+    .findFirst({
+      where: { assetKey: "logo_admin", isActive: true },
+      select: { mediaUrl: true },
+    })
+    .catch(() => null);
+
   return (
     <AdminLayoutClient
       identity={{ name: user.name, email: user.email, role: user.role }}
+      adminLogoUrl={adminLogo?.mediaUrl || undefined}
       notificationsSlot={
         <React.Suspense fallback={<AdminNotificationsButtonFallback />}>
           <AdminNotifications userId={user.id} />

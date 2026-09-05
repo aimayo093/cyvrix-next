@@ -117,11 +117,30 @@ async function getPublicChromeData() {
     black: "/brand/cyvrix-logo-black.png",
   } as const;
 
-  const logoDefault = brandAssets.find((asset) => asset.assetKey === "logo_default")?.mediaUrl || brandData.logoUrl || brandLogo.colour;
-  const logoWhite = brandAssets.find((asset) => asset.assetKey === "logo_white")?.mediaUrl || brandLogo.white;
-  const logoDark = brandAssets.find((asset) => asset.assetKey === "logo_dark")?.mediaUrl || brandLogo.colour;
-  const logoFooter = brandAssets.find((asset) => asset.assetKey === "logo_footer")?.mediaUrl || brandLogo.white;
-  const logoSticky = brandAssets.find((asset) => asset.assetKey === "logo_sticky")?.mediaUrl || brandLogo.white;
+  const brandAssetUrl = (key: string) =>
+    brandAssets.find((asset) => asset.assetKey === key)?.mediaUrl || undefined;
+
+  /*
+   * Only logo_default carries a fallback. The variants must stay undefined.
+   *
+   * Every variant used to be resolved as `asset ?? hardcodedFile`, which made
+   * each one a non-empty string whether or not anything had been uploaded.
+   * Logo.tsx then picks `logoSticky || logoWhite || logoDefault` on a dark
+   * header, so logoSticky - empty in the CMS, filled in here with
+   * /brand/cyvrix-logo-white.png - shadowed logo_default permanently. Uploading
+   * a new Primary Brand Logo changed the database and could never change the
+   * header, which is exactly what was reported.
+   *
+   * Leaving them undefined restores the intended meaning: logo_default is the
+   * logo, the variants are optional overrides for particular backgrounds, and
+   * the file on disk is the last resort rather than the first answer.
+   */
+  const logoDefault =
+    brandAssetUrl("logo_default") || brandData.logoUrl || brandLogo.colour;
+  const logoWhite = brandAssetUrl("logo_white");
+  const logoDark = brandAssetUrl("logo_dark");
+  const logoFooter = brandAssetUrl("logo_footer");
+  const logoSticky = brandAssetUrl("logo_sticky");
 
   const logoAlt = brandData.logoAlt || "CYVRIX Technologies";
   const companyDesc = publicValue(brandData.footerDescription);

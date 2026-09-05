@@ -431,10 +431,34 @@ const add = (f: AppSecFinding) => findings.push(f);
 
 // ── 35. Log exposure ───────────────────────────────────────────────────────
 {
+  /*
+   * A credential word inside a string literal is a label, not a leak.
+   *
+   * The rule matched anything between console.x( and the closing paren, so
+   * console.error("[password-reset] request failed", error) was reported as
+   * logging a credential. It logs an Error. Three files in the password-reset
+   * flow were failing this check on the name of the feature they belong to,
+   * which is the kind of finding that teaches people to ignore the check.
+   *
+   * Quoted strings are removed before the test; template literals keep only
+   * their ${...} expressions, so `token: ${token}` is still caught while
+   * "resetting password" is not. What remains is identifiers and property
+   * accesses, which is what actually reaches the log.
+   */
+  const stripLiteralText = (call: string) =>
+    call
+      .replace(/'(?:[^'\\]|\\.)*'/g, "''")
+      .replace(/"(?:[^"\\]|\\.)*"/g, '""')
+      .replace(/`(?:[^`\\]|\\.)*`/g, (literal) =>
+        [...literal.matchAll(/\$\{([^}]*)\}/g)].map((m) => m[1]).join(" ")
+      );
+
   const risky = sourceFiles
     .map((f) => ({ path: rel(f), source: read(f) }))
     .filter(({ source }) =>
-      /console\.(log|error|warn|info)\s*\([^)]*(password|secret|token|apiKey|passwordHash|authorization)/i.test(source)
+      [...source.matchAll(/console\.(?:log|error|warn|info)\s*\(([^)]*)/g)].some((call) =>
+        /(password|secret|token|apiKey|passwordHash|authorization)/i.test(stripLiteralText(call[1]))
+      )
     )
     .map((f) => f.path);
 

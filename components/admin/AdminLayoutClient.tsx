@@ -78,10 +78,19 @@ interface AdminLayoutClientProps {
    * boundary so a slow query cannot hold up the rest of the header.
    */
   notificationsSlot: React.ReactNode;
+  /**
+   * The admin chrome logo, from the logo_admin brand asset.
+   *
+   * That slot existed in the CMS and nothing read it, so replacing the image
+   * there changed nothing and gave no indication why. Falls back to the wordmark
+   * when no asset is set, which is what the header showed before.
+   */
+  adminLogoUrl?: string;
 }
 
 export function AdminLayoutClient({
   children,
+  adminLogoUrl,
   identity,
   notificationsSlot,
 }: AdminLayoutClientProps) {
@@ -192,8 +201,19 @@ export function AdminLayoutClient({
               <Menu className="h-4 w-4" />
             </button>
             <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
-              <Layers className="h-3.5 w-3.5" />
-              <span>CYVRIX Admin</span>
+              {adminLogoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={adminLogoUrl}
+                  alt="CYVRIX Admin"
+                  className="h-5 w-auto max-w-[140px] object-contain object-left"
+                />
+              ) : (
+                <>
+                  <Layers className="h-3.5 w-3.5" />
+                  <span>CYVRIX Admin</span>
+                </>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
