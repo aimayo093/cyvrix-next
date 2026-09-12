@@ -287,16 +287,10 @@ export async function getHomePageData() {
     };
   } catch (error) {
     console.warn("[public-cache] failed to load homepage data", error);
-    return {
-      pageData: null,
-      services: [],
-      testimonials: [],
-      partners: [],
-      trustedLogos: [],
-      complianceCards: [],
-      faqs: [],
-      caseStudies: [],
-    };
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -382,18 +376,10 @@ export async function getPublicPageData(slug: string) {
     };
   } catch (error) {
     console.warn(`[public-cache] failed to load ${slug} page data`, error);
-    return {
-      pageData: null,
-      services: [],
-      testimonials: [],
-      partners: [],
-      trustedLogos: [],
-      complianceCards: [],
-      faqs: [],
-      industries: [],
-      careerJobs: [],
-      contactSettingsRecord: null,
-    };
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -409,7 +395,10 @@ export async function getPublicServicesData() {
     });
   } catch (error) {
     console.warn("[public-cache] failed to load services", error);
-    return [];
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -465,7 +454,10 @@ export async function getPublicServiceProducts(): Promise<ServiceProduct[]> {
     });
   } catch (error) {
     console.warn("[public-cache] failed to load published service products", error);
-    return [];
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -481,7 +473,10 @@ export async function getPublicIndustriesData() {
     });
   } catch (error) {
     console.warn("[public-cache] failed to load industries", error);
-    return [];
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -517,7 +512,10 @@ export async function getPublicInsights() {
     });
   } catch (error) {
     console.warn("[public-cache] failed to load published insights", error);
-    return [];
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -533,7 +531,10 @@ export async function getPublicInsightDetail(slug: string) {
     });
   } catch (error) {
     console.warn(`[public-cache] failed to load published insight ${slug}`, error);
-    return null;
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -548,7 +549,10 @@ export async function getPublicLegalPage(slug: string) {
     });
   } catch (error) {
     console.warn(`[public-cache] failed to load legal page ${slug}`, error);
-    return null;
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -571,7 +575,10 @@ export async function getPublicServiceDetail(slug: string) {
     return { service, related };
   } catch (error) {
     console.warn(`[public-cache] failed to load service ${slug}`, error);
-    return { service: null, related: [] };
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -584,7 +591,10 @@ export async function getPublicIndustryDetail(slug: string) {
     return await prisma.industry.findFirst({ where: { slug, published: true } });
   } catch (error) {
     console.warn(`[public-cache] failed to load industry ${slug}`, error);
-    return null;
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -600,7 +610,10 @@ export async function getPublicCareerJobs() {
     });
   } catch (error) {
     console.warn("[public-cache] failed to load career jobs", error);
-    return [];
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
@@ -624,7 +637,10 @@ export async function getPublicCaseStudies() {
     });
   } catch (error) {
     console.warn("[public-cache] failed to load published case studies", error);
-    return [];
+    // Rethrown, not answered with an empty value: this function is
+    // cached for hours, so a fallback returned here would be stored and
+    // served long after the database recovered.
+    throw error;
   }
 }
 
