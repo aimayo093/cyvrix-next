@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { Bell, CircleUserRound, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { markAllNotificationsRead, markNotificationRead } from "@/lib/admin-actions";
 
 export type AdminIdentity = {
   name: string | null;
@@ -152,9 +153,21 @@ export function AdminNotificationsMenu({
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <p className="text-xs font-black uppercase tracking-widest text-slate-500">Notifications</p>
             {unreadCount > 0 && (
-              <span className="rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-black text-rose-700">
-                {unreadCount} unread
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-black text-rose-700">
+                  {unreadCount} unread
+                </span>
+                {/* The control that was missing entirely: readAt was written by
+                  * nothing, so the count could only ever grow. */}
+                <form action={markAllNotificationsRead}>
+                  <button
+                    type="submit"
+                    className="rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-[#0f5aab] transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
+                  >
+                    Mark all read
+                  </button>
+                </form>
+              </div>
             )}
           </div>
 
@@ -184,9 +197,22 @@ export function AdminNotificationsMenu({
                           {notification.body}
                         </p>
                       )}
-                      <p className="mt-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                        {relativeTime(notification.createdAt, openedAt)}
-                      </p>
+                      <div className="mt-1.5 flex items-center gap-3">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                          {relativeTime(notification.createdAt, openedAt)}
+                        </p>
+                        {!notification.read && (
+                          <form action={markNotificationRead}>
+                            <input type="hidden" name="id" value={notification.id} />
+                            <button
+                              type="submit"
+                              className="text-[10px] font-bold uppercase tracking-wider text-slate-400 underline-offset-2 transition-colors hover:text-[#0f5aab] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
+                            >
+                              Dismiss
+                            </button>
+                          </form>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </li>

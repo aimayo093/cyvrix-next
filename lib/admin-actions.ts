@@ -1714,7 +1714,7 @@ export async function createComplianceCard(formData: FormData) {
   const isVisible = formData.get("isVisible") === "true";
   const trustPublication = trustPublicationData(formData, false);
 
-  let locations = rawLocation
+  const locations = rawLocation
     .split(",")
     .map(l => l.trim().toLowerCase())
     .filter(l => l !== "footer" && l !== "");
@@ -1760,7 +1760,7 @@ export async function updateComplianceCard(formData: FormData) {
   const isVisible = formData.get("isVisible") === "true";
   const trustPublication = trustPublicationData(formData, false);
 
-  let locations = rawLocation
+  const locations = rawLocation
     .split(",")
     .map(l => l.trim().toLowerCase())
     .filter(l => l !== "footer" && l !== "");
@@ -3060,4 +3060,55 @@ export async function updateHomePageCMS(formData: FormData) {
   revalidatePath("/");
   updateHomeCache();
   redirect("/admin/home-cms?status=success&message=Home+page+content+updated+successfully!");
+}
+
+/*
+ * Marking notifications read.
+ *
+ * The Notification model has carried a readAt column since it was created and
+ * nothing ever wrote to it. The header counted unread rows, the dropdown drew a
+ * blue dot for each, and there was no control anywhere to clear one - so the
+ * badge only ever grew, and "14 unread" meant nothing more than "fourteen scans
+ * have run". A count that cannot go down is not a signal.
+ *
+ * Scoped to the signed-in administrator's own rows. Security scans create one
+ * notification per admin, so clearing yours must not clear anyone else's.
+ */
+export async function markAllNotificationsRead() {
+  const administrator = await requireAdmin();
+
+  const { count } = await prisma.notification.updateMany({
+    where: { userId: administrator.id, readAt: null },
+    data: { readAt: new Date() },
+  });
+
+  if (count > 0) {
+    await prisma.auditLog.create({
+      data: {
+        id: crypto.randomUUID(),
+        userId: administrator.id,
+        action: "notifications_marked_read",
+        entityType: "Notification",
+        metadata: { count },
+      },
+    });
+  }
+
+  revalidatePath("/admin", "layout");
+}
+
+/** Marks one notification read, so a single item can be dismissed. */
+export async function markNotificationRead(formData: FormData) {
+  const administrator = await requireAdmin();
+  const id = String(formData.get("id") ?? "");
+  if (!id) return;
+
+  // Scoped by userId as well as id: an id from a form field must not be able to
+  // touch another administrator's row.
+  await prisma.notification.updateMany({
+    where: { id, userId: administrator.id, readAt: null },
+    data: { readAt: new Date() },
+  });
+
+  revalidatePath("/admin", "layout");
 }

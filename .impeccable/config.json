@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "app/admin/page.tsx"
+        ],
+        "createdAt": "2026-09-12T04:51:04.337Z",
+        "reason": "Claude: ternary branches read as one pairing. Rendered pairs measured amber-700/amber-50 4.84:1 and slate-500/white 4.76:1, both AA. text-slate-500 never renders on bg-amber-50."
+      }
+    ]
+  }
+}
