@@ -3,11 +3,14 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 // Load exFAT and EPERM path patches
 import "./patch-exfat.js";
+import { integrationScriptSources } from "./lib/integrations";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+  // Approved third-party services only. lib/integrations.ts explains why that
+  // list is fixed in code rather than open to whatever the CMS is given.
+  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} ${integrationScriptSources().join(" ")}`.trim(),
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https:",
   "font-src 'self' data:",

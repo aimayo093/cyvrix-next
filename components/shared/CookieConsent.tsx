@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import * as React from "react";
+import { ThirdPartyScripts } from "@/components/shared/ThirdPartyScripts";
+import { INTEGRATIONS, type ActiveIntegration } from "@/lib/integrations";
 
 const Analytics = dynamic(
   () => import("@vercel/analytics/react").then((module) => module.Analytics),
@@ -109,6 +111,42 @@ function writeStoredConsent(choices: ConsentChoices, launcherHidden = false): St
   return consent;
 }
 
+/**
+ * Expires the cookies the enabled analytics services set on this domain.
+ *
+ * Tried against the host and each parent domain, because Google Analytics and
+ * similar services set cookies on the registrable domain rather than the exact
+ * host. A browser ignores an attempt against a domain it would never have
+ * allowed - a public suffix such as co.uk - so trying each one is harmless.
+ *
+ * A registry cookie name containing "<" stands for a family, as in
+ * "_ga_<measurement ID>", and matches by the prefix before it.
+ */
+function expireAnalyticsCookies() {
+  const names = INTEGRATIONS.filter((integration) => integration.category === "analytics").flatMap(
+    (integration) => integration.cookies,
+  );
+  const labels = window.location.hostname.split(".");
+  const domains = labels
+    .map((_, index) => labels.slice(index).join("."))
+    .filter((domain) => domain.includes("."));
+
+  for (const entry of document.cookie.split("; ")) {
+    const cookie = entry.split("=")[0];
+    if (!cookie) continue;
+    const matches = names.some((name) => {
+      const family = name.indexOf("<");
+      return family === -1 ? cookie === name : cookie.startsWith(name.slice(0, family));
+    });
+    if (!matches) continue;
+
+    document.cookie = `${cookie}=; Max-Age=0; Path=/`;
+    for (const domain of domains) {
+      document.cookie = `${cookie}=; Max-Age=0; Path=/; Domain=${domain}`;
+    }
+  }
+}
+
 type ConsentOptionProps = {
   checked: boolean;
   description: string;
@@ -134,7 +172,7 @@ function ConsentOption({ checked, description, id, label, onChange }: ConsentOpt
   );
 }
 
-export function CookieConsent() {
+export function CookieConsent({ integrations = [] }: { integrations?: ActiveIntegration[] }) {
   const hasLoaded = React.useSyncExternalStore(
     subscribeToConsent,
     getClientSnapshot,
@@ -151,12 +189,33 @@ export function CookieConsent() {
   const consent = savedConsent === undefined ? cookieConsent : savedConsent;
   const choices = draftChoices ?? consent ?? DEFAULT_CHOICES;
 
+  const hasThirdPartyAnalytics = integrations.some(
+    (integration) => INTEGRATIONS.find((item) => item.id === integration.id)?.category === "analytics",
+  );
+
   const save = React.useCallback((nextChoices: ConsentChoices) => {
+    const withdrawingAnalytics = consent?.analytics === true && !nextChoices.analytics;
     const nextConsent = writeStoredConsent(nextChoices, consent?.launcherHidden === true);
+
+    /*
+     * Withdrawing consent has to stop what consent started.
+     *
+     * A third-party analytics script keeps running once loaded - unmounting its
+     * <Script> does not unload it - and the cookies it set stay in the browser.
+     * So those cookies are expired and the page reloaded, which is the only
+     * reliable way to stop the scripts. Withdrawal should work as well as the
+     * original consent did, not merely be recorded.
+     */
+    if (withdrawingAnalytics && hasThirdPartyAnalytics) {
+      expireAnalyticsCookies();
+      window.location.reload();
+      return;
+    }
+
     setSavedConsent(nextConsent);
     setDraftChoices(nextChoices);
     setIsManaging(false);
-  }, [consent]);
+  }, [consent, hasThirdPartyAnalytics]);
 
   const openPreferences = React.useCallback(() => {
     setDraftChoices(consent ?? DEFAULT_CHOICES);
@@ -186,7 +245,12 @@ export function CookieConsent() {
 
   return (
     <>
-      {consent?.analytics ? <Analytics /> : null}
+      {consent?.analytics ? (
+        <>
+          <Analytics />
+          <ThirdPartyScripts integrations={integrations} />
+        </>
+      ) : null}
 
       {showPanel ? (
         <section

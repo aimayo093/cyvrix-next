@@ -9,6 +9,7 @@ import { LeadStatus, TicketStatus } from "@/generated/prisma";
 import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
 import { contactValueProblem, publicContactSettingKeys } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
+import { INTEGRATIONS, readStoredIntegrations } from "@/lib/integrations";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
 import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slots";
 import { getDefaultLegalDocument } from "@/lib/legal-content";
@@ -3111,4 +3112,81 @@ export async function markNotificationRead(formData: FormData) {
   });
 
   revalidatePath("/admin", "layout");
+}
+
+/*
+ * Third-party integrations.
+ *
+ * Super administrators only. Switching one on puts another company's script on
+ * every public page, which is a decision about what runs in visitors' browsers
+ * rather than a content edit.
+ */
+export async function updateIntegrations(formData: FormData) {
+  const administrator = await requireAdmin();
+  if (administrator.role !== "SUPER_ADMIN") {
+    redirect(
+      `/admin/integrations?status=error&message=${encodeURIComponent("Only a super administrator can change integrations.")}`,
+    );
+  }
+
+  const existing = await prisma.siteSetting.findUnique({ where: { key: "integrations" } });
+  const before = readStoredIntegrations(existing?.value);
+  const next: Record<string, { enabled: boolean; value: string }> = {};
+
+  for (const integration of INTEGRATIONS) {
+    const enabled = formData.get(`${integration.id}.enabled`) === "on";
+    const value = String(formData.get(`${integration.id}.value`) ?? "").trim();
+
+    if (enabled && !integration.pattern.test(value)) {
+      redirect(
+        `/admin/integrations?status=error&message=${encodeURIComponent(
+          `${integration.name}: that ${integration.fieldLabel.toLowerCase()} is not in the expected format. ${integration.formatHint}`,
+        )}`,
+      );
+    }
+
+    // A disabled service keeps a valid ID, so switching it back on does not mean
+    // finding it again. An invalid one is not stored at all.
+    next[integration.id] = { enabled, value: integration.pattern.test(value) ? value : "" };
+  }
+
+  await prisma.siteSetting.upsert({
+    where: { key: "integrations" },
+    create: { key: "integrations", value: next as Prisma.InputJsonObject, updatedAt: new Date() },
+    update: { value: next as Prisma.InputJsonObject, updatedAt: new Date() },
+  });
+
+  const changed = INTEGRATIONS.filter((integration) => {
+    const was = before[integration.id];
+    const now = next[integration.id];
+    return was.enabled !== now.enabled || was.value !== now.value;
+  }).map((integration) => integration.id);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: administrator.id,
+      action: "integrations_updated",
+      entityType: "SiteSetting",
+      entityId: "integrations",
+      // The IDs are public - they appear in page source - so recording which
+      // services changed is not a disclosure, and answers "what was on when".
+      metadata: {
+        changed,
+        enabled: INTEGRATIONS.filter((integration) => next[integration.id].enabled).map(
+          (integration) => integration.id,
+        ),
+      },
+    },
+  });
+
+  // Page scripts, the verification tags in the root layout and the cookie
+  // policy's list of services all read this one tag.
+  updatePublicCacheTags(PUBLIC_CACHE_TAGS.integrations);
+  revalidatePath("/admin/integrations");
+  redirect(
+    `/admin/integrations?status=success&message=${encodeURIComponent(
+      changed.length > 0 ? "Integrations saved." : "No changes to save.",
+    )}`,
+  );
 }

@@ -2,6 +2,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { withSanitisedRichText } from "@/lib/rich-text";
 import type { ServiceProduct, ServiceProductPriceDisplayMode } from "@/lib/cyvrix-data";
+import { readActiveIntegrations } from "@/lib/integrations";
 
 export const PUBLIC_CACHE_TAGS = {
   shell: "public-shell",
@@ -25,6 +26,7 @@ export const PUBLIC_CACHE_TAGS = {
   careers: "careers",
   contactSettings: "contact-settings",
   siteImages: "site-images",
+  integrations: "integrations",
 } as const;
 
 function verifiedTrustWhere({
@@ -695,4 +697,21 @@ export async function getSiteImages(): Promise<SiteImages> {
     console.warn("[public-cache] failed to load site images", error);
     return { engines: {}, industries: {} };
   }
+}
+
+/**
+ * The third-party integrations switched on in the CMS, validated.
+ *
+ * No catch, deliberately: a failure returned from a cached function is stored
+ * for hours, which is the fault fixed across this file. Callers catch and render
+ * no integrations for that request, which fails closed - nothing third-party
+ * loads when the setting cannot be read.
+ */
+export async function getPublicIntegrations() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(PUBLIC_CACHE_TAGS.integrations);
+
+  const row = await prisma.siteSetting.findUnique({ where: { key: "integrations" } });
+  return readActiveIntegrations(row?.value);
 }

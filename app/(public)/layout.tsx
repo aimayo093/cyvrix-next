@@ -3,7 +3,8 @@ import { Navbar } from "@/components/nav-main/Navbar";
 import { Footer } from "@/components/nav-main/Footer";
 import { CookieConsent } from "@/components/shared/CookieConsent";
 import { JsonLd } from "@/components/public/JsonLd";
-import { getPublicShellData } from "@/lib/public-cache";
+import { getPublicIntegrations, getPublicShellData } from "@/lib/public-cache";
+import type { ActiveIntegration } from "@/lib/integrations";
 import { organisationSchema, webSiteSchema } from "@/lib/structured-data";
 
 /**
@@ -75,9 +76,25 @@ export default function PublicLayout({
       <React.Suspense fallback={null}>
         <PublicFooter />
       </React.Suspense>
-      <CookieConsent />
+      <React.Suspense fallback={null}>
+        <PublicCookieConsent />
+      </React.Suspense>
     </>
   );
+}
+
+/**
+ * The consent banner, handed the integrations it may load once consent exists.
+ *
+ * A failed read renders the banner with none. This fails closed: a database
+ * problem can never mean a third-party script loading that nobody enabled.
+ */
+async function PublicCookieConsent() {
+  const integrations = await getPublicIntegrations().catch((error): ActiveIntegration[] => {
+    console.error("[public-layout] failed to load integrations", error);
+    return [];
+  });
+  return <CookieConsent integrations={integrations} />;
 }
 
 async function getPublicChromeData() {

@@ -23,6 +23,7 @@ import {
   PhoneCall,
   Menu,
   CircleUserRound,
+  Plug,
   Image as ImageIcon,
 } from "lucide-react";
 import { Logo } from "@/components/nav-main/Logo";
@@ -66,6 +67,7 @@ const adminNav = [
     { name: "System Status", href: "/admin/status", icon: Activity },
     { name: "Your Profile", href: "/admin/profile", icon: CircleUserRound },
     { name: "Settings", href: "/admin/settings", icon: Settings },
+    { name: "Integrations", href: "/admin/integrations", icon: Plug },
   ]},
 ];
 

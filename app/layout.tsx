@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-import { getFaviconMetadata } from "@/lib/public-cache";
+import { getFaviconMetadata, getPublicIntegrations } from "@/lib/public-cache";
+import type { ActiveIntegration } from "@/lib/integrations";
 
 // Self-hosted at build time. The previous Google Fonts @import in globals.css was
 // blocked by the site's own Content-Security-Policy, so neither face ever loaded.
@@ -30,6 +31,15 @@ export async function generateMetadata(): Promise<Metadata> {
   });
   
   const faviconUrl = faviconAsset?.mediaUrl || "/favicon.ico";
+
+  // Verification tokens from the Integrations CMS. Plain meta tags rather than
+  // scripts, so they need no consent and are present on every page.
+  const integrations = await getPublicIntegrations().catch((error): ActiveIntegration[] => {
+    console.error("[metadata] failed to load integrations", error);
+    return [];
+  });
+  const googleVerification = integrations.find((integration) => integration.id === "google-site-verification")?.value;
+  const bingVerification = integrations.find((integration) => integration.id === "bing-site-verification")?.value;
 
   return {
     title: {
@@ -71,6 +81,14 @@ export async function generateMetadata(): Promise<Metadata> {
       index: true,
       follow: true,
     },
+    ...(googleVerification || bingVerification
+      ? {
+          verification: {
+            ...(googleVerification ? { google: googleVerification } : {}),
+            ...(bingVerification ? { other: { "msvalidate.01": bingVerification } } : {}),
+          },
+        }
+      : {}),
   };
 }
 
