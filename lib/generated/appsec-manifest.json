@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-30T00:42:58.769Z",
-  "fileCount": 190,
-  "apiRouteCount": 12,
+  "generatedAt": "2026-10-02T20:42:11.475Z",
+  "fileCount": 192,
+  "apiRouteCount": 13,
   "mutatingRouteCount": 9,
   "findings": [
     {
@@ -13,8 +13,8 @@
       "limitation": "Finds the sink, not the source. React escapes everything else by default, but this cannot tell whether a value reaching one of these is attacker-controlled.",
       "evidence": [
         "components/admin/TwoFactorPanel.tsx",
-        "components/shared/SectionRenderer.tsx",
-        "components/public/JsonLd.tsx"
+        "components/public/JsonLd.tsx",
+        "components/shared/SectionRenderer.tsx"
       ]
     },
     {

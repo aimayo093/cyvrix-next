@@ -19,6 +19,7 @@
     "check:enums": "tsx scripts/check-enum-literals.mts",
     "test:ticket-access": "tsx scripts/test-ticket-access.mts",
     "test:totp": "tsx scripts/test-totp.mts",
+    "test:feed": "tsx scripts/test-executive-os-feed.mts",
     "scan:code": "tsx scripts/analyse-appsec.mts",
     "test:mfa": "tsx scripts/test-mfa-storage.mts"
   },

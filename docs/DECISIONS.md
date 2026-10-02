@@ -228,7 +228,35 @@ the thing to remember is that the write and the flush are separate steps.
 
 ---
 
-## 9. Open questions
+## 9. The Executive OS feed
+
+**The website shares its enquiries with the Executive OS (CYVRIX's operations
+app, repository aimayo093/AI-CEO) through a read-only pull feed, not a push.**
+
+Why: the Executive OS runs on the company's own computer, not on the internet,
+so the website cannot reach it. It calls
+`GET /api/integrations/executive-os/feed` every few minutes with a bearer
+token (`EXECUTIVE_OS_FEED_TOKEN`, at least 32 characters, compared in
+constant time). Unset, the route answers 404.
+
+What it returns is deliberately narrow:
+- **Leads** (contact form, consultation bookings, assessment and quote requests). Only the visitor's own answers from the payload are included.
+- **Tickets**, and **client-visible ticket messages** only.
+- **Privacy rights requests**, so the statutory clock is visible in both places.
+- **Unsubscribed newsletter addresses**, so outreach from the Executive OS never contacts them.
+
+It never writes, and never returns staff accounts, internal notes, staff-only
+messages, sessions or settings. The website stays the system of record for
+everything it owns: ticket replies and lead status are still managed in
+`/admin`.
+
+**Would change it:** the Executive OS moving to a public HTTPS host. The website
+could then push enquiries as they arrive and embed its chat assistant, which
+needs `script-src` and `frame-src` in `next.config.ts` to allow that host.
+
+---
+
+## 10. Open questions
 
 - **Service structure.** The site is built around four peer engines: Managed
   Services, Cloud & Cybersecurity, Field Engineering, Professional Services. A
