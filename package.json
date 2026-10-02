@@ -35,8 +35,8 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.20.0",
-    "next": "^16.2.9",
-    "nodemailer": "^9.0.0",
+    "next": "^16.3.8",
+    "nodemailer": "^10.0.13",
     "pg": "^8.22.0",
     "postgres": "^3.4.9",
     "qrcode": "^1.5.4",
@@ -57,10 +57,13 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.0.0",
-    "eslint-config-next": "16.3.2",
-    "prisma": "^7.8.0",
+    "eslint-config-next": "^16.3.8",
+    "prisma": "^7.9.1",
     "tailwindcss": "^4.3.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.3"
+  },
+  "overrides": {
+    "mysql2": "^3.23.1"
   }
 }

@@ -243,3 +243,9 @@ the thing to remember is that the write and the flush are separate steps.
 - **Three legal pages** (`acceptable-use-policy`, `data-processing-addendum`,
   `service-level-agreement`) exist in the CMS with no public route. An SLA and a
   DPA are per-client contract annexes and arguably should not be website pages.
+- **One accepted dependency advisory (2 Oct 2026).** `npm audit` still reports
+  `deepmerge-ts` (GHSA-ggr8-5vv4-36mx) inside the Prisma CLI's config loader.
+  It runs only at build time, on this project's own `prisma.config`, and no
+  Prisma 7 release fixes it yet; the only fix `npm audit` offers is a
+  downgrade to Prisma 6. Revisit when Prisma 7 ships a fix. `mysql2`, the
+  other Prisma CLI advisory, is held at a fixed 3.x by an `overrides` entry.
