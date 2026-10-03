@@ -1,7 +1,9 @@
 /**
  * Edge-compatible session verification.
  * Uses the Web Crypto API (no Node.js built-ins) so it can run in
- * the Next.js proxy (Edge runtime) without the `server-only` restriction.
+ * the Next.js proxy without the `server-only` restriction. Next 16 runs Proxy
+ * on the Node.js runtime rather than the edge, and Web Crypto is available in
+ * both, so nothing here depends on which one it gets.
  *
  * The token format mirrors lib/auth.ts so both runtimes share the same cookies.
  * Format:  base64url(JSON payload) . base64url(HMAC-SHA256 signature)

@@ -225,6 +225,19 @@ the thing to remember is that the write and the flush are separate steps.
 - **`new Date()` in a prerendered Server Component** either fails the build or
   freezes at build time. Use `connection()` inside a Suspense boundary, or state
   a fact that does not age ("since 2009" rather than "17 years").
+- **The request-time auth gate lives in `proxy.ts`, not `middleware.ts`.** Next
+  16 renamed the file convention; the function is `export async function proxy`.
+  Two consequences that are not visible from the file itself. Proxy now defaults
+  to the **Node.js runtime**, and setting a `runtime` config option in a proxy
+  file throws rather than being ignored — `lib/auth-edge.ts` stays on Web Crypto
+  so it is correct on either runtime. And `scripts/analyse-appsec.mts` names
+  `proxy.ts` individually in its scan list, guarded by `existsSync`: renaming the
+  file without updating that list drops the authentication gate out of the
+  Security Center scan **silently**, with no error and only `fileCount` moving.
+- **The gate is not the whole of authorisation.** A Server Function is a POST to
+  the route it is used from, so a matcher that excludes a path also removes proxy
+  coverage from the actions on it. Each action must therefore authorise itself;
+  `proxy.ts` is the first gate, never the only one.
 
 ---
 

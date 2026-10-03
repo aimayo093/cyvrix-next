@@ -47,7 +47,12 @@ function walk(dir: string): string[] {
   });
 }
 
-const sourceFiles = ["app", "components", "lib", "middleware.ts"]
+// `proxy.ts` is named individually because it is a file, not a directory. It
+// holds the authentication gate and the API rate limiter, so it has to be in
+// scope. Note the existsSync below: a rename drops it from the scan silently
+// rather than failing, so this entry must follow the Next file convention. It
+// was `middleware.ts` until Next 16 renamed the convention to `proxy`.
+const sourceFiles = ["app", "components", "lib", "proxy.ts"]
   .flatMap((entry) => {
     const full = path.join(ROOT, entry);
     if (!fs.existsSync(full)) return [];
