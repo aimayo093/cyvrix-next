@@ -1,10 +1,9 @@
 /**
- * Parsers for Vercel Web Analytics API responses.
+ * Parsers for the hosting platform's Web Analytics API responses.
  *
  * Every parser returns null for anything that is not the documented shape, so
  * an error body, a changed API or a proxy page can never become a figure on
- * the dashboard. Documented at
- * https://vercel.com/docs/rest-api/web-analytics/aggregates-page-views.
+ * the dashboard. API reference: DEPLOYMENT.md, #dashboard-analytics.
  */
 import { fillDailySeries, type DayCount } from "./series";
 
@@ -56,7 +55,7 @@ export function parseCount(json: unknown): { pageviews: number; visitors: number
   return isCount(pageviews) && isCount(visitors) ? { pageviews, visitors } : null;
 }
 
-/** `visits/aggregate?by=requestPath` → the top pages, without Vercel's "Others" bucket. */
+/** `visits/aggregate?by=requestPath` → the top pages, without the API's "Others" bucket. */
 export function parseTopPages(json: unknown): { path: string; pageviews: number }[] | null {
   if (!isRecord(json) || !Array.isArray(json.data)) return null;
   const pages: { path: string; pageviews: number }[] = [];

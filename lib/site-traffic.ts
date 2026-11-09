@@ -5,13 +5,13 @@ import type { DayCount } from "@/lib/dashboard/series";
 import { parseCount, parseDaily, parseTopPages } from "@/lib/dashboard/traffic-parse";
 
 /**
- * Website traffic for the admin Today dashboard, from the Vercel Web Analytics
+ * Website traffic for the admin Today dashboard, from the hosting platform's Web Analytics
  * API. Admin-only: never published, never logged with its token.
  *
  * The destination is fixed here, never taken from a request, and the token
- * only ever leaves in the Authorization header to api.vercel.com. Results are
- * cached for an hour per period and day, so the dashboard does not call Vercel
- * on every load. Setup: DEPLOYMENT.md, "Vercel Analytics on the dashboard".
+ * only ever leaves in the Authorization header to the API host. Results are
+ * cached for an hour per period and day, so the dashboard does not call the
+ * analytics API on every load. Setup: DEPLOYMENT.md, #dashboard-analytics.
  */
 
 export type Traffic = {
@@ -47,12 +47,12 @@ async function query(path: "count" | "aggregate", params: Record<string, string>
       cache: "no-store",
     });
     if (!response.ok) {
-      console.error("[site-traffic] Vercel Analytics request refused.", { endpoint: path, status: response.status });
+      console.error("[site-traffic] Analytics request refused.", { endpoint: path, status: response.status });
       return null;
     }
     return await response.json();
   } catch (error) {
-    console.error("[site-traffic] Vercel Analytics request failed.", {
+    console.error("[site-traffic] Analytics request failed.", {
       endpoint: path,
       reason: error instanceof Error ? error.name : "unknown",
     });

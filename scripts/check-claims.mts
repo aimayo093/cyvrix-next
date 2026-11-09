@@ -167,10 +167,16 @@ for (const entry of WITHHELD) {
 // The hosting platform is not named in public copy. It says nothing useful to a
 // visitor, and the company would rather its supplier chain were not advertised
 // on the site. Admin pages are exempt: those mentions are setup instructions
-// that only work if they name where to put the setting.
+// that only work if they name where to put the setting. components/admin is
+// admin-only UI imported solely by app/admin, so the same reasoning covers it;
+// shared code under lib/ is still checked.
 {
   const vendor = "Vercel";
-  const exemptPrefixes = [path.join("app", "admin"), path.join("app", "portal")];
+  const exemptPrefixes = [
+    path.join("app", "admin"),
+    path.join("app", "portal"),
+    path.join("components", "admin"),
+  ];
 
   for (const file of sourceFiles) {
     const relative = path.relative(process.cwd(), file);
@@ -183,7 +189,9 @@ for (const entry of WITHHELD) {
     const contents = fs
       .readFileSync(file, "utf8")
       .replace(/@vercel\/[\w/.-]+/g, "")
-      .replace(/\bVERCEL_[A-Z0-9_]+/g, "");
+      .replace(/\bVERCEL_[A-Z0-9_]+/g, "")
+      // The analytics API's host is an address the code must call, not prose.
+      .replace(/https:\/\/api\.vercel\.com\b/g, "");
 
     // A substring test rather than a word-boundary regex built from a template
     // literal. In a template literal `\b` is the backspace character, not a

@@ -52,7 +52,7 @@ Production media limitation:
 
 Vercel serverless file storage is ephemeral, so production image uploads should use object storage such as Vercel Blob, Cloudinary, Supabase Storage, or S3. The Prisma `MediaAsset` model is already storage-provider neutral.
 
-<a id="vercel-analytics"></a>
+<a id="dashboard-analytics"></a>
 ### Vercel Analytics on the dashboard
 
 The admin Today dashboard shows website visitors and top pages from the

@@ -282,3 +282,29 @@ Two traps worth remembering:
 - An update action writes **only the fields the form sent** (`formData.has`).
   Treating an absent field as `""` blanked the hero and featured image of a
   CMS page whenever its settings were saved.
+
+---
+
+## 11. The admin Today dashboard
+
+**The admin opens on what is waiting on staff, and every figure on it is real
+or marked as unreadable.**
+
+- A block whose data cannot be read shows `—` and says so. Loaders in
+  `lib/dashboard/loaders.ts` return `{ ok: false }` instead of throwing or
+  returning zero, because a zero on a dashboard reads as a quiet day.
+- **Overdue uses only dates staff set** — a ticket's `slaDueAt`, a lead's
+  `followUpDate`. There is no invented reply-time target; one would be a claim
+  about service levels the company has not made (§2).
+- Days are London days. The per-day SQL converts `createdAt` (stored as UTC
+  `timestamp` without zone) with `AT TIME ZONE 'UTC' AT TIME ZONE
+  'Europe/London'`. If the columns ever become `timestamptz`, drop the first
+  conversion.
+- **Website traffic comes from the Vercel Web Analytics API** and is
+  admin-only. It is never shown publicly: visitor numbers on the public site
+  would be a scale claim (§1) with no register behind it. Headline visitors use
+  the count endpoint — summing daily unique visitors would double-count anyone
+  who came twice. Cached for an hour; without `VERCEL_ANALYTICS_TOKEN` the tile
+  says "Not connected" (DEPLOYMENT.md).
+- `npm run test:dashboard` fails if an admin page is missing from the sidebar
+  (`lib/admin-nav.ts`), so a new page cannot be added and then be unreachable.
