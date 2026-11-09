@@ -2,6 +2,10 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * Fetches overview statistics for the Admin Dashboard.
+ *
+ * Returns null when the counts cannot be read. It used to return zeros, which
+ * on the dashboard reads as "no enquiries, no tickets" — a quiet day rather
+ * than a database the admin cannot reach.
  */
 export async function getAdminStats() {
   try {
@@ -20,17 +24,15 @@ export async function getAdminStats() {
     };
   } catch (error) {
     console.error("Error fetching admin stats:", error);
-    return {
-      totalClients: 0,
-      activeTickets: 0,
-      newLeads: 0,
-      totalSubscribers: 0,
-    };
+    return null;
   }
 }
 
 /**
  * Fetches recent audit logs/activities for the Admin Dashboard.
+ *
+ * Returns null when the audit log cannot be read, so the dashboard can say so
+ * instead of showing "no recent operations".
  */
 export async function getRecentActivities(limit = 5) {
   try {
@@ -48,7 +50,7 @@ export async function getRecentActivities(limit = 5) {
     }));
   } catch (error) {
     console.error("Error fetching recent activities:", error);
-    return [];
+    return null;
   }
 }
 

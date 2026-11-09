@@ -1,4 +1,5 @@
 import * as React from "react";
+import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import { connection } from "next/server";
 import { AlertCircle, BellRing, CheckCircle2, Clock, LockKeyhole, Radar, Save, ShieldCheck, Siren, XCircle } from "lucide-react";
 import { canManageSecurityCenter, requireAdmin } from "@/lib/auth";
@@ -28,18 +29,21 @@ const STATUS_META = {
   fail: { icon: XCircle, label: "Action", color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
 };
 
-export default function SecurityCenterPage() {
+type SecurityCenterSearch = { status?: string; message?: string };
+
+export default function SecurityCenterPage({ searchParams }: { searchParams: Promise<SecurityCenterSearch> }) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
-      <SecurityCenterPageContent />
+      <SecurityCenterPageContent searchParams={searchParams} />
     </React.Suspense>
   );
 }
 
-async function SecurityCenterPageContent() {
+async function SecurityCenterPageContent({ searchParams }: { searchParams: Promise<SecurityCenterSearch> }) {
   await connection();
   const administrator = await requireAdmin();
   if (!canManageSecurityCenter(administrator.role)) redirect("/admin");
+  const sp = await searchParams;
 
   const [securitySetting, lastScan, alertEvents] = await Promise.all([
     prisma.siteSetting.findUnique({ where: { key: "securityCenter" } }),
@@ -63,6 +67,7 @@ async function SecurityCenterPageContent() {
 
   return (
     <div className="space-y-8 pb-16">
+      <AdminStatusNotice status={sp.status} message={sp.message} />
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#2691F0]/20 bg-[#2691F0]/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#0f5aab]">

@@ -3,6 +3,7 @@
 import crypto from "node:crypto";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
 import { LeadStatus, TicketStatus } from "@/generated/prisma";
@@ -117,7 +118,36 @@ function trustPublicationData(formData: FormData, requiresPermission: boolean) {
   };
 }
 
-type PublicCacheTag = (typeof PUBLIC_CACHE_TAGS)[keyof typeof PUBLIC_CACHE_TAGS];
+/**
+ * Sends the administrator back to the form they submitted, with the reason it
+ * was refused shown on the page.
+ *
+ * Throwing from a form action replaced the whole admin with the public
+ * "Error 500" screen, and production builds hide the message, so a refusal as
+ * ordinary as "password too short" read as the site breaking. The destination
+ * is the submitting admin page (from the Referer, accepted only when it is an
+ * /admin path), so the message lands where the form is.
+ */
+async function returnWithError(message: string, fallbackPath: string): Promise<never> {
+  let target = fallbackPath;
+  const referer = (await headers()).get("referer");
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
+        url.searchParams.delete("status");
+        url.searchParams.delete("message");
+        target = `${url.pathname}${url.search}`;
+      }
+    } catch {
+      // A malformed Referer falls back to the known page.
+    }
+  }
+  const separator = target.includes("?") ? "&" : "?";
+  redirect(`${target}${separator}status=error&message=${encodeURIComponent(message)}`);
+}
+
+type PublicCacheTag =(typeof PUBLIC_CACHE_TAGS)[keyof typeof PUBLIC_CACHE_TAGS];
 
 function updatePublicCacheTags(...tags: PublicCacheTag[]) {
   for (const tag of new Set(tags)) {
@@ -192,7 +222,7 @@ export async function saveLegalPage(formData: FormData) {
   const legalSlug = sanitize((formData.get("slug") as string) || "");
   const definition = findPublicLegalPageDefinition(legalSlug);
   if (!definition) {
-    throw new Error("This legal document is not available for public publication.");
+    return returnWithError("This legal document is not available for public publication.", "/admin/legal-pages");
   }
 
   const title = sanitize((formData.get("title") as string) || "");
@@ -203,10 +233,10 @@ export async function saveLegalPage(formData: FormData) {
 
   if (status === "PUBLISHED") {
     if (formData.get("legalReviewConfirmed") !== "true") {
-      throw new Error("Confirm the legal review before publishing this document.");
+      return returnWithError("Confirm the legal review before publishing this document.", "/admin/legal-pages");
     }
     if (!document) {
-      throw new Error("Published legal documents need a title and substantive reviewed content.");
+      return returnWithError("Published legal documents need a title and substantive reviewed content.", "/admin/legal-pages");
     }
   }
 
@@ -394,7 +424,7 @@ async function serviceProductFormData(formData: FormData) {
   const description = sanitize((formData.get("description") as string) || "");
 
   if (!name || !description) {
-    throw new Error("A service product needs a name and a concise public description.");
+    return returnWithError("A service product needs a name and a concise public description.", "/admin/service-products");
   }
 
   const sortOrderCandidate = Number(formData.get("sortOrder"));
@@ -903,16 +933,16 @@ export async function updateSiteSetting(formData: FormData) {
   const keyValue = formData.get("key");
   const key = typeof keyValue === "string" ? keyValue.trim() : "";
   if (!/^[A-Za-z][A-Za-z0-9_-]{0,99}$/.test(key)) {
-    throw new Error("Invalid setting key.");
+    return returnWithError("Invalid setting key.", "/admin/settings");
   }
   if (!canUpdateSiteSetting(administrator.role, key)) {
-    throw new Error("You do not have permission to update this setting.");
+    return returnWithError("You do not have permission to update this setting.", "/admin/settings");
   }
 
   // Support dot-notation fields like value.name, value.email → build nested object
   const hasDotFields = Array.from(formData.keys()).some((k) => k.startsWith("value."));
   if (key === "emailConfig" && !hasDotFields) {
-    throw new Error("Email delivery identity must be updated through the approved settings form.");
+    return returnWithError("Email delivery identity must be updated through the approved settings form.", "/admin/settings");
   }
 
   let value: unknown;
@@ -932,10 +962,10 @@ export async function updateSiteSetting(formData: FormData) {
       const defaultFromEmail = incoming.defaultFromEmail ?? existingObj.defaultFromEmail ?? "";
       const adminNotificationEmail = incoming.adminNotificationEmail ?? existingObj.adminNotificationEmail ?? "";
       if (defaultFromEmail && !z.string().trim().email().max(254).safeParse(defaultFromEmail).success) {
-        throw new Error("Enter a valid default sender email address.");
+        return returnWithError("Enter a valid default sender email address.", "/admin/settings");
       }
       if (adminNotificationEmail && !z.string().trim().email().max(254).safeParse(adminNotificationEmail).success) {
-        throw new Error("Enter a valid admin notification email address.");
+        return returnWithError("Enter a valid admin notification email address.", "/admin/settings");
       }
       value = Object.fromEntries(
         [...emailIdentityFields].map((field) => [field, incoming[field] ?? existingObj[field] ?? ""]),
@@ -1146,43 +1176,61 @@ export async function createCmsPage(formData: FormData) {
   });
 
   revalidatePath("/admin/pages-cms");
+  // The cached page list (navigation page links, sitemap) is tagged, not
+  // path-cached, so a new page needs the tag cleared like any other edit.
+  updateCmsPageCache();
 }
 
 export async function updateCmsPage(formData: FormData) {
   await requireAdmin();
   const id = formData.get("id") as string;
-  const title = sanitize(formData.get("title") as string || "");
-  const heroTitle = sanitize(formData.get("heroTitle") as string || "");
-  const heroSubtitle = sanitize(formData.get("heroSubtitle") as string || "");
-  const featuredImage = sanitize(formData.get("featuredImage") as string || "");
-  const seoTitle = sanitize(formData.get("seoTitle") as string || "");
-  const seoDescription = sanitize(formData.get("seoDescription") as string || "");
-  const rawContentData = formData.get("contentData") as string || "{}";
 
-  let contentData = {};
-  try {
-    contentData = JSON.parse(rawContentData);
-  } catch (e) {
-    // ignore
+  // Only fields the form actually sent are written. The settings form sends
+  // title and SEO fields; treating every absent field as "" used to blank the
+  // hero title, hero subtitle and featured image, and replace the page's
+  // content block with {}, on every save.
+  //
+  // The slug is never written here. Each public page is a fixed route that
+  // looks its CMS record up by slug, so renaming one detaches the page from
+  // its content.
+  const textField = (name: string) =>
+    formData.has(name) ? sanitize((formData.get(name) as string) || "") : undefined;
+
+  const title = textField("title");
+  if (title !== undefined && !title.trim()) {
+    redirect(`/admin/pages-cms?edit=${encodeURIComponent(id)}&tab=settings&status=error&message=${encodeURIComponent("A page needs an internal title.")}`);
+  }
+
+  let contentData: unknown = undefined;
+  if (formData.has("contentData")) {
+    try {
+      contentData = JSON.parse((formData.get("contentData") as string) || "{}");
+    } catch {
+      redirect(`/admin/pages-cms?edit=${encodeURIComponent(id)}&tab=settings&status=error&message=${encodeURIComponent("Page data was not valid JSON, so nothing was saved.")}`);
+    }
   }
 
   const existing = await prisma.cmsPage.findUnique({ where: { id }, include: { ContentBlock: true } });
-  if (!existing) return;
+  if (!existing) {
+    redirect(`/admin/pages-cms?status=error&message=${encodeURIComponent("That page no longer exists.")}`);
+  }
 
   await prisma.cmsPage.update({
     where: { id },
     data: {
       title,
-      heroTitle,
-      heroSubtitle,
-      featuredImage,
-      seoTitle,
-      seoDescription,
+      heroTitle: textField("heroTitle"),
+      heroSubtitle: textField("heroSubtitle"),
+      featuredImage: textField("featuredImage"),
+      seoTitle: textField("seoTitle"),
+      seoDescription: textField("seoDescription"),
       updatedAt: new Date(),
     },
   });
 
-  if (existing.ContentBlock.length > 0) {
+  if (contentData === undefined) {
+    // No page data in this submission: leave the content block alone.
+  } else if (existing.ContentBlock.length > 0) {
     await prisma.contentBlock.update({
       where: { id: existing.ContentBlock[0].id },
       data: { content: contentData as any, updatedAt: new Date() }
@@ -1211,6 +1259,7 @@ export async function updateCmsPage(formData: FormData) {
   } else {
     updateCmsPageCache();
   }
+  redirect(`/admin/pages-cms?edit=${encodeURIComponent(id)}&tab=settings&status=success&message=${encodeURIComponent("Page settings saved.")}`);
 }
 
 export async function deleteCmsPage(formData: FormData) {
@@ -2408,7 +2457,7 @@ export async function createPortalUser(formData: FormData) {
   const clientCompanyId = formData.get("clientCompanyId") as string || "";
 
   if (!email || !password || !clientCompanyId) {
-    throw new Error("Missing required fields.");
+    return returnWithError("Missing required fields.", "/admin/client-management");
   }
 
   const { hashPassword } = await import("./password");
@@ -2675,11 +2724,11 @@ export async function resetPortalUserPassword(formData: FormData) {
   const newPassword = formData.get("newPassword") as string || "";
 
   if (!userId || !newPassword) {
-    throw new Error("User ID and new password are required.");
+    return returnWithError("User ID and new password are required.", "/admin/client-management");
   }
 
   if (newPassword.length < 8) {
-    throw new Error("Password must be at least 8 characters long.");
+    return returnWithError("Password must be at least 8 characters long.", "/admin/client-management");
   }
 
   const { hashPassword } = await import("./password");
@@ -2796,13 +2845,13 @@ export async function sendAdminEmail(formData: FormData) {
     body: formData.get("body"),
   });
   if (!parsed.success) {
-    throw new Error("Enter a valid recipient, subject and message.");
+    return returnWithError("Enter a valid recipient, subject and message.", "/admin/email");
   }
   const { to, subject, body: messageBody } = parsed.data;
 
   const smtp = getServerSmtpConfig();
   if (!smtp) {
-    throw new Error("Server-managed SMTP is not configured. Ask a Super Admin to configure the approved environment secrets.");
+    return returnWithError("Server-managed SMTP is not configured. Ask a Super Admin to configure the approved environment secrets.", "/admin/email");
   }
 
   const nodemailer = (await import("nodemailer")).default;
@@ -2841,7 +2890,7 @@ export async function updateHomePageCMS(formData: FormData) {
     where: { slug: "home" },
   });
   if (!homePage) {
-    throw new Error("Homepage page record not found in database.");
+    return returnWithError("Homepage page record not found in database.", "/admin/home-cms");
   }
 
   // 1. Hero

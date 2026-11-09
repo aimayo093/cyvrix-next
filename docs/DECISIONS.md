@@ -235,9 +235,12 @@ the thing to remember is that the write and the flush are separate steps.
   later positioning statement proposes four *pillars* — Managed IT, Cloud,
   Cybersecurity, Infrastructure — with Field Engineering and Professional
   Services as supporting capabilities. **Unresolved.**
-- **MFA enrolment and the sign-in challenge** are not built. The core and
-  storage layer are.
-- **Email verification** has no flow, so `emailVerified` cannot honestly be set.
+- ~~MFA enrolment and the sign-in challenge are not built.~~ Built since:
+  enrolment is on the admin Profile page and sign-in asks for a TOTP or
+  recovery code when `twoFactorEnrolledAt` is set (`app/(auth)/login`).
+- ~~Email verification has no flow.~~ Built since: `lib/email-verification.ts`
+  sends a single-use link, and `/verify-email` is the only place
+  `emailVerified` is set.
 - **CV upload** is unwired. The scanner is built and tested; it needs a private
   bucket, not `public-media`.
 - **Three legal pages** (`acceptable-use-policy`, `data-processing-addendum`,
@@ -256,3 +259,26 @@ the thing to remember is that the write and the flush are separate steps.
   latest). Each is its own upgrade with its own breaking changes. Apart from
   the build-time Sentry advisory above, `npm audit` reports nothing that only a
   major upgrade fixes.
+
+---
+
+## 10. Admin form refusals
+
+**An admin action that refuses input redirects back with `?status=error&message=`;
+it never throws.**
+
+A thrown error from a form action replaced the whole admin with the public
+"Error 500" screen, and production builds hide the message, so "password too
+short" looked like the site breaking. `returnWithError` in
+`lib/admin-actions.ts` sends the administrator back to the page they submitted
+from, and `AdminStatusNotice` shows the reason beside the form.
+`app/admin/error.tsx` exists for genuinely unexpected failures only.
+
+Two traps worth remembering:
+
+- `redirect()` works by throwing. A `try` around it swallows the redirect —
+  the email page reported "NEXT_REDIRECT" as a failure after the email had
+  been sent. Call `unstable_rethrow(err)` first in any such `catch`.
+- An update action writes **only the fields the form sent** (`formData.has`).
+  Treating an absent field as `""` blanked the hero and featured image of a
+  CMS page whenever its settings were saved.

@@ -1,4 +1,5 @@
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
@@ -21,7 +22,7 @@ export default function ClientManagementPage(props: any) {
 async function ClientManagementPageContent({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; status?: string; message?: string }>;
 }) {
   await connection();
   await requireAdmin();
@@ -44,6 +45,7 @@ async function ClientManagementPageContent({
 
   return (
     <div className="space-y-8 pb-16">
+      <AdminStatusNotice status={sp.status} message={sp.message} />
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="font-outfit text-3xl font-black text-[#041635]">Client Management</h1>

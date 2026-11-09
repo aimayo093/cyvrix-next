@@ -1,4 +1,5 @@
 import * as React from "react";
+import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Eye, EyeOff, Pencil, Plus, Tags } from "lucide-react";
@@ -34,7 +35,7 @@ async function loadServiceProductData() {
 export default async function ServiceProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string; newItem?: string }>;
+  searchParams: Promise<{ edit?: string; newItem?: string; status?: string; message?: string }>;
 }) {
   await connection();
   await requireAdmin();
@@ -55,6 +56,7 @@ export default async function ServiceProductsPage({
 
   return (
     <div className="space-y-8 pb-16">
+      <AdminStatusNotice status={params.status} message={params.message} />
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="flex items-center gap-3 font-outfit text-3xl font-black text-[#041635]"><Tags className="h-8 w-8 text-[#2691F0]" />Service Products</h1>

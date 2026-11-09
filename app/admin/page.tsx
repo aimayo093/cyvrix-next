@@ -35,11 +35,13 @@ async function AdminDashboardContent() {
     getRecentActivities(6)
   ]);
 
+  // A count that could not be read shows a dash, never a zero.
+  const show = (value: number | undefined) => (value === undefined ? "—" : value.toString());
   const stats = [
-    { name: "Active clients", value: statsData.totalClients.toString(), context: "Active company records", icon: Users },
-    { name: "New enquiries", value: statsData.newLeads.toString(), context: "Awaiting triage", icon: Shield },
-    { name: "Newsletter", value: statsData.totalSubscribers.toString(), context: "Subscribed contacts", icon: ArrowUpRight },
-    { name: "Open support tickets", value: statsData.activeTickets.toString(), context: "Not marked closed", icon: Server },
+    { name: "Active clients", value: show(statsData?.totalClients), context: "Active company records", icon: Users },
+    { name: "New enquiries", value: show(statsData?.newLeads), context: "Awaiting triage", icon: Shield },
+    { name: "Newsletter", value: show(statsData?.totalSubscribers), context: "Subscribed contacts", icon: ArrowUpRight },
+    { name: "Open support tickets", value: show(statsData?.activeTickets), context: "Not marked closed", icon: Server },
   ];
 
   return (
@@ -48,6 +50,13 @@ async function AdminDashboardContent() {
         <h1 className="font-outfit text-3xl font-black text-[#041635] mb-2">Systems Overview</h1>
         <p className="text-slate-500 font-medium">Operational records and recent audit activity.</p>
       </div>
+
+      {!statsData && (
+        <p role="alert" className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
+          The figures below could not be read from the database. They are shown as a dash rather than zero. Reload to
+          try again.
+        </p>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -75,9 +84,17 @@ async function AdminDashboardContent() {
             <Link href="/admin/audit-logs" className="text-xs font-bold text-[#2691F0] hover:underline">View all</Link>
           </div>
           <div className="divide-y divide-slate-50">
-            {activities.length > 0 ? (
+            {activities === null ? (
+              <div className="px-6 py-12 text-center text-amber-700">
+                <p className="text-sm font-semibold">Recent activity could not be read from the audit log.</p>
+              </div>
+            ) : activities.length > 0 ? (
               activities.map((item) => (
-                <div key={item.id} className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+                <Link
+                  key={item.id}
+                  href="/admin/audit-logs"
+                  className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors"
+                >
                   <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   <div className="flex-1">
                     <p className="text-sm font-bold text-[#041635]">{item.action}</p>
@@ -88,10 +105,8 @@ async function AdminDashboardContent() {
                       <span className="capitalize">{item.type.toLowerCase()}</span>
                     </p>
                   </div>
-                  <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <ChevronRight className="h-4 w-4 text-slate-300" />
-                  </button>
-                </div>
+                  <ChevronRight className="h-4 w-4 text-slate-300" aria-hidden="true" />
+                </Link>
               ))
             ) : (
               <div className="px-6 py-12 text-center text-slate-400">
@@ -129,6 +144,6 @@ async function AdminDashboardContent() {
   );
 }
 
-const ChevronRight = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+const ChevronRight = ({ className, ...rest }: React.SVGProps<SVGSVGElement>) => (
+  <svg className={className} {...rest}xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
 );

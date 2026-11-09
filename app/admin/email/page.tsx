@@ -5,7 +5,7 @@ import { requireAdmin } from "@/lib/auth";
 import { sendAdminEmail } from "@/lib/admin-actions";
 import { Button } from "@/components/shared/Button";
 import { Mail, AlertCircle, CheckCircle2, Send } from "lucide-react";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 
 export const metadata = { title: "Email Broadcasts" };
 
@@ -31,13 +31,23 @@ async function EmailBroadcastPageContent({
 
   async function handleSendEmail(formData: FormData) {
     "use server";
+    // redirect() works by throwing, so it must not run inside the try: the
+    // catch used to swallow the success redirect and report "NEXT_REDIRECT"
+    // as an error after the email had been sent.
+    let failed = false;
     try {
       await sendAdminEmail(formData);
-      redirect("/admin/email?status=success&message=Email sent successfully");
-    } catch (err: any) {
-      const msg = encodeURIComponent(err.message || "Failed to send email");
-      redirect(`/admin/email?status=error&message=${msg}`);
+    } catch (err) {
+      // Validation refusals redirect from inside the action; let them through.
+      unstable_rethrow(err);
+      console.error("[admin-email] Send failed.", { message: err instanceof Error ? err.message : "Unknown error" });
+      failed = true;
     }
+    redirect(
+      failed
+        ? `/admin/email?status=error&message=${encodeURIComponent("The mail server did not accept the message. Nothing was sent.")}`
+        : `/admin/email?status=success&message=${encodeURIComponent("Email sent successfully.")}`
+    );
   }
 
   return (
