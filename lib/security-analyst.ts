@@ -159,6 +159,22 @@ function severityForCheck(check: SecurityScanCheck): Severity {
 }
 
 function toFinding(check: SecurityScanCheck): AnalystFinding {
+  // A question the scan could not answer is a blind spot, not a defect. Ranking
+  // it as a low finding would put it in triage with "this check did not pass",
+  // which says something the scan never established. See docs/DECISIONS.md §5.
+  if (check.assessed === false) {
+    return {
+      id: check.id,
+      title: check.label,
+      severity: "info",
+      category: check.category,
+      observation: check.detail,
+      impact: "Not assessed, so this is neither a pass nor a failure. The scan could not answer the question on this run.",
+      remediation: "Read the detail to see why. Nothing needs fixing unless the reason given no longer holds.",
+      unknown: true,
+    };
+  }
+
   const guidance = CHECK_GUIDANCE[check.id] ?? DEFAULT_GUIDANCE;
   return {
     id: check.id,
@@ -342,7 +358,13 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
   const auth = authFindings(activity);
 
   const findings = [...scanFindings, ...hygiene.findings, ...auth.findings, icoRegistrationFinding()];
-  const blindSpots = [...hygiene.blindSpots, ...auth.blindSpots];
+  const blindSpots = [
+    ...scan.checks
+      .filter((check) => check.assessed === false)
+      .map((check) => `${check.label}: ${check.detail.replace(/^Not assessed\.\s*/, "").split(" Method:")[0]}`),
+    ...hygiene.blindSpots,
+    ...auth.blindSpots,
+  ];
 
   const counts = SEVERITY_ORDER.reduce(
     (acc, severity) => ({ ...acc, [severity]: findings.filter((f) => f.severity === severity).length }),

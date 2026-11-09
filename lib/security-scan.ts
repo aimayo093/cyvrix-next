@@ -428,6 +428,7 @@ export async function runSecurityScan(options: {
       label: "Live application-security probes",
       status: "warn",
       category: "security",
+      assessed: false,
       detail: "The live probes could not complete, so exposed source maps, exposed files, CORS and error detail were not assessed on this run.",
     });
   } finally {

@@ -243,3 +243,16 @@ the thing to remember is that the write and the flush are separate steps.
 - **Three legal pages** (`acceptable-use-policy`, `data-processing-addendum`,
   `service-level-agreement`) exist in the CMS with no public route. An SLA and a
   DPA are per-client contract annexes and arguably should not be website pages.
+- **One accepted dependency advisory (9 Nov 2026).** `npm audit` reports
+  `glob` (GHSA-3g3m-2fjr-6pw4) and its `minimatch` (GHSA-g3hv-75wg-m249)
+  inside `@sentry/bundler-plugins`. They run only at build time, when Sentry's
+  webpack plugin finds source maps to upload; nothing reaches the deployed site.
+  Sentry 10 requires `glob@^13` and the fix exists only in `glob@14`, so the only
+  fix offered is Sentry 11, a major upgrade. Revisit when moving to Sentry 11.
+- **Majors are held back on purpose.** The Security Center's outdated check
+  compares against npm's `latest`, majors included, so it will keep listing
+  `@sentry/nextjs` 11, `framer-motion` 14, `postgres` 4, `typescript` 7,
+  `eslint` 10 and `@types/node` (which should track the Node runtime, not npm's
+  latest). Each is its own upgrade with its own breaking changes. Apart from
+  the build-time Sentry advisory above, `npm audit` reports nothing that only a
+  major upgrade fixes.

@@ -9,6 +9,7 @@ import {
   recordSecurityAlertDelivery,
   sendSecurityAlertEmail,
 } from "@/lib/security-alerts";
+import { scanOrigin } from "@/lib/scan-origin";
 
 function isAuthorised(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -16,14 +17,6 @@ function isAuthorised(req: Request) {
   return req.headers.get("authorization") === `Bearer ${secret}`;
 }
 
-function getRequestOrigin(req: Request) {
-  const url = new URL(req.url);
-  const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  if (configured) {
-    return configured.startsWith("http") ? configured.replace(/\/+$/, "") : `https://${configured.replace(/\/+$/, "")}`;
-  }
-  return `${url.protocol}//${url.host}`;
-}
 
 export async function GET(req: Request) {
   if (!isAuthorised(req)) {
@@ -36,7 +29,7 @@ export async function GET(req: Request) {
   }
 
   const result = await runSecurityScan({
-    requestOrigin: getRequestOrigin(req),
+    requestOrigin: scanOrigin(req),
     trigger: "background",
     settings,
   });

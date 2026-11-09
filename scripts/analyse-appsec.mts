@@ -189,7 +189,13 @@ const add = (f: AppSecFinding) => findings.push(f);
   const outbound = sourceFiles
     .map((f) => ({ path: rel(f), source: read(f) }))
     .filter(({ source }) => /fetch\s*\(\s*(?!["'`/])[A-Za-z_$][\w.$]*/.test(source))
-    .filter(({ source }) => /(params|searchParams|body|formData|req\.|request\.)/.test(source))
+    // Request input means a route's params or a read from the Request object.
+    // The bare words "body" and "params" also match response.body and
+    // URLSearchParams, which flagged lib/appsec-checks.ts: it fetches this
+    // site's own origin and reads no request data at all.
+    .filter(({ source }) =>
+      /\{\s*params\s*\}|\bsearchParams\b|\b(req|request)\.(json|formData|text|url|headers|nextUrl|body)\b/.test(source)
+    )
     // A destination that comes from an environment variable is chosen by
     // whoever deploys the site, not by whoever sends the request — which is the
     // thing SSRF is about. These three read request data and fetch a URL, but

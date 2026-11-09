@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import { canManageSecurityCenter, getSession } from "@/lib/auth";
 import { getSecurityCenterSettings, runSecurityScan } from "@/lib/security-scan";
-
-function getRequestOrigin(req: Request) {
-  const url = new URL(req.url);
-  return `${url.protocol}//${url.host}`;
-}
+import { scanOrigin } from "@/lib/scan-origin";
 
 export async function POST(req: Request) {
   const session = await getSession();
@@ -18,7 +14,7 @@ export async function POST(req: Request) {
 
   const settings = await getSecurityCenterSettings();
   const result = await runSecurityScan({
-    requestOrigin: getRequestOrigin(req),
+    requestOrigin: scanOrigin(req),
     trigger: "manual",
     settings,
   });
