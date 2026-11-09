@@ -1,4 +1,6 @@
 import { MetadataRoute } from "next";
+import { cacheLife, cacheTag } from "next/cache";
+import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { blogPosts, industries, services } from "@/lib/cyvrix-data";
 import { findPublicLegalPageDefinition, publicLegalPageDefinitions } from "@/lib/legal-page-definitions";
 import { prisma } from "@/lib/prisma";
@@ -36,9 +38,12 @@ const staticRoutes: MetadataRoute.Sitemap = [
   ...blogPosts.map((post) => route(`/blog/${post.slug}`, 0.7, "monthly")),
 ];
 
-export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  try {
-    const [pages, posts, legalPages] = await Promise.all([
+async function getPublishedSitemapRecords() {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(PUBLIC_CACHE_TAGS.cmsPages, PUBLIC_CACHE_TAGS.insights, PUBLIC_CACHE_TAGS.legalPages);
+
+  return Promise.all([
       prisma.cmsPage.findMany({
         where: { visible: true, status: "PUBLISHED" },
         select: { slug: true, updatedAt: true },
@@ -55,6 +60,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         select: { slug: true, updatedAt: true },
       }),
     ]);
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  try {
+    const [pages, posts, legalPages] = await getPublishedSitemapRecords();
 
     const pageRoutes = pages.map((page) => ({
       ...route(`/${page.slug}`, 0.8, "weekly"),
