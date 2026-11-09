@@ -16,7 +16,7 @@ import { buildAnalystReport } from "@/lib/security-analyst";
 import {
   DEFAULT_SECURITY_CENTER_SETTINGS,
   parseSecurityCenterSettings,
-  type SecurityScanResult,
+  readScanResult,
 } from "@/lib/security-scan";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -286,14 +286,6 @@ function readMetadata(value: unknown): Record<string, unknown> {
   return isRecord(value) ? value : {};
 }
 
-function readScanResult(value: unknown): SecurityScanResult | null {
-  const result = readMetadata(value).result;
-  if (!isRecord(result) || !Array.isArray(result.checks)) return null;
-  if (typeof result.score !== "number" || typeof result.durationMs !== "number" || typeof result.timestamp !== "string") return null;
-  if (result.overallStatus !== "pass" && result.overallStatus !== "warn" && result.overallStatus !== "fail") return null;
-  if (result.trigger !== "manual" && result.trigger !== "background") return null;
-  return result as unknown as SecurityScanResult;
-}
 
 function ToggleField({
   name,

@@ -513,3 +513,29 @@ export function shouldNotifyForScan(result: SecurityScanResult, settings: Securi
   if (result.overallStatus === "fail") return true;
   return settings.alertOnWarnings && result.overallStatus === "warn";
 }
+
+function isScanRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/**
+ * The scan result stored in a SECURITY_SCAN_RUN audit entry's metadata, or
+ * null when the entry is missing, malformed or from an older format. Shared
+ * by the Security Centre and the admin Today dashboard.
+ */
+export function readScanResult(metadata: unknown): SecurityScanResult | null {
+  let value: unknown = metadata;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  const result = isScanRecord(value) ? value.result : undefined;
+  if (!isScanRecord(result) || !Array.isArray(result.checks)) return null;
+  if (typeof result.score !== "number" || typeof result.durationMs !== "number" || typeof result.timestamp !== "string") return null;
+  if (result.overallStatus !== "pass" && result.overallStatus !== "warn" && result.overallStatus !== "fail") return null;
+  if (result.trigger !== "manual" && result.trigger !== "background") return null;
+  return result as unknown as SecurityScanResult;
+}
