@@ -10,6 +10,13 @@
  */
 import { ageLabel, greeting, londonDayKey, londonDayKeys, parseRange } from "../lib/dashboard/time";
 import { fillDailySeries, seriesTotal, sparklinePoints } from "../lib/dashboard/series";
+import {
+  buildQueue,
+  summarySentence,
+  ticketNeedsStaff,
+  type QueueLead,
+  type QueueTicket,
+} from "../lib/dashboard/queue";
 
 let failures = 0;
 let total = 0;
@@ -52,6 +59,73 @@ check("ignore outside", seriesTotal(fillDailySeries([{ day: "2026-01-01", count:
 check("flat line no NaN", sparklinePoints([0, 0, 0], 80, 20).includes("NaN"), false);
 check("single point", sparklinePoints([5], 80, 20), "0,10 80,10");
 check("scaled", sparklinePoints([0, 10], 80, 20), "0,20 80,0");
+
+// ── Work queue ─────────────────────────────────────────────────────────────
+const now = new Date("2026-11-09T10:00:00Z");
+const past = new Date("2026-11-08T10:00:00Z");
+const today = new Date("2026-11-09T00:00:00Z");
+const older = new Date("2026-11-01T10:00:00Z");
+const twoDaysAgo = new Date("2026-11-07T09:00:00Z");
+const hoursAgo = new Date("2026-11-09T05:00:00Z");
+
+const t = (overrides: Partial<QueueTicket> = {}): QueueTicket => ({
+  id: "a",
+  ticketNumber: "CYV-0001",
+  subject: "Printer offline",
+  company: "Acme",
+  status: "OPEN",
+  slaDueAt: null,
+  createdAt: hoursAgo,
+  ...overrides,
+});
+const l = (overrides: Partial<QueueLead> = {}): QueueLead => ({
+  id: "a",
+  name: "Sam",
+  company: "Acme",
+  source: "contact_form",
+  status: "NEW",
+  followUpDate: null,
+  createdAt: hoursAgo,
+  ...overrides,
+});
+
+check("waiting on client excluded", buildQueue([t({ status: "WAITING_ON_CLIENT" })], [], now).length, 0);
+check("in progress only when overdue", buildQueue([t({ status: "IN_PROGRESS" })], [], now).length, 0);
+check("in progress overdue", buildQueue([t({ status: "IN_PROGRESS", slaDueAt: past })], [], now)[0].kind, "overdue");
+check("null sla never overdue", buildQueue([t({ status: "OPEN", slaDueAt: null })], [], now)[0].kind, "ticket");
+check(
+  "lead dedupe as follow up",
+  buildQueue([], [l({ status: "NEW", followUpDate: today })], now).map((i) => i.kind),
+  ["follow_up"]
+);
+check("won lead not followed up", buildQueue([], [l({ status: "WON", followUpDate: today })], now).length, 0);
+check(
+  "overdue sorts first",
+  buildQueue([t({ status: "OPEN", createdAt: older }), t({ id: "b", status: "OPEN", slaDueAt: past })], [], now)[0].kind,
+  "overdue"
+);
+check("uncapped", buildQueue([], Array.from({ length: 12 }, (_, i) => l({ id: `l${i}` })), now).length, 12);
+check("empty summary", summarySentence([], now), "Nothing is waiting on you.");
+check(
+  "summary",
+  summarySentence(
+    buildQueue(
+      [t({ status: "OPEN", slaDueAt: past })],
+      [l({ createdAt: twoDaysAgo }), l({ id: "x", createdAt: hoursAgo }), l({ id: "y" })],
+      now
+    ),
+    now
+  ),
+  "3 enquiries waiting, oldest 2 days. 1 ticket past its due date."
+);
+check(
+  "summary tickets only",
+  summarySentence(buildQueue([t(), t({ id: "b" })], [], now), now),
+  "2 tickets to pick up."
+);
+check("ticket link",buildQueue([t()], [], now)[0].href, "/admin/ticket-management?filter=all&view=a");
+check("lead link", buildQueue([], [l()], now)[0].href, "/admin/leads-crm?view=a");
+check("staff rule matches queue", ticketNeedsStaff({ status: "IN_PROGRESS", slaDueAt: null }, now), false);
 
 if (failures > 0) {
   console.error(`\n  ${failures} of ${total} checks failed.\n`);
