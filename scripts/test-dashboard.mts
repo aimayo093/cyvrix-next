@@ -8,6 +8,9 @@
  *
  * Run with `npm run test:dashboard`.
  */
+import fs from "node:fs";
+import path from "node:path";
+import { ADMIN_NAV, activeNavItem } from "../lib/admin-nav";
 import { ageLabel, greeting, londonDayKey, londonDayKeys, parseRange } from "../lib/dashboard/time";
 import { fillDailySeries, seriesTotal, sparklinePoints } from "../lib/dashboard/series";
 import {
@@ -164,6 +167,23 @@ check(
 check("count", parseCount({ version: 1, data: { pageviews: 1250, visitors: 980 } }), { pageviews: 1250, visitors: 980 });
 check("count bad shape", parseCount({ data: [] }), null);
 check("top pages bad shape",parseTopPages({ data: [{ pageviews: 1 }] }), null);
+
+// ── Admin navigation ───────────────────────────────────────────────────────
+const allNavHrefs = () => ADMIN_NAV.flatMap((group) => [...group.primary, ...(group.more ?? [])].map((item) => item.href));
+const missingAdminPages = () => {
+  const dir = path.join(process.cwd(), "app", "admin");
+  const pages = fs
+    .readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("[") && fs.existsSync(path.join(dir, entry.name, "page.tsx")))
+    .map((entry) => `/admin/${entry.name}`);
+  const linked = new Set(allNavHrefs());
+  return ["/admin", ...pages].filter((href) => !linked.has(href)).sort();
+};
+check("every admin page in nav once", allNavHrefs().length, new Set(allNavHrefs()).size);
+check("nav covers all pages", missingAdminPages(), []);
+check("active exact", activeNavItem("/admin")?.name, "Today");
+check("active prefix", activeNavItem("/admin/leads-crm")?.name, "Enquiries");
+check("dashboard not prefix of all", activeNavItem("/admin/unknown"), null);
 
 if (failures > 0) {
   console.error(`\n  ${failures} of ${total} checks failed.\n`);
