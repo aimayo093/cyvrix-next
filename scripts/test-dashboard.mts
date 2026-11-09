@@ -9,6 +9,7 @@
  * Run with `npm run test:dashboard`.
  */
 import { ageLabel, greeting, londonDayKey, londonDayKeys, parseRange } from "../lib/dashboard/time";
+import { fillDailySeries, seriesTotal, sparklinePoints } from "../lib/dashboard/series";
 
 let failures = 0;
 let total = 0;
@@ -39,6 +40,18 @@ check("greeting evening", greeting(new Date("2026-12-01T19:00:00Z"), "Paula"), "
 check("greeting no name", greeting(new Date("2026-12-01T09:00:00Z"), null), "Good morning.");
 check("age hours", ageLabel(new Date("2026-11-09T05:00:00Z"), new Date("2026-11-09T10:00:00Z")), "5h");
 check("age days", ageLabel(new Date("2026-11-07T09:00:00Z"), new Date("2026-11-09T10:00:00Z")), "2d");
+
+// ── Daily series ───────────────────────────────────────────────────────────
+const k = ["2026-11-07", "2026-11-08", "2026-11-09"];
+check("fill gaps", fillDailySeries([{ day: "2026-11-08", count: 2n }], k), [
+  { day: "2026-11-07", count: 0 },
+  { day: "2026-11-08", count: 2 },
+  { day: "2026-11-09", count: 0 },
+]);
+check("ignore outside", seriesTotal(fillDailySeries([{ day: "2026-01-01", count: 9 }], k)), 0);
+check("flat line no NaN", sparklinePoints([0, 0, 0], 80, 20).includes("NaN"), false);
+check("single point", sparklinePoints([5], 80, 20), "0,10 80,10");
+check("scaled", sparklinePoints([0, 10], 80, 20), "0,20 80,0");
 
 if (failures > 0) {
   console.error(`\n  ${failures} of ${total} checks failed.\n`);
