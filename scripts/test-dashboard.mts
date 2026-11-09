@@ -17,6 +17,7 @@ import {
   type QueueLead,
   type QueueTicket,
 } from "../lib/dashboard/queue";
+import { parseCount, parseDaily, parseTopPages } from "../lib/dashboard/traffic-parse";
 
 let failures = 0;
 let total = 0;
@@ -50,7 +51,7 @@ check("age days", ageLabel(new Date("2026-11-07T09:00:00Z"), new Date("2026-11-0
 
 // ── Daily series ───────────────────────────────────────────────────────────
 const k = ["2026-11-07", "2026-11-08", "2026-11-09"];
-check("fill gaps", fillDailySeries([{ day: "2026-11-08", count: 2n }], k), [
+check("fill gaps", fillDailySeries([{ day: "2026-11-08", count: BigInt(2) }], k), [
   { day: "2026-11-07", count: 0 },
   { day: "2026-11-08", count: 2 },
   { day: "2026-11-09", count: 0 },
@@ -126,6 +127,43 @@ check(
 check("ticket link",buildQueue([t()], [], now)[0].href, "/admin/ticket-management?filter=all&view=a");
 check("lead link", buildQueue([], [l()], now)[0].href, "/admin/leads-crm?view=a");
 check("staff rule matches queue", ticketNeedsStaff({ status: "IN_PROGRESS", slaDueAt: null }, now), false);
+
+// ── Vercel Web Analytics parsing ───────────────────────────────────────────
+const trafficKeys = londonDayKeys(30, new Date("2026-11-09T10:00:00Z"));
+const daily = parseDaily(
+  {
+    version: 1,
+    data: [
+      { timestamp: "2026-11-08T00:00:00.000Z", pageviews: 220, visitors: 180 },
+      { timestamp: "2026-11-09T00:00:00.000Z", pageviews: 30, visitors: 20 },
+    ],
+  },
+  trafficKeys
+);
+check("daily visitors", daily?.visitors, 200);
+check("daily pageviews", daily?.pageviews, 250);
+check("daily filled", daily?.daily.length, 30);
+check("daily value lands on its day", daily?.daily.find((d) => d.day === "2026-11-08")?.count, 180);
+check("error payload", parseDaily({ error: { code: "forbidden" } }, trafficKeys), null);
+check("data not array", parseDaily({ data: { pageviews: 3 } }, trafficKeys), null);
+check(
+  "available days",
+  parseDaily({ data: [{ timestamp: "2026-10-31T00:00:00.000Z", pageviews: 1, visitors: 1 }] }, trafficKeys)?.availableDays,
+  10
+);
+check(
+  "top pages drop Others",
+  parseTopPages({
+    data: [
+      { requestPath: "/", pageviews: 50, visitors: 40 },
+      { requestPath: "Others", pageviews: 9, visitors: 9 },
+    ],
+  }),
+  [{ path: "/", pageviews: 50 }]
+);
+check("count", parseCount({ version: 1, data: { pageviews: 1250, visitors: 980 } }), { pageviews: 1250, visitors: 980 });
+check("count bad shape", parseCount({ data: [] }), null);
+check("top pages bad shape",parseTopPages({ data: [{ pageviews: 1 }] }), null);
 
 if (failures > 0) {
   console.error(`\n  ${failures} of ${total} checks failed.\n`);

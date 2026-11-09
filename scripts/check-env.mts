@@ -108,6 +108,17 @@ for (const key of ["DATABASE_URL", "DIRECT_URL"]) {
   }
 }
 
+// Optional: the admin Today dashboard's traffic tile. Absent is fine — the
+// tile says "Not connected" — so this reports, it never counts as a problem.
+console.log("\n  Vercel Analytics on the dashboard (optional)");
+const analyticsToken = effective.get("VERCEL_ANALYTICS_TOKEN");
+const analyticsProject = effective.get("VERCEL_ANALYTICS_PROJECT_ID");
+console.log(`    VERCEL_ANALYTICS_TOKEN: ${analyticsToken ? `set in ${analyticsToken.file} (value hidden)` : "not set — traffic tile shows Not connected"}`);
+console.log(
+  `    VERCEL_ANALYTICS_PROJECT_ID: ${analyticsProject ? `set in ${analyticsProject.file}` : "not set — Vercel's own VERCEL_PROJECT_ID is used when deployed"}`
+);
+console.log(`    VERCEL_ANALYTICS_TEAM_ID: ${effective.get("VERCEL_ANALYTICS_TEAM_ID") ? "set" : "not set (fine for a personal account)"}`);
+
 console.log(
   problems === 0
     ? "\n  No issues found.\n"

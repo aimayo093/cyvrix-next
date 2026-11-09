@@ -52,6 +52,26 @@ Production media limitation:
 
 Vercel serverless file storage is ephemeral, so production image uploads should use object storage such as Vercel Blob, Cloudinary, Supabase Storage, or S3. The Prisma `MediaAsset` model is already storage-provider neutral.
 
+<a id="vercel-analytics"></a>
+### Vercel Analytics on the dashboard
+
+The admin Today dashboard shows website visitors and top pages from the
+[Vercel Web Analytics API](https://vercel.com/docs/rest-api/web-analytics/aggregates-page-views).
+Without these variables it shows "Not connected"; nothing else is affected.
+
+1. In Vercel, open Account Settings → Tokens and create a token scoped to the
+   team that owns this project. Give it the shortest expiry you are willing to
+   renew.
+2. In the project's Settings → Environment Variables, add
+   `VERCEL_ANALYTICS_TOKEN` for Production (and Preview if wanted).
+3. Optional: `VERCEL_ANALYTICS_PROJECT_ID` (defaults to Vercel's own
+   `VERCEL_PROJECT_ID`) and `VERCEL_ANALYTICS_TEAM_ID` for a team project.
+4. Redeploy. Figures are cached for an hour.
+
+The token is read only on the server and sent only to `api.vercel.com`.
+`npm run check:env` reports whether it is set without printing it. Hobby plans
+keep one month of analytics, so a 90-day view says how many days are available.
+
 ## Former Laravel Request
 
 The Laravel project was removed per earlier instruction. If CYVRIX later needs a Laravel backend/admin, host that separately on Laravel-friendly hosting and keep this Next.js app as either the frontend or a replacement full-stack platform.
