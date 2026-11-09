@@ -25,3 +25,11 @@ export const ADMIN_ROLES: UserRole[] = [
 export function isAdminRole(role: UserRole): boolean {
   return ADMIN_ROLES.includes(role);
 }
+
+/**
+ * Who may open the Security Centre, run scans, and see the security posture
+ * anywhere in the admin — including the Today dashboard's security card.
+ */
+export function canManageSecurityCenter(role: UserRole): boolean {
+  return role === "SUPER_ADMIN" || role === "ADMIN";
+}

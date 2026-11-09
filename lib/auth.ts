@@ -5,7 +5,7 @@ import { forbidden, redirect } from "next/navigation";
 import { connection } from "next/server";
 import { createHmac } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { ADMIN_ROLES, isAdminRole } from "@/lib/roles";
+import { ADMIN_ROLES, canManageSecurityCenter, isAdminRole } from "@/lib/roles";
 import type { User, UserRole } from "@/generated/prisma";
 export { hashPassword, verifyPassword } from "@/lib/password";
 
@@ -160,11 +160,7 @@ export async function requireSuperAdmin() {
 }
 
 // Re-exported so existing imports from "@/lib/auth" keep working.
-export { isAdminRole };
-
-export function canManageSecurityCenter(role: UserRole) {
-  return role === "SUPER_ADMIN" || role === "ADMIN";
-}
+export { isAdminRole, canManageSecurityCenter };
 
 export function canUpdateSiteSetting(role: UserRole, key: string) {
   return role === "SUPER_ADMIN" || (role === "ADMIN" && key === "securityCenter");

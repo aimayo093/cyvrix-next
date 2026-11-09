@@ -97,18 +97,18 @@ export function AdminLayoutClient({ children, identity, notificationsSlot, badge
 
       {/* Drawer, below lg */}
       {drawerOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button
-            type="button"
-            aria-label="Close menu"
-            onClick={() => setDrawerOpen(false)}
-            className="absolute inset-0 bg-[#041635]/40"
-          />
-          <aside
-            id="admin-drawer"
-            aria-label="Admin menu"
-            className="absolute inset-y-0 left-0 w-72 max-w-[85vw] border-r border-slate-200 bg-white shadow-xl"
-          >
+        // A modal: the page behind is inert while it is open (see <main>), so
+        // keyboard focus cannot leave the menu. The backdrop closes it on a
+        // click but is not a tab stop — the X button is the one close control.
+        <div
+          id="admin-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Admin menu"
+          className="fixed inset-0 z-40 lg:hidden"
+        >
+          <div aria-hidden="true" onClick={() => setDrawerOpen(false)} className="absolute inset-0 bg-[#041635]/40" />
+          <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] border-r border-slate-200 bg-white shadow-xl">
             <button
               type="button"
               onClick={() => setDrawerOpen(false)}
@@ -128,7 +128,7 @@ export function AdminLayoutClient({ children, identity, notificationsSlot, badge
         </div>
       )}
 
-      <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <main inert={drawerOpen} className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 lg:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <button

@@ -3,7 +3,7 @@ import { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { buildAnalystReport } from "@/lib/security-analyst";
 import { readScanResult } from "@/lib/security-scan";
-import { fillDailySeries, type DayCount } from "./series";
+import { fillDailySeries, scoreHistory, type DayCount } from "./series";
 import { londonDayKeys, type RangeDays } from "./time";
 import {
   buildQueue,
@@ -126,12 +126,13 @@ export function loadTiles(range: RangeDays, now: Date): Promise<Loaded<TileData>
       prisma.auditLog.findMany({
         where: { action: "SECURITY_SCAN_RUN", createdAt: { gte: since } },
         select: { metadata: true },
-        orderBy: { createdAt: "asc" },
+        // Newest first, so the cap keeps the latest scans (see scoreHistory).
+        orderBy: { createdAt: "desc" },
         take: 90,
       }),
     ]);
     const enquiryDaily = fillDailySeries(leadRows, keys);
-    const history = scans.map((scan) => readScanResult(scan.metadata)?.score).filter((s): s is number => typeof s === "number");
+    const history = scoreHistory(scans.map((scan) => readScanResult(scan.metadata)?.score));
     return {
       enquiries: { total: enquiryDaily.reduce((sum, day) => sum + day.count, 0), daily: enquiryDaily },
       openTickets: { now: openTickets, daily: fillDailySeries(ticketRows, keys) },

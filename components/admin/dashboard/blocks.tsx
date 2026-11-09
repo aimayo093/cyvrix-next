@@ -1,25 +1,24 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowRight, CheckCircle2, ShieldAlert, ShieldCheck } from "lucide-react";
-import { getSession } from "@/lib/auth";
 import { loadRecentActivity, loadSecuritySummary, loadWebsiteActivity } from "@/lib/dashboard/loaders";
 import { QUEUE_LIMIT, summarySentence, type QueueKind } from "@/lib/dashboard/queue";
 import { seriesTotal, type DayCount } from "@/lib/dashboard/series";
 import { ageLabel, greeting, type RangeDays } from "@/lib/dashboard/time";
-import { todayQueue, todayTiles, todayTraffic } from "./data";
+import { todayQueue, todayTiles, todayTraffic, todayViewer } from "./data";
 import { BlockError, CARD, dayLabel, RangeLinks, StatTile } from "./parts";
 import { RunScanButton } from "./RunScanButton";
 
 // ── Header ─────────────────────────────────────────────────────────────────
 
 export async function TodayHeader({ range }: { range: RangeDays }) {
-  const [session, queue] = await Promise.all([getSession(), todayQueue()]);
+  const [viewer, queue] = await Promise.all([todayViewer(), todayQueue()]);
   const now = new Date();
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
       <div className="min-w-0">
         <h1 className="font-outfit text-3xl font-black text-balance text-[#041635]">
-          {greeting(now, session?.user.name ?? null)}
+          {greeting(now, viewer.name)}
         </h1>
         <p className="mt-1 text-sm font-semibold text-slate-600">
           {queue.ok ? summarySentence(queue.data, now) : "The work queue could not be read."}
@@ -35,7 +34,7 @@ export async function TodayHeader({ range }: { range: RangeDays }) {
 const counts = (series: DayCount[]) => series.map((day) => day.count);
 
 export async function TilesBlock({ range }: { range: RangeDays }) {
-  const [tiles, traffic] = await Promise.all([todayTiles(range), todayTraffic(range)]);
+  const [tiles, traffic, viewer] = await Promise.all([todayTiles(range), todayTraffic(range), todayViewer()]);
   const data = tiles.ok ? tiles.data : null;
   const unread = !tiles.ok ? "Could not be read" : undefined;
 
@@ -44,6 +43,8 @@ export async function TilesBlock({ range }: { range: RangeDays }) {
       <span title="Set VERCEL_ANALYTICS_TOKEN — see DEPLOYMENT.md">Not connected</span>
     ) : traffic.state === "unavailable" ? (
       "Could not reach Vercel Analytics"
+    ) : traffic.traffic.availableDays === 0 ? (
+      "Vercel Web Analytics · no visits recorded yet"
     ) : traffic.traffic.availableDays < range ? (
       `Vercel Web Analytics, production · last ${traffic.traffic.availableDays} days available`
     ) : (
@@ -68,14 +69,16 @@ export async function TilesBlock({ range }: { range: RangeDays }) {
         trendLabel={`Tickets opened per day over ${range} days`}
         note={unread ?? "Now · trend is tickets opened"}
       />
-      <StatTile
-        label="Security score"
-        value={data?.security.score ?? null}
-        href="/admin/security-center"
-        trend={data && data.security.history.length > 1 ? data.security.history : undefined}
-        trendLabel={`Security score of each scan over ${range} days`}
-        note={unread ?? (data?.security.score === null ? "No scan in this period" : "Latest scan")}
-      />
+      {viewer.canSeeSecurity && (
+        <StatTile
+          label="Security score"
+          value={data?.security.score ?? null}
+          href="/admin/security-center"
+          trend={data && data.security.history.length > 1 ? data.security.history : undefined}
+          trendLabel={`Security score of each scan over ${range} days`}
+          note={unread ?? (data?.security.score === null ? "No scan in this period" : "Latest scan")}
+        />
+      )}
       <StatTile
         label="Newsletter"
         value={data?.newsletter.now ?? null}
@@ -166,6 +169,9 @@ export async function QueueBlock() {
 // ── Security ───────────────────────────────────────────────────────────────
 
 export async function SecurityBlock() {
+  // Roles that cannot open the Security Centre do not see its posture here.
+  const viewer = await todayViewer();
+  if (!viewer.canSeeSecurity) return null;
   const summary = await loadSecuritySummary();
   const urgent = summary.ok && summary.data && ["critical", "high"].includes(summary.data.highestSeverity ?? "");
   const Icon = urgent ? ShieldAlert : ShieldCheck;

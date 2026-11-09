@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife } from "next/cache";
 import { londonDayKeys, type RangeDays } from "@/lib/dashboard/time";
 import type { DayCount } from "@/lib/dashboard/series";
-import { parseCount, parseDaily, parseTopPages } from "@/lib/dashboard/traffic-parse";
+import { parseCount, parseDaily, parseTopPages, trafficCacheProfile } from "@/lib/dashboard/traffic-parse";
 
 /**
  * Website traffic for the admin Today dashboard, from the hosting platform's Web Analytics
@@ -62,8 +62,15 @@ async function query(path: "count" | "aggregate", params: Record<string, string>
 
 async function fetchTraffic(range: RangeDays, todayKey: string): Promise<TrafficResult> {
   "use cache";
-  cacheLife("hours");
+  // Exactly one cacheLife call per run, chosen once the result is known: a
+  // good answer is kept for the hour, a failure or missing token is retried
+  // within minutes rather than showing "Could not reach" for an hour.
+  const result = await readTraffic(range, todayKey);
+  cacheLife(trafficCacheProfile(result));
+  return result;
+}
 
+async function readTraffic(range: RangeDays, todayKey: string): Promise<TrafficResult> {
   if (!config()) return { state: "not_configured" };
 
   const keys = londonDayKeys(range, new Date(`${todayKey}T12:00:00Z`));

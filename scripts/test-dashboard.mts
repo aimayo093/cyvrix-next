@@ -12,7 +12,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { ADMIN_NAV, activeNavItem } from "../lib/admin-nav";
 import { ageLabel, greeting, londonDayKey, londonDayKeys, parseRange } from "../lib/dashboard/time";
-import { fillDailySeries, seriesTotal, sparklinePoints } from "../lib/dashboard/series";
+import { fillDailySeries, scoreHistory, seriesTotal, sparklinePoints } from "../lib/dashboard/series";
+import { canManageSecurityCenter } from "../lib/roles";
 import {
   buildQueue,
   summarySentence,
@@ -20,7 +21,7 @@ import {
   type QueueLead,
   type QueueTicket,
 } from "../lib/dashboard/queue";
-import { parseCount, parseDaily, parseTopPages } from "../lib/dashboard/traffic-parse";
+import { parseCount, parseDaily, parseTopPages, trafficCacheProfile } from "../lib/dashboard/traffic-parse";
 
 let failures = 0;
 let total = 0;
@@ -145,7 +146,8 @@ const daily = parseDaily(
 );
 check("daily visitors", daily?.visitors, 200);
 check("daily pageviews", daily?.pageviews, 250);
-check("daily filled", daily?.daily.length, 30);
+// Data starts on 8 Nov, so the series covers 8–9 Nov only (see review 3 below).
+check("daily covers available days", daily?.daily.length, 2);
 check("daily value lands on its day", daily?.daily.find((d) => d.day === "2026-11-08")?.count, 180);
 check("error payload", parseDaily({ error: { code: "forbidden" } }, trafficKeys), null);
 check("data not array", parseDaily({ data: { pageviews: 3 } }, trafficKeys), null);
@@ -167,6 +169,28 @@ check(
 check("count", parseCount({ version: 1, data: { pageviews: 1250, visitors: 980 } }), { pageviews: 1250, visitors: 980 });
 check("count bad shape", parseCount({ data: [] }), null);
 check("top pages bad shape",parseTopPages({ data: [{ pageviews: 1 }] }), null);
+
+// ── Final review fixes ─────────────────────────────────────────────────────
+// Review 1: the newest scan is the "latest", whatever the window holds.
+check("score history oldest first", scoreHistory([95, undefined, 90, 80]), [80, 90, 95]);
+// Review 2: only roles that can open the Security Centre see its posture.
+check("security posture for admin", canManageSecurityCenter("ADMIN"), true);
+check("no security posture for content manager", canManageSecurityCenter("CONTENT_MANAGER"), false);
+check("no security posture for finance viewer", canManageSecurityCenter("FINANCE_VIEWER"), false);
+// Review 3: days the analytics provider has no data for are not drawn as zero.
+const shortHistory = parseDaily(
+  { data: [{ timestamp: "2026-10-31T00:00:00.000Z", pageviews: 1, visitors: 1 }] },
+  trafficKeys
+);
+check("short history series covers only available days", shortHistory?.daily.length, 10);
+check("short history series starts at first available day", shortHistory?.daily[0]?.day, "2026-10-31");
+const noHistory = parseDaily({ data: [] }, trafficKeys);
+check("no data yet: no available days", noHistory?.availableDays, 0);
+check("no data yet: no series", noHistory?.daily, []);
+// Review 4: a failed call is cached briefly, a good one for the hour.
+check("unavailable cached for minutes", trafficCacheProfile({ state: "unavailable" }), "minutes");
+check("ok cached for hours", trafficCacheProfile({ state: "ok" }), "hours");
+check("not configured cached for minutes", trafficCacheProfile({ state: "not_configured" }), "minutes");
 
 // ── Admin navigation ───────────────────────────────────────────────────────
 const allNavHrefs = () => ADMIN_NAV.flatMap((group) => [...group.primary, ...(group.more ?? [])].map((item) => item.href));

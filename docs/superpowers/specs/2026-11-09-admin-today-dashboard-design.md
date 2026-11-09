@@ -95,7 +95,7 @@ Each tile links to its page. The visitors tile is described in §2.6.
 ### 2.3 "Needs you" queue
 
 Up to 8 rows; a "View all" link goes to the relevant list. One query per
-source, merged in code. Order: overdue first, then oldest first.
+source, merged in code. Order: overdue first, then follow-ups that are due (a date staff set, like an SLA), then oldest first.
 
 | Badge | Source | Rule |
 | --- | --- | --- |

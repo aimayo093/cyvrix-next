@@ -14,6 +14,18 @@ export function fillDailySeries(rows: { day: string; count: number | bigint }[],
   return keys.map((day) => ({ day, count: byDay.get(day) ?? 0 }));
 }
 
+/**
+ * Scan scores for a trend line, oldest first, from scores read newest first.
+ *
+ * The query reads newest first so that a capped read keeps the latest scans;
+ * reading oldest first with a cap dropped the newest once a period held more
+ * scans than the cap, and the "Latest scan" tile showed an old score.
+ * Unreadable entries (undefined) are skipped.
+ */
+export function scoreHistory(scoresNewestFirst: (number | undefined)[]): number[] {
+  return scoresNewestFirst.filter((score): score is number => typeof score === "number").reverse();
+}
+
 export function seriesTotal(series: DayCount[]): number {
   return series.reduce((sum, point) => sum + point.count, 0);
 }

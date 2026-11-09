@@ -38,14 +38,28 @@ export function parseDaily(
     pageviews += row.pageviews;
   }
 
+  // Days before the first day with data are unknown, not zero: a plan's
+  // retention window, or analytics enabled part-way through the period. The
+  // series is cut to the days the provider has, so the chart never draws a
+  // run of zero traffic that is really "no data".
   const today = keys.at(-1);
   const earliest = rows.map((row) => row.day).sort()[0];
   const availableDays =
     earliest && today
-      ? Math.min(keys.length, Math.round((Date.parse(today) - Date.parse(earliest)) / 86_400_000) + 1)
-      : keys.length;
+      ? Math.max(0, Math.min(keys.length, Math.round((Date.parse(today) - Date.parse(earliest)) / 86_400_000) + 1))
+      : 0;
 
-  return { daily: fillDailySeries(rows, keys), visitors, pageviews, availableDays };
+  const daily = availableDays === 0 ? [] : fillDailySeries(rows, keys).slice(-availableDays);
+  return { daily, visitors, pageviews, availableDays };
+}
+
+/**
+ * How long a traffic result may be cached. A good answer holds for the hour;
+ * a failure or a missing token is re-checked within minutes, so a brief outage
+ * or a newly added token does not show "Could not reach" for an hour.
+ */
+export function trafficCacheProfile(result: { state: "ok" | "unavailable" | "not_configured" }): "hours" | "minutes" {
+  return result.state === "ok" ? "hours" : "minutes";
 }
 
 /** `visits/count` → unique visitors and page views across the whole period. */
