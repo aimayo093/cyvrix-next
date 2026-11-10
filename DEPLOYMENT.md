@@ -81,6 +81,8 @@ ended sessions). Nothing depends on it, so it can go before or after a deploy.
 
 ## Paperclip AI drafts (20261111120000)
 
+**Done 10 November 2026:** applied to production (Cyvrix-Technology) and verified: 17 columns, 4 indexes, the four statuses, row-level security on, no anon or authenticated access.
+
 Apply `prisma/migrations/20261111120000_agent_drafts` to production. It adds
 the `AgentDraft` table (row-level security on, no anon or authenticated
 access). Nothing uses it until `PAPERCLIP_DRAFT_TOKEN` is set, so it can go
