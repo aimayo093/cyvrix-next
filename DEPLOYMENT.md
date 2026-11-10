@@ -81,6 +81,8 @@ ended sessions). Nothing depends on it, so it can go before or after a deploy.
 
 ## Tamper-evident audit log (20261111000000)
 
+**Done 10 November 2026:** applied to production (Cyvrix-Technology) and verified: all 455 existing entries chained and verified, three triggers active, an UPDATE and a DELETE refused, and no anon or authenticated access to the functions.
+
 Apply `prisma/migrations/20261111000000_tamper_evident_audit_log` to
 production. It adds three columns to `AuditLog`, chains every existing entry
 in the order written, and installs triggers that chain each new entry and
