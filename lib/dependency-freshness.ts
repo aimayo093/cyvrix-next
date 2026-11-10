@@ -38,3 +38,16 @@ export function upgradeTarget(name: string, declared: string, latest: string, ru
   if (/^\d+\.\d+\.\d+-/.test(latest.trim())) return null;
   return compareVersions(declared, latest) < 0 ? latest : null;
 }
+
+export type DependencyHold = { by: string; range: string; maxMajor: number };
+
+/**
+ * The installed packages that stop `target` being adopted: those whose peer
+ * range for this dependency ends below the target's major. Empty when nothing
+ * holds it back, so the package is simply outdated.
+ */
+export function heldBackBy(target: string, holds: DependencyHold[] | undefined): DependencyHold[] {
+  const targetMajor = major(target);
+  if (!holds || Number.isNaN(targetMajor)) return [];
+  return holds.filter((hold) => hold.maxMajor < targetMajor);
+}

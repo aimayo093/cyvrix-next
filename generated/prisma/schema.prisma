@@ -1051,12 +1051,33 @@ model User {
   createdAt              DateTime       @default(now())
   updatedAt              DateTime
   ClientCompany          ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  sessions               UserSession[]
 
   @@schema("public")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// Email verification links. The token is never stored, only its SHA-256 hash.
+/// One signed-in device. The session cookie names its row, so a device can be
+/// listed and signed out on its own from the Security Center.
+model UserSession {
+  id            String    @id
+  userId        String
+  createdAt     DateTime  @default(now())
+  lastSeenAt    DateTime  @default(now())
+  expiresAt     DateTime
+  userAgent     String?
+  ipAddress     String?
+  revokedAt     DateTime?
+  /// signed_out, revoked_by_admin, all_sessions_ended
+  revokedReason String?
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, revokedAt])
+  @@index([expiresAt])
+  @@schema("public")
+}
+
 /// A rate-limit window shared by every server instance. The key is an HMAC of
 /// the limit's name and subject (address or email), never the raw value.
 model RateLimitBucket {

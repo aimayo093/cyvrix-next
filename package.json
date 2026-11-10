@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "node --env-file-if-exists=.env --env-file-if-exists=.env.local ./node_modules/prisma/build/index.js generate && npm run scan:code && npm run check:cms && npm run check:enums && next build --webpack",
+    "build": "node --env-file-if-exists=.env --env-file-if-exists=.env.local ./node_modules/prisma/build/index.js generate && npm run scan:code && npm run scan:deps && npm run check:cms && npm run check:enums && next build --webpack",
     "start": "next start",
     "lint": "eslint",
     "prisma:generate": "prisma generate",
@@ -22,7 +22,8 @@
     "scan:code": "tsx scripts/analyse-appsec.mts",
     "test:mfa": "tsx scripts/test-mfa-storage.mts",
     "test:dashboard": "tsx scripts/test-dashboard.mts",
-    "test:appsec": "tsx scripts/test-appsec-probes.mts"
+    "test:appsec": "tsx scripts/test-appsec-probes.mts",
+    "scan:deps": "tsx scripts/dependency-holds.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
@@ -57,9 +58,11 @@
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/semver": "^7.8.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.6",
     "prisma": "^7.10.1",
+    "semver": "^7.8.6",
     "tailwindcss": "^4.3.5",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3"

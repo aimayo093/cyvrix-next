@@ -4,7 +4,8 @@ import path from "node:path";
 import type { Prisma } from "@/generated/prisma";
 import { appSecManifestAge, liveAppSecChecks, staticAppSecChecks } from "@/lib/appsec-checks";
 import { prisma } from "@/lib/prisma";
-import { cleanVersion, upgradeTarget } from "@/lib/dependency-freshness";
+import { cleanVersion, heldBackBy, upgradeTarget, type DependencyHold } from "@/lib/dependency-freshness";
+import dependencyHolds from "@/lib/generated/dependency-holds.json";
 import { getEmailIdentity, normaliseEmailRecipients } from "@/lib/email-config";
 
 export type SecurityCheckStatus = "pass" | "warn" | "fail";
@@ -197,7 +198,24 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
       }),
     );
 
-    const outdated = results.filter((result): result is Exclude<Outcome, string> => typeof result === "object");
+    const behind = results.filter((result): result is Exclude<Outcome, string> => typeof result === "object");
+    // A newer major that an installed package's peer range does not admit
+    // cannot be adopted yet. It is listed with what holds it, not counted as
+    // outdated: there is no action to take, and npm audit in CI still blocks
+    // any package with a known vulnerability.
+    const holdsFor = (dependencyHolds as { holds: Record<string, DependencyHold[]> }).holds;
+    const heldBack = behind
+      .map((item) => ({ ...item, holders: heldBackBy(item.target, holdsFor[item.name]) }))
+      .filter((item) => item.holders.length > 0);
+    const outdated = behind.filter((item) => !heldBack.some((held) => held.name === item.name));
+    const held = heldBack.length
+      ? ` Held back, not yet adoptable: ${heldBack
+          .map((item) => {
+            const names = [...new Set(item.holders.map((hold) => hold.by))];
+            return `${item.name} ${item.target} (${names.slice(0, 2).join(", ")}${names.length > 2 ? ` and ${names.length - 2} more` : ""} support up to ${Math.min(...item.holders.map((hold) => hold.maxMajor))}.x)`;
+          })
+          .join("; ")}.`
+      : "";
     // A package the registry did not answer for is unknown, not up to date.
     const unreachable = entries.filter((_, index) => results[index] === "unreachable").map(([name]) => name);
     const unknown = unreachable.length
@@ -215,9 +233,10 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
               .slice(0, 8)
               .map((item) => `${item.name} ${item.current} -> ${item.target}`)
               .join(", ")}${outdated.length > 8 ? ", ..." : ""}.`
-          : `${entries.length - unreachable.length} of ${entries.length} direct packages are on their latest release.`) +
+          : `${entries.length - unreachable.length - heldBack.length} of ${entries.length} direct packages are on their latest release.`) +
+        held +
         unknown +
-        " Method: compared each declared version with the npm registry's latest release. Limit: pre-releases are ignored, and @types/node is compared with the Node.js runtime, not the newest Node.",
+        " Method: compared each declared version with the npm registry's latest release, and with the peer ranges installed packages declare (recorded at build). Limit: pre-releases are ignored, and @types/node is compared with the Node.js runtime, not the newest Node.",
     });
   } catch {
     checks.push({

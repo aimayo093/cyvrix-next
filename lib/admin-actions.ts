@@ -8,9 +8,12 @@ import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
 import { LeadStatus, TicketStatus } from "@/generated/prisma";
 import {
+  canManageSecurityCenter,
   canUpdateSiteSetting,
   clearSession,
+  currentSessionId,
   endAllSessions,
+  revokeSessionById,
   requireAdmin,
   requireStaffForSecondFactorSetup,
   SECURITY_SETUP_PATH,
@@ -2714,6 +2717,55 @@ export async function signOutEverywhere() {
   });
   await clearSession();
   redirect("/login");
+}
+
+/**
+ * Signs one device out, from the Security Center's device list.
+ *
+ * Only roles that can open the Security Center may do it, and only a super
+ * admin may sign out a super admin's device, so an administrator cannot lock
+ * the owner out. Ending your own current session signs you out here too.
+ */
+export async function signOutDevice(formData: FormData) {
+  const admin = await requireAdmin();
+  const back = "/admin/security-center#devices";
+  if (!canManageSecurityCenter(admin.role)) redirect("/admin");
+
+  const sessionId = formData.get("sessionId");
+  if (typeof sessionId !== "string" || sessionId.length < 16 || sessionId.length > 64) {
+    return returnWithError("That device could not be found.", back);
+  }
+
+  const device = await prisma.userSession.findUnique({
+    where: { id: sessionId },
+    select: { userId: true, revokedAt: true, userAgent: true, user: { select: { email: true, role: true } } },
+  });
+  if (!device || device.revokedAt) {
+    redirect(`/admin/security-center?status=success&message=${encodeURIComponent("That device was already signed out.")}#devices`);
+  }
+  if (device.user.role === "SUPER_ADMIN" && admin.role !== "SUPER_ADMIN") {
+    return returnWithError("Only a super admin can sign out a super admin's devices.", back);
+  }
+
+  const isCurrent = (await currentSessionId()) === sessionId;
+  await revokeSessionById(sessionId, "revoked_by_admin");
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "SESSION_REVOKED",
+      entityType: "UserSession",
+      entityId: sessionId,
+      metadata: { account: device.user.email, by: admin.email, ownSession: device.userId === admin.id },
+    },
+  });
+
+  if (isCurrent) {
+    await clearSession();
+    redirect("/login");
+  }
+  revalidatePath("/admin/security-center");
+  redirect(`/admin/security-center?status=success&message=${encodeURIComponent(`Signed out a device for ${device.user.email}.`)}#devices`);
 }
 
 /** Issues a fresh set of recovery codes, invalidating the previous ones. */

@@ -846,6 +846,18 @@ exports.Prisma.UserScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.UserSessionScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  lastSeenAt: 'lastSeenAt',
+  expiresAt: 'expiresAt',
+  userAgent: 'userAgent',
+  ipAddress: 'ipAddress',
+  revokedAt: 'revokedAt',
+  revokedReason: 'revokedReason'
+};
+
 exports.Prisma.RateLimitBucketScalarFieldEnum = {
   key: 'key',
   count: 'count',
@@ -1576,6 +1588,7 @@ exports.Prisma.ModelName = {
   TicketAttachment: 'TicketAttachment',
   TicketMessage: 'TicketMessage',
   User: 'User',
+  UserSession: 'UserSession',
   RateLimitBucket: 'RateLimitBucket',
   VerificationToken: 'VerificationToken',
   WebsiteSection: 'WebsiteSection',

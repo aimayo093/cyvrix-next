@@ -8,6 +8,7 @@ import { updateSiteSetting } from "@/lib/admin-actions";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { Button } from "@/components/shared/Button";
 import { SecurityScanCard } from "@/components/admin/SecurityScanCard";
+import { SignedInDevices } from "@/components/admin/SignedInDevices";
 import {
   SecurityAnalystEmptyState,
   SecurityAnalystPanel,
@@ -98,6 +99,12 @@ async function SecurityCenterPageContent({ searchParams }: { searchParams: Promi
       </div>
 
       {analyst ? <SecurityAnalystPanel report={analyst} /> : <SecurityAnalystEmptyState />}
+
+      <React.Suspense
+        fallback={<div className="h-40 animate-pulse rounded-2xl border border-slate-200 bg-white motion-reduce:animate-none" />}
+      >
+        <SignedInDevices viewerRole={administrator.role} />
+      </React.Suspense>
 
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-8">

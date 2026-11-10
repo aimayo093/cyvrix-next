@@ -1,0 +1,251 @@
+{
+  "generatedAt": "2026-11-10T13:06:08.901Z",
+  "holds": {
+    "@types/react": [
+      {
+        "by": "@prisma/studio-core",
+        "range": "^18.0.0 || ^19.0.0",
+        "maxMajor": 19
+      },
+      {
+        "by": "@types/react-dom",
+        "range": "^19.3.0",
+        "maxMajor": 19
+      }
+    ],
+    "react": [
+      {
+        "by": "@prisma/studio-core",
+        "range": "^18.0.0 || ^19.0.0",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-compose-refs",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-primitive",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-slot",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-toggle",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-use-controllable-state",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-use-effect-event",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-use-layout-effect",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@sentry/react",
+        "range": "17.x || 18.x || 19.x",
+        "maxMajor": 19
+      },
+      {
+        "by": "@vercel/analytics",
+        "range": "^18 || ^19 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@visx/grid",
+        "range": "^16.14.0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0",
+        "maxMajor": 19
+      },
+      {
+        "by": "@visx/group",
+        "range": "^16.14.0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0",
+        "maxMajor": 19
+      },
+      {
+        "by": "@visx/responsive",
+        "range": "^16.14.0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0",
+        "maxMajor": 19
+      },
+      {
+        "by": "@visx/shape",
+        "range": "^16.14.0 || ^17.0.0-0 || ^18.0.0-0 || ^19.0.0-0",
+        "maxMajor": 19
+      },
+      {
+        "by": "framer-motion",
+        "range": "^18.0.0 || ^19.0.0",
+        "maxMajor": 19
+      },
+      {
+        "by": "lucide-react",
+        "range": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+        "maxMajor": 19
+      },
+      {
+        "by": "next",
+        "range": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+        "maxMajor": 19
+      },
+      {
+        "by": "react-dom",
+        "range": "^19.3.1",
+        "maxMajor": 19
+      },
+      {
+        "by": "react-hook-form",
+        "range": "^16.8.0 || ^17 || ^18 || ^19",
+        "maxMajor": 19
+      }
+    ],
+    "react-dom": [
+      {
+        "by": "@prisma/studio-core",
+        "range": "^18.0.0 || ^19.0.0",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-primitive",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "@radix-ui/react-toggle",
+        "range": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc",
+        "maxMajor": 19
+      },
+      {
+        "by": "framer-motion",
+        "range": "^18.0.0 || ^19.0.0",
+        "maxMajor": 19
+      },
+      {
+        "by": "next",
+        "range": "^18.2.0 || 19.0.0-rc-de68d2f4-20241204 || ^19.0.0",
+        "maxMajor": 19
+      }
+    ],
+    "next": [
+      {
+        "by": "@sentry/nextjs",
+        "range": "^14.0 || ^15.0.0-rc.0 || ^16.0.0-0",
+        "maxMajor": 16
+      }
+    ],
+    "@supabase/supabase-js": [
+      {
+        "by": "@supabase/ssr",
+        "range": "^2.114.0",
+        "maxMajor": 2
+      }
+    ],
+    "eslint": [
+      {
+        "by": "eslint-plugin-import",
+        "range": "^2 || ^3 || ^4 || ^5 || ^6 || ^7.2.0 || ^8 || ^9",
+        "maxMajor": 9
+      },
+      {
+        "by": "eslint-plugin-jsx-a11y",
+        "range": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9",
+        "maxMajor": 9
+      },
+      {
+        "by": "eslint-plugin-react",
+        "range": "^3 || ^4 || ^5 || ^6 || ^7 || ^8 || ^9.7",
+        "maxMajor": 9
+      },
+      {
+        "by": "@typescript-eslint/eslint-plugin",
+        "range": "^8.57.0 || ^9.0.0 || ^10.0.0",
+        "maxMajor": 10
+      },
+      {
+        "by": "@typescript-eslint/parser",
+        "range": "^8.57.0 || ^9.0.0 || ^10.0.0",
+        "maxMajor": 10
+      },
+      {
+        "by": "@typescript-eslint/type-utils",
+        "range": "^8.57.0 || ^9.0.0 || ^10.0.0",
+        "maxMajor": 10
+      },
+      {
+        "by": "@typescript-eslint/utils",
+        "range": "^8.57.0 || ^9.0.0 || ^10.0.0",
+        "maxMajor": 10
+      },
+      {
+        "by": "eslint-plugin-react-hooks",
+        "range": "^3.0.0 || ^4.0.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0-0 || ^9.0.0 || ^10.0.0",
+        "maxMajor": 10
+      },
+      {
+        "by": "typescript-eslint",
+        "range": "^8.57.0 || ^9.0.0 || ^10.0.0",
+        "maxMajor": 10
+      }
+    ],
+    "typescript": [
+      {
+        "by": "@typescript-eslint/eslint-plugin",
+        "range": ">=4.8.4 <6.1.0",
+        "maxMajor": 6
+      },
+      {
+        "by": "@typescript-eslint/parser",
+        "range": ">=4.8.4 <6.1.0",
+        "maxMajor": 6
+      },
+      {
+        "by": "@typescript-eslint/project-service",
+        "range": ">=4.8.4 <6.1.0",
+        "maxMajor": 6
+      },
+      {
+        "by": "@typescript-eslint/tsconfig-utils",
+        "range": ">=4.8.4 <6.1.0",
+        "maxMajor": 6
+      },
+      {
+        "by": "@typescript-eslint/type-utils",
+        "range": ">=4.8.4 <6.1.0",
+        "maxMajor": 6
+      },
+      {
+        "by": "@typescript-eslint/typescript-estree",
+        "range": ">=4.8.4 <6.1.0",
+        "maxMajor": 6
+      },
+      {
+        "by": "@typescript-eslint/utils",
+        "range": ">=4.8.4 <6.1.0",
+        "maxMajor": 6
+      },
+      {
+        "by": "typescript-eslint",
+        "range": ">=4.8.4 <6.1.0",
+        "maxMajor": 6
+      }
+    ],
+    "zod": [
+      {
+        "by": "zod-validation-error",
+        "range": "^3.25.0 || ^4.0.0",
+        "maxMajor": 4
+      }
+    ]
+  }
+}

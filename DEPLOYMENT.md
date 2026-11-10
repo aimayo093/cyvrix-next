@@ -72,6 +72,13 @@ The token is read only on the server and sent only to `api.vercel.com`.
 `npm run check:env` reports whether it is set without printing it. Hobby plans
 keep one month of analytics, so a 90-day view says how many days are available.
 
+## Before deploying signed-in devices
+
+Apply `prisma/migrations/20261110120000_user_sessions` to production first.
+It only adds the `UserSession` table. Once the code is deployed, every
+existing sign-in ends once (those cookies name no device row), so everyone
+signs in again, then appears in Security Center → Signed-in devices.
+
 ## Before merging the November 2026 security changes
 
 **Done 10 November 2026:** applied to the production project (Cyvrix-Technology), with the column, table, row-level security and revoked API grants verified.

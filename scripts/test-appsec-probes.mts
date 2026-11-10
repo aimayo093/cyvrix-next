@@ -2,9 +2,10 @@
  * Parsing behind the live Security Center probes. Run: npm run test:appsec
  */
 import { clientBundlePaths } from "../lib/appsec-probe-parse";
-import { upgradeTarget } from "../lib/dependency-freshness";
+import { heldBackBy, upgradeTarget } from "../lib/dependency-freshness";
 import { countHit, MemoryStore, RateLimitError, type RateLimitStore } from "../lib/rate-limit-core";
 import { needsSecondFactor, sessionVersionMatches } from "../lib/session-rules";
+import { deviceLabel } from "../lib/device-label";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -44,6 +45,24 @@ check("pre-release is not a target", upgradeTarget("prisma", "^7.10.1", "8.0.0-r
 check("@types/node on runtime major is current", upgradeTarget("@types/node", "^24.19.2", "26.6.6", 24), null);
 check("@types/node off runtime major is flagged", upgradeTarget("@types/node", "^20.19.43", "26.6.6", 24), "24.x (the Node.js runtime)");
 check("unpinned range is skipped", upgradeTarget("@types/react", "^19", "19.3.0", 24), null);
+
+// Device names in the Security Center.
+check("Chrome on Windows", deviceLabel("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36"), "Chrome on Windows");
+check("Edge is not mistaken for Chrome", deviceLabel("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0"), "Edge on Windows");
+check("Safari on iPhone", deviceLabel("Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1"), "Safari on iPhone");
+check("Chrome on Android", deviceLabel("Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36"), "Chrome on Android");
+check("Firefox on Mac", deviceLabel("Mozilla/5.0 (Macintosh; Intel Mac OS X 15.1; rv:140.0) Gecko/20100101 Firefox/140.0"), "Firefox on Mac");
+check("a script is named as one", deviceLabel("curl/8.9.1"), "Script on unknown system");
+check("no user agent", deviceLabel(null), "Unknown device");
+
+// Held-back majors.
+const eslintHolds = [
+  { by: "eslint-plugin-react", range: "^3 || ^9.7", maxMajor: 9 },
+  { by: "typescript-eslint", range: "^8.57.0 || ^9.0.0 || ^10.0.0", maxMajor: 10 },
+];
+check("ESLint 10 is held by the plugin capped at 9", heldBackBy("10.14.0", eslintHolds).map((h) => h.by), ["eslint-plugin-react"]);
+check("a target every peer admits is not held", heldBackBy("9.40.0", eslintHolds), []);
+check("no recorded peers: not held", heldBackBy("14.12.0", undefined), []);
 
 // Rate limiting.
 async function attempts(store: RateLimitStore, fallback: RateLimitStore, n: number, limit: number) {

@@ -1,4 +1,5 @@
 import * as React from "react";
+import Link from "next/link";
 import { connection } from "next/server";
 import { AlertCircle, CheckCircle2, KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
@@ -226,7 +227,11 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
             <p className="mt-1 max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
               Ends every session on every device, including this one. Use it if a device is lost or you
               signed in somewhere you should not have. Changing your password does this for your other
-              devices automatically.
+              devices automatically. To sign out one device at a time, use{" "}
+              <Link href="/admin/security-center#devices" className="font-bold text-[#0f5aab] underline-offset-4 hover:underline">
+                Signed-in devices
+              </Link>{" "}
+              in the Security Center.
             </p>
             <form action={signOutEverywhere} className="mt-5">
               <button

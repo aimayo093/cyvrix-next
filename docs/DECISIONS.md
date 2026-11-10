@@ -149,6 +149,16 @@ unchecked, never as current. Pre-releases are ignored. `@types/node` is
 compared with the running Node.js major, because types newer than the runtime
 describe APIs the server does not have.
 
+**A newer major that cannot be adopted is listed, not warned about.** The build
+records each installed package's peer range for our direct dependencies
+(`npm run scan:deps`, into `lib/generated/dependency-holds.json`). When a
+latest major falls outside one of those ranges — ESLint 10 while
+eslint-config-next's plugins stop at 9, TypeScript 7 while typescript-eslint
+stops below 6.1 — the scan names the package and what holds it instead of
+raising a warning nobody can act on. It is not a blind spot: Dependabot
+proposes the upgrade once the ceiling lifts, and `npm audit` in CI still
+blocks any package with a known vulnerability.
+
 ---
 
 ## 6. Two-factor authentication
@@ -385,3 +395,14 @@ falls back to the instance's memory: an outage must not switch limiting off.
   every API request, and a database round trip there would cost more than it
   protects. Broad flood protection belongs at the edge, in the hosting
   firewall (DEPLOYMENT.md).
+
+**Each signed-in device is a row (`UserSession`).** The session cookie names
+its row, so the Security Center lists every signed-in device, across all
+accounts, and can end any one of them. Ending a row ends that device's next
+request; signing out ends the row as well as deleting the cookie, so a copied
+cookie stops working too. Only a super admin can sign out a super admin's
+devices. A row records the browser's user agent and the IP address, to tell
+devices apart; both are kept while the session lives and swept 30 days after
+it ends. `lastSeenAt` is refreshed at most every five minutes, so reading a
+session rarely writes. Tokens from before rows existed name none and are
+refused, which signed every account out once when this shipped.
