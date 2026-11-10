@@ -74,6 +74,8 @@ keep one month of analytics, so a 90-day view says how many days are available.
 
 ## Before deploying signed-in devices
 
+**Done 10 November 2026:** applied to production (Cyvrix-Technology) and verified: columns, three indexes, cascade on account delete, row-level security with no policies, no anon or authenticated access.
+
 Apply `prisma/migrations/20261110120000_user_sessions` to production first.
 It only adds the `UserSession` table. Once the code is deployed, every
 existing sign-in ends once (those cookies name no device row), so everyone
