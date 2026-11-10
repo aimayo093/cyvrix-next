@@ -2768,6 +2768,28 @@ export async function signOutDevice(formData: FormData) {
   redirect(`/admin/security-center?status=success&message=${encodeURIComponent(`Signed out a device for ${device.user.email}.`)}#devices`);
 }
 
+/** Turns the firewall's bot-protection challenge on or off, from the Security Center. */
+export async function toggleBotProtection(formData: FormData) {
+  const admin = await requireAdmin();
+  if (!canManageSecurityCenter(admin.role)) redirect("/admin");
+  const enable = formData.get("enable") === "true";
+  const { setBotProtection } = await import("./bot-protection");
+  const failure = await setBotProtection(enable);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: failure ? "BOT_PROTECTION_CHANGE_FAILED" : enable ? "BOT_PROTECTION_ENABLED" : "BOT_PROTECTION_DISABLED",
+      entityType: "Firewall",
+      metadata: { by: admin.email, requested: enable ? "on" : "off", ...(failure ? { reason: failure } : {}) },
+    },
+  });
+
+  const message = failure ?? (enable ? "Bot protection is on. Suspicious traffic now gets a JavaScript challenge." : "Bot protection is off.");
+  redirect(`/admin/security-center?status=${failure ? "error" : "success"}&message=${encodeURIComponent(message)}#bot-protection`);
+}
+
 /** Issues a fresh set of recovery codes, invalidating the previous ones. */
 export async function issueNewRecoveryCodes() {
   const admin = await requireAdmin();

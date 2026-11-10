@@ -96,6 +96,23 @@ After deploying, staff accounts without two-factor are sent to
 `/security-setup` and cannot use the admin until they enrol. Have an
 authenticator app ready.
 
+## Bot protection
+
+The Security Center's **Bot protection** switch turns the Vercel Firewall's Bot
+Protection managed ruleset on (JavaScript challenge) or off, and shows the
+state the firewall reports.
+
+1. Vercel → Account Settings → Tokens: create a token scoped to the team that
+   owns the project.
+2. Add it to the project's environment variables as `FIREWALL_API_TOKEN`
+   (Production only), then redeploy.
+3. The project id comes from `VERCEL_PROJECT_ID`, which Vercel sets. If the
+   project is in a team, also set `VERCEL_FIREWALL_TEAM_ID` (or the existing
+   `VERCEL_ANALYTICS_TEAM_ID`) to the team id.
+
+Without the token the card says "Not connected" and offers no switch. Every
+change, and every refused change, is written to the audit log.
+
 ## Dependency updates
 
 Dependabot (`.github/dependabot.yml`) opens pull requests every Monday morning:

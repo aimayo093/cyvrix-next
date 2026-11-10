@@ -119,6 +119,11 @@ console.log(
 );
 console.log(`    VERCEL_ANALYTICS_TEAM_ID: ${effective.get("VERCEL_ANALYTICS_TEAM_ID") ? "set" : "not set (fine for a personal account)"}`);
 
+// Optional: the Security Center's Bot protection switch.
+console.log("\n  Bot protection switch (optional)");
+const firewallToken = effective.get("FIREWALL_API_TOKEN") ?? effective.get("VERCEL_FIREWALL_TOKEN");
+console.log(`    FIREWALL_API_TOKEN: ${firewallToken ? `set in ${firewallToken.file} (value hidden)` : "not set — the switch shows Not connected"}`);
+
 console.log(
   problems === 0
     ? "\n  No issues found.\n"

@@ -1,0 +1,42 @@
+/**
+ * Reading and writing the hosting firewall's bot-protection ruleset, without
+ * the network, so the shapes are tested (npm run test:appsec).
+ *
+ * The ruleset challenges suspicious traffic with a JavaScript check: browsers
+ * pass it without noticing, scripts and automated attacks do not.
+ */
+
+export type BotProtectionState =
+  | { state: "on" | "off"; mode: "challenge" | "deny" | "log" | null; updatedAt: string | null }
+  | { state: "not_configured" }
+  | { state: "unavailable"; reason: string };
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * The active firewall configuration's `managedRules.bot_protection`.
+ * Logging alone is reported as off: it records bots but stops none.
+ */
+export function parseBotProtection(status: number, json: unknown): BotProtectionState {
+  // No firewall configuration saved yet: every managed ruleset is off.
+  if (status === 404) return { state: "off", mode: null, updatedAt: null };
+  if (status === 401 || status === 403) return { state: "unavailable", reason: "The access token was refused." };
+  if (status < 200 || status >= 300) return { state: "unavailable", reason: `The firewall answered ${status}.` };
+
+  const rule = isRecord(json) && isRecord(json.managedRules) ? json.managedRules.bot_protection : undefined;
+  if (!isRecord(rule)) return { state: "off", mode: null, updatedAt: null };
+  const mode = rule.action === "challenge" || rule.action === "deny" || rule.action === "log" ? rule.action : null;
+  const updatedAt = typeof rule.updatedAt === "string" ? rule.updatedAt : null;
+  const active = rule.active === true && mode !== "log";
+  return { state: active ? "on" : "off", mode, updatedAt };
+}
+
+/** The PATCH body that turns the ruleset on (challenge) or off. */
+export function botProtectionUpdate(enabled: boolean) {
+  return {
+    action: "managedRules.update",
+    id: "bot_protection",
+    value: { active: enabled, action: "challenge" },
+  } as const;
+}

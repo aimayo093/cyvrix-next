@@ -9,6 +9,7 @@ import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { Button } from "@/components/shared/Button";
 import { SecurityScanCard } from "@/components/admin/SecurityScanCard";
 import { SignedInDevices } from "@/components/admin/SignedInDevices";
+import { BotProtectionCard } from "@/components/admin/BotProtectionCard";
 import {
   SecurityAnalystEmptyState,
   SecurityAnalystPanel,
@@ -239,6 +240,12 @@ async function SecurityCenterPageContent({ searchParams }: { searchParams: Promi
         </div>
 
         <aside className="space-y-6">
+          <React.Suspense
+            fallback={<div className="h-48 animate-pulse rounded-2xl border border-slate-200 bg-white motion-reduce:animate-none" />}
+          >
+            <BotProtectionCard />
+          </React.Suspense>
+
           <SecurityScanCard />
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">

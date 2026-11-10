@@ -8,6 +8,7 @@ import { needsSecondFactor, sessionVersionMatches } from "../lib/session-rules";
 import { deviceLabel } from "../lib/device-label";
 import { verifySessionToken as verifyAtProxy } from "../lib/auth-edge";
 import { createHmac } from "node:crypto";
+import { botProtectionUpdate, parseBotProtection } from "../lib/bot-protection-parse";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -72,6 +73,16 @@ check("no user agent", deviceLabel(null), "Unknown device");
   check("proxy accepts a cookie naming a device row", (await verifyAtProxy(current))?.sid, "abcdefghijklmnopqrstuvwx");
   check("proxy refuses a tampered cookie", await verifyAtProxy(current.slice(0, -2) + "xx"), null);
 }
+
+// Bot protection, as the firewall reports it.
+check("challenge active reads as on", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "challenge", updatedAt: "2026-11-10T12:00:00Z" } } }), { state: "on", mode: "challenge", updatedAt: "2026-11-10T12:00:00Z" });
+check("inactive reads as off", parseBotProtection(200, { managedRules: { bot_protection: { active: false } } }), { state: "off", mode: null, updatedAt: null });
+check("log-only is not protection", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "log" } } }).state, "off");
+check("no firewall config yet reads as off", parseBotProtection(404, null).state, "off");
+check("refused token is not shown as off", parseBotProtection(403, null).state, "unavailable");
+check("server error is not shown as off", parseBotProtection(500, { error: "x" }).state, "unavailable");
+check("turn-on body", botProtectionUpdate(true), { action: "managedRules.update", id: "bot_protection", value: { active: true, action: "challenge" } });
+check("turn-off body", botProtectionUpdate(false).value.active, false);
 
 // Held-back majors.
 const eslintHolds = [
