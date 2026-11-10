@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig, type SentryBuildOptions } from "@sentry/nextjs/config";
 
 // Load exFAT and EPERM path patches
 import "./patch-exfat.js";
@@ -69,18 +69,19 @@ const nextConfig: NextConfig = {
 };
 
 // Sentry configuration options
-const sentryBuildOptions = {
+const sentryBuildOptions: SentryBuildOptions = {
   silent: true,
   org: "cyvrix",
   project: "cyvrix-next",
   widenClientFileUpload: true,
   tunnelRoute: "/monitoring",
-  disableLogger: true,
-  sourcemaps: {
-    deleteSourcemapsAfterUpload: true,
-  },
   webpack: {
     automaticVercelMonitors: true,
+    // Sentry 11 moved disableLogger here.
+    treeshake: { removeDebugLogging: true },
+  },
+  sourcemaps: {
+    deleteSourcemapsAfterUpload: true,
   },
 };
 

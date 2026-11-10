@@ -321,3 +321,21 @@ or marked as unreadable.**
   says "Not connected" (DEPLOYMENT.md).
 - `npm run test:dashboard` fails if an admin page is missing from the sidebar
   (`lib/admin-nav.ts`), so a new page cannot be added and then be unreachable.
+
+---
+
+## 12. What error monitoring may collect
+
+Sentry 11 (November 2026) replaced `sendDefaultPii` with `dataCollection` and
+turned almost everything on by default: request and response bodies, headers,
+cookies, user details, database query values and stack-frame local variables.
+Here that would send sign-in passwords, contact-form contents and session
+cookies to a third party, which the privacy notice does not cover.
+
+- Every one of those is switched off in `lib/sentry-options.ts`, which the
+  browser (`instrumentation-client.ts`), server and edge set-ups all import.
+  One module, so the three cannot drift apart.
+- What remains — the error, its stack trace and the route — is enough to find
+  a fault without identifying a visitor.
+- Turning any of them back on is a privacy-notice change first and a code
+  change second. Do not do it to debug one error.
