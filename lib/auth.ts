@@ -269,9 +269,16 @@ export async function getSession() {
   return { user: session.user };
 }
 
+/**
+ * Where a request goes when it carries a cookie the server no longer accepts.
+ * `ended=1` tells the proxy to delete the cookie instead of trusting its
+ * signature and sending the browser back here, which looped.
+ */
+const SESSION_ENDED_PATH = "/login?ended=1";
+
 export async function requireUser() {
   const session = await readSession();
-  if (!session) redirect("/login");
+  if (!session) redirect(SESSION_ENDED_PATH);
   if (session.needsSecondFactor) redirect(SECURITY_SETUP_PATH);
   return session.user;
 }
@@ -288,7 +295,7 @@ export async function requireAdmin() {
  */
 export async function requireStaffForSecondFactorSetup() {
   const session = await readSession();
-  if (!session) redirect("/login");
+  if (!session) redirect(SESSION_ENDED_PATH);
   if (!ADMIN_ROLES.includes(session.user.role)) redirect("/portal");
   return { ...session.user, needsSecondFactor: session.needsSecondFactor };
 }

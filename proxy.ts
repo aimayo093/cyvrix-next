@@ -27,6 +27,8 @@ const POLLING_PREFIX = "/api/tickets/";
 const MAX_POLLING_REQUESTS = 240;
 
 // Routes that require authentication (any role)
+const SESSION_COOKIE = "cyvrix_session";
+
 const PROTECTED_ROUTES = ["/portal", "/admin", "/security-setup"];
 
 // Routes that require an internal/admin role
@@ -94,14 +96,17 @@ export async function proxy(request: NextRequest) {
   const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
 
   if (isProtected) {
-    const token = request.cookies.get("cyvrix_session")?.value;
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
     const session = await verifySessionToken(token);
 
-    // No valid session → redirect to login, preserving destination
+    // No valid session → redirect to login, preserving destination, and drop
+    // any cookie that failed the check so it cannot be offered again.
     if (!session) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(loginUrl);
+      const redirect = NextResponse.redirect(loginUrl);
+      if (token) redirect.cookies.delete(SESSION_COOKIE);
+      return redirect;
     }
 
     // Admin routes require an internal role
@@ -114,6 +119,14 @@ export async function proxy(request: NextRequest) {
   // ── 3. Redirect already-authenticated users away from /login ─────────
   if (pathname === "/login") {
     const token = request.cookies.get("cyvrix_session")?.value;
+    // The server ended this session (signed out from another device, password
+    // changed, account disabled). The cookie still has a valid signature, which
+    // is all this file can check, so it is deleted here rather than trusted:
+    // trusting it would send the browser straight back to a page that refuses it.
+    if (request.nextUrl.searchParams.get("ended") === "1") {
+      if (token) response.cookies.delete(SESSION_COOKIE);
+      return response;
+    }
     const session = await verifySessionToken(token);
     if (session) {
       const dest = ADMIN_ROLES.includes(session.role) ? "/admin" : "/portal";

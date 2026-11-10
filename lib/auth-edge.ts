@@ -28,6 +28,8 @@ export type SessionPayload = {
   email: string;
   role: UserRole;
   exp: number;
+  /** The UserSession row. The server refuses a token without one. */
+  sid?: string;
 };
 
 function getSecret(): string {
@@ -90,6 +92,12 @@ export async function verifySessionToken(
 
     // Check expiry
     if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+
+    // A token that names no device row is refused by the server (lib/auth.ts),
+    // so it must read as signed out here too. Otherwise the proxy sends it from
+    // /login back to /admin, the admin sends it to /login, and the browser
+    // loops on a loading screen.
+    if (typeof payload.sid !== "string" || !payload.sid) return null;
 
     return payload;
   } catch {

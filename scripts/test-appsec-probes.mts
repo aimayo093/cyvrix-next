@@ -6,6 +6,8 @@ import { heldBackBy, upgradeTarget } from "../lib/dependency-freshness";
 import { countHit, MemoryStore, RateLimitError, type RateLimitStore } from "../lib/rate-limit-core";
 import { needsSecondFactor, sessionVersionMatches } from "../lib/session-rules";
 import { deviceLabel } from "../lib/device-label";
+import { verifySessionToken as verifyAtProxy } from "../lib/auth-edge";
+import { createHmac } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -54,6 +56,22 @@ check("Chrome on Android", deviceLabel("Mozilla/5.0 (Linux; Android 15; Pixel 9)
 check("Firefox on Mac", deviceLabel("Mozilla/5.0 (Macintosh; Intel Mac OS X 15.1; rv:140.0) Gecko/20100101 Firefox/140.0"), "Firefox on Mac");
 check("a script is named as one", deviceLabel("curl/8.9.1"), "Script on unknown system");
 check("no user agent", deviceLabel(null), "Unknown device");
+
+// The proxy's cookie check. A cookie the server refuses must read as signed
+// out at the proxy too, or /login and /admin redirect to each other forever.
+{
+  process.env.AUTH_SECRET = "test-secret-for-proxy-check-0000000000000000";
+  const mint = (payload: object) => {
+    const body = Buffer.from(JSON.stringify(payload)).toString("base64url");
+    return `${body}.${createHmac("sha256", process.env.AUTH_SECRET!).update(body).digest("base64url")}`;
+  };
+  const exp = Math.floor(Date.now() / 1000) + 3600;
+  const legacy = mint({ sub: "u1", email: "a@b.c", role: "SUPER_ADMIN", exp, sv: 0 });
+  const current = mint({ sub: "u1", email: "a@b.c", role: "SUPER_ADMIN", exp, sv: 0, sid: "abcdefghijklmnopqrstuvwx" });
+  check("proxy refuses a cookie with no device row (the loop)", await verifyAtProxy(legacy), null);
+  check("proxy accepts a cookie naming a device row", (await verifyAtProxy(current))?.sid, "abcdefghijklmnopqrstuvwx");
+  check("proxy refuses a tampered cookie", await verifyAtProxy(current.slice(0, -2) + "xx"), null);
+}
 
 // Held-back majors.
 const eslintHolds = [
