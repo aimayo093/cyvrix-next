@@ -93,33 +93,35 @@ export function AdminSidebar({
   collapsed,
   badges,
   firstLinkRef,
+  onNavigate,
 }: {
   pathname: string;
   activeHref: string | null;
   collapsed: boolean;
   badges: BadgeSlots;
   firstLinkRef?: React.Ref<HTMLAnchorElement>;
+  /** Called when a link is chosen, including the page already open (closes the drawer). */
+  onNavigate?: () => void;
 }) {
-  const [moreOpen, setMoreOpen] = React.useState(false);
+  // null until the person toggles: then the stored preference, or open when
+  // the current page lives under "More". Once they toggle, their choice wins —
+  // "Fewer" used to do nothing while on a "More" page.
+  const [moreOpen, setMoreOpen] = React.useState<boolean | null>(null);
 
-  // Restored after mount; the server has no localStorage. A "More" item that
-  // is the current page keeps the list open regardless.
   React.useEffect(() => {
-    const restore = window.setTimeout(() => setMoreOpen(readMoreOpen()), 0);
+    const restore = window.setTimeout(() => setMoreOpen((current) => current ?? (readMoreOpen() || null)), 0);
     return () => window.clearTimeout(restore);
   }, []);
-  const showMore = moreOpen || (activeHref !== null && isInMore(activeHref));
+  const showMore = moreOpen ?? (activeHref !== null && isInMore(activeHref));
 
   const toggleMore = () => {
-    setMoreOpen((previous) => {
-      const next = !previous;
-      try {
-        localStorage.setItem(MORE_KEY, String(next));
-      } catch {
-        // A private window can refuse storage; the toggle still works.
-      }
-      return next;
-    });
+    const next = !showMore;
+    setMoreOpen(next);
+    try {
+      localStorage.setItem(MORE_KEY, String(next));
+    } catch {
+      // A private window can refuse storage; the toggle still works.
+    }
   };
 
   const renderItem = (item: AdminNavItem, index: number) => {
@@ -132,6 +134,7 @@ export function AdminSidebar({
         href={item.href}
         title={collapsed ? item.name : undefined}
         aria-current={active ? "page" : undefined}
+        onClick={onNavigate}
         className={`flex min-h-11 items-center rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] lg:min-h-9 ${
           collapsed ? "justify-center px-2" : "gap-3 px-3"
         } ${active ? "bg-[#2691F0]/10 text-[#0f5aab]" : "text-slate-600 hover:bg-slate-100 hover:text-[#041635]"}`}
@@ -147,7 +150,7 @@ export function AdminSidebar({
   return (
     <div className="flex h-full flex-col">
       <div className={`flex shrink-0 items-center border-b border-slate-200 ${collapsed ? "h-14 justify-center" : "h-16 px-5"}`}>
-        <Logo variant={collapsed ? "icon" : "full"} className="brightness-0" />
+        <Logo variant={collapsed ? "icon" : "full"} theme="light" />
       </div>
 
       <nav aria-label="Admin" className="flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-3 py-4">

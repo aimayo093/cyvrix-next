@@ -54,13 +54,45 @@ export function AdminLayoutClient({ children, identity, notificationsSlot, badge
     return () => window.clearTimeout(close);
   }, [pathname]);
 
+  // The drawer is hidden from lg up. If the window widens while it is open,
+  // close it: otherwise <main> stays inert with no visible way to close it.
+  React.useEffect(() => {
+    if (!drawerOpen) return;
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const onChange = () => {
+      if (desktop.matches) setDrawerOpen(false);
+    };
+    onChange();
+    desktop.addEventListener("change", onChange);
+    return () => desktop.removeEventListener("change", onChange);
+  }, [drawerOpen]);
+
   // Focus moves into the drawer when it opens and back to the button when it
-  // closes; Escape closes it.
+  // closes; Escape closes it, and Tab cycles inside it rather than leaving.
   React.useEffect(() => {
     if (drawerOpen) {
       firstDrawerLinkRef.current?.focus();
       const onKey = (event: KeyboardEvent) => {
-        if (event.key === "Escape") setDrawerOpen(false);
+        if (event.key === "Escape") {
+          setDrawerOpen(false);
+          return;
+        }
+        if (event.key !== "Tab") return;
+        const drawer = document.getElementById("admin-drawer");
+        if (!drawer) return;
+        const focusable = [...drawer.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(
+          (element) => element.offsetParent !== null,
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
       };
       document.addEventListener("keydown", onKey);
       wasOpen.current = true;
@@ -123,6 +155,7 @@ export function AdminLayoutClient({ children, identity, notificationsSlot, badge
               collapsed={false}
               badges={badgeSlots}
               firstLinkRef={firstDrawerLinkRef}
+              onNavigate={() => setDrawerOpen(false)}
             />
           </aside>
         </div>

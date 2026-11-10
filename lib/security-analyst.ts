@@ -383,8 +383,13 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
     ...auth.blindSpots,
   ];
 
+  // "info" is the Clear tile. An unanswered check or an absent feature is not
+  // clear, so neither is counted there (DECISIONS §5).
   const counts = SEVERITY_ORDER.reduce(
-    (acc, severity) => ({ ...acc, [severity]: findings.filter((f) => f.severity === severity).length }),
+    (acc, severity) => ({
+      ...acc,
+      [severity]: findings.filter((f) => f.severity === severity && !f.unknown && !f.notApplicable).length,
+    }),
     {} as Record<Severity, number>
   );
 

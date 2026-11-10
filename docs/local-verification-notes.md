@@ -73,7 +73,7 @@
 - `scripts/analyse-appsec.mts` names the proxy file individually in its `sourceFiles` list, so it was renamed in the same commit. That list is guarded by `existsSync`: had it kept saying `middleware.ts`, the authentication gate and the API rate limiter would have dropped out of the Security Center scan silently, with no error and only `fileCount` moving. The count holding at 190 is the check that it did not.
 - Authentication gating was re-verified against the built output on a local production server. Unauthenticated `/admin`, `/admin/services-cms`, `/portal` and `/portal/tickets` each returned `307` with the destination preserved, for example `location: /login?next=%2Fadmin%2Fservices-cms`. No route returned `500`.
 - `npm run test:routes` still exits `1`, on `/case-studies/logistics-network-refresh` returning `404` where the list expects `200`. This is unrelated to the proxy rename: the build prerendered `/case-studies/__not-published__`, so no case study is published, which is the deliberate position recorded in `PRODUCT.md`. The expectation in the smoke list is stale, not the route.
-- Verified against Next `16.3.2`, which is what the committed lockfile pins. The working checkout carries an uncommitted bump to `^16.3.8`; that was deliberately not applied here, and the migration is identical in both versions' bundled guides.
+- Verified at the time against Next `16.3.2`. The branch now pins `16.4.6`: the proxy convention is unchanged in its bundled guide, and the production build, `tsc` and the full test suites were re-run on `16.4.6` on 10 November 2026 with the route table still listing `ƒ Proxy (Middleware)`.
 
 ## Existing follow-up items
 

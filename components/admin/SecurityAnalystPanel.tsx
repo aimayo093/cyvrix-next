@@ -121,7 +121,17 @@ export function SecurityAnalystPanel({ report }: { report: AnalystReport }) {
       )}
 
       <div className="p-6">
-        {report.triage.length === 0 ? (
+        {report.triage.length === 0 && report.blindSpots.length > 0 ? (
+          // Nothing failed, but not everything was answered: never "all passed".
+          <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-slate-500" />
+            <p className="text-sm font-semibold leading-relaxed text-slate-700">
+              No open findings, but {report.blindSpots.length} question
+              {report.blindSpots.length === 1 ? " was" : "s were"} not answered on the last run (listed above). Nothing
+              here says those passed.
+            </p>
+          </div>
+        ) : report.triage.length === 0 ? (
           <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
             <p className="text-sm font-semibold leading-relaxed text-emerald-900">

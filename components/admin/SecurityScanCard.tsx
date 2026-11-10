@@ -10,6 +10,8 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  MinusCircle,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,10 @@ interface ScanCheck {
   label: string;
   status: "pass" | "warn" | "fail";
   detail: string;
+  /** False when the question was not answered; such a check is not a pass. */
+  assessed?: boolean;
+  /** The feature does not exist, so there was nothing to test. */
+  notApplicable?: boolean;
 }
 interface ScanResult {
   score: number;
@@ -34,6 +40,12 @@ const STATUS = {
   pass: { icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", label: "Passed" },
   warn: { icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", label: "Warning" },
   fail: { icon: XCircle, color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20", label: "Failed" },
+};
+
+/** Unanswered and not-applicable checks: neither passed nor failed. */
+const NEUTRAL = {
+  na: { icon: MinusCircle, color: "text-slate-400", bg: "bg-white/5 border-white/10", label: "N/A" },
+  unknown: { icon: HelpCircle, color: "text-slate-300", bg: "bg-white/5 border-white/10", label: "Not assessed" },
 };
 
 const RING_STROKE = { pass: "#34d399", warn: "#fbbf24", fail: "#f87171" };
@@ -88,9 +100,11 @@ export function SecurityScanCard() {
   }, []);
 
   const overall = result ? STATUS[result.overallStatus] : null;
-  const passes = result?.checks.filter((c) => c.status === "pass").length ?? 0;
-  const fails = result?.checks.filter((c) => c.status === "fail").length ?? 0;
-  const warns = result?.checks.filter((c) => c.status === "warn").length ?? 0;
+  // Only answered checks are counted as passed, warned or failed.
+  const answered = result?.checks.filter((c) => c.assessed !== false) ?? [];
+  const passes = answered.filter((c) => c.status === "pass").length;
+  const fails = answered.filter((c) => c.status === "fail").length;
+  const warns = answered.filter((c) => c.status === "warn").length;
 
   return (
     <div className="bg-[#041635] text-white rounded-2xl relative overflow-hidden border border-white/5">
@@ -151,7 +165,11 @@ export function SecurityScanCard() {
           {expanded && (
             <div className="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
               {result.checks.map((check) => {
-                const meta = STATUS[check.status];
+                const meta = check.notApplicable
+                  ? NEUTRAL.na
+                  : check.assessed === false
+                    ? NEUTRAL.unknown
+                    : STATUS[check.status];
                 return (
                   <div key={check.id} className={cn("flex items-start gap-2.5 p-2.5 rounded-xl border", meta.bg)}>
                     <meta.icon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", meta.color)} />

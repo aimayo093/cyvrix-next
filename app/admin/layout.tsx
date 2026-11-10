@@ -99,7 +99,11 @@ async function AdminNotifications({ userId }: { userId: string }) {
       }),
     // Counted, not inferred from the fifteen shown, so the badge is right
     // when more are waiting.
-    prisma.notification.count({ where: { userId, readAt: null } }).catch(() => 0),
+    // Unreadable is null, not 0: the bell then shows no count rather than "none".
+    prisma.notification.count({ where: { userId, readAt: null } }).catch((error) => {
+      console.error("[admin-layout] could not count unread notifications", error);
+      return null;
+    }),
   ]);
 
   return (

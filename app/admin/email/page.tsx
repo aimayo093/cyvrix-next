@@ -45,7 +45,7 @@ async function EmailBroadcastPageContent({
     }
     redirect(
       failed
-        ? `/admin/email?status=error&message=${encodeURIComponent("The mail server did not accept the message. Nothing was sent.")}`
+        ? `/admin/email?status=error&message=${encodeURIComponent("Sending could not be confirmed. The message may or may not have gone out, so check before sending it again.")}`
         : `/admin/email?status=success&message=${encodeURIComponent("Email sent successfully.")}`
     );
   }

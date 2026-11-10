@@ -164,8 +164,11 @@ latest major falls outside one of those ranges — ESLint 10 while
 eslint-config-next's plugins stop at 9, TypeScript 7 while typescript-eslint
 stops below 6.1 — the scan names the package and what holds it instead of
 raising a warning nobody can act on. It is not a blind spot: Dependabot
-proposes the upgrade once the ceiling lifts, and `npm audit` in CI still
-blocks any package with a known vulnerability.
+proposes the upgrade once the ceiling lifts, and CI's
+`npm audit --omit=dev --audit-level=moderate` still blocks a production
+dependency with a moderate or worse advisory. That audit does not cover
+development-only packages, which is where both of today's held-back packages
+sit.
 
 ---
 
@@ -292,19 +295,15 @@ the thing to remember is that the write and the flush are separate steps.
 - **Three legal pages** (`acceptable-use-policy`, `data-processing-addendum`,
   `service-level-agreement`) exist in the CMS with no public route. An SLA and a
   DPA are per-client contract annexes and arguably should not be website pages.
-- **One accepted dependency advisory (9 Nov 2026).** `npm audit` reports
-  `glob` (GHSA-3g3m-2fjr-6pw4) and its `minimatch` (GHSA-g3hv-75wg-m249)
-  inside `@sentry/bundler-plugins`. They run only at build time, when Sentry's
-  webpack plugin finds source maps to upload; nothing reaches the deployed site.
-  Sentry 10 requires `glob@^13` and the fix exists only in `glob@14`, so the only
-  fix offered is Sentry 11, a major upgrade. Revisit when moving to Sentry 11.
-- **Majors are held back on purpose.** The Security Center's outdated check
-  compares against npm's `latest`, majors included, so it will keep listing
-  `@sentry/nextjs` 11, `framer-motion` 14, `postgres` 4, `typescript` 7,
-  `eslint` 10 and `@types/node` (which should track the Node runtime, not npm's
-  latest). Each is its own upgrade with its own breaking changes. Apart from
-  the build-time Sentry advisory above, `npm audit` reports nothing that only a
-  major upgrade fixes.
+- **The Sentry build-time advisory is resolved (10 Nov 2026).** `glob` and its
+  `minimatch` inside `@sentry/bundler-plugins` were fixed by the move to Sentry
+  11 (§12); `npm audit --omit=dev` reports nothing.
+- **Majors: each is its own upgrade, checked before it lands.** On 10 November
+  2026 `@sentry/nextjs` 11 (§12), `framer-motion` 14 and `@types/node` 24 (to
+  match the runtime) were each upgraded with the build and the animated pages
+  (login, contact, case studies) checked in production; `postgres` was removed
+  rather than upgraded, since `pg` already covers it. What remains is held back
+  by a peer dependency and reported as such (§5): `eslint` 10 and `typescript` 7.
 
 ---
 
@@ -393,7 +392,10 @@ password and sign in as them.
 **Rate limits are counted in the database, shared by every instance.** The
 site runs as many short-lived server instances and each used to keep its own
 count, so attempts spread across them were barely limited. One atomic upsert
-per attempt (`RateLimitBucket`) now counts them together. Keys are an HMAC,
+per rate-limit key (`RateLimitBucket`) now counts them together; a sign-in or a
+form submission checks two keys (address, and address-or-email), so it costs
+two. After a store failure the database is skipped for 30 seconds, so an
+outage does not make every attempt wait for its timeout. Keys are an HMAC,
 never the raw address or email. If the database cannot be reached the count
 falls back to the instance's memory: an outage must not switch limiting off.
 

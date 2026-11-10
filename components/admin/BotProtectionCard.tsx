@@ -45,7 +45,7 @@ export async function BotProtectionCard() {
               type="submit"
               role="switch"
               aria-checked={on}
-              aria-label={on ? "Turn bot protection off" : "Turn bot protection on"}
+              aria-label="Bot protection"
               className={cn(
                 "relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] focus-visible:ring-offset-2 motion-reduce:transition-none",
                 on ? "bg-emerald-500" : "bg-slate-300",
@@ -66,7 +66,8 @@ export async function BotProtectionCard() {
       <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-600">
         {current.state === "on" && (
           <p>
-            <span className="font-black text-emerald-700">On.</span> Suspicious requests must pass a JavaScript check.
+            <span className="font-black text-emerald-700">On.</span>{" "}
+            {current.mode === "deny" ? "Suspicious requests are blocked outright." : "Suspicious requests must pass a JavaScript check."}
             {current.updatedAt ? ` Changed ${updated.format(new Date(current.updatedAt))}.` : ""}
           </p>
         )}

@@ -32,7 +32,12 @@ export function parseDaily(
       return null;
     }
     const day = row.timestamp.slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return null;
+    // The shape and a real calendar date: 2026-13-01 matches the pattern but
+    // is no day, and would turn the available-days count into NaN.
+    const parsed = Date.parse(`${day}T00:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day) || Number.isNaN(parsed) || new Date(parsed).toISOString().slice(0, 10) !== day) {
+      return null;
+    }
     rows.push({ day, count: row.visitors });
     visitors += row.visitors;
     pageviews += row.pageviews;

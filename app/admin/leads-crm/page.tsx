@@ -1,13 +1,14 @@
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateLeadStatus, addLeadNote, deleteLead } from "@/lib/admin-actions";
 import { formatDistanceToNow } from "date-fns";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
-import { ADMIN_PAGE_SIZE, AdminPager, parsePage } from "@/components/admin/AdminPager";
+import { ADMIN_PAGE_SIZE, AdminPager, lastPageFor, parsePage } from "@/components/admin/AdminPager";
 import { Trash2, StickyNote } from "lucide-react";
 import { LeadStatus } from "@/generated/prisma";
 
@@ -82,6 +83,9 @@ async function LeadsCRMPageContent({
     prisma.lead.count(),
     prisma.lead.groupBy({ by: ["status"], _count: { _all: true } }),
   ]);
+  // Past the last page (the last lead on it was deleted, or a stale link):
+  // go to the last page that has rows instead of showing "No leads yet".
+  if (page > lastPageFor(total)) redirect(`/admin/leads-crm?page=${lastPageFor(total)}${sp.view ? `&view=${encodeURIComponent(sp.view)}` : ""}`);
   const countFor = (status: LeadStatus) =>
     statusCounts.find((row) => row.status === status)?._count._all ?? 0;
 

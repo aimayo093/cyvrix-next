@@ -10,10 +10,24 @@ if (!connectionString) {
   process.exit(1);
 }
 
-// Uses `pg`, which the app already depends on, rather than a second Postgres
-// driver kept only for this script. TLS is required, as before; like the
-// previous driver's `ssl: "require"`, the server certificate is not pinned.
-const client = new pg.Client({ connectionString, ssl: { rejectUnauthorized: false } });
+// Uses `pg`, which the app already depends on.
+//
+// TLS with the server certificate verified, so credentials and migration SQL
+// cannot be handed to an impersonated endpoint. Supabase signs with its own
+// CA: download it (Project Settings → Database → SSL) and point
+// DATABASE_CA_CERT at the file. `sslmode` is stripped from the URL because
+// node-postgres would otherwise let it override the options below.
+const url = new URL(connectionString);
+url.searchParams.delete("sslmode");
+const caPath = process.env.DATABASE_CA_CERT;
+if (!caPath) {
+  console.error("Set DATABASE_CA_CERT to the database's CA certificate file, so its identity can be verified.");
+  process.exit(1);
+}
+const client = new pg.Client({
+  connectionString: url.toString(),
+  ssl: { rejectUnauthorized: true, ca: fs.readFileSync(caPath, "utf8") },
+});
 
 async function main() {
   await client.connect();

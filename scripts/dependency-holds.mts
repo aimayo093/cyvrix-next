@@ -51,8 +51,9 @@ function visit(dir: string) {
             list.push({ by: info.name, range, maxMajor: ceiling });
           }
         }
-      } catch {
-        // An unreadable manifest is not ours to judge.
+      } catch (error) {
+        // Logged, so a ceiling that went missing can be traced; the scan goes on.
+        console.warn(`  Could not read ${path.relative(ROOT, manifest)}: ${error instanceof Error ? error.message : "unknown error"}`);
       }
     }
     visit(path.join(full, "node_modules"));
@@ -63,5 +64,7 @@ visit(path.join(ROOT, "node_modules"));
 for (const list of Object.values(holds)) list.sort((a, b) => a.maxMajor - b.maxMajor || a.by.localeCompare(b.by));
 
 const out = path.join(ROOT, "lib", "generated", "dependency-holds.json");
-fs.writeFileSync(out, JSON.stringify({ generatedAt: new Date().toISOString(), holds }, null, 2) + "\n");
+// No timestamp: the file is tracked, and a build that changes nothing should
+// leave it unchanged.
+fs.writeFileSync(out, JSON.stringify({ holds }, null, 2) + "\n");
 console.log(`  Dependency holds written: ${Object.keys(holds).length} package(s) with a peer ceiling.`);

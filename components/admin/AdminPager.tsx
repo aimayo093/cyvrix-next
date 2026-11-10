@@ -3,10 +3,15 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export const ADMIN_PAGE_SIZE = 50;
 
-/** Reads `?page=` as a 1-based page number; anything unusable is page 1. */
+/** Reads `?page=` as a 1-based page number; anything unusable (`2junk`, `0`, `-1`) is page 1. */
 export function parsePage(value: string | undefined): number {
-  const page = Number.parseInt(value ?? "1", 10);
-  return Number.isFinite(page) && page >= 1 ? page : 1;
+  if (!value || !/^[1-9][0-9]{0,8}$/.test(value)) return 1;
+  return Number(value);
+}
+
+/** The last page that has rows; 1 when there are none. */
+export function lastPageFor(total: number, pageSize = ADMIN_PAGE_SIZE): number {
+  return Math.max(1, Math.ceil(total / pageSize));
 }
 
 /**
@@ -26,9 +31,11 @@ export function AdminPager({
   buildHref: (page: number) => string;
   noun: string;
 }) {
-  const pages = Math.max(1, Math.ceil(total / pageSize));
+  const pages = lastPageFor(total, pageSize);
   if (total <= pageSize) return null;
 
+  // Clamped, so a stale page number never shows an inverted range.
+  page = Math.min(page, pages);
   const first = (page - 1) * pageSize + 1;
   const last = Math.min(page * pageSize, total);
   const linkClass =

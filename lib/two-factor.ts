@@ -60,6 +60,22 @@ export async function beginEnrolment(userId: string, account: string): Promise<E
   };
 }
 
+/**
+ * The enrolment offer to show on a page render. Reuses a pending (unconfirmed)
+ * secret when there is one, so refreshing the page or opening it in a second
+ * tab does not replace the QR code someone has already scanned.
+ */
+export async function pendingEnrolmentOffer(userId: string, account: string): Promise<EnrolmentOffer> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { twoFactorSecret: true, twoFactorEnrolledAt: true },
+  });
+  const pending = user && !user.twoFactorEnrolledAt && user.twoFactorSecret ? openSecret(user.twoFactorSecret) : null;
+  if (!pending) return beginEnrolment(userId, account);
+  const url = otpauthUrl({ secret: pending, account, issuer: ISSUER });
+  return { secret: pending, otpauthUrl: url, qrSvg: await QRCode.toString(url, { type: "svg", margin: 1, width: 200 }) };
+}
+
 export type ConfirmResult =
   | { ok: true; recoveryCodes: string[] }
   | { ok: false; reason: "no_pending_enrolment" | "bad_code" | "rate_limited" };

@@ -1,6 +1,7 @@
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateTicketStatus, assignTicket, closeTicket } from "@/lib/admin-actions";
@@ -8,7 +9,7 @@ import { AdminTicketThread } from "@/components/admin/AdminTicketThread";
 import { loadTicketThread } from "@/lib/ticket-thread";
 import { formatDistanceToNow } from "date-fns";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
-import { ADMIN_PAGE_SIZE, AdminPager, parsePage } from "@/components/admin/AdminPager";
+import { ADMIN_PAGE_SIZE, AdminPager, lastPageFor, parsePage } from "@/components/admin/AdminPager";
 import { MessageSquare } from "lucide-react";
 import { TicketStatus } from "@/generated/prisma";
 
@@ -97,6 +98,12 @@ async function TicketManagementPageContent({
     prisma.ticket.count({ where }),
   ]);
 
+  // Past the last page (its last ticket was closed, or a stale link): go to
+  // the last page that has rows.
+  if (page > lastPageFor(total)) {
+    redirect(`/admin/ticket-management?filter=${filter}&page=${lastPageFor(total)}${sp.view ? `&view=${encodeURIComponent(sp.view)}` : ""}`);
+  }
+
   // A ticket opened by link need not be on the current page or in the filter.
   const viewing = sp.view
     ? tickets.find((t) => t.id === sp.view) ?? (await prisma.ticket.findUnique({ where: { id: sp.view } }))
@@ -106,8 +113,7 @@ async function TicketManagementPageContent({
     `/admin/ticket-management?filter=${filter}${page > 1 ? `&page=${page}` : ""}&view=${id}`;
 
   // Loaded through the shared reader so the analyst and the client are looking
-  // at the same conversation, ordered the same way. The queue query above sorts
-  // messages newest-first for the row summary; a thread reads oldest-first.
+  // at the same conversation, ordered the same way (oldest first).
   const viewingThread = viewing
     ? await loadTicketThread(viewing.id, admin).then((thread) => ({
         messages: thread.map((message) => ({ ...message, createdAt: message.createdAt.toISOString() })),

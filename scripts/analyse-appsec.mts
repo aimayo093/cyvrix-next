@@ -55,13 +55,15 @@ function walk(dir: string): string[] {
 
 // `proxy.ts` is named individually because it is a file, not a directory. It
 // holds the authentication gate and the API rate limiter, so it has to be in
-// scope. Note the existsSync below: a rename drops it from the scan silently
-// rather than failing, so this entry must follow the Next file convention. It
-// was `middleware.ts` until Next 16 renamed the convention to `proxy`.
+// scope. A missing entry stops the scan with an error: it used to be skipped
+// silently, so a rename (it was `middleware.ts` until Next 16) could drop the
+// authentication gate out of the scan with nothing to show for it.
 const sourceFiles = ["app", "components", "lib", "proxy.ts"]
   .flatMap((entry) => {
     const full = path.join(ROOT, entry);
-    if (!fs.existsSync(full)) return [];
+    if (!fs.existsSync(full)) {
+      throw new Error(`scan:code expected "${entry}" and it is missing. Update the list if it was renamed.`);
+    }
     return fs.statSync(full).isDirectory() ? walk(full) : [full];
   });
 
@@ -347,7 +349,17 @@ const add = (f: AppSecFinding) => findings.push(f);
 
 // ── 31. Webhook signatures ─────────────────────────────────────────────────
 {
-  const webhooks = apiRoutes.filter((r) => /webhook/i.test(r.path));
+  // By name and by behaviour, so a webhook under another name is still found:
+  // signature headers from common providers, provider event parsing, and
+  // reading the raw body (which signature checks need).
+  const webhooks = apiRoutes.filter(
+    (r) =>
+      /webhook|hook|callback|notify|ipn/i.test(r.path) ||
+      // A webhook is called by another service, never with a user session, so
+      // behaviour only counts on routes that do not check one.
+      (!/getSession|requireAdmin|requireUser|requireSuperAdmin/.test(r.source) &&
+        /stripe-signature|x-hub-signature|svix-|webhook-signature|x-signature|constructEvent\(|\.text\(\)|\.arrayBuffer\(\)/i.test(r.source)),
+  );
   const unsigned = webhooks
     .filter((r) => !/signature|hmac|createHmac|timingSafeEqual|verify/i.test(r.source))
     .map((r) => r.path);
@@ -356,14 +368,14 @@ const add = (f: AppSecFinding) => findings.push(f);
     id: "appsec_webhooks",
     label: "Webhook signature verification",
     status: webhooks.length === 0 ? "not_applicable" : unsigned.length === 0 ? "pass" : "fail",
-    method: `Looked for inbound webhook routes and whether each verifies a signature.`,
+    method: `Looked for inbound webhook routes, by name and by behaviour (provider signature headers, event parsing, raw-body reads), and whether each verifies a signature.`,
     detail:
       webhooks.length === 0
         ? "No inbound webhook endpoint exists, so there is no unsigned webhook to exploit."
         : unsigned.length === 0
           ? "Every webhook route verifies a signature."
           : `${unsigned.length} webhook route(s) accept unsigned requests.`,
-    limitation: "Identifies routes by name. A webhook under a different name would be missed.",
+    limitation: "A webhook that neither has a webhook-like name nor reads a signature header or raw body would be missed.",
     evidence: unsigned,
   });
 }

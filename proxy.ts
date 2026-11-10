@@ -123,7 +123,11 @@ export async function proxy(request: NextRequest) {
     // changed, account disabled). The cookie still has a valid signature, which
     // is all this file can check, so it is deleted here rather than trusted:
     // trusting it would send the browser straight back to a page that refuses it.
-    if (request.nextUrl.searchParams.get("ended") === "1") {
+    //
+    // Only for a same-site arrival. The server's own redirect comes from this
+    // site; a link on another site to /login?ended=1 must not be able to sign
+    // a visitor out (the reason sign-out itself is POST-only).
+    if (request.nextUrl.searchParams.get("ended") === "1" && request.headers.get("sec-fetch-site") !== "cross-site") {
       if (token) response.cookies.delete(SESSION_COOKIE);
       return response;
     }

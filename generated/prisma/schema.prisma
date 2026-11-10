@@ -844,6 +844,7 @@ model Notification {
   readAt    DateTime?
   createdAt DateTime  @default(now())
 
+  @@index([userId, readAt])
   @@schema("public")
 }
 
@@ -1057,7 +1058,6 @@ model User {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-/// Email verification links. The token is never stored, only its SHA-256 hash.
 /// One signed-in device. The session cookie names its row, so a device can be
 /// listed and signed out on its own from the Security Center.
 model UserSession {
@@ -1075,6 +1075,7 @@ model UserSession {
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
+  @@index([revokedAt])
   @@schema("public")
 }
 
@@ -1089,6 +1090,7 @@ model RateLimitBucket {
   @@schema("public")
 }
 
+/// Email verification links. The token is never stored, only its SHA-256 hash.
 model VerificationToken {
   id        String   @id
   userId    String

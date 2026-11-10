@@ -316,7 +316,6 @@ export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
  * Model UserSession
  * This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
- * Email verification links. The token is never stored, only its SHA-256 hash.
  * One signed-in device. The session cookie names its row, so a device can be
  * listed and signed out on its own from the Security Center.
  */
@@ -329,7 +328,7 @@ export type UserSession = $Result.DefaultSelection<Prisma.$UserSessionPayload>
 export type RateLimitBucket = $Result.DefaultSelection<Prisma.$RateLimitBucketPayload>
 /**
  * Model VerificationToken
- * 
+ * Email verification links. The token is never stored, only its SHA-256 hash.
  */
 export type VerificationToken = $Result.DefaultSelection<Prisma.$VerificationTokenPayload>
 /**

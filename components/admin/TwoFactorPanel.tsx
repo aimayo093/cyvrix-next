@@ -174,19 +174,35 @@ export function TwoFactorPanel({
           </form>
         </div>
 
-        <form action={turnOffTwoFactor} className="mt-5 border-t border-slate-100 pt-5">
+        <form action={turnOffTwoFactor} className="mt-5 space-y-3 border-t border-slate-100 pt-5">
           <p className="mb-3 flex items-start gap-2 text-xs font-medium leading-relaxed text-slate-500">
             <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
             New phone or lost device? Staff accounts must keep a second factor, so this removes the
             current authenticator, signs you out of every other device, and takes you straight to set up
             the new one.
           </p>
-          <button
-            type="submit"
-            className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-black text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
-          >
-            Replace authenticator
-          </button>
+          <div className="flex flex-wrap items-end gap-2">
+            <div>
+              <label htmlFor="replace-code" className="block text-[10px] font-black uppercase tracking-wider text-slate-500">
+                Current code or recovery code
+              </label>
+              <input
+                id="replace-code"
+                name="code"
+                required
+                autoComplete="one-time-code"
+                inputMode="text"
+                maxLength={20}
+                className="mt-1 h-9 w-44 rounded-lg border border-slate-200 px-3 font-mono text-sm text-[#041635] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
+              />
+            </div>
+            <button
+              type="submit"
+              className="h-9 rounded-lg border border-rose-200 bg-white px-3 text-xs font-black text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+            >
+              Replace authenticator
+            </button>
+          </div>
         </form>
       </section>
     );

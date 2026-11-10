@@ -18,7 +18,8 @@ export type Traffic = {
   visitors: number;
   pageviews: number;
   daily: DayCount[];
-  topPages: { path: string; pageviews: number }[];
+  /** null when that request failed: shown as unreadable, not as "no pages". */
+  topPages: { path: string; pageviews: number }[] | null;
   availableDays: number;
 };
 
@@ -29,7 +30,9 @@ const TIMEOUT_MS = 5_000;
 
 function config() {
   const token = process.env.VERCEL_ANALYTICS_TOKEN?.trim();
-  const projectId = (process.env.VERCEL_ANALYTICS_PROJECT_ID || process.env.VERCEL_PROJECT_ID)?.trim();
+  // Each candidate trimmed before the fallback, so a blank override does not
+  // hide the id the platform sets.
+  const projectId = process.env.VERCEL_ANALYTICS_PROJECT_ID?.trim() || process.env.VERCEL_PROJECT_ID?.trim();
   if (!token || !projectId) return null;
   return { token, projectId, teamId: process.env.VERCEL_ANALYTICS_TEAM_ID?.trim() || undefined };
 }
@@ -95,7 +98,7 @@ async function readTraffic(range: RangeDays, todayKey: string): Promise<TrafficR
       visitors: totals.visitors,
       pageviews: totals.pageviews,
       daily: daily.daily,
-      topPages: parseTopPages(pagesJson) ?? [],
+      topPages: parseTopPages(pagesJson),
       availableDays: daily.availableDays,
     },
   };

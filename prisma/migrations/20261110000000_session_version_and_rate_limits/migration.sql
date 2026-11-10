@@ -29,8 +29,3 @@ CREATE INDEX IF NOT EXISTS "RateLimitBucket_resetAt_idx"
 -- table owner and is unaffected; with no policies, anon and authenticated
 -- roles can read or write nothing.
 ALTER TABLE "public"."RateLimitBucket" ENABLE ROW LEVEL SECURITY;
-
--- Supabase grants its public API roles access to new tables by default. Row
--- level security already hides every row; this removes the grant as well, so
--- the table is not reachable through the public API at all.
-REVOKE ALL ON TABLE "public"."RateLimitBucket" FROM anon, authenticated;

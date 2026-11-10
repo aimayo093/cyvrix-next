@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { ArrowRight, CheckCircle2, ShieldAlert, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
 import { loadRecentActivity, loadSecuritySummary, loadWebsiteActivity } from "@/lib/dashboard/loaders";
 import { QUEUE_LIMIT, summarySentence, type QueueKind } from "@/lib/dashboard/queue";
 import { seriesTotal, type DayCount } from "@/lib/dashboard/series";
@@ -40,7 +40,14 @@ export async function TilesBlock({ range }: { range: RangeDays }) {
 
   const trafficNote =
     traffic.state === "not_configured" ? (
-      <span title="Set VERCEL_ANALYTICS_TOKEN — see DEPLOYMENT.md">Not connected</span>
+      <a
+        href="https://github.com/aimayo093/cyvrix-next/blob/main/DEPLOYMENT.md#vercel-analytics-on-the-dashboard"
+        target="_blank"
+        rel="noreferrer"
+        className="underline underline-offset-2 hover:text-[#041635]"
+      >
+        Not connected — set up
+      </a>
     ) : traffic.state === "unavailable" ? (
       "Could not reach Vercel Analytics"
     ) : traffic.traffic.availableDays === 0 ? (
@@ -174,11 +181,15 @@ export async function SecurityBlock() {
   if (!viewer.canSeeSecurity) return null;
   const summary = await loadSecuritySummary();
   const urgent = summary.ok && summary.data && ["critical", "high"].includes(summary.data.highestSeverity ?? "");
-  const Icon = urgent ? ShieldAlert : ShieldCheck;
+  // Green only for a real scan with nothing urgent; no scan, or one that could
+  // not be read, is neutral rather than "clear".
+  const known = summary.ok && summary.data !== null;
+  const Icon = urgent ? ShieldAlert : known ? ShieldCheck : Shield;
+  const iconColour = urgent ? "text-rose-600" : known ? "text-emerald-600" : "text-slate-400";
   return (
     <section aria-labelledby="security-heading" className={`${CARD} p-5`}>
       <h2 id="security-heading" className="flex items-center gap-2 font-outfit text-lg font-black text-[#041635]">
-        <Icon className={`h-5 w-5 ${urgent ? "text-rose-600" : "text-emerald-600"}`} aria-hidden="true" />
+        <Icon className={`h-5 w-5 ${iconColour}`} aria-hidden="true" />
         Security
       </h2>
       <div className="mt-2 space-y-1 text-sm font-semibold text-slate-600">
@@ -251,7 +262,12 @@ export async function WebsiteBlock({ range }: { range: RangeDays }) {
           </ul>
         </>
       )}
-      {traffic.state === "ok" && traffic.traffic.topPages.length > 0 && (
+      {traffic.state === "ok" && traffic.traffic.topPages === null && (
+        <p className="mt-4 border-t border-slate-100 pt-3 text-xs font-semibold text-slate-500">
+          Top pages: — could not be read.
+        </p>
+      )}
+      {traffic.state === "ok" && traffic.traffic.topPages && traffic.traffic.topPages.length > 0 && (
         <div className="mt-4 border-t border-slate-100 pt-3">
           <p className="text-xs font-bold uppercase tracking-wider text-slate-500">Top pages, {range} days</p>
           <ol className="mt-2 space-y-1">
@@ -307,7 +323,9 @@ export async function ChartBlock({ range }: { range: RangeDays }) {
         (() => {
           const enquiries = tiles.data.enquiries.daily;
           const tickets = tiles.data.openTickets.daily;
-          const max = Math.max(1, ...enquiries.map((d) => d.count), ...tickets.map((d) => d.count));
+          // The real peak for the spoken summary; the scale needs at least 1.
+          const peak = Math.max(0, ...enquiries.map((d) => d.count), ...tickets.map((d) => d.count));
+          const max = Math.max(1, peak);
           const middle = enquiries[Math.floor(enquiries.length / 2)];
           return (
             <>
@@ -316,7 +334,7 @@ export async function ChartBlock({ range }: { range: RangeDays }) {
                 preserveAspectRatio="none"
                 className="mt-4 h-40 w-full"
                 role="img"
-                aria-label={`${seriesTotal(enquiries)} enquiries and ${seriesTotal(tickets)} tickets opened over the last ${range} days. Busiest day had ${max}.`}
+                aria-label={`${seriesTotal(enquiries)} enquiries and ${seriesTotal(tickets)} tickets opened over the last ${range} days. ${peak === 0 ? "No activity in the period." : `Busiest day had ${peak}.`}`}
               >
                 <line x1="0" y1={CHART_H} x2={CHART_W} y2={CHART_H} stroke="#e2e8f0" vectorEffect="non-scaling-stroke" />
                 <polyline points={linePoints(tickets, max)} fill="none" stroke="#94a3b8" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />

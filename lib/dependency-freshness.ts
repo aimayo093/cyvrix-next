@@ -18,7 +18,11 @@ export function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-const major = (version: string) => Number(cleanVersion(version).split(".")[0]);
+/** The leading major number, or NaN when the text does not start with one. */
+const major = (version: string) => {
+  const match = version.trim().match(/^[\^~>=<v\s]*(\d+)/);
+  return match ? Number(match[1]) : Number.NaN;
+};
 
 /**
  * The version this package should be compared against, or null when there is
@@ -36,7 +40,10 @@ export function upgradeTarget(name: string, declared: string, latest: string, ru
     return major(declared) === runtimeNodeMajor ? null : `${runtimeNodeMajor}.x (the Node.js runtime)`;
   }
   if (/^\d+\.\d+\.\d+-/.test(latest.trim())) return null;
-  return compareVersions(declared, latest) < 0 ? latest : null;
+  const order = compareVersions(declared, latest);
+  // A declared pre-release (^8.0.0-rc.1) is older than its own release (8.0.0).
+  if (order === 0 && /\d+\.\d+\.\d+-/.test(declared)) return latest;
+  return order < 0 ? latest : null;
 }
 
 export type DependencyHold = { by: string; range: string; maxMajor: number };

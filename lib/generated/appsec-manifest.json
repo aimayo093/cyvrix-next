@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-10T14:32:13.406Z",
+  "generatedAt": "2026-11-10T15:09:11.047Z",
   "fileCount": 218,
   "apiRouteCount": 12,
   "mutatingRouteCount": 9,
@@ -106,9 +106,9 @@
       "id": "appsec_webhooks",
       "label": "Webhook signature verification",
       "status": "not_applicable",
-      "method": "Looked for inbound webhook routes and whether each verifies a signature.",
+      "method": "Looked for inbound webhook routes, by name and by behaviour (provider signature headers, event parsing, raw-body reads), and whether each verifies a signature.",
       "detail": "No inbound webhook endpoint exists, so there is no unsigned webhook to exploit.",
-      "limitation": "Identifies routes by name. A webhook under a different name would be missed.",
+      "limitation": "A webhook that neither has a webhook-like name nor reads a signature header or raw body would be missed.",
       "evidence": []
     },
     {

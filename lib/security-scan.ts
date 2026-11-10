@@ -218,7 +218,8 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
       ? ` Held back, not yet adoptable: ${heldBack
           .map((item) => {
             const names = [...new Set(item.holders.map((hold) => hold.by))];
-            return `${item.name} ${item.target} (${names.slice(0, 2).join(", ")}${names.length > 2 ? ` and ${names.length - 2} more` : ""} support up to ${Math.min(...item.holders.map((hold) => hold.maxMajor))}.x)`;
+            const ceiling = Math.min(...item.holders.map((hold) => hold.maxMajor));
+            return `${item.name} ${item.target} (${names.slice(0, 2).join(", ")}${names.length > 2 ? ` and ${names.length - 2} more` : ""} support up to ${ceiling}.x; newer ${ceiling}.x releases are not checked)`;
           })
           .join("; ")}.`
       : "";
@@ -234,7 +235,9 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
       category: "dependencies",
       assessed: unreachable.length < entries.length,
       detail:
-        (outdated.length
+        (unreachable.length === entries.length
+          ? "No package could be checked."
+          : outdated.length
           ? `${outdated.length} package${outdated.length === 1 ? "" : "s"} appear outdated: ${outdated
               .slice(0, 8)
               .map((item) => `${item.name} ${item.current} -> ${item.target}`)
@@ -474,7 +477,7 @@ export async function runSecurityScan(options: {
     });
   }
 
-  const passCount = checks.filter((check) => check.status === "pass").length;
+  const passCount = checks.filter((check) => check.assessed !== false && check.status === "pass").length;
   // Only answered questions count. An unanswered check used to be stored as a
   // warning and counted here, so a site with nothing wrong still reported
   // "found warnings" and raised a notification on every scheduled scan.
@@ -553,6 +556,19 @@ function isScanRecord(value: unknown): value is Record<string, unknown> {
  * null when the entry is missing, malformed or from an older format. Shared
  * by the Security Centre and the admin Today dashboard.
  */
+function isStoredCheck(value: unknown): boolean {
+  if (!isScanRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    typeof value.label === "string" &&
+    typeof value.detail === "string" &&
+    typeof value.category === "string" &&
+    (value.status === "pass" || value.status === "warn" || value.status === "fail") &&
+    (value.assessed === undefined || typeof value.assessed === "boolean") &&
+    (value.notApplicable === undefined || typeof value.notApplicable === "boolean")
+  );
+}
+
 export function readScanResult(metadata: unknown): SecurityScanResult | null {
   let value: unknown = metadata;
   if (typeof value === "string") {
@@ -567,5 +583,8 @@ export function readScanResult(metadata: unknown): SecurityScanResult | null {
   if (typeof result.score !== "number" || typeof result.durationMs !== "number" || typeof result.timestamp !== "string") return null;
   if (result.overallStatus !== "pass" && result.overallStatus !== "warn" && result.overallStatus !== "fail") return null;
   if (result.trigger !== "manual" && result.trigger !== "background") return null;
+  // Every check is validated too: one malformed element in a stored scan would
+  // otherwise reach the analyst and the dashboard as if it were well formed.
+  if (!result.checks.every(isStoredCheck)) return null;
   return result as unknown as SecurityScanResult;
 }

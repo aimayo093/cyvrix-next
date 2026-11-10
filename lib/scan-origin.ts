@@ -3,8 +3,10 @@
  *
  * The configured site URL wins, so the destination of the scan's outbound
  * requests is chosen by whoever deploys the site rather than by the Host header
- * of whoever triggers it. The request's own origin is only a fallback for a
- * deployment with no site URL configured (local development, previews).
+ * of whoever triggers it. The request's own origin is only a fallback when
+ * neither is set (local development). On the hosting platform
+ * VERCEL_PROJECT_PRODUCTION_URL is set for every deployment, so a scan run on
+ * a preview probes the production site, not the preview.
  */
 export function scanOrigin(req: Request): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL;

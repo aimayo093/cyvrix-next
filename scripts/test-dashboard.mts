@@ -209,6 +209,17 @@ check("active exact", activeNavItem("/admin")?.name, "Today");
 check("active prefix", activeNavItem("/admin/leads-crm")?.name, "Enquiries");
 check("dashboard not prefix of all", activeNavItem("/admin/unknown"), null);
 
+// Review follow-ups.
+check("an impossible calendar date is rejected", parseDaily({ data: [{ timestamp: "2026-13-01T00:00:00Z", visitors: 1, pageviews: 1 }] }, ["2026-11-10"]), null);
+{
+  const { parsePage, lastPageFor } = await import("../components/admin/AdminPager");
+  check("page 2junk is page 1", parsePage("2junk"), 1);
+  check("page 0 is page 1", parsePage("0"), 1);
+  check("page 3 is page 3", parsePage("3"), 3);
+  check("last page of 100 at 50", lastPageFor(100), 2);
+  check("last page of none is 1", lastPageFor(0), 1);
+}
+
 if (failures > 0) {
   console.error(`\n  ${failures} of ${total} checks failed.\n`);
   process.exit(1);

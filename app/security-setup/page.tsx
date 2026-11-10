@@ -5,7 +5,7 @@ import { ShieldCheck } from "lucide-react";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { TwoFactorPanel } from "@/components/admin/TwoFactorPanel";
 import { requireStaffForSecondFactorSetup } from "@/lib/auth";
-import { beginEnrolment, getTwoFactorState } from "@/lib/two-factor";
+import { getTwoFactorState, pendingEnrolmentOffer } from "@/lib/two-factor";
 
 export const metadata = { title: "Set up two-factor authentication", robots: { index: false } };
 
@@ -36,8 +36,8 @@ async function SetupContent({ searchParams }: SetupPageProps) {
 
   const sp = await searchParams;
   const state = await getTwoFactorState(staff.id);
-  // A fresh secret on every render until one is confirmed, as on the profile page.
-  const offer = await beginEnrolment(staff.id, staff.email);
+  // The pending secret is reused, so a refresh does not replace a scanned QR code.
+  const offer = await pendingEnrolmentOffer(staff.id, staff.email);
 
   return (
     <>

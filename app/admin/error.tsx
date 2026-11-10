@@ -5,9 +5,11 @@ import Link from "next/link";
 import { AlertTriangle, RotateCcw } from "lucide-react";
 
 /**
- * Error boundary for the admin. Renders inside the admin layout, so the
+ * Error boundary for admin pages. Renders inside the admin layout, so the
  * sidebar stays and the administrator is not dropped onto the public site's
- * "contact us" error screen.
+ * "contact us" error screen. It catches errors from pages only: an error in
+ * app/admin/layout.tsx itself (the sign-in check) is above this boundary and
+ * reaches app/error.tsx.
  *
  * Production builds replace a server error's message with a digest, so the
  * digest is shown as the reference to look up in the logs. Expected refusals

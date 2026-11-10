@@ -8,7 +8,7 @@ export function deviceLabel(userAgent: string | null | undefined): string {
   const ua = userAgent;
 
   const browser =
-    /Edg\//.test(ua) ? "Edge"
+    /Edg(?:A|iOS)?\//.test(ua) ? "Edge"
     : /OPR\/|Opera/.test(ua) ? "Opera"
     : /SamsungBrowser\//.test(ua) ? "Samsung Internet"
     : /Firefox\/|FxiOS\//.test(ua) ? "Firefox"

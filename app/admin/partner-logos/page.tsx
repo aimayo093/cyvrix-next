@@ -283,19 +283,23 @@ function PartnerFormFields({ defaults }: { defaults?: any }) {
         </div>
       </div>
 
-      <label className="block text-sm font-bold text-slate-700">
-        Logo Alt Text
+      <div>
+        <label htmlFor={`altText-${defaults?.id ?? "new"}`} className="block text-sm font-bold text-slate-700">
+          Logo Alt Text
+        </label>
         <input
+          id={`altText-${defaults?.id ?? "new"}`}
           name="altText"
           defaultValue={defaults?.altText ?? ""}
           maxLength={160}
+          aria-describedby={`altText-help-${defaults?.id ?? "new"}`}
           placeholder="e.g. Microsoft Solutions Partner logo"
           className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none"
         />
-        <span className="mt-1 block text-xs font-medium text-slate-500">
+        <p id={`altText-help-${defaults?.id ?? "new"}`} className="mt-1 text-xs font-medium text-slate-500">
           Read aloud by screen readers. Leave blank to use the partner name.
-        </span>
-      </label>
+        </p>
+      </div>
 
       <label className="block text-sm font-bold text-slate-700">
         Short Description

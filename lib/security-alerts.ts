@@ -65,17 +65,27 @@ export async function createSecurityNotifications(result: SecurityScanResult) {
   const title = result.overallStatus === "fail" ? "Security scan found issues" : "Security scan found warnings";
   const body = `Security Center score ${result.score}%. Review the latest scan report.`;
 
-  // The same unread alert is moved to the top rather than repeated: a daily
-  // scan with an unchanged result used to add an identical row every day.
+  // One unread copy of an alert at most. The newest copy is moved to the top
+  // (or one is created), then every other unread copy is removed. That also
+  // collapses rows left by the old daily insert, and by two scans that
+  // overlap: whichever runs second removes the other's copy.
   await Promise.all(
     admins.map(async (admin) => {
-      const refreshed = await prisma.notification
-        .updateMany({ where: { userId: admin.id, title, body, readAt: null }, data: { createdAt: new Date() } })
-        .catch(() => ({ count: 0 }));
-      if (refreshed.count > 0) return;
-      await prisma.notification
-        .create({ data: { id: crypto.randomUUID(), userId: admin.id, title, body } })
-        .catch(() => null);
+      try {
+        const same = { userId: admin.id, title, body, readAt: null };
+        const newest = await prisma.notification.findFirst({ where: same, orderBy: { createdAt: "desc" }, select: { id: true } });
+        const keepId = newest?.id ?? crypto.randomUUID();
+        if (newest) {
+          await prisma.notification.update({ where: { id: keepId }, data: { createdAt: new Date() } });
+        } else {
+          await prisma.notification.create({ data: { id: keepId, userId: admin.id, title, body } });
+        }
+        await prisma.notification.deleteMany({ where: { ...same, id: { not: keepId } } });
+      } catch (error) {
+        console.error("[security-alerts] Could not record a notification.", {
+          message: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
     }),
   );
 }

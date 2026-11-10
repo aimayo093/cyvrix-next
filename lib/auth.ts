@@ -191,9 +191,15 @@ export async function currentSessionId(): Promise<string | null> {
 /** Signs out this device: ends its session row as well as deleting the cookie. */
 export async function clearSession() {
   const sessionId = await currentSessionId();
-  if (sessionId) await revokeSessionById(sessionId, "signed_out").catch(() => false);
   const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE);
+  try {
+    // If this fails the error reaches the caller: a sign-out that leaves the
+    // server-side session alive must not look like it worked, because a copied
+    // cookie would keep working (DECISIONS §13).
+    if (sessionId) await revokeSessionById(sessionId, "signed_out");
+  } finally {
+    cookieStore.delete(SESSION_COOKIE);
+  }
 }
 
 /** Where a staff account without two-factor is sent until it enrols. */
@@ -306,15 +312,33 @@ export async function requireStaffForSecondFactorSetup() {
  * signed in on this device: their cookie is reissued at the new version.
  */
 export async function endAllSessions(userId: string, { keepCurrent = false } = {}) {
-  await prisma.userSession.updateMany({
-    where: { userId, revokedAt: null },
-    data: { revokedAt: new Date(), revokedReason: "all_sessions_ended" },
-  });
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: { sessionVersion: { increment: 1 } },
-    select: { id: true, email: true, role: true, sessionVersion: true },
-  });
+  return changeAccountAndEndSessions(userId, {}, { keepCurrent });
+}
+
+/**
+ * Applies a credential change and ends every session in one transaction, so
+ * a new password can never be saved while the old sessions stay valid.
+ */
+export async function changeAccountAndEndSessions(
+  userId: string,
+  change: { passwordHash?: string },
+  { keepCurrent = false } = {},
+) {
+  const [, user] = await prisma.$transaction([
+    prisma.userSession.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date(), revokedReason: "all_sessions_ended" },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...change,
+        ...(change.passwordHash ? { updatedAt: new Date() } : {}),
+        sessionVersion: { increment: 1 },
+      },
+      select: { id: true, email: true, role: true, sessionVersion: true },
+    }),
+  ]);
   if (keepCurrent) await setSession(user);
   return user.sessionVersion;
 }

@@ -18,15 +18,18 @@ export function parseRange(value: string | undefined): RangeDays {
   return (RANGES as readonly number[]).includes(parsed) ? (parsed as RangeDays) : 30;
 }
 
+// Built once: the queue calls this once per lead.
+const LONDON_PARTS = new Intl.DateTimeFormat("en-GB", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  hourCycle: "h23",
+});
+
 function londonParts(date: Date) {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: TIME_ZONE,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(date);
+  const parts = LONDON_PARTS.formatToParts(date);
   const get = (type: string) => parts.find((part) => part.type === type)?.value ?? "";
   return { year: get("year"), month: get("month"), day: get("day"), hour: Number(get("hour")) };
 }

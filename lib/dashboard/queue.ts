@@ -46,7 +46,7 @@ export const QUEUE_LIMIT = 8;
 export const STAFF_TICKET_STATUSES = ["NEW", "OPEN", "ESCALATED"] as const;
 /** Statuses that are overdue once past `slaDueAt`, including work in hand. */
 export const OVERDUE_TICKET_STATUSES = ["NEW", "OPEN", "IN_PROGRESS", "ESCALATED"] as const;
-const CLOSED_LEAD_STATUSES = ["WON", "LOST", "ARCHIVED"];
+export const CLOSED_LEAD_STATUSES = ["WON", "LOST", "ARCHIVED"] as const;
 
 function isOverdue(ticket: Pick<QueueTicket, "status" | "slaDueAt">, now: Date) {
   return (
@@ -82,7 +82,7 @@ export function buildQueue(tickets: QueueTicket[], leads: QueueLead[], now: Date
   }
 
   for (const lead of leads) {
-    const open = !CLOSED_LEAD_STATUSES.includes(lead.status);
+    const open = !(CLOSED_LEAD_STATUSES as readonly string[]).includes(lead.status);
     const followUpDue = open && lead.followUpDate !== null && londonDayKey(lead.followUpDate) <= todayKey;
     if (!followUpDue && lead.status !== "NEW") continue;
     items.push({

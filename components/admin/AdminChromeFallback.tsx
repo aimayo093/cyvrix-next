@@ -32,7 +32,10 @@ export function AdminChromeFallback() {
       <main className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 lg:px-6">
           <div className="flex items-center gap-3">
-            <Menu className="h-5 w-5 text-slate-300 lg:hidden" aria-hidden="true" />
+            {/* The size of the real menu button, so the header does not shift. */}
+            <span className="flex h-11 w-11 items-center justify-center lg:hidden" aria-hidden="true">
+              <Menu className="h-5 w-5 text-slate-300" />
+            </span>
             <div className="h-4 w-28 animate-pulse rounded bg-slate-100" />
           </div>
           <div className="flex items-center gap-3">

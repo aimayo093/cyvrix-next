@@ -19,15 +19,25 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * Logging alone is reported as off: it records bots but stops none.
  */
 export function parseBotProtection(status: number, json: unknown): BotProtectionState {
-  // No firewall configuration saved yet: every managed ruleset is off.
-  if (status === 404) return { state: "off", mode: null, updatedAt: null };
+  // A 404 can mean "no configuration yet" or a wrong project or team id; the
+  // two cannot be told apart, so neither is shown as "off".
+  if (status === 404) {
+    return { state: "unavailable", reason: "No firewall configuration was found for this project. Check the project and team ids." };
+  }
   if (status === 401 || status === 403) return { state: "unavailable", reason: "The access token was refused." };
   if (status < 200 || status >= 300) return { state: "unavailable", reason: `The firewall answered ${status}.` };
+  if (!isRecord(json)) return { state: "unavailable", reason: "The firewall's answer could not be read." };
 
-  const rule = isRecord(json) && isRecord(json.managedRules) ? json.managedRules.bot_protection : undefined;
-  if (!isRecord(rule)) return { state: "off", mode: null, updatedAt: null };
+  const rule = isRecord(json.managedRules) ? json.managedRules.bot_protection : undefined;
+  // A readable configuration with no bot ruleset in it: the ruleset is off.
+  if (rule === undefined) return { state: "off", mode: null, updatedAt: null };
+  if (!isRecord(rule)) return { state: "unavailable", reason: "The bot-protection setting could not be read." };
+
   const mode = rule.action === "challenge" || rule.action === "deny" || rule.action === "log" ? rule.action : null;
-  const updatedAt = typeof rule.updatedAt === "string" ? rule.updatedAt : null;
+  if (rule.active === true && mode === null) {
+    return { state: "unavailable", reason: "Bot protection is active in a mode this page does not recognise." };
+  }
+  const updatedAt = typeof rule.updatedAt === "string" && !Number.isNaN(Date.parse(rule.updatedAt)) ? rule.updatedAt : null;
   const active = rule.active === true && mode !== "log";
   return { state: active ? "on" : "off", mode, updatedAt };
 }

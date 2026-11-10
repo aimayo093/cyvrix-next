@@ -76,8 +76,9 @@ computed per request (`connection()`, inside Suspense — DECISIONS §8). Below 
 one sentence from the queue, e.g. "3 enquiries waiting, oldest 2 days. 1 ticket
 past its due date." With an empty queue: "Nothing is waiting on you."
 
-A period control — 7, 30 or 90 days, via `?range=7|30|90`, default 30 — affects
-only trends and the chart. Implemented as links, so it works without
+A period control — 7, 30 or 90 days, via `?range=7|30|90`, default 30 — sets
+the period for the tiles' "in the period" totals, the top pages, the trends
+and the chart. Figures defined as "now" (open tickets, subscribers) ignore it. Implemented as links, so it works without
 JavaScript.
 
 ### 2.2 Five tiles
@@ -137,8 +138,11 @@ Server-side only, in a new `lib/site-traffic.ts`, `import "server-only"`.
 - Same endpoint with `by=requestPath`, `limit=5` → top pages.
 - `Authorization: Bearer ${VERCEL_ANALYTICS_TOKEN}`. Token never reaches the
   browser, never logged.
-- Cached for one hour (`use cache` + `cacheLife`, keyed by range), so the
-  dashboard does not call Vercel on every load. 5-second timeout.
+- Cached (`use cache` + `cacheLife`, keyed by range): a good answer for an
+  hour, a failure or a missing token for minutes, so one timeout does not
+  blank the tile for the hour, and the dashboard does not call Vercel on every
+  load. (First planned as one hour for every result; changed when built.)
+  5-second timeout.
 - New environment variables, documented in `DEPLOYMENT.md` and reported by
   `npm run check:env`: `VERCEL_ANALYTICS_TOKEN` (required for the feature),
   `VERCEL_ANALYTICS_PROJECT_ID` (defaults to `VERCEL_PROJECT_ID`, which Vercel
@@ -171,7 +175,8 @@ Kept, showing who did it (user name, or "System") and linking to the audit log.
 - **One loader per block**, each returning `{ ok: true, data } | { ok: false }`,
   each in its own Suspense boundary with a skeleton. A failed block shows its
   own "could not be read" state; the rest of the page still renders.
-- **Query budget**: queue 2 queries, tiles 4 counts + 3 per-day series, security
+- **Query budget**: sidebar counts 1 query on every admin page (all four
+  counts in one round trip), queue 4 small queries, tiles 4 counts + 3 per-day series, security
   1 audit read + analyst, website 2, activity 1. Run as `Promise.all` within a
   block; Prisma's 3-connection cap queues the rest. No row-loading for counts.
 - **Dates**: "today" and day buckets are `Europe/London`; SQL buckets use

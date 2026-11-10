@@ -113,7 +113,8 @@ export function AdminNotificationsMenu({
   unreadCount,
 }: {
   notifications: AdminNotification[];
-  unreadCount: number;
+  /** null when the count could not be read: no badge, and no claim of "none". */
+  unreadCount: number | null;
 }) {
   // The clock is read in the click handler rather than during render: render
   // has to stay pure, and the time the panel was opened is the right reference
@@ -131,14 +132,16 @@ export function AdminNotificationsMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={
-          unreadCount > 0
+          unreadCount === null
+            ? "Notifications"
+            : unreadCount > 0
             ? `Notifications, ${unreadCount} unread`
             : "Notifications, none unread"
         }
         className="relative rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-[#041635] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
       >
         <Bell className="h-4 w-4" />
-        {unreadCount > 0 && (
+        {unreadCount !== null && unreadCount > 0 && (
           <span className="absolute right-1.5 top-1.5 flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-black leading-none text-white">
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
@@ -152,7 +155,7 @@ export function AdminNotificationsMenu({
         >
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <p className="text-xs font-black uppercase tracking-widest text-slate-500">Notifications</p>
-            {unreadCount > 0 && (
+            {unreadCount !== null && unreadCount > 0 && (
               <span className="rounded-md bg-rose-50 px-2 py-0.5 text-[10px] font-black text-rose-700">
                 {unreadCount} unread
               </span>
@@ -161,7 +164,7 @@ export function AdminNotificationsMenu({
 
           {notifications.length > 0 && (
             <div className="flex items-center justify-end gap-1 border-b border-slate-100 px-2 py-1.5">
-              {unreadCount > 0 && (
+              {unreadCount !== 0 && (
                 <form action={markAllNotificationsRead}>
                   <button
                     type="submit"

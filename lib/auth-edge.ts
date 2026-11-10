@@ -28,8 +28,8 @@ export type SessionPayload = {
   email: string;
   role: UserRole;
   exp: number;
-  /** The UserSession row. The server refuses a token without one. */
-  sid?: string;
+  /** The UserSession row. verifySessionToken refuses a token without one. */
+  sid: string;
 };
 
 function getSecret(): string {

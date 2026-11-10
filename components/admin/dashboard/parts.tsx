@@ -86,7 +86,7 @@ export function RangeLinks({ current }: { current: RangeDays }) {
           key={range}
           href={`/admin?range=${range}`}
           aria-current={range === current ? "page" : undefined}
-          className={`flex min-h-9 items-center rounded-lg px-3 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] ${
+          className={`flex min-h-11 items-center rounded-lg px-3 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] ${
             range === current ? "bg-[#041635] text-white" : "text-slate-500 hover:text-[#041635]"
           }`}
         >

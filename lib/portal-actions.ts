@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { endAllSessions, requireUser } from "@/lib/auth";
+import { changeAccountAndEndSessions, requireUser } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/password";
 
 const ticketSchema = z.object({
@@ -209,10 +209,11 @@ export async function updatePortalProfile(_prevState: unknown, formData: FormDat
     const raw = Object.fromEntries(formData.entries());
     const data = profileSchema.parse(raw);
 
-    const updateData: { name: string; updatedAt: Date; passwordHash?: string } = {
+    const updateData: { name: string; updatedAt: Date } = {
       name: data.name,
       updatedAt: new Date(),
     };
+    let newPasswordHash: string | null = null;
 
     if (data.password) {
       if (!data.currentPassword) {
@@ -226,7 +227,7 @@ export async function updatePortalProfile(_prevState: unknown, formData: FormDat
         return { success: false, message: "The current password you entered is incorrect." };
       }
 
-      updateData.passwordHash = hashPassword(data.password);
+      newPasswordHash = hashPassword(data.password);
     }
 
     await prisma.user.update({
@@ -234,9 +235,10 @@ export async function updatePortalProfile(_prevState: unknown, formData: FormDat
       data: updateData
     });
 
-    if (updateData.passwordHash) {
-      // A new password ends every other session; this device stays signed in.
-      await endAllSessions(user.id, { keepCurrent: true });
+    if (newPasswordHash) {
+      // The new password and the end of every other session land together;
+      // this device stays signed in.
+      await changeAccountAndEndSessions(user.id, { passwordHash: newPasswordHash }, { keepCurrent: true });
       await prisma.auditLog.create({
         data: {
           id: crypto.randomUUID(),
@@ -251,7 +253,7 @@ export async function updatePortalProfile(_prevState: unknown, formData: FormDat
     revalidatePath("/portal/profile-and-company");
     return {
       success: true,
-      message: updateData.passwordHash
+      message: newPasswordHash
         ? "Profile and password updated."
         : "Profile successfully updated.",
     };

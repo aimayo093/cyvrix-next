@@ -41,7 +41,10 @@ export async function readBotProtection(): Promise<BotProtectionState> {
       cache: "no-store",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    return parseBotProtection(response.status, await response.json().catch(() => null));
+    // Unparseable JSON is passed on as itself, not as null, so it reads as
+    // "could not be read" rather than as "off".
+    const body: unknown = await response.json().catch(() => "unreadable");
+    return parseBotProtection(response.status, body);
   } catch (error) {
     console.error("[bot-protection] Could not read the firewall.", {
       reason: error instanceof Error ? error.name : "unknown",
@@ -50,10 +53,16 @@ export async function readBotProtection(): Promise<BotProtectionState> {
   }
 }
 
-/** Turns the ruleset on (challenge) or off. Returns an error sentence, or null on success. */
-export async function setBotProtection(enabled: boolean): Promise<string | null> {
+export type BotProtectionChange =
+  | { outcome: "applied" }
+  | { outcome: "refused"; message: string }
+  /** The request may have reached the firewall; the state shown is the truth. */
+  | { outcome: "unconfirmed"; message: string };
+
+/** Turns the ruleset on (challenge) or off. */
+export async function setBotProtection(enabled: boolean): Promise<BotProtectionChange> {
   const settings = config();
-  if (!settings) return "Bot protection is not connected. Add the firewall token first.";
+  if (!settings) return { outcome: "refused", message: "Bot protection is not connected. Add the firewall token first." };
   try {
     const response = await fetch(`${API}?${query(settings)}`, {
       method: "PATCH",
@@ -62,12 +71,17 @@ export async function setBotProtection(enabled: boolean): Promise<string | null>
       cache: "no-store",
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (response.ok) return null;
+    if (response.ok) return { outcome: "applied" };
     console.error("[bot-protection] Update refused.", { status: response.status });
-    if (response.status === 401 || response.status === 403) return "The firewall refused the access token.";
-    return `The firewall refused the change (${response.status}).`;
+    if (response.status === 401 || response.status === 403) {
+      return { outcome: "refused", message: "The firewall refused the access token." };
+    }
+    return { outcome: "refused", message: `The firewall refused the change (${response.status}).` };
   } catch (error) {
-    console.error("[bot-protection] Update failed.", { reason: error instanceof Error ? error.name : "unknown" });
-    return "The firewall could not be reached. Nothing was changed.";
+    console.error("[bot-protection] Update unconfirmed.", { reason: error instanceof Error ? error.name : "unknown" });
+    return {
+      outcome: "unconfirmed",
+      message: "No answer from the firewall, so the change may or may not have applied. Check the state shown before trying again.",
+    };
   }
 }

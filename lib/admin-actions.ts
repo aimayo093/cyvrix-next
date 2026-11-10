@@ -10,6 +10,7 @@ import { LeadStatus, TicketStatus } from "@/generated/prisma";
 import {
   canManageSecurityCenter,
   canUpdateSiteSetting,
+  changeAccountAndEndSessions,
   clearSession,
   currentSessionId,
   endAllSessions,
@@ -32,6 +33,7 @@ import {
   disableTwoFactor as clearTwoFactor,
   flashRecoveryCodes,
   regenerateRecoveryCodes,
+  verifyChallenge,
 } from "@/lib/two-factor";
 import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
@@ -1295,7 +1297,9 @@ export async function updateBrandAsset(formData: FormData) {
   const id = formData.get("id") as string;
   const name = sanitize(formData.get("name") as string || "");
   const mediaUrl = sanitize(formData.get("mediaUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const usageContext = sanitize(formData.get("usageContext") as string || "");
   const isActive = formData.get("isActive") === "true";
 
@@ -1587,7 +1591,9 @@ export async function createPartnerLogo(formData: FormData) {
   const category = sanitize(formData.get("category") as string || "");
   const description = sanitize(formData.get("description") as string || "");
   const logoUrl = sanitize(formData.get("logoUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
   const isVisible = formData.get("isVisible") === "true";
@@ -1620,7 +1626,9 @@ export async function updatePartnerLogo(formData: FormData) {
   const category = sanitize(formData.get("category") as string || "");
   const description = sanitize(formData.get("description") as string || "");
   const logoUrl = sanitize(formData.get("logoUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
   const isVisible = formData.get("isVisible") === "true";
@@ -1675,7 +1683,9 @@ export async function createTrustedLogo(formData: FormData) {
   await requireAdmin();
   const companyName = sanitize(formData.get("companyName") as string || "");
   const logoUrl = sanitize(formData.get("logoUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
   const isVisible = formData.get("isVisible") === "true";
@@ -1704,7 +1714,9 @@ export async function updateTrustedLogo(formData: FormData) {
   const id = formData.get("id") as string;
   const companyName = sanitize(formData.get("companyName") as string || "");
   const logoUrl = sanitize(formData.get("logoUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
   const isVisible = formData.get("isVisible") === "true";
@@ -2548,16 +2560,9 @@ export async function changeAdminPassword(formData: FormData) {
 
   const newPasswordHash = hashPassword(newPassword);
 
-  await prisma.user.update({
-    where: { id: admin.id },
-    data: {
-      passwordHash: newPasswordHash,
-      updatedAt: new Date(),
-    },
-  });
-
-  // A new password ends every other session; this device stays signed in.
-  await endAllSessions(admin.id, { keepCurrent: true });
+  // The new password and the end of every other session land together; this
+  // device stays signed in.
+  await changeAccountAndEndSessions(admin.id, { passwordHash: newPasswordHash }, { keepCurrent: true });
 
   await prisma.auditLog.create({
     data: {
@@ -2682,8 +2687,19 @@ export async function dismissRecoveryCodes() {
  * this is how a lost or replaced phone is swapped: every session ends and the
  * next screen sets up the new device.
  */
-export async function turnOffTwoFactor() {
+export async function turnOffTwoFactor(formData: FormData) {
   const admin = await requireAdmin();
+  // Proof of the current factor first. Without it, anyone holding a signed-in
+  // session could swap the authenticator for their own and keep the account.
+  const code = (formData.get("code") as string | null)?.trim() ?? "";
+  const proof = await verifyChallenge(admin.id, code);
+  if (!proof.ok) {
+    const message =
+      proof.reason === "rate_limited"
+        ? "Too many attempts. Wait a few minutes and try again."
+        : "Enter a current code from your authenticator, or a recovery code, to replace it.";
+    redirect(`/admin/profile?status=error&message=${encodeURIComponent(message)}`);
+  }
   await clearTwoFactor(admin.id);
   await endAllSessions(admin.id, { keepCurrent: true });
 
@@ -2797,20 +2813,26 @@ export async function toggleBotProtection(formData: FormData) {
   if (!canManageSecurityCenter(admin.role)) redirect("/admin");
   const enable = formData.get("enable") === "true";
   const { setBotProtection } = await import("./bot-protection");
-  const failure = await setBotProtection(enable);
+  const change = await setBotProtection(enable);
 
   await prisma.auditLog.create({
     data: {
       id: crypto.randomUUID(),
       userId: admin.id,
-      action: failure ? "BOT_PROTECTION_CHANGE_FAILED" : enable ? "BOT_PROTECTION_ENABLED" : "BOT_PROTECTION_DISABLED",
+      action:
+        change.outcome === "applied"
+          ? enable ? "BOT_PROTECTION_ENABLED" : "BOT_PROTECTION_DISABLED"
+          : change.outcome === "refused" ? "BOT_PROTECTION_CHANGE_FAILED" : "BOT_PROTECTION_CHANGE_UNCONFIRMED",
       entityType: "Firewall",
-      metadata: { by: admin.email, requested: enable ? "on" : "off", ...(failure ? { reason: failure } : {}) },
+      metadata: { by: admin.email, requested: enable ? "on" : "off", ...(change.outcome !== "applied" ? { reason: change.message } : {}) },
     },
   });
 
-  const message = failure ?? (enable ? "Bot protection is on. Suspicious traffic now gets a JavaScript challenge." : "Bot protection is off.");
-  redirect(`/admin/security-center?status=${failure ? "error" : "success"}&message=${encodeURIComponent(message)}#bot-protection`);
+  const message =
+    change.outcome === "applied"
+      ? enable ? "Bot protection is on. Suspicious traffic now gets a JavaScript challenge." : "Bot protection is off."
+      : change.message;
+  redirect(`/admin/security-center?status=${change.outcome === "applied" ? "success" : "error"}&message=${encodeURIComponent(message)}#bot-protection`);
 }
 
 /** Issues a fresh set of recovery codes, invalidating the previous ones. */
@@ -2885,16 +2907,9 @@ export async function resetPortalUserPassword(formData: FormData) {
   const { hashPassword } = await import("./password");
   const passwordHash = hashPassword(newPassword);
 
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      passwordHash,
-      updatedAt: new Date(),
-    },
-  });
-
-  // Whoever was using the old password is signed out.
-  await endAllSessions(userId);
+  // Whoever was using the old password is signed out in the same transaction.
+  await changeAccountAndEndSessions(userId, { passwordHash });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { email: true } });
 
   await prisma.auditLog.create({
     data: {

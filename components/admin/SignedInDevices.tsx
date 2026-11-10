@@ -34,10 +34,11 @@ const when = new Intl.DateTimeFormat("en-GB", {
 export async function SignedInDevices({ viewerRole }: { viewerRole: string }) {
   await connection();
   const now = new Date();
-  const [sessions, mine] = await Promise.all([
+  const active = { revokedAt: null, expiresAt: { gt: now } };
+  const [sessions, total, mine] = await Promise.all([
     prisma.userSession
       .findMany({
-        where: { revokedAt: null, expiresAt: { gt: now } },
+        where: active,
         orderBy: { lastSeenAt: "desc" },
         take: MAX_LISTED,
         select: {
@@ -50,6 +51,7 @@ export async function SignedInDevices({ viewerRole }: { viewerRole: string }) {
         },
       })
       .catch(() => null),
+    prisma.userSession.count({ where: active }).catch(() => null),
     currentSessionId(),
   ]);
 
@@ -68,6 +70,14 @@ export async function SignedInDevices({ viewerRole }: { viewerRole: string }) {
       ) : sessions.length === 0 ? (
         <p className="px-6 py-5 text-sm font-semibold text-slate-500">No devices are signed in.</p>
       ) : (
+        <>
+        {total !== null && total > sessions.length && (
+          // Never silently: say how many are not listed, and how to end them.
+          <p className="border-b border-slate-100 bg-amber-50 px-6 py-3 text-xs font-semibold text-amber-900">
+            Showing the {sessions.length} most recently active of {total} signed-in devices. To end the rest, use
+            &ldquo;Sign out of all devices&rdquo; on the account&apos;s profile, or change its password.
+          </p>
+        )}
         <ul className="divide-y divide-slate-100">
           {sessions.map((session) => {
             const label = deviceLabel(session.userAgent);
@@ -103,6 +113,7 @@ export async function SignedInDevices({ viewerRole }: { viewerRole: string }) {
                     <input type="hidden" name="sessionId" value={session.id} />
                     <button
                       type="submit"
+                      aria-label={`Sign out ${label} for ${session.user.name?.trim() || session.user.email}`}
                       className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-sm font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                     >
                       <LogOut className="h-4 w-4" aria-hidden="true" />
@@ -114,6 +125,7 @@ export async function SignedInDevices({ viewerRole }: { viewerRole: string }) {
             );
           })}
         </ul>
+        </>
       )}
     </section>
   );

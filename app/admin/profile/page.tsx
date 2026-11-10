@@ -3,11 +3,11 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { AlertCircle, CheckCircle2, KeyRound, Save, ShieldCheck, UserRound } from "lucide-react";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
-import { requireAdmin } from "@/lib/auth";
+import { canManageSecurityCenter, requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { changeAdminPassword, requestEmailVerification, signOutEverywhere, updateAdminProfile } from "@/lib/admin-actions";
 import { TwoFactorPanel } from "@/components/admin/TwoFactorPanel";
-import { beginEnrolment, getTwoFactorState, peekRecoveryCodes, type EnrolmentOffer } from "@/lib/two-factor";
+import { getTwoFactorState, peekRecoveryCodes, pendingEnrolmentOffer, type EnrolmentOffer } from "@/lib/two-factor";
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 
@@ -40,12 +40,11 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
   // dates come from the record itself.
   const twoFactor = await getTwoFactorState(admin.id);
 
-  // The enrolment screen needs the QR again on every render while it is open,
-  // and beginEnrolment issues a fresh secret each time it is called, so it is
-  // only called when the pending secret has not yet been confirmed.
+  // The enrolment screen needs the QR on every render while it is open. The
+  // pending secret is reused, so a refresh does not replace a scanned code.
   let enrolmentOffer: EnrolmentOffer | null = null;
   if (sp.enrol === "2fa" && !twoFactor.enrolled) {
-    enrolmentOffer = await beginEnrolment(admin.id, admin.email);
+    enrolmentOffer = await pendingEnrolmentOffer(admin.id, admin.email);
   }
 
   // Read without clearing. Cookies may only be modified in an action, and the
@@ -227,11 +226,16 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
             <p className="mt-1 max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
               Ends every session on every device, including this one. Use it if a device is lost or you
               signed in somewhere you should not have. Changing your password does this for your other
-              devices automatically. To sign out one device at a time, use{" "}
-              <Link href="/admin/security-center#devices" className="font-bold text-[#0f5aab] underline-offset-4 hover:underline">
-                Signed-in devices
-              </Link>{" "}
-              in the Security Center.
+              devices automatically.
+              {canManageSecurityCenter(admin.role) && (
+                <>
+                  {" "}To sign out one device at a time, use{" "}
+                  <Link href="/admin/security-center#devices" className="font-bold text-[#0f5aab] underline-offset-4 hover:underline">
+                    Signed-in devices
+                  </Link>{" "}
+                  in the Security Center.
+                </>
+              )}
             </p>
             <form action={signOutEverywhere} className="mt-5">
               <button

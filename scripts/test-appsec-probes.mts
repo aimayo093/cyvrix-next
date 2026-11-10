@@ -48,6 +48,8 @@ check("same version is current", upgradeTarget("next", "^16.4.6", "16.4.6", 24),
 check("pre-release is not a target", upgradeTarget("prisma", "^7.10.1", "8.0.0-rc.33", 24), null);
 check("@types/node on runtime major is current", upgradeTarget("@types/node", "^24.19.2", "26.6.6", 24), null);
 check("@types/node off runtime major is flagged", upgradeTarget("@types/node", "^20.19.43", "26.6.6", 24), "24.x (the Node.js runtime)");
+check("a declared pre-release is older than its release", upgradeTarget("prisma", "^8.0.0-rc.33", "8.0.0", 24), "8.0.0");
+check("@types/node target is held by a peer ceiling", heldBackBy("24.x (the Node.js runtime)", [{ by: "x", range: "<23", maxMajor: 22 }]).length, 1);
 check("unpinned range is skipped", upgradeTarget("@types/react", "^19", "19.3.0", 24), null);
 
 // Device names in the Security Center.
@@ -56,6 +58,8 @@ check("Edge is not mistaken for Chrome", deviceLabel("Mozilla/5.0 (Windows NT 10
 check("Safari on iPhone", deviceLabel("Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 Mobile/15E148 Safari/604.1"), "Safari on iPhone");
 check("Chrome on Android", deviceLabel("Mozilla/5.0 (Linux; Android 15; Pixel 9) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36"), "Chrome on Android");
 check("Firefox on Mac", deviceLabel("Mozilla/5.0 (Macintosh; Intel Mac OS X 15.1; rv:140.0) Gecko/20100101 Firefox/140.0"), "Firefox on Mac");
+check("Edge on Android", deviceLabel("Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Mobile Safari/537.36 EdgA/142.0.0.0"), "Edge on Android");
+check("Edge on iPhone", deviceLabel("Mozilla/5.0 (iPhone; CPU iPhone OS 19_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/19.0 EdgiOS/142.0 Mobile/15E148 Safari/605.1.15"), "Edge on iPhone");
 check("a script is named as one", deviceLabel("curl/8.9.1"), "Script on unknown system");
 check("no user agent", deviceLabel(null), "Unknown device");
 
@@ -79,7 +83,11 @@ check("no user agent", deviceLabel(null), "Unknown device");
 check("challenge active reads as on", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "challenge", updatedAt: "2026-11-10T12:00:00Z" } } }), { state: "on", mode: "challenge", updatedAt: "2026-11-10T12:00:00Z" });
 check("inactive reads as off", parseBotProtection(200, { managedRules: { bot_protection: { active: false } } }), { state: "off", mode: null, updatedAt: null });
 check("log-only is not protection", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "log" } } }).state, "off");
-check("no firewall config yet reads as off", parseBotProtection(404, null).state, "off");
+check("a 404 is not shown as off (could be a wrong id)", parseBotProtection(404, null).state, "unavailable");
+check("a config without the ruleset reads as off", parseBotProtection(200, { managedRules: {} }).state, "off");
+check("unreadable JSON is not shown as off", parseBotProtection(200, "unreadable").state, "unavailable");
+check("active in an unknown mode is not shown as on", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "mystery" } } }).state, "unavailable");
+check("a bad timestamp is dropped, not rendered", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "challenge", updatedAt: "not a date" } } }), { state: "on", mode: "challenge", updatedAt: null });
 check("refused token is not shown as off", parseBotProtection(403, null).state, "unavailable");
 check("server error is not shown as off", parseBotProtection(500, { error: "x" }).state, "unavailable");
 check("turn-on body", botProtectionUpdate(true), { action: "managedRules.update", id: "bot_protection", value: { active: true, action: "challenge" } });

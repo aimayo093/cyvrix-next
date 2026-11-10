@@ -7,6 +7,7 @@ import { fillDailySeries, scoreHistory, type DayCount } from "./series";
 import { londonDayKeys, type RangeDays } from "./time";
 import {
   buildQueue,
+  CLOSED_LEAD_STATUSES,
   OVERDUE_TICKET_STATUSES,
   STAFF_TICKET_STATUSES,
   type QueueItem,
@@ -34,7 +35,6 @@ async function load<T>(label: string, run: () => Promise<T>): Promise<Loaded<T>>
   }
 }
 
-const CLOSED_LEAD_STATUSES = ["WON", "LOST", "ARCHIVED"] as const;
 
 /** End of today in London, as an instant, for "follow-up due today or earlier". */
 function endOfLondonToday(now: Date): Date {
@@ -44,28 +44,46 @@ function endOfLondonToday(now: Date): Date {
   return new Date(Date.parse(`${todayKey}T23:59:59.999Z`) + 3_600_000);
 }
 
+/**
+ * Rows per queue group. The queue shows eight, so each group fetches more than
+ * that from its own most-urgent end. One capped query over everything let 200
+ * older rows push out a newer overdue ticket or due follow-up entirely.
+ */
+const PER_GROUP = 25;
+
 export function loadQueue(now: Date): Promise<Loaded<QueueItem[]>> {
   return load("Work queue", async () => {
-    const [tickets, leads] = await Promise.all([
+    const ticketSelect = { id: true, ticketNumber: true, subject: true, company: true, status: true, slaDueAt: true, createdAt: true } as const;
+    const leadSelect = { id: true, name: true, company: true, source: true, status: true, followUpDate: true, createdAt: true } as const;
+    const [overdueTickets, waitingTickets, dueFollowUps, newLeads] = await Promise.all([
       prisma.ticket.findMany({
-        where: { status: { in: [...OVERDUE_TICKET_STATUSES] } },
-        select: { id: true, ticketNumber: true, subject: true, company: true, status: true, slaDueAt: true, createdAt: true },
+        where: { status: { in: [...OVERDUE_TICKET_STATUSES] }, slaDueAt: { lt: now } },
+        select: ticketSelect,
+        orderBy: { slaDueAt: "asc" },
+        take: PER_GROUP,
+      }),
+      prisma.ticket.findMany({
+        where: { status: { in: [...STAFF_TICKET_STATUSES] }, OR: [{ slaDueAt: null }, { slaDueAt: { gte: now } }] },
+        select: ticketSelect,
         orderBy: { createdAt: "asc" },
-        take: 200,
+        take: PER_GROUP,
       }),
       prisma.lead.findMany({
-        where: {
-          OR: [
-            { status: "NEW" },
-            { followUpDate: { lte: endOfLondonToday(now) }, status: { notIn: [...CLOSED_LEAD_STATUSES] } },
-          ],
-        },
-        select: { id: true, name: true, company: true, source: true, status: true, followUpDate: true, createdAt: true },
+        where: { followUpDate: { lte: endOfLondonToday(now) }, status: { notIn: [...CLOSED_LEAD_STATUSES] } },
+        select: leadSelect,
+        orderBy: { followUpDate: "asc" },
+        take: PER_GROUP,
+      }),
+      prisma.lead.findMany({
+        where: { status: "NEW" },
+        select: leadSelect,
         orderBy: { createdAt: "asc" },
-        take: 200,
+        take: PER_GROUP,
       }),
     ]);
-    return buildQueue(tickets, leads, now);
+    // A lead can be in both lead groups; buildQueue keeps it once, as Follow up.
+    const leads = [...new Map([...dueFollowUps, ...newLeads].map((lead) => [lead.id, lead])).values()];
+    return buildQueue([...overdueTickets, ...waitingTickets], leads, now);
   });
 }
 
@@ -73,15 +91,25 @@ export type NavCounts = { enquiries: number; tickets: number; overdueTickets: nu
 
 export function loadNavCounts(now: Date): Promise<Loaded<NavCounts>> {
   return load("Sidebar counts", async () => {
-    const overdueWhere = { status: { in: [...OVERDUE_TICKET_STATUSES] }, slaDueAt: { lt: now } };
-    const [enquiries, staffTickets, overdueTickets, overdueInProgress] = await Promise.all([
-      prisma.lead.count({ where: { status: "NEW" } }),
-      prisma.ticket.count({ where: { status: { in: [...STAFF_TICKET_STATUSES] } } }),
-      prisma.ticket.count({ where: overdueWhere }),
-      prisma.ticket.count({ where: { status: "IN_PROGRESS", slaDueAt: { lt: now } } }),
-    ]);
+    // One round trip for all four counts: these run on every admin page, and
+    // the pool allows three connections per client (DECISIONS §7).
+    const [row] = await prisma.$queryRaw<
+      { enquiries: bigint; staffTickets: bigint; overdueTickets: bigint; overdueInProgress: bigint }[]
+    >`
+      SELECT
+        (SELECT count(*) FROM "public"."Lead" WHERE "status" = 'NEW') AS "enquiries",
+        (SELECT count(*) FROM "public"."Ticket"
+          WHERE "status"::text IN (${Prisma.join([...STAFF_TICKET_STATUSES])})) AS "staffTickets",
+        (SELECT count(*) FROM "public"."Ticket"
+          WHERE "status"::text IN (${Prisma.join([...OVERDUE_TICKET_STATUSES])}) AND "slaDueAt" < ${now}) AS "overdueTickets",
+        (SELECT count(*) FROM "public"."Ticket" WHERE "status" = 'IN_PROGRESS' AND "slaDueAt" < ${now}) AS "overdueInProgress"`;
+    if (!row) throw new Error("Sidebar counts returned no row.");
     // Queue tickets = new/open/escalated, plus in-progress ones once overdue.
-    return { enquiries, tickets: staffTickets + overdueInProgress, overdueTickets };
+    return {
+      enquiries: Number(row.enquiries),
+      tickets: Number(row.staffTickets) + Number(row.overdueInProgress),
+      overdueTickets: Number(row.overdueTickets),
+    };
   });
 }
 
@@ -152,28 +180,31 @@ export function loadSecuritySummary(): Promise<Loaded<SecuritySummary | null>> {
       orderBy: { createdAt: "desc" },
       select: { metadata: true, createdAt: true },
     });
-    const result = latest ? readScanResult(latest.metadata) : null;
-    if (!latest || !result) return null;
+    if (!latest) return null;
+    // A scan that exists but cannot be read is a failure to read, shown as
+    // "—", not "No scan has run yet".
+    const result = readScanResult(latest.metadata);
+    if (!result) throw new Error("The latest scan record could not be read.");
     const report = await buildAnalystReport(result);
     return { ranAt: latest.createdAt, score: result.score, highestSeverity: report.highestSeverity };
   });
 }
 
 /** Entity types written by content actions — what "the website changed" means. */
+// The entity types content actions actually write (grep `entityType:` in lib/).
+// A type listed here that nothing writes would never show; one written but
+// missing would hide real edits.
 const CONTENT_ENTITY_TYPES = [
   "CmsPage",
-  "PageSection",
   "BlogPost",
   "LegalPage",
   "Service",
   "ServicePackage",
-  "Industry",
-  "CareerJob",
   "SiteSetting",
   "BrandAsset",
-  "PartnerLogo",
-  "TrustedBusinessLogo",
-  "ComplianceCard",
+  "NavigationItem",
+  "Testimonial",
+  "MediaAsset",
 ];
 
 async function namesFor(userIds: (string | null)[]): Promise<Map<string, string>> {

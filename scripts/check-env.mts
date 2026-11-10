@@ -110,19 +110,34 @@ for (const key of ["DATABASE_URL", "DIRECT_URL"]) {
 
 // Optional: the admin Today dashboard's traffic tile. Absent is fine — the
 // tile says "Not connected" — so this reports, it never counts as a problem.
+//
+// These are usually set in the hosting project's environment, which this
+// script cannot see; it reads the local files only, and says so.
+/** The first of these keys with a non-blank value locally: an empty `KEY=` is not set. */
+const firstSet = (...keys: string[]) => {
+  for (const key of keys) {
+    const entry = effective.get(key);
+    if (entry && entry.value.trim()) return entry;
+  }
+  return undefined;
+};
+const NOT_LOCAL = "not in the local env files (production reads the hosting project's environment variables)";
+
 console.log("\n  Vercel Analytics on the dashboard (optional)");
-const analyticsToken = effective.get("VERCEL_ANALYTICS_TOKEN");
-const analyticsProject = effective.get("VERCEL_ANALYTICS_PROJECT_ID");
-console.log(`    VERCEL_ANALYTICS_TOKEN: ${analyticsToken ? `set in ${analyticsToken.file} (value hidden)` : "not set — traffic tile shows Not connected"}`);
+const analyticsToken = firstSet("VERCEL_ANALYTICS_TOKEN");
+const analyticsProject = firstSet("VERCEL_ANALYTICS_PROJECT_ID");
+console.log(`    VERCEL_ANALYTICS_TOKEN: ${analyticsToken ? `set in ${analyticsToken.file} (value hidden)` : NOT_LOCAL}`);
 console.log(
-  `    VERCEL_ANALYTICS_PROJECT_ID: ${analyticsProject ? `set in ${analyticsProject.file}` : "not set — Vercel's own VERCEL_PROJECT_ID is used when deployed"}`
+  `    VERCEL_ANALYTICS_PROJECT_ID: ${analyticsProject ? `set in ${analyticsProject.file}` : "not set locally — Vercel's own VERCEL_PROJECT_ID is used when deployed"}`
 );
-console.log(`    VERCEL_ANALYTICS_TEAM_ID: ${effective.get("VERCEL_ANALYTICS_TEAM_ID") ? "set" : "not set (fine for a personal account)"}`);
+console.log(`    VERCEL_ANALYTICS_TEAM_ID: ${firstSet("VERCEL_ANALYTICS_TEAM_ID") ? "set" : "not set locally (fine for a personal account)"}`);
 
 // Optional: the Security Center's Bot protection switch.
 console.log("\n  Bot protection switch (optional)");
-const firewallToken = effective.get("FIREWALL_API_TOKEN") ?? effective.get("VERCEL_FIREWALL_TOKEN");
-console.log(`    FIREWALL_API_TOKEN: ${firewallToken ? `set in ${firewallToken.file} (value hidden)` : "not set — the switch shows Not connected"}`);
+const firewallToken = firstSet("FIREWALL_API_TOKEN", "VERCEL_FIREWALL_TOKEN");
+console.log(
+  `    ${firewallToken ? `${firewallToken.key}: set in ${firewallToken.file} (value hidden)` : `FIREWALL_API_TOKEN: ${NOT_LOCAL}`}`
+);
 
 console.log(
   problems === 0

@@ -1,5 +1,6 @@
 import { MetadataRoute } from "next";
 import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { blogPosts, industries, services } from "@/lib/cyvrix-data";
 import { findPublicLegalPageDefinition, publicLegalPageDefinitions } from "@/lib/legal-page-definitions";
@@ -48,12 +49,12 @@ async function getPublishedSitemapRecords() {
         where: { visible: true, status: "PUBLISHED" },
         select: { slug: true, updatedAt: true },
       }),
+      // Every published post, with its publication time. The "is it live yet"
+      // cut-off is applied outside the cache: inside, it froze for the cache
+      // lifetime and a scheduled post stayed out of the sitemap until expiry.
       prisma.blogPost.findMany({
-        where: {
-          status: "PUBLISHED",
-          OR: [{ publishAt: null }, { publishAt: { lte: new Date() } }],
-        },
-        select: { slug: true, updatedAt: true },
+        where: { status: "PUBLISHED" },
+        select: { slug: true, updatedAt: true, publishAt: true },
       }),
       prisma.legalPage.findMany({
         where: { status: "PUBLISHED", slug: { in: publicLegalPageDefinitions.map((page) => page.slug) } },
@@ -64,7 +65,10 @@ async function getPublishedSitemapRecords() {
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
-    const [pages, posts, legalPages] = await getPublishedSitemapRecords();
+    const [pages, allPosts, legalPages] = await getPublishedSitemapRecords();
+    await connection();
+    const now = Date.now();
+    const posts = allPosts.filter((post) => !post.publishAt || new Date(post.publishAt).getTime() <= now);
 
     const pageRoutes = pages.map((page) => ({
       ...route(`/${page.slug}`, 0.8, "weekly"),

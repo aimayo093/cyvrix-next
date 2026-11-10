@@ -90,7 +90,8 @@ to the production database **first** (Supabase SQL editor, or
 `npx prisma migrate deploy` with the production `DATABASE_URL`). It only adds
 a column and a table, so the site keeps working while it runs. The new code
 reads `User.sessionVersion` on every signed-in request, so deploying the code
-before the migration signs everyone out with errors until it is applied.
+before the migration makes every signed-in request fail with a database error
+until it is applied.
 
 After deploying, staff accounts without two-factor are sent to
 `/security-setup` and cannot use the admin until they enrol. Have an
@@ -106,7 +107,8 @@ state the firewall reports.
    owns the project.
 2. Add it to the project's environment variables as `FIREWALL_API_TOKEN`
    (Production only), then redeploy.
-3. The project id comes from `VERCEL_PROJECT_ID`, which Vercel sets. If the
+3. The project id comes from `VERCEL_ANALYTICS_PROJECT_ID` when that is set,
+   otherwise from `VERCEL_PROJECT_ID`, which Vercel sets. If the
    project is in a team, also set `VERCEL_FIREWALL_TEAM_ID` (or the existing
    `VERCEL_ANALYTICS_TEAM_ID`) to the team id.
 
@@ -117,11 +119,11 @@ change, and every refused change, is written to the audit log.
 
 Dependabot (`.github/dependabot.yml`) opens pull requests every Monday morning:
 
-- one grouped PR for all patch and minor releases;
-- Prisma packages together, and React packages together, because they must
-  move as a set;
-- a separate PR for each major release, which can break things and needs a
-  look before merging;
+- Prisma packages in one PR and React packages in another, whatever the size
+  of the release (majors included), because each set must move together;
+- one grouped PR for every other package's patch and minor releases;
+- a separate PR for each other package's major release, which can break
+  things and needs a look before merging;
 - GitHub Actions used by CI, which are pinned to commits.
 
 A new release waits three days before Dependabot proposes it, which keeps the
