@@ -3065,6 +3065,14 @@ export async function sendAdminEmail(formData: FormData) {
   await prisma.auditLog.create({
     data: { id: crypto.randomUUID(), userId: administrator.id, action: "admin_email_sent", entityType: "Email", metadata: { to, subject } },
   });
+
+  // Sent from an approved AI draft: record that it went out, so the agent sees it.
+  const agentDraftId = String(formData.get("agentDraftId") ?? "");
+  if (/^[0-9a-f-]{36}$/i.test(agentDraftId)) {
+    await prisma.agentDraft
+      .updateMany({ where: { id: agentDraftId, kind: "email", status: "APPROVED" }, data: { status: "PUBLISHED" } })
+      .catch((error) => console.warn("[admin-email] could not mark the AI draft as sent", error instanceof Error ? error.name : "error"));
+  }
 }
 
 // ─── HOME PAGE CMS ────────────────────────────────────────────────────────────

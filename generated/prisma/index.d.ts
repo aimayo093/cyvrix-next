@@ -511,6 +511,12 @@ export type SurveyResponse = $Result.DefaultSelection<Prisma.$SurveyResponsePayl
  * 
  */
 export type WorkOrder = $Result.DefaultSelection<Prisma.$WorkOrderPayload>
+/**
+ * Model AgentDraft
+ * A draft or proposal submitted by a Paperclip agent. Never public until an
+ * administrator approves it in /admin/ai-drafts. See migration 20261111120000.
+ */
+export type AgentDraft = $Result.DefaultSelection<Prisma.$AgentDraftPayload>
 
 /**
  * Enums
@@ -672,6 +678,16 @@ export const user_role: {
 
 export type user_role = (typeof user_role)[keyof typeof user_role]
 
+
+export const AgentDraftStatus: {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  PUBLISHED: 'PUBLISHED'
+};
+
+export type AgentDraftStatus = (typeof AgentDraftStatus)[keyof typeof AgentDraftStatus]
+
 }
 
 export type aal_level = $Enums.aal_level
@@ -733,6 +749,10 @@ export const UserRole: typeof $Enums.UserRole
 export type user_role = $Enums.user_role
 
 export const user_role: typeof $Enums.user_role
+
+export type AgentDraftStatus = $Enums.AgentDraftStatus
+
+export const AgentDraftStatus: typeof $Enums.AgentDraftStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -1794,6 +1814,16 @@ export class PrismaClient<
     * ```
     */
   get workOrder(): Prisma.WorkOrderDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.agentDraft`: Exposes CRUD operations for the **AgentDraft** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AgentDrafts
+    * const agentDrafts = await prisma.agentDraft.findMany()
+    * ```
+    */
+  get agentDraft(): Prisma.AgentDraftDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2334,7 +2364,8 @@ export namespace Prisma {
     SurveySetting: 'SurveySetting',
     SurveyRequest: 'SurveyRequest',
     SurveyResponse: 'SurveyResponse',
-    WorkOrder: 'WorkOrder'
+    WorkOrder: 'WorkOrder',
+    AgentDraft: 'AgentDraft'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2350,7 +2381,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "auditLog" | "blogPost" | "careerJob" | "caseStudy" | "clientCompany" | "clientDocument" | "cmsPage" | "contact" | "contentBlock" | "fAQ" | "industry" | "jobApplication" | "knowledgeBaseArticle" | "landingPage" | "lead" | "leadNote" | "legalPage" | "mediaAsset" | "navigationItem" | "newsletterSubscriber" | "notification" | "proposal" | "proposalItem" | "quoteRequest" | "service" | "servicePackage" | "siteSetting" | "testimonial" | "ticket" | "ticketAttachment" | "ticketMessage" | "user" | "userSession" | "rateLimitBucket" | "verificationToken" | "websiteSection" | "audit_logs" | "blog_categories" | "blog_posts" | "career_applications" | "career_jobs" | "case_studies" | "client_companies" | "client_company_users" | "client_documents" | "leads" | "media_assets" | "navigation_items" | "notifications" | "pages" | "profiles" | "quote_requests" | "service_faqs" | "services" | "site_settings" | "support_tickets" | "ticket_messages" | "brandAsset" | "menu" | "menuItem" | "footerSection" | "footerLink" | "pageSection" | "partnerLogo" | "trustedBusinessLogo" | "complianceCard" | "socialLink" | "surveySetting" | "surveyRequest" | "surveyResponse" | "workOrder"
+      modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "auditLog" | "blogPost" | "careerJob" | "caseStudy" | "clientCompany" | "clientDocument" | "cmsPage" | "contact" | "contentBlock" | "fAQ" | "industry" | "jobApplication" | "knowledgeBaseArticle" | "landingPage" | "lead" | "leadNote" | "legalPage" | "mediaAsset" | "navigationItem" | "newsletterSubscriber" | "notification" | "proposal" | "proposalItem" | "quoteRequest" | "service" | "servicePackage" | "siteSetting" | "testimonial" | "ticket" | "ticketAttachment" | "ticketMessage" | "user" | "userSession" | "rateLimitBucket" | "verificationToken" | "websiteSection" | "audit_logs" | "blog_categories" | "blog_posts" | "career_applications" | "career_jobs" | "case_studies" | "client_companies" | "client_company_users" | "client_documents" | "leads" | "media_assets" | "navigation_items" | "notifications" | "pages" | "profiles" | "quote_requests" | "service_faqs" | "services" | "site_settings" | "support_tickets" | "ticket_messages" | "brandAsset" | "menu" | "menuItem" | "footerSection" | "footerLink" | "pageSection" | "partnerLogo" | "trustedBusinessLogo" | "complianceCard" | "socialLink" | "surveySetting" | "surveyRequest" | "surveyResponse" | "workOrder" | "agentDraft"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -9310,6 +9341,80 @@ export namespace Prisma {
           }
         }
       }
+      AgentDraft: {
+        payload: Prisma.$AgentDraftPayload<ExtArgs>
+        fields: Prisma.AgentDraftFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AgentDraftFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AgentDraftFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>
+          }
+          findFirst: {
+            args: Prisma.AgentDraftFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AgentDraftFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>
+          }
+          findMany: {
+            args: Prisma.AgentDraftFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>[]
+          }
+          create: {
+            args: Prisma.AgentDraftCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>
+          }
+          createMany: {
+            args: Prisma.AgentDraftCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AgentDraftCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>[]
+          }
+          delete: {
+            args: Prisma.AgentDraftDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>
+          }
+          update: {
+            args: Prisma.AgentDraftUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>
+          }
+          deleteMany: {
+            args: Prisma.AgentDraftDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AgentDraftUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AgentDraftUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>[]
+          }
+          upsert: {
+            args: Prisma.AgentDraftUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AgentDraftPayload>
+          }
+          aggregate: {
+            args: Prisma.AgentDraftAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAgentDraft>
+          }
+          groupBy: {
+            args: Prisma.AgentDraftGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AgentDraftGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AgentDraftCountArgs<ExtArgs>
+            result: $Utils.Optional<AgentDraftCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -9527,6 +9632,7 @@ export namespace Prisma {
     surveyRequest?: SurveyRequestOmit
     surveyResponse?: SurveyResponseOmit
     workOrder?: WorkOrderOmit
+    agentDraft?: AgentDraftOmit
   }
 
   /* Types for Logging */
@@ -118936,6 +119042,1157 @@ export namespace Prisma {
 
 
   /**
+   * Model AgentDraft
+   */
+
+  export type AggregateAgentDraft = {
+    _count: AgentDraftCountAggregateOutputType | null
+    _min: AgentDraftMinAggregateOutputType | null
+    _max: AgentDraftMaxAggregateOutputType | null
+  }
+
+  export type AgentDraftMinAggregateOutputType = {
+    id: string | null
+    kind: string | null
+    status: $Enums.AgentDraftStatus | null
+    title: string | null
+    body: string | null
+    sourceAgent: string | null
+    sourceRole: string | null
+    paperclipIssueId: string | null
+    idempotencyKey: string | null
+    reviewerId: string | null
+    reviewNote: string | null
+    reviewedAt: Date | null
+    publishedRef: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AgentDraftMaxAggregateOutputType = {
+    id: string | null
+    kind: string | null
+    status: $Enums.AgentDraftStatus | null
+    title: string | null
+    body: string | null
+    sourceAgent: string | null
+    sourceRole: string | null
+    paperclipIssueId: string | null
+    idempotencyKey: string | null
+    reviewerId: string | null
+    reviewNote: string | null
+    reviewedAt: Date | null
+    publishedRef: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AgentDraftCountAggregateOutputType = {
+    id: number
+    kind: number
+    status: number
+    title: number
+    body: number
+    payload: number
+    claimFindings: number
+    sourceAgent: number
+    sourceRole: number
+    paperclipIssueId: number
+    idempotencyKey: number
+    reviewerId: number
+    reviewNote: number
+    reviewedAt: number
+    publishedRef: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AgentDraftMinAggregateInputType = {
+    id?: true
+    kind?: true
+    status?: true
+    title?: true
+    body?: true
+    sourceAgent?: true
+    sourceRole?: true
+    paperclipIssueId?: true
+    idempotencyKey?: true
+    reviewerId?: true
+    reviewNote?: true
+    reviewedAt?: true
+    publishedRef?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AgentDraftMaxAggregateInputType = {
+    id?: true
+    kind?: true
+    status?: true
+    title?: true
+    body?: true
+    sourceAgent?: true
+    sourceRole?: true
+    paperclipIssueId?: true
+    idempotencyKey?: true
+    reviewerId?: true
+    reviewNote?: true
+    reviewedAt?: true
+    publishedRef?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AgentDraftCountAggregateInputType = {
+    id?: true
+    kind?: true
+    status?: true
+    title?: true
+    body?: true
+    payload?: true
+    claimFindings?: true
+    sourceAgent?: true
+    sourceRole?: true
+    paperclipIssueId?: true
+    idempotencyKey?: true
+    reviewerId?: true
+    reviewNote?: true
+    reviewedAt?: true
+    publishedRef?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AgentDraftAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgentDraft to aggregate.
+     */
+    where?: AgentDraftWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentDrafts to fetch.
+     */
+    orderBy?: AgentDraftOrderByWithRelationInput | AgentDraftOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AgentDraftWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentDrafts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentDrafts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AgentDrafts
+    **/
+    _count?: true | AgentDraftCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AgentDraftMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AgentDraftMaxAggregateInputType
+  }
+
+  export type GetAgentDraftAggregateType<T extends AgentDraftAggregateArgs> = {
+        [P in keyof T & keyof AggregateAgentDraft]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAgentDraft[P]>
+      : GetScalarType<T[P], AggregateAgentDraft[P]>
+  }
+
+
+
+
+  export type AgentDraftGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AgentDraftWhereInput
+    orderBy?: AgentDraftOrderByWithAggregationInput | AgentDraftOrderByWithAggregationInput[]
+    by: AgentDraftScalarFieldEnum[] | AgentDraftScalarFieldEnum
+    having?: AgentDraftScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AgentDraftCountAggregateInputType | true
+    _min?: AgentDraftMinAggregateInputType
+    _max?: AgentDraftMaxAggregateInputType
+  }
+
+  export type AgentDraftGroupByOutputType = {
+    id: string
+    kind: string
+    status: $Enums.AgentDraftStatus
+    title: string
+    body: string
+    payload: JsonValue
+    claimFindings: JsonValue
+    sourceAgent: string
+    sourceRole: string | null
+    paperclipIssueId: string | null
+    idempotencyKey: string
+    reviewerId: string | null
+    reviewNote: string | null
+    reviewedAt: Date | null
+    publishedRef: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AgentDraftCountAggregateOutputType | null
+    _min: AgentDraftMinAggregateOutputType | null
+    _max: AgentDraftMaxAggregateOutputType | null
+  }
+
+  type GetAgentDraftGroupByPayload<T extends AgentDraftGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AgentDraftGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AgentDraftGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AgentDraftGroupByOutputType[P]>
+            : GetScalarType<T[P], AgentDraftGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AgentDraftSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    kind?: boolean
+    status?: boolean
+    title?: boolean
+    body?: boolean
+    payload?: boolean
+    claimFindings?: boolean
+    sourceAgent?: boolean
+    sourceRole?: boolean
+    paperclipIssueId?: boolean
+    idempotencyKey?: boolean
+    reviewerId?: boolean
+    reviewNote?: boolean
+    reviewedAt?: boolean
+    publishedRef?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["agentDraft"]>
+
+  export type AgentDraftSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    kind?: boolean
+    status?: boolean
+    title?: boolean
+    body?: boolean
+    payload?: boolean
+    claimFindings?: boolean
+    sourceAgent?: boolean
+    sourceRole?: boolean
+    paperclipIssueId?: boolean
+    idempotencyKey?: boolean
+    reviewerId?: boolean
+    reviewNote?: boolean
+    reviewedAt?: boolean
+    publishedRef?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["agentDraft"]>
+
+  export type AgentDraftSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    kind?: boolean
+    status?: boolean
+    title?: boolean
+    body?: boolean
+    payload?: boolean
+    claimFindings?: boolean
+    sourceAgent?: boolean
+    sourceRole?: boolean
+    paperclipIssueId?: boolean
+    idempotencyKey?: boolean
+    reviewerId?: boolean
+    reviewNote?: boolean
+    reviewedAt?: boolean
+    publishedRef?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["agentDraft"]>
+
+  export type AgentDraftSelectScalar = {
+    id?: boolean
+    kind?: boolean
+    status?: boolean
+    title?: boolean
+    body?: boolean
+    payload?: boolean
+    claimFindings?: boolean
+    sourceAgent?: boolean
+    sourceRole?: boolean
+    paperclipIssueId?: boolean
+    idempotencyKey?: boolean
+    reviewerId?: boolean
+    reviewNote?: boolean
+    reviewedAt?: boolean
+    publishedRef?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AgentDraftOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "kind" | "status" | "title" | "body" | "payload" | "claimFindings" | "sourceAgent" | "sourceRole" | "paperclipIssueId" | "idempotencyKey" | "reviewerId" | "reviewNote" | "reviewedAt" | "publishedRef" | "createdAt" | "updatedAt", ExtArgs["result"]["agentDraft"]>
+
+  export type $AgentDraftPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AgentDraft"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      /**
+       * blog, email, social or proposal
+       */
+      kind: string
+      status: $Enums.AgentDraftStatus
+      title: string
+      body: string
+      payload: Prisma.JsonValue
+      claimFindings: Prisma.JsonValue
+      sourceAgent: string
+      sourceRole: string | null
+      paperclipIssueId: string | null
+      idempotencyKey: string
+      reviewerId: string | null
+      reviewNote: string | null
+      reviewedAt: Date | null
+      publishedRef: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["agentDraft"]>
+    composites: {}
+  }
+
+  type AgentDraftGetPayload<S extends boolean | null | undefined | AgentDraftDefaultArgs> = $Result.GetResult<Prisma.$AgentDraftPayload, S>
+
+  type AgentDraftCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AgentDraftFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AgentDraftCountAggregateInputType | true
+    }
+
+  export interface AgentDraftDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AgentDraft'], meta: { name: 'AgentDraft' } }
+    /**
+     * Find zero or one AgentDraft that matches the filter.
+     * @param {AgentDraftFindUniqueArgs} args - Arguments to find a AgentDraft
+     * @example
+     * // Get one AgentDraft
+     * const agentDraft = await prisma.agentDraft.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AgentDraftFindUniqueArgs>(args: SelectSubset<T, AgentDraftFindUniqueArgs<ExtArgs>>): Prisma__AgentDraftClient<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AgentDraft that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AgentDraftFindUniqueOrThrowArgs} args - Arguments to find a AgentDraft
+     * @example
+     * // Get one AgentDraft
+     * const agentDraft = await prisma.agentDraft.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AgentDraftFindUniqueOrThrowArgs>(args: SelectSubset<T, AgentDraftFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AgentDraftClient<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgentDraft that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentDraftFindFirstArgs} args - Arguments to find a AgentDraft
+     * @example
+     * // Get one AgentDraft
+     * const agentDraft = await prisma.agentDraft.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AgentDraftFindFirstArgs>(args?: SelectSubset<T, AgentDraftFindFirstArgs<ExtArgs>>): Prisma__AgentDraftClient<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AgentDraft that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentDraftFindFirstOrThrowArgs} args - Arguments to find a AgentDraft
+     * @example
+     * // Get one AgentDraft
+     * const agentDraft = await prisma.agentDraft.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AgentDraftFindFirstOrThrowArgs>(args?: SelectSubset<T, AgentDraftFindFirstOrThrowArgs<ExtArgs>>): Prisma__AgentDraftClient<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AgentDrafts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentDraftFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AgentDrafts
+     * const agentDrafts = await prisma.agentDraft.findMany()
+     * 
+     * // Get first 10 AgentDrafts
+     * const agentDrafts = await prisma.agentDraft.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const agentDraftWithIdOnly = await prisma.agentDraft.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends AgentDraftFindManyArgs>(args?: SelectSubset<T, AgentDraftFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AgentDraft.
+     * @param {AgentDraftCreateArgs} args - Arguments to create a AgentDraft.
+     * @example
+     * // Create one AgentDraft
+     * const AgentDraft = await prisma.agentDraft.create({
+     *   data: {
+     *     // ... data to create a AgentDraft
+     *   }
+     * })
+     * 
+     */
+    create<T extends AgentDraftCreateArgs>(args: SelectSubset<T, AgentDraftCreateArgs<ExtArgs>>): Prisma__AgentDraftClient<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AgentDrafts.
+     * @param {AgentDraftCreateManyArgs} args - Arguments to create many AgentDrafts.
+     * @example
+     * // Create many AgentDrafts
+     * const agentDraft = await prisma.agentDraft.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AgentDraftCreateManyArgs>(args?: SelectSubset<T, AgentDraftCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AgentDrafts and returns the data saved in the database.
+     * @param {AgentDraftCreateManyAndReturnArgs} args - Arguments to create many AgentDrafts.
+     * @example
+     * // Create many AgentDrafts
+     * const agentDraft = await prisma.agentDraft.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AgentDrafts and only return the `id`
+     * const agentDraftWithIdOnly = await prisma.agentDraft.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AgentDraftCreateManyAndReturnArgs>(args?: SelectSubset<T, AgentDraftCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AgentDraft.
+     * @param {AgentDraftDeleteArgs} args - Arguments to delete one AgentDraft.
+     * @example
+     * // Delete one AgentDraft
+     * const AgentDraft = await prisma.agentDraft.delete({
+     *   where: {
+     *     // ... filter to delete one AgentDraft
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AgentDraftDeleteArgs>(args: SelectSubset<T, AgentDraftDeleteArgs<ExtArgs>>): Prisma__AgentDraftClient<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AgentDraft.
+     * @param {AgentDraftUpdateArgs} args - Arguments to update one AgentDraft.
+     * @example
+     * // Update one AgentDraft
+     * const agentDraft = await prisma.agentDraft.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AgentDraftUpdateArgs>(args: SelectSubset<T, AgentDraftUpdateArgs<ExtArgs>>): Prisma__AgentDraftClient<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AgentDrafts.
+     * @param {AgentDraftDeleteManyArgs} args - Arguments to filter AgentDrafts to delete.
+     * @example
+     * // Delete a few AgentDrafts
+     * const { count } = await prisma.agentDraft.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AgentDraftDeleteManyArgs>(args?: SelectSubset<T, AgentDraftDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgentDrafts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentDraftUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AgentDrafts
+     * const agentDraft = await prisma.agentDraft.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AgentDraftUpdateManyArgs>(args: SelectSubset<T, AgentDraftUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AgentDrafts and returns the data updated in the database.
+     * @param {AgentDraftUpdateManyAndReturnArgs} args - Arguments to update many AgentDrafts.
+     * @example
+     * // Update many AgentDrafts
+     * const agentDraft = await prisma.agentDraft.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AgentDrafts and only return the `id`
+     * const agentDraftWithIdOnly = await prisma.agentDraft.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AgentDraftUpdateManyAndReturnArgs>(args: SelectSubset<T, AgentDraftUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AgentDraft.
+     * @param {AgentDraftUpsertArgs} args - Arguments to update or create a AgentDraft.
+     * @example
+     * // Update or create a AgentDraft
+     * const agentDraft = await prisma.agentDraft.upsert({
+     *   create: {
+     *     // ... data to create a AgentDraft
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AgentDraft we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AgentDraftUpsertArgs>(args: SelectSubset<T, AgentDraftUpsertArgs<ExtArgs>>): Prisma__AgentDraftClient<$Result.GetResult<Prisma.$AgentDraftPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AgentDrafts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentDraftCountArgs} args - Arguments to filter AgentDrafts to count.
+     * @example
+     * // Count the number of AgentDrafts
+     * const count = await prisma.agentDraft.count({
+     *   where: {
+     *     // ... the filter for the AgentDrafts we want to count
+     *   }
+     * })
+    **/
+    count<T extends AgentDraftCountArgs>(
+      args?: Subset<T, AgentDraftCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AgentDraftCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AgentDraft.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentDraftAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AgentDraftAggregateArgs>(args: Subset<T, AgentDraftAggregateArgs>): Prisma.PrismaPromise<GetAgentDraftAggregateType<T>>
+
+    /**
+     * Group by AgentDraft.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AgentDraftGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AgentDraftGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AgentDraftGroupByArgs['orderBy'] }
+        : { orderBy?: AgentDraftGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AgentDraftGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAgentDraftGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AgentDraft model
+   */
+  readonly fields: AgentDraftFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AgentDraft.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AgentDraftClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AgentDraft model
+   */
+  interface AgentDraftFieldRefs {
+    readonly id: FieldRef<"AgentDraft", 'String'>
+    readonly kind: FieldRef<"AgentDraft", 'String'>
+    readonly status: FieldRef<"AgentDraft", 'AgentDraftStatus'>
+    readonly title: FieldRef<"AgentDraft", 'String'>
+    readonly body: FieldRef<"AgentDraft", 'String'>
+    readonly payload: FieldRef<"AgentDraft", 'Json'>
+    readonly claimFindings: FieldRef<"AgentDraft", 'Json'>
+    readonly sourceAgent: FieldRef<"AgentDraft", 'String'>
+    readonly sourceRole: FieldRef<"AgentDraft", 'String'>
+    readonly paperclipIssueId: FieldRef<"AgentDraft", 'String'>
+    readonly idempotencyKey: FieldRef<"AgentDraft", 'String'>
+    readonly reviewerId: FieldRef<"AgentDraft", 'String'>
+    readonly reviewNote: FieldRef<"AgentDraft", 'String'>
+    readonly reviewedAt: FieldRef<"AgentDraft", 'DateTime'>
+    readonly publishedRef: FieldRef<"AgentDraft", 'String'>
+    readonly createdAt: FieldRef<"AgentDraft", 'DateTime'>
+    readonly updatedAt: FieldRef<"AgentDraft", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AgentDraft findUnique
+   */
+  export type AgentDraftFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentDraft to fetch.
+     */
+    where: AgentDraftWhereUniqueInput
+  }
+
+  /**
+   * AgentDraft findUniqueOrThrow
+   */
+  export type AgentDraftFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentDraft to fetch.
+     */
+    where: AgentDraftWhereUniqueInput
+  }
+
+  /**
+   * AgentDraft findFirst
+   */
+  export type AgentDraftFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentDraft to fetch.
+     */
+    where?: AgentDraftWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentDrafts to fetch.
+     */
+    orderBy?: AgentDraftOrderByWithRelationInput | AgentDraftOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgentDrafts.
+     */
+    cursor?: AgentDraftWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentDrafts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentDrafts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentDrafts.
+     */
+    distinct?: AgentDraftScalarFieldEnum | AgentDraftScalarFieldEnum[]
+  }
+
+  /**
+   * AgentDraft findFirstOrThrow
+   */
+  export type AgentDraftFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentDraft to fetch.
+     */
+    where?: AgentDraftWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentDrafts to fetch.
+     */
+    orderBy?: AgentDraftOrderByWithRelationInput | AgentDraftOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AgentDrafts.
+     */
+    cursor?: AgentDraftWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentDrafts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentDrafts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentDrafts.
+     */
+    distinct?: AgentDraftScalarFieldEnum | AgentDraftScalarFieldEnum[]
+  }
+
+  /**
+   * AgentDraft findMany
+   */
+  export type AgentDraftFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * Filter, which AgentDrafts to fetch.
+     */
+    where?: AgentDraftWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AgentDrafts to fetch.
+     */
+    orderBy?: AgentDraftOrderByWithRelationInput | AgentDraftOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AgentDrafts.
+     */
+    cursor?: AgentDraftWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AgentDrafts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AgentDrafts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AgentDrafts.
+     */
+    distinct?: AgentDraftScalarFieldEnum | AgentDraftScalarFieldEnum[]
+  }
+
+  /**
+   * AgentDraft create
+   */
+  export type AgentDraftCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * The data needed to create a AgentDraft.
+     */
+    data: XOR<AgentDraftCreateInput, AgentDraftUncheckedCreateInput>
+  }
+
+  /**
+   * AgentDraft createMany
+   */
+  export type AgentDraftCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AgentDrafts.
+     */
+    data: AgentDraftCreateManyInput | AgentDraftCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgentDraft createManyAndReturn
+   */
+  export type AgentDraftCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * The data used to create many AgentDrafts.
+     */
+    data: AgentDraftCreateManyInput | AgentDraftCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AgentDraft update
+   */
+  export type AgentDraftUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * The data needed to update a AgentDraft.
+     */
+    data: XOR<AgentDraftUpdateInput, AgentDraftUncheckedUpdateInput>
+    /**
+     * Choose, which AgentDraft to update.
+     */
+    where: AgentDraftWhereUniqueInput
+  }
+
+  /**
+   * AgentDraft updateMany
+   */
+  export type AgentDraftUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AgentDrafts.
+     */
+    data: XOR<AgentDraftUpdateManyMutationInput, AgentDraftUncheckedUpdateManyInput>
+    /**
+     * Filter which AgentDrafts to update
+     */
+    where?: AgentDraftWhereInput
+    /**
+     * Limit how many AgentDrafts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentDraft updateManyAndReturn
+   */
+  export type AgentDraftUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * The data used to update AgentDrafts.
+     */
+    data: XOR<AgentDraftUpdateManyMutationInput, AgentDraftUncheckedUpdateManyInput>
+    /**
+     * Filter which AgentDrafts to update
+     */
+    where?: AgentDraftWhereInput
+    /**
+     * Limit how many AgentDrafts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentDraft upsert
+   */
+  export type AgentDraftUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * The filter to search for the AgentDraft to update in case it exists.
+     */
+    where: AgentDraftWhereUniqueInput
+    /**
+     * In case the AgentDraft found by the `where` argument doesn't exist, create a new AgentDraft with this data.
+     */
+    create: XOR<AgentDraftCreateInput, AgentDraftUncheckedCreateInput>
+    /**
+     * In case the AgentDraft was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AgentDraftUpdateInput, AgentDraftUncheckedUpdateInput>
+  }
+
+  /**
+   * AgentDraft delete
+   */
+  export type AgentDraftDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+    /**
+     * Filter which AgentDraft to delete.
+     */
+    where: AgentDraftWhereUniqueInput
+  }
+
+  /**
+   * AgentDraft deleteMany
+   */
+  export type AgentDraftDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AgentDrafts to delete
+     */
+    where?: AgentDraftWhereInput
+    /**
+     * Limit how many AgentDrafts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AgentDraft without action
+   */
+  export type AgentDraftDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AgentDraft
+     */
+    select?: AgentDraftSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AgentDraft
+     */
+    omit?: AgentDraftOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -120505,6 +121762,29 @@ export namespace Prisma {
   export type WorkOrderScalarFieldEnum = (typeof WorkOrderScalarFieldEnum)[keyof typeof WorkOrderScalarFieldEnum]
 
 
+  export const AgentDraftScalarFieldEnum: {
+    id: 'id',
+    kind: 'kind',
+    status: 'status',
+    title: 'title',
+    body: 'body',
+    payload: 'payload',
+    claimFindings: 'claimFindings',
+    sourceAgent: 'sourceAgent',
+    sourceRole: 'sourceRole',
+    paperclipIssueId: 'paperclipIssueId',
+    idempotencyKey: 'idempotencyKey',
+    reviewerId: 'reviewerId',
+    reviewNote: 'reviewNote',
+    reviewedAt: 'reviewedAt',
+    publishedRef: 'publishedRef',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AgentDraftScalarFieldEnum = (typeof AgentDraftScalarFieldEnum)[keyof typeof AgentDraftScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -120870,6 +122150,20 @@ export namespace Prisma {
    * Reference to a field of type 'user_role[]'
    */
   export type ListEnumuser_roleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'user_role[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'AgentDraftStatus'
+   */
+  export type EnumAgentDraftStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AgentDraftStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'AgentDraftStatus[]'
+   */
+  export type ListEnumAgentDraftStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AgentDraftStatus[]'>
     
 
 
@@ -128845,6 +130139,118 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"WorkOrder"> | Date | string
     createdBy?: StringNullableWithAggregatesFilter<"WorkOrder"> | string | null
     updatedBy?: StringNullableWithAggregatesFilter<"WorkOrder"> | string | null
+  }
+
+  export type AgentDraftWhereInput = {
+    AND?: AgentDraftWhereInput | AgentDraftWhereInput[]
+    OR?: AgentDraftWhereInput[]
+    NOT?: AgentDraftWhereInput | AgentDraftWhereInput[]
+    id?: StringFilter<"AgentDraft"> | string
+    kind?: StringFilter<"AgentDraft"> | string
+    status?: EnumAgentDraftStatusFilter<"AgentDraft"> | $Enums.AgentDraftStatus
+    title?: StringFilter<"AgentDraft"> | string
+    body?: StringFilter<"AgentDraft"> | string
+    payload?: JsonFilter<"AgentDraft">
+    claimFindings?: JsonFilter<"AgentDraft">
+    sourceAgent?: StringFilter<"AgentDraft"> | string
+    sourceRole?: StringNullableFilter<"AgentDraft"> | string | null
+    paperclipIssueId?: StringNullableFilter<"AgentDraft"> | string | null
+    idempotencyKey?: StringFilter<"AgentDraft"> | string
+    reviewerId?: StringNullableFilter<"AgentDraft"> | string | null
+    reviewNote?: StringNullableFilter<"AgentDraft"> | string | null
+    reviewedAt?: DateTimeNullableFilter<"AgentDraft"> | Date | string | null
+    publishedRef?: StringNullableFilter<"AgentDraft"> | string | null
+    createdAt?: DateTimeFilter<"AgentDraft"> | Date | string
+    updatedAt?: DateTimeFilter<"AgentDraft"> | Date | string
+  }
+
+  export type AgentDraftOrderByWithRelationInput = {
+    id?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    title?: SortOrder
+    body?: SortOrder
+    payload?: SortOrder
+    claimFindings?: SortOrder
+    sourceAgent?: SortOrder
+    sourceRole?: SortOrderInput | SortOrder
+    paperclipIssueId?: SortOrderInput | SortOrder
+    idempotencyKey?: SortOrder
+    reviewerId?: SortOrderInput | SortOrder
+    reviewNote?: SortOrderInput | SortOrder
+    reviewedAt?: SortOrderInput | SortOrder
+    publishedRef?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgentDraftWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    idempotencyKey?: string
+    AND?: AgentDraftWhereInput | AgentDraftWhereInput[]
+    OR?: AgentDraftWhereInput[]
+    NOT?: AgentDraftWhereInput | AgentDraftWhereInput[]
+    kind?: StringFilter<"AgentDraft"> | string
+    status?: EnumAgentDraftStatusFilter<"AgentDraft"> | $Enums.AgentDraftStatus
+    title?: StringFilter<"AgentDraft"> | string
+    body?: StringFilter<"AgentDraft"> | string
+    payload?: JsonFilter<"AgentDraft">
+    claimFindings?: JsonFilter<"AgentDraft">
+    sourceAgent?: StringFilter<"AgentDraft"> | string
+    sourceRole?: StringNullableFilter<"AgentDraft"> | string | null
+    paperclipIssueId?: StringNullableFilter<"AgentDraft"> | string | null
+    reviewerId?: StringNullableFilter<"AgentDraft"> | string | null
+    reviewNote?: StringNullableFilter<"AgentDraft"> | string | null
+    reviewedAt?: DateTimeNullableFilter<"AgentDraft"> | Date | string | null
+    publishedRef?: StringNullableFilter<"AgentDraft"> | string | null
+    createdAt?: DateTimeFilter<"AgentDraft"> | Date | string
+    updatedAt?: DateTimeFilter<"AgentDraft"> | Date | string
+  }, "id" | "idempotencyKey">
+
+  export type AgentDraftOrderByWithAggregationInput = {
+    id?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    title?: SortOrder
+    body?: SortOrder
+    payload?: SortOrder
+    claimFindings?: SortOrder
+    sourceAgent?: SortOrder
+    sourceRole?: SortOrderInput | SortOrder
+    paperclipIssueId?: SortOrderInput | SortOrder
+    idempotencyKey?: SortOrder
+    reviewerId?: SortOrderInput | SortOrder
+    reviewNote?: SortOrderInput | SortOrder
+    reviewedAt?: SortOrderInput | SortOrder
+    publishedRef?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AgentDraftCountOrderByAggregateInput
+    _max?: AgentDraftMaxOrderByAggregateInput
+    _min?: AgentDraftMinOrderByAggregateInput
+  }
+
+  export type AgentDraftScalarWhereWithAggregatesInput = {
+    AND?: AgentDraftScalarWhereWithAggregatesInput | AgentDraftScalarWhereWithAggregatesInput[]
+    OR?: AgentDraftScalarWhereWithAggregatesInput[]
+    NOT?: AgentDraftScalarWhereWithAggregatesInput | AgentDraftScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"AgentDraft"> | string
+    kind?: StringWithAggregatesFilter<"AgentDraft"> | string
+    status?: EnumAgentDraftStatusWithAggregatesFilter<"AgentDraft"> | $Enums.AgentDraftStatus
+    title?: StringWithAggregatesFilter<"AgentDraft"> | string
+    body?: StringWithAggregatesFilter<"AgentDraft"> | string
+    payload?: JsonWithAggregatesFilter<"AgentDraft">
+    claimFindings?: JsonWithAggregatesFilter<"AgentDraft">
+    sourceAgent?: StringWithAggregatesFilter<"AgentDraft"> | string
+    sourceRole?: StringNullableWithAggregatesFilter<"AgentDraft"> | string | null
+    paperclipIssueId?: StringNullableWithAggregatesFilter<"AgentDraft"> | string | null
+    idempotencyKey?: StringWithAggregatesFilter<"AgentDraft"> | string
+    reviewerId?: StringNullableWithAggregatesFilter<"AgentDraft"> | string | null
+    reviewNote?: StringNullableWithAggregatesFilter<"AgentDraft"> | string | null
+    reviewedAt?: DateTimeNullableWithAggregatesFilter<"AgentDraft"> | Date | string | null
+    publishedRef?: StringNullableWithAggregatesFilter<"AgentDraft"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"AgentDraft"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AgentDraft"> | Date | string
   }
 
   export type audit_log_entriesCreateInput = {
@@ -137955,6 +139361,146 @@ export namespace Prisma {
     updatedBy?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
+  export type AgentDraftCreateInput = {
+    id: string
+    kind: string
+    status?: $Enums.AgentDraftStatus
+    title: string
+    body: string
+    payload?: JsonNullValueInput | InputJsonValue
+    claimFindings?: JsonNullValueInput | InputJsonValue
+    sourceAgent: string
+    sourceRole?: string | null
+    paperclipIssueId?: string | null
+    idempotencyKey: string
+    reviewerId?: string | null
+    reviewNote?: string | null
+    reviewedAt?: Date | string | null
+    publishedRef?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentDraftUncheckedCreateInput = {
+    id: string
+    kind: string
+    status?: $Enums.AgentDraftStatus
+    title: string
+    body: string
+    payload?: JsonNullValueInput | InputJsonValue
+    claimFindings?: JsonNullValueInput | InputJsonValue
+    sourceAgent: string
+    sourceRole?: string | null
+    paperclipIssueId?: string | null
+    idempotencyKey: string
+    reviewerId?: string | null
+    reviewNote?: string | null
+    reviewedAt?: Date | string | null
+    publishedRef?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentDraftUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: EnumAgentDraftStatusFieldUpdateOperationsInput | $Enums.AgentDraftStatus
+    title?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    claimFindings?: JsonNullValueInput | InputJsonValue
+    sourceAgent?: StringFieldUpdateOperationsInput | string
+    sourceRole?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    reviewerId?: NullableStringFieldUpdateOperationsInput | string | null
+    reviewNote?: NullableStringFieldUpdateOperationsInput | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedRef?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentDraftUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: EnumAgentDraftStatusFieldUpdateOperationsInput | $Enums.AgentDraftStatus
+    title?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    claimFindings?: JsonNullValueInput | InputJsonValue
+    sourceAgent?: StringFieldUpdateOperationsInput | string
+    sourceRole?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    reviewerId?: NullableStringFieldUpdateOperationsInput | string | null
+    reviewNote?: NullableStringFieldUpdateOperationsInput | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedRef?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentDraftCreateManyInput = {
+    id: string
+    kind: string
+    status?: $Enums.AgentDraftStatus
+    title: string
+    body: string
+    payload?: JsonNullValueInput | InputJsonValue
+    claimFindings?: JsonNullValueInput | InputJsonValue
+    sourceAgent: string
+    sourceRole?: string | null
+    paperclipIssueId?: string | null
+    idempotencyKey: string
+    reviewerId?: string | null
+    reviewNote?: string | null
+    reviewedAt?: Date | string | null
+    publishedRef?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AgentDraftUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: EnumAgentDraftStatusFieldUpdateOperationsInput | $Enums.AgentDraftStatus
+    title?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    claimFindings?: JsonNullValueInput | InputJsonValue
+    sourceAgent?: StringFieldUpdateOperationsInput | string
+    sourceRole?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    reviewerId?: NullableStringFieldUpdateOperationsInput | string | null
+    reviewNote?: NullableStringFieldUpdateOperationsInput | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedRef?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AgentDraftUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: EnumAgentDraftStatusFieldUpdateOperationsInput | $Enums.AgentDraftStatus
+    title?: StringFieldUpdateOperationsInput | string
+    body?: StringFieldUpdateOperationsInput | string
+    payload?: JsonNullValueInput | InputJsonValue
+    claimFindings?: JsonNullValueInput | InputJsonValue
+    sourceAgent?: StringFieldUpdateOperationsInput | string
+    sourceRole?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    idempotencyKey?: StringFieldUpdateOperationsInput | string
+    reviewerId?: NullableStringFieldUpdateOperationsInput | string | null
+    reviewNote?: NullableStringFieldUpdateOperationsInput | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    publishedRef?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type UuidNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -143416,6 +144962,79 @@ export namespace Prisma {
     updatedBy?: SortOrder
   }
 
+  export type EnumAgentDraftStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentDraftStatus | EnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentDraftStatus[] | ListEnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentDraftStatus[] | ListEnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentDraftStatusFilter<$PrismaModel> | $Enums.AgentDraftStatus
+  }
+
+  export type AgentDraftCountOrderByAggregateInput = {
+    id?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    title?: SortOrder
+    body?: SortOrder
+    payload?: SortOrder
+    claimFindings?: SortOrder
+    sourceAgent?: SortOrder
+    sourceRole?: SortOrder
+    paperclipIssueId?: SortOrder
+    idempotencyKey?: SortOrder
+    reviewerId?: SortOrder
+    reviewNote?: SortOrder
+    reviewedAt?: SortOrder
+    publishedRef?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgentDraftMaxOrderByAggregateInput = {
+    id?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    title?: SortOrder
+    body?: SortOrder
+    sourceAgent?: SortOrder
+    sourceRole?: SortOrder
+    paperclipIssueId?: SortOrder
+    idempotencyKey?: SortOrder
+    reviewerId?: SortOrder
+    reviewNote?: SortOrder
+    reviewedAt?: SortOrder
+    publishedRef?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AgentDraftMinOrderByAggregateInput = {
+    id?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    title?: SortOrder
+    body?: SortOrder
+    sourceAgent?: SortOrder
+    sourceRole?: SortOrder
+    paperclipIssueId?: SortOrder
+    idempotencyKey?: SortOrder
+    reviewerId?: SortOrder
+    reviewNote?: SortOrder
+    reviewedAt?: SortOrder
+    publishedRef?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumAgentDraftStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentDraftStatus | EnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentDraftStatus[] | ListEnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentDraftStatus[] | ListEnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentDraftStatusWithAggregatesFilter<$PrismaModel> | $Enums.AgentDraftStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAgentDraftStatusFilter<$PrismaModel>
+    _max?: NestedEnumAgentDraftStatusFilter<$PrismaModel>
+  }
+
   export type NullableStringFieldUpdateOperationsInput = {
     set?: string | null
   }
@@ -147196,6 +148815,10 @@ export namespace Prisma {
     update?: XOR<XOR<ClientCompanyUpdateToOneWithWhereWithoutWorkOrderInput, ClientCompanyUpdateWithoutWorkOrderInput>, ClientCompanyUncheckedUpdateWithoutWorkOrderInput>
   }
 
+  export type EnumAgentDraftStatusFieldUpdateOperationsInput = {
+    set?: $Enums.AgentDraftStatus
+  }
+
   export type NestedUuidNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -147884,6 +149507,23 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumuser_roleFilter<$PrismaModel>
     _max?: NestedEnumuser_roleFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAgentDraftStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentDraftStatus | EnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentDraftStatus[] | ListEnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentDraftStatus[] | ListEnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentDraftStatusFilter<$PrismaModel> | $Enums.AgentDraftStatus
+  }
+
+  export type NestedEnumAgentDraftStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentDraftStatus | EnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentDraftStatus[] | ListEnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentDraftStatus[] | ListEnumAgentDraftStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentDraftStatusWithAggregatesFilter<$PrismaModel> | $Enums.AgentDraftStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAgentDraftStatusFilter<$PrismaModel>
+    _max?: NestedEnumAgentDraftStatusFilter<$PrismaModel>
   }
 
   export type saml_relay_statesCreateWithoutFlow_stateInput = {

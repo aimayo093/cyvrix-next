@@ -133,6 +133,16 @@ console.log(
 );
 console.log(`    VERCEL_ANALYTICS_TEAM_ID: ${firstSet("VERCEL_ANALYTICS_TEAM_ID") ? "set" : "not set locally (fine for a personal account)"}`);
 
+// Optional: the Paperclip integration (DECISIONS section 15).
+console.log("\n  Paperclip integration (optional)");
+for (const key of ["PAPERCLIP_READ_TOKEN", "PAPERCLIP_DRAFT_TOKEN", "EXECUTIVE_OS_FEED_TOKEN"]) {
+  const entry = firstSet(key);
+  const length = entry?.value.trim().length ?? 0;
+  console.log(
+    `    ${key}: ${entry ? `set in ${entry.file} (value hidden${length < 32 ? ", but shorter than 32 characters, so ignored" : ""})` : "not set locally"}`
+  );
+}
+
 // Optional: the Security Center's Bot protection switch.
 console.log("\n  Bot protection switch (optional)");
 const firewallToken = firstSet("FIREWALL_API_TOKEN", "VERCEL_FIREWALL_TOKEN");
