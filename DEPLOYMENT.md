@@ -74,6 +74,8 @@ keep one month of analytics, so a 90-day view says how many days are available.
 
 ## Before merging the November 2026 security changes
 
+**Done 10 November 2026:** applied to the production project (Cyvrix-Technology), with the column, table, row-level security and revoked API grants verified.
+
 Apply `prisma/migrations/20261110000000_session_version_and_rate_limits`
 to the production database **first** (Supabase SQL editor, or
 `npx prisma migrate deploy` with the production `DATABASE_URL`). It only adds
