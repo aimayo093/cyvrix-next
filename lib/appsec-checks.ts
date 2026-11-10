@@ -17,6 +17,7 @@
  */
 import manifest from "@/lib/generated/appsec-manifest.json";
 import type { SecurityScanCheck, SecurityCheckStatus } from "@/lib/security-scan";
+import { clientBundlePaths } from "@/lib/appsec-probe-parse";
 
 type ManifestFinding = {
   id: string;
@@ -86,7 +87,7 @@ export async function liveAppSecChecks(origin: string, signal: AbortSignal): Pro
   // and any logic the bundle would otherwise obscure.
   {
     const page = await probe(origin, signal);
-    const scriptUrls = [...page.body.matchAll(/src="(\/_next\/static\/[^"]+\.js)"/g)].map((m) => m[1]).slice(0, 3);
+    const scriptUrls = clientBundlePaths(page.body);
 
     let servedMaps = 0;
     for (const script of scriptUrls) {

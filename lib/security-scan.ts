@@ -4,6 +4,7 @@ import path from "node:path";
 import type { Prisma } from "@/generated/prisma";
 import { appSecManifestAge, liveAppSecChecks, staticAppSecChecks } from "@/lib/appsec-checks";
 import { prisma } from "@/lib/prisma";
+import { cleanVersion, upgradeTarget } from "@/lib/dependency-freshness";
 import { getEmailIdentity, normaliseEmailRecipients } from "@/lib/email-config";
 
 export type SecurityCheckStatus = "pass" | "warn" | "fail";
@@ -143,23 +144,13 @@ function withTimeout(ms: number) {
   return { controller, done: () => clearTimeout(timeout) };
 }
 
-function cleanVersion(range: string) {
-  const match = range.match(/\d+\.\d+\.\d+/);
-  return match?.[0] ?? "";
-}
-
-function compareVersions(a: string, b: string) {
-  const left = cleanVersion(a).split(".").map((part) => Number(part));
-  const right = cleanVersion(b).split(".").map((part) => Number(part));
-  for (let i = 0; i < 3; i++) {
-    if ((left[i] ?? 0) > (right[i] ?? 0)) return 1;
-    if ((left[i] ?? 0) < (right[i] ?? 0)) return -1;
-  }
-  return 0;
-}
-
+/**
+ * The `latest` document only, a few kilobytes. The full packument runs to
+ * megabytes for packages like Prisma and timed out, and a timed-out package
+ * used to drop out of the count silently.
+ */
 function registryUrl(packageName: string) {
-  return `https://registry.npmjs.org/${encodeURIComponent(packageName).replace("%2F", "%2f")}`;
+  return `https://registry.npmjs.org/${encodeURIComponent(packageName).replace("%2F", "%2f")}/latest`;
 }
 
 async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
@@ -186,36 +177,47 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
       return;
     }
 
-    const results = await Promise.all(
-      entries.map(async ([name, current]) => {
-        const request = withTimeout(2500);
+    const nodeMajor = Number(process.versions.node.split(".")[0]);
+    type Outcome = { name: string; current: string; target: string } | "current" | "unreachable";
+    const results: Outcome[] = await Promise.all(
+      entries.map(async ([name, current]): Promise<Outcome> => {
+        const request = withTimeout(4000);
         try {
           const response = await fetch(registryUrl(name), { signal: request.controller.signal });
-          if (!response.ok) return null;
-          const data = (await response.json()) as { "dist-tags"?: { latest?: string } };
-          const latest = data["dist-tags"]?.latest;
-          if (!latest) return null;
-          return compareVersions(current, latest) < 0 ? { name, current, latest } : null;
+          if (!response.ok) return "unreachable";
+          const data = (await response.json()) as { version?: string };
+          if (!data.version) return "unreachable";
+          const target = upgradeTarget(name, current, data.version, nodeMajor);
+          return target ? { name, current, target } : "current";
         } catch {
-          return null;
+          return "unreachable";
         } finally {
           request.done();
         }
       }),
     );
 
-    const outdated = results.filter(Boolean) as Array<{ name: string; current: string; latest: string }>;
+    const outdated = results.filter((result): result is Exclude<Outcome, string> => typeof result === "object");
+    // A package the registry did not answer for is unknown, not up to date.
+    const unreachable = entries.filter((_, index) => results[index] === "unreachable").map(([name]) => name);
+    const unknown = unreachable.length
+      ? ` ${unreachable.length} could not be checked (the registry did not answer): ${unreachable.slice(0, 5).join(", ")}${unreachable.length > 5 ? ", ..." : ""}.`
+      : "";
     checks.push({
       id: "dep_outdated",
       label: "Outdated Dependencies",
-      status: outdated.length ? "warn" : "pass",
+      status: outdated.length || unreachable.length ? "warn" : "pass",
       category: "dependencies",
-      detail: outdated.length
-        ? `${outdated.length} package${outdated.length === 1 ? "" : "s"} appear outdated: ${outdated
-            .slice(0, 8)
-            .map((item) => `${item.name} ${item.current} -> ${item.latest}`)
-            .join(", ")}${outdated.length > 8 ? ", ..." : ""}`
-        : `${entries.length} direct package${entries.length === 1 ? "" : "s"} checked against npm latest versions.`,
+      assessed: unreachable.length < entries.length,
+      detail:
+        (outdated.length
+          ? `${outdated.length} package${outdated.length === 1 ? "" : "s"} appear outdated: ${outdated
+              .slice(0, 8)
+              .map((item) => `${item.name} ${item.current} -> ${item.target}`)
+              .join(", ")}${outdated.length > 8 ? ", ..." : ""}.`
+          : `${entries.length - unreachable.length} of ${entries.length} direct packages are on their latest release.`) +
+        unknown +
+        " Method: compared each declared version with the npm registry's latest release. Limit: pre-releases are ignored, and @types/node is compared with the Node.js runtime, not the newest Node.",
     });
   } catch {
     checks.push({

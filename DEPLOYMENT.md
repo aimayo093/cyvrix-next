@@ -72,6 +72,32 @@ The token is read only on the server and sent only to `api.vercel.com`.
 `npm run check:env` reports whether it is set without printing it. Hobby plans
 keep one month of analytics, so a 90-day view says how many days are available.
 
+## Dependency updates
+
+Dependabot (`.github/dependabot.yml`) opens pull requests every Monday morning:
+
+- one grouped PR for all patch and minor releases;
+- Prisma packages together, and React packages together, because they must
+  move as a set;
+- a separate PR for each major release, which can break things and needs a
+  look before merging;
+- GitHub Actions used by CI, which are pinned to commits.
+
+A new release waits three days before Dependabot proposes it, which keeps the
+site clear of most hijacked-package incidents.
+
+Every PR runs CI (`.github/workflows/ci.yml`): a production dependency audit,
+the type check, `check:claims`, the test suites and a production build. Merge a
+Dependabot PR when CI is green and the Vercel preview looks right. Nothing
+merges itself.
+
+`@types/node` follows the Node.js runtime in `package.json` `engines`
+(currently 24.x), not the newest Node. To move to a new Node major, change
+both together and check Vercel's Node.js version setting matches.
+
+ESLint stays on 9 until `eslint-config-next`'s bundled plugins
+(react, jsx-a11y, import) support 10.
+
 ## Former Laravel Request
 
 The Laravel project was removed per earlier instruction. If CYVRIX later needs a Laravel backend/admin, host that separately on Laravel-friendly hosting and keep this Next.js app as either the frontend or a replacement full-stack platform.

@@ -141,6 +141,14 @@ object-level authorisation flagged create-only routes, input validation flagged
 a route with no body. A security tool that cries wolf gets ignored, which is
 worse than not having one. **Verify a new detector by hand before trusting it.**
 
+**The dependency check compares against a release worth moving to.** It asks
+the registry for each package's `latest` document (a few kilobytes; the full
+record timed out for large packages, which then dropped out of the count
+silently). A package the registry does not answer for is reported as
+unchecked, never as current. Pre-releases are ignored. `@types/node` is
+compared with the running Node.js major, because types newer than the runtime
+describe APIs the server does not have.
+
 ---
 
 ## 6. Two-factor authentication

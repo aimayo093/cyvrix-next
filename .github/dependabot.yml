@@ -1,0 +1,44 @@
+# Keeps every dependency on this platform current. See DEPLOYMENT.md#dependency-updates.
+#
+# Each update arrives as a pull request, and CI (.github/workflows/ci.yml) runs
+# the type check, claims check, tests and a production build on it before it
+# can be merged. Nothing merges itself.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    open-pull-requests-limit: 10
+    # A new release is held back for three days: most malicious package
+    # releases are caught and pulled within that window.
+    cooldown:
+      default-days: 3
+    # A package joins the first group it matches, so the move-together groups
+    # come before the catch-all.
+    groups:
+      prisma:
+        patterns: ["prisma", "@prisma/*"]
+      react:
+        patterns: ["react", "react-dom", "@types/react", "@types/react-dom"]
+      # Everything else: patch and minor releases together, one PR a week.
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # @types/node follows the Node.js runtime (package.json engines), not
+      # the newest Node. Move both together, deliberately.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+    labels: [dependencies]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/London
+    labels: [dependencies]
