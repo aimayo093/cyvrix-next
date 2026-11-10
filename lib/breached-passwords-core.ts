@@ -4,7 +4,15 @@
  */
 import { createHash } from "node:crypto";
 
-/** SHA-1 of the password, upper-case hex, split into the 5-character prefix sent and the suffix kept. */
+/**
+ * SHA-1 of the password, upper-case hex, split into the 5-character prefix sent and the suffix kept.
+ *
+ * SHA-1 is not used to protect the password: it is the lookup key the Pwned
+ * Passwords range API is built on, it is never stored, and only 5 hex
+ * characters of it leave the server. Passwords are stored with scrypt
+ * (`lib/password.ts`). CodeQL's js/insufficient-password-hash flags this line;
+ * that alert is a false positive for this reason.
+ */
 export function passwordHashParts(password: string): { prefix: string; suffix: string } {
   const digest = createHash("sha1").update(password, "utf8").digest("hex").toUpperCase();
   return { prefix: digest.slice(0, 5), suffix: digest.slice(5) };
