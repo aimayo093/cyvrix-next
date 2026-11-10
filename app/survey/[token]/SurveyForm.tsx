@@ -32,8 +32,7 @@ export function SurveyForm({ token, ratingType }: SurveyFormProps) {
     currentValue: number | null,
     hoveredValue: number | null,
     onChange: (val: number) => void,
-    onHover: (val: number | null) => void,
-    name: string
+    onHover: (val: number | null) => void
   ) => {
     return (
       <div className="flex items-center gap-1.5">
@@ -84,13 +83,13 @@ export function SurveyForm({ token, ratingType }: SurveyFormProps) {
 
     try {
       await submitSurveyResponse(formData);
-    } catch (err: any) {
-      if (err.digest?.startsWith("NEXT_REDIRECT")) {
+    } catch (err) {
+      if ((err as { digest?: string })?.digest?.startsWith("NEXT_REDIRECT")) {
         // Let Next.js handle the server action redirect
         throw err;
       }
       setIsPending(false);
-      setError(err?.message || "Failed to submit survey. Please try again.");
+      setError(err instanceof Error && err.message ? err.message : "Failed to submit survey. Please try again.");
     }
   };
 
@@ -137,7 +136,7 @@ export function SurveyForm({ token, ratingType }: SurveyFormProps) {
           <label className="block text-sm font-black text-white tracking-wide">
             Overall Satisfaction with our Services
           </label>
-          {renderStars(rating, hoveredRating, setRating, setHoveredRating, "rating")}
+          {renderStars(rating, hoveredRating, setRating, setHoveredRating)}
           <div className="text-[10px] font-black uppercase tracking-wider text-slate-500 px-1">
             {rating === 1 && "Poor"}
             {rating === 2 && "Fair"}
@@ -160,21 +159,21 @@ export function SurveyForm({ token, ratingType }: SurveyFormProps) {
             <label className="block text-xs font-black text-slate-300">
               Response Time &amp; Dispatch Speed
             </label>
-            {renderStars(responseTime, hoveredResponseTime, setResponseTime, setHoveredResponseTime, "responseTime")}
+            {renderStars(responseTime, hoveredResponseTime, setResponseTime, setHoveredResponseTime)}
           </div>
 
           <div className="space-y-2">
             <label className="block text-xs font-black text-slate-300">
               Quality of Technical Issue Resolution
             </label>
-            {renderStars(resolution, hoveredResolution, setResolution, setHoveredResolution, "resolution")}
+            {renderStars(resolution, hoveredResolution, setResolution, setHoveredResolution)}
           </div>
 
           <div className="space-y-2">
             <label className="block text-xs font-black text-slate-300">
               Staff Professionalism &amp; Communication
             </label>
-            {renderStars(professionalism, hoveredProfessionalism, setProfessionalism, setHoveredProfessionalism, "professionalism")}
+            {renderStars(professionalism, hoveredProfessionalism, setProfessionalism, setHoveredProfessionalism)}
           </div>
 
           {ratingType === "nps_10" && (
@@ -182,7 +181,7 @@ export function SurveyForm({ token, ratingType }: SurveyFormProps) {
               <label className="block text-xs font-black text-slate-300">
                 Overall Service Quality Star Rating
               </label>
-              {renderStars(rating, hoveredRating, setRating, setHoveredRating, "rating")}
+              {renderStars(rating, hoveredRating, setRating, setHoveredRating)}
             </div>
           )}
         </div>

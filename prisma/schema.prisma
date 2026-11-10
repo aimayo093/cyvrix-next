@@ -516,6 +516,13 @@ model AuditLog {
   ipAddress  String?
   metadata   Json     @default("{}")
   createdAt  DateTime @default(now())
+  /// Position in the hash chain. Set by the database on insert, never by the app.
+  seq        BigInt?  @unique
+  /// The previous entry's hash. Set by the database on insert.
+  prevHash   String?
+  /// SHA-256 of this entry and prevHash. Set by the database on insert.
+  /// Rows cannot be updated or deleted; see migration 20261111000000.
+  hash       String?
 
   @@schema("public")
 }

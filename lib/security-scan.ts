@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { Prisma } from "@/generated/prisma";
 import { appSecManifestAge, liveAppSecChecks, staticAppSecChecks } from "@/lib/appsec-checks";
+import { auditChainCheck, auditChainNotSetUp, type AuditChainRow } from "@/lib/audit-chain";
 import { prisma } from "@/lib/prisma";
 import { cleanVersion, heldBackBy, upgradeTarget, type DependencyHold } from "@/lib/dependency-freshness";
 import dependencyHolds from "@/lib/generated/dependency-holds.json";
@@ -373,6 +374,15 @@ export async function runSecurityScan(options: {
     });
   } catch {
     checks.push({ id: "audit", label: "Audit Logging", status: "warn", category: "platform", detail: "Unable to query audit log." });
+  }
+
+  try {
+    const rows = await prisma.$queryRaw<AuditChainRow[]>`SELECT * FROM "public"."audit_log_verify"()`;
+    checks.push(auditChainCheck(rows[0]));
+  } catch (error) {
+    // 42883: the function does not exist, because the migration has not run.
+    const missing = /42883|audit_log_verify.*does not exist/i.test(String((error as { code?: string; message?: string })?.message ?? error));
+    checks.push(missing ? auditChainNotSetUp() : auditChainCheck(null));
   }
 
   try {

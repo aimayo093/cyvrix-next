@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -12,11 +13,11 @@ import {
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Eye, EyeOff } from "lucide-react";
 
 export const metadata = { title: "Services CMS" };
 
-export default function ServicesCMSPage(props: any) {
+export default function ServicesCMSPage(props: React.ComponentProps<typeof ServicesCMSPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <ServicesCMSPageContent {...props} />
@@ -54,13 +55,13 @@ async function ServicesCMSPageContent({
             configured &mdash; edit, publish, or create new service pages.
           </p>
         </div>
-        <a
+        <Link
           href="/admin/services-cms?edit=new"
           className="inline-flex items-center gap-2 bg-[#2691F0] text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-[#041635] transition-colors"
         >
           <Plus className="h-4 w-4" />
           Add Service
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -147,7 +148,7 @@ async function ServicesCMSPageContent({
                     colSpan={4}
                     className="px-6 py-12 text-center text-sm text-slate-400"
                   >
-                    No services yet. Click "Add Service" to create one.
+                    No services yet. Click &quot;Add Service&quot; to create one.
                   </td>
                 </tr>
               )}

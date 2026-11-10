@@ -32,6 +32,8 @@ jobs:
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=moderate
       - run: npx tsc --noEmit
+      - name: Lint (zero warnings, so the backlog cannot creep back)
+        run: npx eslint . --max-warnings=0
       - run: npm run check:claims
       - name: Tests
         run: |

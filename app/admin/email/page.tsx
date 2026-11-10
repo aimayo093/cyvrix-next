@@ -9,7 +9,7 @@ import { redirect, unstable_rethrow } from "next/navigation";
 
 export const metadata = { title: "Email Broadcasts" };
 
-export default function EmailBroadcastPage(props: any) {
+export default function EmailBroadcastPage(props: React.ComponentProps<typeof EmailBroadcastPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <EmailBroadcastPageContent {...props} />

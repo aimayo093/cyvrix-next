@@ -1,3 +1,5 @@
+import Link from "next/link";
+import type { CmsJson } from "@/lib/cms-json";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -6,7 +8,6 @@ import { prisma } from "@/lib/prisma";
 import {
   createMenu,
   updateMenu,
-  deleteMenu,
   createMenuItem,
   updateMenuItem,
   deleteMenuItem,
@@ -18,7 +19,7 @@ import { Plus, Pencil, Layers, ExternalLink, ArrowUp, ArrowDown, FolderTree } fr
 
 export const metadata = { title: "Navigation CMS" };
 
-export default function NavigationCMSPage(props: any) {
+export default function NavigationCMSPage(props: React.ComponentProps<typeof NavigationCMSPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <NavigationCMSPageContent {...props} />
@@ -87,13 +88,13 @@ async function NavigationCMSPageContent({
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <a
+          <Link
             href="/admin/navigation?newMenu=true"
             className="inline-flex items-center gap-2 bg-[#041635] text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#2691F0] transition-colors"
           >
             <Plus className="h-4 w-4" />
             New Menu Location
-          </a>
+          </Link>
           {selectedMenu && (
             <a
               href={`/admin/navigation?menuId=${selectedMenuId}&newItem=true`}
@@ -480,8 +481,8 @@ function ItemFormFields({
   defaults,
 }: {
   pages: { id: string; title: string; slug: string }[];
-  rootItems: any[];
-  defaults?: any;
+  rootItems: CmsJson[];
+  defaults?: CmsJson;
 }) {
   return (
     <>

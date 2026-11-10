@@ -1,3 +1,5 @@
+import Link from "next/link";
+import type { CmsJson } from "@/lib/cms-json";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -17,7 +19,7 @@ import { Plus, Pencil, Users, ArrowUp, ArrowDown } from "lucide-react";
 
 export const metadata = { title: "Trusted Client Logos CMS" };
 
-export default function TrustedLogosCMSPage(props: any) {
+export default function TrustedLogosCMSPage(props: React.ComponentProps<typeof TrustedLogosCMSPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <TrustedLogosCMSPageContent {...props} />
@@ -54,13 +56,13 @@ async function TrustedLogosCMSPageContent({
             Record client logo permissions and evidence before any brand can appear publicly.
           </p>
         </div>
-        <a
+        <Link
           href="/admin/trusted-logos?newItem=true"
           className="inline-flex items-center gap-2 bg-[#2691F0] text-white font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-[#041635] transition-colors shrink-0"
         >
           <Plus className="h-4 w-4" />
           Add Client Logo
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -182,9 +184,9 @@ async function TrustedLogosCMSPageContent({
                   <Button type="submit" className="flex-1 bg-[#041635] text-white hover:bg-[#2691F0] py-3 rounded-xl font-bold">
                     Add Client Logo
                   </Button>
-                  <a href="/admin/trusted-logos" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl text-sm text-center">
+                  <Link href="/admin/trusted-logos" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl text-sm text-center">
                     Cancel
-                  </a>
+                  </Link>
                 </div>
               </form>
             )}
@@ -198,9 +200,9 @@ async function TrustedLogosCMSPageContent({
                   <Button type="submit" className="flex-1 bg-[#041635] text-white hover:bg-[#2691F0] py-3 rounded-xl font-bold">
                     Save Changes
                   </Button>
-                  <a href="/admin/trusted-logos" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl text-sm text-center">
+                  <Link href="/admin/trusted-logos" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl text-sm text-center">
                     Cancel
-                  </a>
+                  </Link>
                 </div>
               </form>
             )}
@@ -221,7 +223,7 @@ async function TrustedLogosCMSPageContent({
   );
 }
 
-function TrustedFormFields({ defaults }: { defaults?: any }) {
+function TrustedFormFields({ defaults }: { defaults?: CmsJson }) {
   return (
     <>
       <label className="block text-sm font-bold text-slate-700">

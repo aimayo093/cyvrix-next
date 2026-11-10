@@ -1,3 +1,4 @@
+import type { CmsJson } from "@/lib/cms-json";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Check, Cloud, ShieldCheck } from "lucide-react";
@@ -66,10 +67,10 @@ type PremiumHomeProps = {
    * has been editing all along appear, instead of someone having to remember
    * that the home page needed wiring too.
    */
-  additionalSections?: any[];
-  testimonials?: any[];
-  partners?: any[];
-  trustedLogos?: any[];
+  additionalSections?: CmsJson[];
+  testimonials?: CmsJson[];
+  partners?: CmsJson[];
+  trustedLogos?: CmsJson[];
 };
 
 /** The reviewed copy, used wherever the CMS leaves a field empty. */

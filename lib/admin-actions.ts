@@ -1,5 +1,6 @@
 "use server";
 
+import type { CmsJson } from "@/lib/cms-json";
 import crypto from "node:crypto";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
@@ -26,6 +27,7 @@ import { buildSiteImagesValue, siteImageFieldNames } from "@/lib/site-image-slot
 import { getDefaultLegalDocument } from "@/lib/legal-content";
 import { sendVerificationEmail } from "@/lib/email-verification";
 import { SITE_URL } from "@/lib/structured-data";
+import { breachedPasswordProblem } from "@/lib/breached-passwords";
 import {
   beginEnrolment,
   clearRecoveryCodeFlash,
@@ -996,8 +998,8 @@ export async function updateSiteSetting(formData: FormData) {
 
   await prisma.siteSetting.upsert({
     where: { key },
-    update: { value: value as any, updatedAt: new Date() },
-    create: { key, value: value as any, updatedAt: new Date() },
+    update: { value: value as Prisma.InputJsonValue, updatedAt: new Date() },
+    create: { key, value: value as Prisma.InputJsonValue, updatedAt: new Date() },
   });
 
   await prisma.auditLog.create({
@@ -1245,7 +1247,7 @@ export async function updateCmsPage(formData: FormData) {
   } else if (existing.ContentBlock.length > 0) {
     await prisma.contentBlock.update({
       where: { id: existing.ContentBlock[0].id },
-      data: { content: contentData as any, updatedAt: new Date() }
+      data: { content: contentData as Prisma.InputJsonValue, updatedAt: new Date() }
     });
   } else {
     await prisma.contentBlock.create({
@@ -1254,7 +1256,7 @@ export async function updateCmsPage(formData: FormData) {
         pageId: id,
         type: "RICH_TEXT",
         title: "Page Data",
-        content: contentData as any,
+        content: contentData as Prisma.InputJsonValue,
         updatedAt: new Date()
       }
     });
@@ -1779,7 +1781,7 @@ export async function createComplianceCard(formData: FormData) {
   const isVisible = formData.get("isVisible") === "true";
   const trustPublication = trustPublicationData(formData, false);
 
-  let locations = rawLocation
+  const locations = rawLocation
     .split(",")
     .map(l => l.trim().toLowerCase())
     .filter(l => l !== "footer" && l !== "");
@@ -1825,7 +1827,7 @@ export async function updateComplianceCard(formData: FormData) {
   const isVisible = formData.get("isVisible") === "true";
   const trustPublication = trustPublicationData(formData, false);
 
-  let locations = rawLocation
+  const locations = rawLocation
     .split(",")
     .map(l => l.trim().toLowerCase())
     .filter(l => l !== "footer" && l !== "");
@@ -2003,10 +2005,10 @@ export async function createPageSection(formData: FormData) {
   const settingsJsonRaw = formData.get("settingsJson") as string || "{}";
   const isVisible = formData.get("isVisible") !== "false";
 
-  let settingsJson: Record<string, any> = {};
+  let settingsJson: CmsJson = {};
   try {
     settingsJson = JSON.parse(settingsJsonRaw);
-  } catch (e) {}
+  } catch {}
 
   for (const [key, value] of formData.entries()) {
     if (key.startsWith("settingsJson_") && typeof value === "string") {
@@ -2096,7 +2098,7 @@ export async function updatePageSection(formData: FormData) {
   // object, so a form that shows six of a section's ten keys cannot delete the
   // other four. The raw JSON textarea, where present, is authoritative for the
   // keys it names; the individual `settingsJson_*` inputs then layer on top.
-  const settingsJson: Record<string, any> = { ...((existing.settingsJson as Record<string, any>) || {}) };
+  const settingsJson: CmsJson = { ...((existing.settingsJson as CmsJson | null) || {}) };
 
   if (formData.has("settingsJson")) {
     try {
@@ -2482,6 +2484,13 @@ export async function createPortalUser(formData: FormData) {
     return returnWithError("Missing required fields.", "/admin/client-management");
   }
 
+  if (password.length < 8) {
+    return returnWithError("Password must be at least 8 characters long.", "/admin/client-management");
+  }
+
+  const breached = await breachedPasswordProblem(password);
+  if (breached) return returnWithError(breached, "/admin/client-management");
+
   const { hashPassword } = await import("./password");
   const passwordHash = hashPassword(password);
 
@@ -2541,6 +2550,11 @@ export async function changeAdminPassword(formData: FormData) {
 
   if (newPassword.length < 8) {
     redirect(`${returnTo}?status=error&message=New password must be at least 8 characters long.`);
+  }
+
+  const breached = await breachedPasswordProblem(newPassword);
+  if (breached) {
+    redirect(`${returnTo}?status=error&message=${encodeURIComponent(breached)}`);
   }
 
   const userRecord = await prisma.user.findUnique({
@@ -2904,6 +2918,9 @@ export async function resetPortalUserPassword(formData: FormData) {
     return returnWithError("Only client portal passwords can be reset here.", "/admin/client-management");
   }
 
+  const breached = await breachedPasswordProblem(newPassword);
+  if (breached) return returnWithError(breached, "/admin/client-management");
+
   const { hashPassword } = await import("./password");
   const passwordHash = hashPassword(newPassword);
 
@@ -2961,7 +2978,7 @@ export async function updateWorkOrderStatus(formData: FormData) {
   const status = formData.get("status") as string;
   const completionNotes = sanitize(formData.get("completionNotes") as string || "");
 
-  const updateData: any = {
+  const updateData: Prisma.WorkOrderUpdateInput = {
     status,
     updatedAt: new Date(),
   };
@@ -3076,7 +3093,7 @@ export async function updateHomePageCMS(formData: FormData) {
     const heroSecondaryCtaLabel = sanitize(formData.get("hero.secondaryCtaLabel") as string || "");
     const heroSecondaryCtaUrl = sanitize(formData.get("hero.secondaryCtaUrl") as string || "");
 
-    const existingSettings = (heroSection.settingsJson as Record<string, any>) || {};
+    const existingSettings = (heroSection.settingsJson as CmsJson | null) || {};
 
     await prisma.pageSection.update({
       where: { id: heroSection.id },

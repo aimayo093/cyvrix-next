@@ -79,6 +79,25 @@ production. It is idempotent: the grants it revokes are already revoked on
 production, so on that database it only adds two indexes (unread notifications,
 ended sessions). Nothing depends on it, so it can go before or after a deploy.
 
+## Tamper-evident audit log (20261111000000)
+
+Apply `prisma/migrations/20261111000000_tamper_evident_audit_log` to
+production. It adds three columns to `AuditLog`, chains every existing entry
+in the order written, and installs triggers that chain each new entry and
+refuse UPDATE, DELETE and TRUNCATE. The application never updates or deletes
+audit entries and leaves the new columns out of its queries, so it can go
+before or after a deploy. Until it is applied the Security Center shows
+"Audit Log Integrity" as not assessed.
+
+It was dry-run against production inside a transaction that was rolled back:
+455 entries chained and verified, a client-supplied hash was overwritten, and
+an UPDATE and a DELETE were both refused.
+
+**Erasing an audit entry** (for example a court order) now takes the table
+owner dropping `AuditLog_no_update_delete`, deleting, and recreating the
+trigger. The chain will then report the gap from that entry on, which is the
+point: record why in the audit log itself straight afterwards.
+
 ## Running scripts/apply-migrations.mjs
 
 The script verifies the database's TLS certificate and will not run without

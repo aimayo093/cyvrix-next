@@ -17,7 +17,8 @@ let failed = 0;
 
 function check(name: string, actual: unknown, expected: unknown) {
   const ok = JSON.stringify(actual) === JSON.stringify(expected);
-  ok ? (passed += 1) : (failed += 1);
+  if (ok) passed += 1;
+  else failed += 1;
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${name}${ok ? "" : `  expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`}`);
 }
 

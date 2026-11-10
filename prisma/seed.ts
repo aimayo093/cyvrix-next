@@ -239,19 +239,19 @@ async function main() {
   // Seeding Footer Column Menus
   const companyCol = await prisma.footerSection.create({
     data: { id: crypto.randomUUID(), title: "Company", sortOrder: 1 },
-  }).catch((e) => ({ id: "company-fallback" }));
+  }).catch(() => ({ id: "company-fallback" }));
 
   const servicesCol = await prisma.footerSection.create({
     data: { id: crypto.randomUUID(), title: "Services", sortOrder: 2 },
-  }).catch((e) => ({ id: "services-fallback" }));
+  }).catch(() => ({ id: "services-fallback" }));
 
   const supportCol = await prisma.footerSection.create({
     data: { id: crypto.randomUUID(), title: "Support", sortOrder: 3 },
-  }).catch((e) => ({ id: "support-fallback" }));
+  }).catch(() => ({ id: "support-fallback" }));
 
   const legalCol = await prisma.footerSection.create({
     data: { id: crypto.randomUUID(), title: "Legal", sortOrder: 4 },
-  }).catch((e) => ({ id: "legal-fallback" }));
+  }).catch(() => ({ id: "legal-fallback" }));
 
   const footerLinks = [
     // Company Col

@@ -424,3 +424,51 @@ devices apart; both are kept while the session lives and swept 30 days after
 it ends. `lastSeenAt` is refreshed at most every five minutes, so reading a
 session rarely writes. Tokens from before rows existed name none and are
 refused, which signed every account out once when this shipped.
+
+## 14. Tier 2 hardening: script policy, leaked passwords, audit log
+
+**The script policy still allows inline scripts, on purpose.** A strict
+policy needs a per-request nonce, and Next.js can only add one to a page that
+renders on every request. That would turn off the cached pages that keep server cost down,
+for every visitor. What the policy forbids instead:
+inline event-handler attributes (`script-src-attr 'none'`, the usual way an
+injected `<img onerror>` runs), connections to any other origin
+(`connect-src 'self'` -- Sentry and Analytics both go through this origin), and
+plain-http subresources (`upgrade-insecure-requests`). CMS HTML is sanitised
+before render (`lib/rich-text.ts`). Revisit a nonce policy for `/admin` and
+`/portal` alone if those routes ever stop using cached shells.
+
+**New passwords are checked against known breaches.** Setting or changing any
+password (staff, portal, admin-created portal accounts) asks Have I Been
+Pwned's range API whether it has appeared in a breach. Only the first five
+characters of its SHA-1 leave the server, and padding is requested, so the
+service learns nothing usable. The check **fails open**: if the service is
+down or slow (3 seconds) the password is judged on length alone and a warning
+is logged. Refusing every password change during someone else's outage would
+trap people in the password they are trying to replace. Sign-in is not
+checked; the existing password was already accepted and a breach notice there
+would only teach people to ignore it. Portal accounts created by an
+administrator now also need 8 characters, which they did not before.
+
+**The audit log is append-only and hash-chained.** The database, not the
+application, numbers each entry and stores the SHA-256 of its contents plus
+the previous entry's hash (migration 20261111000000), under an advisory lock
+so concurrent writers cannot fork the chain. Triggers refuse UPDATE, DELETE
+and TRUNCATE. `audit_log_verify()` walks the chain and the Security Center
+reports the first entry that no longer matches.
+
+- What it does not stop: the database owner can drop the triggers and rewrite
+  the whole chain from the edited entry on. The latest fingerprint is shown in
+  the Security Center check so it can be noted elsewhere; a copy kept outside
+  the database is what would catch a full rewrite.
+- The Prisma client omits the three chain columns from every query
+  (`lib/prisma.ts`), so a BigInt never reaches a page or a cache.
+- Audit entries can contain an email address. They are kept as security
+  records; erasing one is a deliberate owner-level step (DEPLOYMENT.md), not
+  something the app can do.
+
+**security.txt** is served at `/.well-known/security.txt`. Its contact is the
+support address from Contact Us CMS, falling back to the DPO address, so it
+never names an inbox nobody reads. `Expires` is 180 days from when the file was
+last built, and it is rebuilt hourly, so it only lapses if the site stops
+being maintained.

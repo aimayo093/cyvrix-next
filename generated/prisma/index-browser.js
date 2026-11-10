@@ -436,7 +436,10 @@ exports.Prisma.AuditLogScalarFieldEnum = {
   entityId: 'entityId',
   ipAddress: 'ipAddress',
   metadata: 'metadata',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  seq: 'seq',
+  prevHash: 'prevHash',
+  hash: 'hash'
 };
 
 exports.Prisma.BlogPostScalarFieldEnum = {

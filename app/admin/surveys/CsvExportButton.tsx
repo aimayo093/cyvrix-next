@@ -1,10 +1,11 @@
 "use client";
 
+import type { CmsJson } from "@/lib/cms-json";
 import * as React from "react";
 import { Download } from "lucide-react";
 
 interface CsvExportButtonProps {
-  data: any[];
+  data: CmsJson[];
 }
 
 export function CsvExportButton({ data }: CsvExportButtonProps) {

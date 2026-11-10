@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-10T15:37:20.953Z",
-  "fileCount": 218,
+  "generatedAt": "2026-11-10T17:36:43.344Z",
+  "fileCount": 224,
   "apiRouteCount": 12,
   "mutatingRouteCount": 9,
   "findings": [
@@ -132,11 +132,13 @@
     {
       "id": "appsec_log_exposure",
       "label": "Sensitive values in logs",
-      "status": "pass",
+      "status": "fail",
       "method": "Searched every log statement for credential-shaped variable names.",
-      "detail": "No log statement writes a credential-shaped value.",
+      "detail": "1 file(s) log a value whose name suggests a credential.",
       "limitation": "Matches names. Logging a whole request or user object that happens to contain a secret would not be caught.",
-      "evidence": []
+      "evidence": [
+        "lib/breached-passwords.ts"
+      ]
     }
   ]
 }
