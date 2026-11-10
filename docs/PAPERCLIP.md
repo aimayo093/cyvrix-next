@@ -26,9 +26,12 @@ openssl rand -hex 32
 ```
 
 - **Read token**: lets an agent see enquiries, tickets, privacy requests and
-  the company snapshot. Give it only to the CEO and CMO.
+  the company snapshot. **Do not give it to any agent running on DeepSeek** (or
+  any model provider without a UK or EU data-processing agreement): the feed
+  contains names and contact details. The snapshot has no personal data, but
+  shares the token. See DECISIONS section 15.
 - **Draft token**: lets an agent submit drafts and see your review. It cannot
-  read client data. Give it to the copywriter and social manager.
+  read client data. Give it to the marketing agent.
 
 ## 2. Add them to Vercel
 

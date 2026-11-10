@@ -534,6 +534,13 @@ agents call the website, never the other way round. Setup is
   may pass them to an AI model provider. The privacy notice must say so before
   the read token is set; the proposed wording is in the pull request that
   added this, for sign-off, because it is a public statement.
+- **No personal data to a model outside the UK.** Cyvrix's agents run on
+  DeepSeek, which processes data in China, and there is no lawful transfer
+  basis for client personal data. So `/snapshot` carries counts, kinds and
+  ages only (no names, companies, subjects or ticket numbers), and the read
+  token must not be given to any agent on such a provider while `/feed` holds
+  names and contact details. Revisit if an agent moves to a provider with a
+  UK or EU data-processing agreement.
 - **Firewall.** Bot protection challenges non-browser requests, so the
   integration needs a Vercel firewall bypass rule for `/api/integrations/`
   (docs/PAPERCLIP.md step 3). The routes are still token-protected and

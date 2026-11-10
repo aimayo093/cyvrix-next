@@ -124,7 +124,9 @@ const feedSource = fs.readFileSync(path.join(process.cwd(), "lib/executive-os-fe
 check("ticket messages are limited to client-visible ones", /visibility:\s*"client"/.test(feedSource), true);
 check("no password, session or setting is ever selected", /passwordHash|userSession|siteSetting|twoFactor/i.test(feedSource), false);
 const snapshotSource = fs.readFileSync(path.join(process.cwd(), "lib/paperclip-snapshot.ts"), "utf8");
-check("the snapshot carries no contact details", /email|phone/i.test(snapshotSource.replace(/\/\*[\s\S]*?\*\//g, "")), false);
+const snapshotCode = snapshotSource.replace(/\/\*[\s\S]*?\*\//g, "");
+check("the snapshot carries no contact details", /email|phone/i.test(snapshotCode), false);
+check("snapshot queue items carry no name, company or subject", /item\.(title|detail)/.test(snapshotCode), false);
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);
