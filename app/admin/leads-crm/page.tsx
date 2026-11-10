@@ -1,12 +1,14 @@
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateLeadStatus, addLeadNote, deleteLead } from "@/lib/admin-actions";
 import { formatDistanceToNow } from "date-fns";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
+import { ADMIN_PAGE_SIZE, AdminPager, lastPageFor, parsePage } from "@/components/admin/AdminPager";
 import { Trash2, StickyNote } from "lucide-react";
 import { LeadStatus } from "@/generated/prisma";
 
@@ -61,33 +63,56 @@ export default function LeadsCRMPage(props: any) {
 async function LeadsCRMPageContent({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string }>;
+  searchParams: Promise<{ view?: string; page?: string }>;
 }) {
   await connection();
   await requireAdmin();
   const sp = await searchParams;
+  const page = parsePage(sp.page);
 
-  const leads = await prisma.lead.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { LeadNote: { orderBy: { createdAt: "desc" } } },
-    take: 100,
-  });
+  // Paged, with counts from the database. The list used to stop at the newest
+  // 100, so older leads could not be listed or opened, and the status totals
+  // only counted those 100.
+  const [leads, total, statusCounts] = await Promise.all([
+    prisma.lead.findMany({
+      orderBy: { createdAt: "desc" },
+      include: { LeadNote: { orderBy: { createdAt: "desc" } } },
+      take: ADMIN_PAGE_SIZE,
+      skip: (page - 1) * ADMIN_PAGE_SIZE,
+    }),
+    prisma.lead.count(),
+    prisma.lead.groupBy({ by: ["status"], _count: { _all: true } }),
+  ]);
+  // Past the last page (the last lead on it was deleted, or a stale link):
+  // go to the last page that has rows instead of showing "No leads yet".
+  if (page > lastPageFor(total)) redirect(`/admin/leads-crm?page=${lastPageFor(total)}${sp.view ? `&view=${encodeURIComponent(sp.view)}` : ""}`);
+  const countFor = (status: LeadStatus) =>
+    statusCounts.find((row) => row.status === status)?._count._all ?? 0;
 
-  const viewing = sp.view ? leads.find((l) => l.id === sp.view) ?? null : null;
+  // A lead opened by link need not be on the current page.
+  const viewing = sp.view
+    ? leads.find((l) => l.id === sp.view) ??
+      (await prisma.lead.findUnique({
+        where: { id: sp.view },
+        include: { LeadNote: { orderBy: { createdAt: "desc" } } },
+      }))
+    : null;
+  const pageHref = (p: number) => `/admin/leads-crm?page=${p}`;
+  const viewHref = (id: string) => `/admin/leads-crm?${page > 1 ? `page=${page}&` : ""}view=${id}`;
 
   return (
     <div className="space-y-8 pb-16">
       <div>
         <h1 className="font-outfit text-3xl font-black text-[#041635]">Leads CRM</h1>
         <p className="text-slate-500 text-sm mt-1">
-          {leads.length} lead{leads.length !== 1 ? "s" : ""} &mdash; manage status, notes, and follow-ups.
+          {total} lead{total !== 1 ? "s" : ""} &mdash; manage status, notes, and follow-ups.
         </p>
       </div>
 
       {/* Summary counts */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[LeadStatus.NEW, LeadStatus.CONTACTED, LeadStatus.QUALIFIED, LeadStatus.WON].map((s) => {
-          const count = leads.filter((l) => l.status === s).length;
+          const count = countFor(s);
           return (
             <div key={s} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm">
               <p className="text-2xl font-black text-[#041635]">{count}</p>
@@ -133,7 +158,7 @@ async function LeadsCRMPageContent({
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex items-center justify-end gap-1">
-                      <a href={`/admin/leads-crm?view=${lead.id}`} className="p-2 rounded-lg text-slate-400 hover:text-[#2691F0] hover:bg-blue-50 transition-colors" title="View & Notes">
+                      <a href={viewHref(lead.id)}className="p-2 rounded-lg text-slate-400 hover:text-[#2691F0] hover:bg-blue-50 transition-colors" title="View & Notes">
                         <StickyNote className="h-4 w-4" />
                       </a>
                       <form action={deleteLead}>
@@ -149,6 +174,7 @@ async function LeadsCRMPageContent({
               )}
             </tbody>
           </table>
+          <AdminPager page={page} total={total} buildHref={pageHref} noun="leads" />
         </div>
 
         {/* Lead Detail / Notes Panel */}

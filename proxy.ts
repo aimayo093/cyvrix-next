@@ -27,7 +27,9 @@ const POLLING_PREFIX = "/api/tickets/";
 const MAX_POLLING_REQUESTS = 240;
 
 // Routes that require authentication (any role)
-const PROTECTED_ROUTES = ["/portal", "/admin"];
+const SESSION_COOKIE = "cyvrix_session";
+
+const PROTECTED_ROUTES = ["/portal", "/admin", "/security-setup"];
 
 // Routes that require an internal/admin role
 const ADMIN_ROUTES = ["/admin"];
@@ -54,7 +56,7 @@ function pruneRateLimitMap(now: number) {
   }
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const response = NextResponse.next();
 
@@ -94,14 +96,17 @@ export async function middleware(request: NextRequest) {
   const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
 
   if (isProtected) {
-    const token = request.cookies.get("cyvrix_session")?.value;
+    const token = request.cookies.get(SESSION_COOKIE)?.value;
     const session = await verifySessionToken(token);
 
-    // No valid session → redirect to login, preserving destination
+    // No valid session → redirect to login, preserving destination, and drop
+    // any cookie that failed the check so it cannot be offered again.
     if (!session) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("next", pathname);
-      return NextResponse.redirect(loginUrl);
+      const redirect = NextResponse.redirect(loginUrl);
+      if (token) redirect.cookies.delete(SESSION_COOKIE);
+      return redirect;
     }
 
     // Admin routes require an internal role
@@ -114,6 +119,23 @@ export async function middleware(request: NextRequest) {
   // ── 3. Redirect already-authenticated users away from /login ─────────
   if (pathname === "/login") {
     const token = request.cookies.get("cyvrix_session")?.value;
+    // The server ended this session (signed out from another device, password
+    // changed, account disabled). The cookie still has a valid signature, which
+    // is all this file can check, so it is deleted here rather than trusted:
+    // trusting it would send the browser straight back to a page that refuses it.
+    //
+    // The login page is always shown for ended=1 (never bounced back to the
+    // admin, which would loop). The cookie is deleted only for an arrival this
+    // site made: a link elsewhere to /login?ended=1 must not sign a visitor
+    // out (the reason sign-out itself is POST-only). Allow-listed, so a client
+    // that sends no Fetch Metadata does not get the deletion.
+    if (request.nextUrl.searchParams.get("ended") === "1") {
+      const site = request.headers.get("sec-fetch-site");
+      if (token && (site === "same-origin" || site === "same-site" || site === "none")) {
+        response.cookies.delete(SESSION_COOKIE);
+      }
+      return response;
+    }
     const session = await verifySessionToken(token);
     if (session) {
       const dest = ADMIN_ROLES.includes(session.role) ? "/admin" : "/portal";

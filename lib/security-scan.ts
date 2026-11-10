@@ -4,6 +4,8 @@ import path from "node:path";
 import type { Prisma } from "@/generated/prisma";
 import { appSecManifestAge, liveAppSecChecks, staticAppSecChecks } from "@/lib/appsec-checks";
 import { prisma } from "@/lib/prisma";
+import { cleanVersion, heldBackBy, upgradeTarget, type DependencyHold } from "@/lib/dependency-freshness";
+import dependencyHolds from "@/lib/generated/dependency-holds.json";
 import { getEmailIdentity, normaliseEmailRecipients } from "@/lib/email-config";
 
 export type SecurityCheckStatus = "pass" | "warn" | "fail";
@@ -28,6 +30,12 @@ export interface SecurityScanCheck {
    * Defaults to true, so existing checks are unaffected.
    */
   assessed?: boolean;
+  /**
+   * True when the scan looked and the feature does not exist, so there is
+   * nothing to test. Always with `assessed: false`; shown as "Not applicable",
+   * not as a blind spot. `status` is then meaningless and ignored.
+   */
+  notApplicable?: boolean;
 }
 
 export interface SecurityScanResult {
@@ -143,23 +151,13 @@ function withTimeout(ms: number) {
   return { controller, done: () => clearTimeout(timeout) };
 }
 
-function cleanVersion(range: string) {
-  const match = range.match(/\d+\.\d+\.\d+/);
-  return match?.[0] ?? "";
-}
-
-function compareVersions(a: string, b: string) {
-  const left = cleanVersion(a).split(".").map((part) => Number(part));
-  const right = cleanVersion(b).split(".").map((part) => Number(part));
-  for (let i = 0; i < 3; i++) {
-    if ((left[i] ?? 0) > (right[i] ?? 0)) return 1;
-    if ((left[i] ?? 0) < (right[i] ?? 0)) return -1;
-  }
-  return 0;
-}
-
+/**
+ * The `latest` document only, a few kilobytes. The full packument runs to
+ * megabytes for packages like Prisma and timed out, and a timed-out package
+ * used to drop out of the count silently.
+ */
 function registryUrl(packageName: string) {
-  return `https://registry.npmjs.org/${encodeURIComponent(packageName).replace("%2F", "%2f")}`;
+  return `https://registry.npmjs.org/${encodeURIComponent(packageName).replaceAll("%2F", "%2f")}/latest`;
 }
 
 async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
@@ -186,36 +184,72 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
       return;
     }
 
-    const results = await Promise.all(
-      entries.map(async ([name, current]) => {
-        const request = withTimeout(2500);
+    const nodeMajor = Number(process.versions.node.split(".")[0]);
+    type Outcome = { name: string; current: string; target: string } | "current" | "unreachable";
+    const results: Outcome[] = await Promise.all(
+      entries.map(async ([name, current]): Promise<Outcome> => {
+        const request = withTimeout(4000);
         try {
           const response = await fetch(registryUrl(name), { signal: request.controller.signal });
-          if (!response.ok) return null;
-          const data = (await response.json()) as { "dist-tags"?: { latest?: string } };
-          const latest = data["dist-tags"]?.latest;
-          if (!latest) return null;
-          return compareVersions(current, latest) < 0 ? { name, current, latest } : null;
+          if (!response.ok) return "unreachable";
+          const data = (await response.json()) as { version?: string };
+          if (!data.version) return "unreachable";
+          const target = upgradeTarget(name, current, data.version, nodeMajor);
+          return target ? { name, current, target } : "current";
         } catch {
-          return null;
+          return "unreachable";
         } finally {
           request.done();
         }
       }),
     );
 
-    const outdated = results.filter(Boolean) as Array<{ name: string; current: string; latest: string }>;
+    const behind = results.filter((result): result is Exclude<Outcome, string> => typeof result === "object");
+    // A newer major that an installed package's peer range does not admit
+    // cannot be adopted yet. It is listed with what holds it, not counted as
+    // outdated: there is no action to take, and npm audit in CI still blocks
+    // any package with a known vulnerability.
+    const holdsFor = (dependencyHolds as { holds: Record<string, DependencyHold[]> }).holds;
+    const heldBack = behind
+      .map((item) => ({ ...item, holders: heldBackBy(item.target, holdsFor[item.name]) }))
+      .filter((item) => item.holders.length > 0);
+    const outdated = behind.filter((item) => !heldBack.some((held) => held.name === item.name));
+    const held = heldBack.length
+      ? ` Held back, not yet adoptable: ${heldBack
+          .map((item) => {
+            // Each holder with its own ceiling, so one package's limit is not
+            // attributed to another.
+            const ceilingFor = new Map<string, number>();
+            for (const hold of item.holders) ceilingFor.set(hold.by, Math.min(ceilingFor.get(hold.by) ?? Infinity, hold.maxMajor));
+            const named = [...ceilingFor].map(([by, max]) => `${by} up to ${max}.x`);
+            const ceiling = Math.min(...ceilingFor.values());
+            return `${item.name} ${item.target} (${named.slice(0, 2).join(", ")}${named.length > 2 ? ` and ${named.length - 2} more` : ""}; newer ${ceiling}.x releases are not checked)`;
+          })
+          .join("; ")}.`
+      : "";
+    // A package the registry did not answer for is unknown, not up to date.
+    const unreachable = entries.filter((_, index) => results[index] === "unreachable").map(([name]) => name);
+    const unknown = unreachable.length
+      ? ` ${unreachable.length} could not be checked (the registry did not answer): ${unreachable.slice(0, 5).join(", ")}${unreachable.length > 5 ? ", ..." : ""}.`
+      : "";
     checks.push({
       id: "dep_outdated",
       label: "Outdated Dependencies",
-      status: outdated.length ? "warn" : "pass",
+      status: outdated.length || unreachable.length ? "warn" : "pass",
       category: "dependencies",
-      detail: outdated.length
-        ? `${outdated.length} package${outdated.length === 1 ? "" : "s"} appear outdated: ${outdated
-            .slice(0, 8)
-            .map((item) => `${item.name} ${item.current} -> ${item.latest}`)
-            .join(", ")}${outdated.length > 8 ? ", ..." : ""}`
-        : `${entries.length} direct package${entries.length === 1 ? "" : "s"} checked against npm latest versions.`,
+      assessed: unreachable.length < entries.length,
+      detail:
+        (unreachable.length === entries.length
+          ? "No package could be checked."
+          : outdated.length
+          ? `${outdated.length} package${outdated.length === 1 ? "" : "s"} appear outdated: ${outdated
+              .slice(0, 8)
+              .map((item) => `${item.name} ${item.current} -> ${item.target}`)
+              .join(", ")}${outdated.length > 8 ? ", ..." : ""}.`
+          : `${entries.length - unreachable.length - heldBack.length} of ${entries.length} direct packages are on their latest release.`) +
+        held +
+        unknown +
+        " Method: compared each declared version with the npm registry's latest release, and with the peer ranges installed packages declare (recorded at build). Limit: pre-releases are ignored, and @types/node is compared with the Node.js runtime, not the newest Node.",
     });
   } catch {
     checks.push({
@@ -428,6 +462,7 @@ export async function runSecurityScan(options: {
       label: "Live application-security probes",
       status: "warn",
       category: "security",
+      assessed: false,
       detail: "The live probes could not complete, so exposed source maps, exposed files, CORS and error detail were not assessed on this run.",
     });
   } finally {
@@ -446,9 +481,12 @@ export async function runSecurityScan(options: {
     });
   }
 
-  const passCount = checks.filter((check) => check.status === "pass").length;
-  const failCount = checks.filter((check) => check.status === "fail").length;
-  const warnCount = checks.filter((check) => check.status === "warn").length;
+  const passCount = checks.filter((check) => check.assessed !== false && check.status === "pass").length;
+  // Only answered questions count. An unanswered check used to be stored as a
+  // warning and counted here, so a site with nothing wrong still reported
+  // "found warnings" and raised a notification on every scheduled scan.
+  const failCount = checks.filter((check) => check.assessed !== false && check.status === "fail").length;
+  const warnCount = checks.filter((check) => check.assessed !== false && check.status === "warn").length;
 
   /*
    * Scored over the checks that could actually be answered, with a warning
@@ -511,4 +549,46 @@ export function shouldNotifyForScan(result: SecurityScanResult, settings: Securi
   if (!settings.emailAlertsEnabled) return false;
   if (result.overallStatus === "fail") return true;
   return settings.alertOnWarnings && result.overallStatus === "warn";
+}
+
+function isScanRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isStoredCheck(value: unknown): boolean {
+  if (!isScanRecord(value)) return false;
+  return (
+    typeof value.id === "string" &&
+    typeof value.label === "string" &&
+    typeof value.detail === "string" &&
+    typeof value.category === "string" &&
+    (value.status === "pass" || value.status === "warn" || value.status === "fail") &&
+    (value.assessed === undefined || typeof value.assessed === "boolean") &&
+    (value.notApplicable === undefined || typeof value.notApplicable === "boolean")
+  );
+}
+
+/**
+ * The scan result stored in a SECURITY_SCAN_RUN audit entry's metadata, or
+ * null when the entry is missing, malformed or from an older format. Shared
+ * by the Security Centre and the admin Today dashboard.
+ */
+export function readScanResult(metadata: unknown): SecurityScanResult | null {
+  let value: unknown = metadata;
+  if (typeof value === "string") {
+    try {
+      value = JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  const result = isScanRecord(value) ? value.result : undefined;
+  if (!isScanRecord(result) || !Array.isArray(result.checks)) return null;
+  if (typeof result.score !== "number" || typeof result.durationMs !== "number" || typeof result.timestamp !== "string") return null;
+  if (result.overallStatus !== "pass" && result.overallStatus !== "warn" && result.overallStatus !== "fail") return null;
+  if (result.trigger !== "manual" && result.trigger !== "background") return null;
+  // Every check is validated too: one malformed element in a stored scan would
+  // otherwise reach the analyst and the dashboard as if it were well formed.
+  if (!result.checks.every(isStoredCheck)) return null;
+  return result as unknown as SecurityScanResult;
 }

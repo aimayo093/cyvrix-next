@@ -62,17 +62,30 @@ export async function createSecurityNotifications(result: SecurityScanResult) {
     select: { id: true },
   }).catch(() => []);
 
+  const title = result.overallStatus === "fail" ? "Security scan found issues" : "Security scan found warnings";
+  const body = `Security Center score ${result.score}%. Review the latest scan report.`;
+
+  // One copy of an alert per administrator, by construction: the id is derived
+  // from who it is for and what it says, so writing it is one atomic upsert.
+  // Two overlapping scans land on the same row instead of racing to create
+  // (and then delete) different ones. A repeat moves it to the top and marks
+  // it unread again. Rows from the old random-id insert are then removed.
   await Promise.all(
-    admins.map((admin) =>
-      prisma.notification.create({
-        data: {
-          id: crypto.randomUUID(),
-          userId: admin.id,
-          title: result.overallStatus === "fail" ? "Security scan found issues" : "Security scan found warnings",
-          body: `Security Center score ${result.score}%. Review the latest scan report.`,
-        },
-      }).catch(() => null),
-    ),
+    admins.map(async (admin) => {
+      try {
+        const id = `alert-${crypto.createHash("sha256").update(`${admin.id}\n${title}\n${body}`).digest("hex").slice(0, 40)}`;
+        await prisma.notification.upsert({
+          where: { id },
+          create: { id, userId: admin.id, title, body },
+          update: { readAt: null, createdAt: new Date() },
+        });
+        await prisma.notification.deleteMany({ where: { userId: admin.id, title, body, readAt: null, id: { not: id } } });
+      } catch (error) {
+        console.error("[security-alerts] Could not record a notification.", {
+          message: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+    }),
   );
 }
 

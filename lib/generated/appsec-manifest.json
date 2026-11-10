@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-30T00:42:58.769Z",
-  "fileCount": 190,
+  "generatedAt": "2026-11-10T15:37:20.953Z",
+  "fileCount": 218,
   "apiRouteCount": 12,
   "mutatingRouteCount": 9,
   "findings": [
@@ -13,8 +13,8 @@
       "limitation": "Finds the sink, not the source. React escapes everything else by default, but this cannot tell whether a value reaching one of these is attacker-controlled.",
       "evidence": [
         "components/admin/TwoFactorPanel.tsx",
-        "components/shared/SectionRenderer.tsx",
-        "components/public/JsonLd.tsx"
+        "components/public/JsonLd.tsx",
+        "components/shared/SectionRenderer.tsx"
       ]
     },
     {
@@ -47,18 +47,16 @@
     {
       "id": "appsec_ssrf",
       "label": "Server-side request forgery",
-      "status": "warn",
+      "status": "pass",
       "method": "Searched for outbound fetch calls to a non-literal URL in files that also read request input.",
-      "detail": "1 file(s) fetch a non-literal URL and also read request data. Worth confirming the two are unrelated.",
+      "detail": "No outbound request is made to a URL that could come from request input.",
       "limitation": "Coarse. A file can legitimately do both without the request value reaching the fetch. Treat as a prompt to read the code, not a defect.",
-      "evidence": [
-        "lib/appsec-checks.ts"
-      ]
+      "evidence": []
     },
     {
       "id": "appsec_password_reset",
       "label": "Password reset flow",
-      "status": "unknown",
+      "status": "not_applicable",
       "method": "Looked for a self-service password reset and, if present, whether its tokens expire and are single use.",
       "detail": "No self-service password reset exists. Nothing to attack, and nothing for a locked-out administrator either.",
       "limitation": "Cannot verify token entropy, or that the reset email goes only to a verified address.",
@@ -107,10 +105,10 @@
     {
       "id": "appsec_webhooks",
       "label": "Webhook signature verification",
-      "status": "unknown",
-      "method": "Looked for inbound webhook routes and whether each verifies a signature.",
+      "status": "not_applicable",
+      "method": "Looked for inbound webhook routes, by name and by behaviour (provider signature headers, event parsing), and whether each verifies a signature.",
       "detail": "No inbound webhook endpoint exists, so there is no unsigned webhook to exploit.",
-      "limitation": "Identifies routes by name. A webhook under a different name would be missed.",
+      "limitation": "A webhook that neither has a webhook-like name nor reads a provider signature header would be missed.",
       "evidence": []
     },
     {
@@ -125,14 +123,11 @@
     {
       "id": "appsec_input_validation",
       "label": "Request body validation",
-      "status": "warn",
+      "status": "pass",
       "method": "Checked 6 state-changing route(s) that read a request body for schema validation. Routes with no body are excluded.",
-      "detail": "2 route(s) read a request body without schema validation.",
+      "detail": "Every state-changing route validates its body against a schema.",
       "limitation": "Presence of a schema is not the same as a schema that constrains the right things.",
-      "evidence": [
-        "app/api/admin/cms/[module]/route.ts",
-        "app/api/admin/upload/route.ts"
-      ]
+      "evidence": []
     },
     {
       "id": "appsec_log_exposure",

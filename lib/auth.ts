@@ -1,11 +1,14 @@
 import "server-only";
 
-import { cookies } from "next/headers";
+import * as React from "react";
+import { cookies, headers } from "next/headers";
 import { forbidden, redirect } from "next/navigation";
 import { connection } from "next/server";
-import { createHmac } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/prisma";
-import { ADMIN_ROLES, isAdminRole } from "@/lib/roles";
+import { getClientAddress } from "@/lib/rate-limit-core";
+import { ADMIN_ROLES, canManageSecurityCenter, isAdminRole } from "@/lib/roles";
+import { needsSecondFactor, sessionVersionMatches } from "@/lib/session-rules";
 import type { User, UserRole } from "@/generated/prisma";
 export { hashPassword, verifyPassword } from "@/lib/password";
 
@@ -18,7 +21,13 @@ type SessionPayload = {
   email: string;
   role: UserRole;
   exp: number;
+  /** The account's sessionVersion when issued. Absent on older tokens: read as 0. */
+  sv?: number;
+  /** The UserSession row for this device. Tokens without one are refused. */
+  sid?: string;
 };
+
+type SessionUser = Pick<User, "id" | "email" | "role"> & { sessionVersion?: number };
 
 function secret() {
   const s = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
@@ -39,12 +48,21 @@ function sign(payload: string) {
   return createHmac("sha256", secret()).update(payload).digest("base64url");
 }
 
-export function createSessionToken(user: Pick<User, "id" | "email" | "role">) {
+/** Constant-time, so the comparison does not leak how much of a forged signature matched. */
+function signatureMatches(payload: string, signature: string) {
+  const expected = Buffer.from(sign(payload));
+  const given = Buffer.from(signature);
+  return expected.length === given.length && timingSafeEqual(expected, given);
+}
+
+export function createSessionToken(user: SessionUser, sessionId: string) {
   const payload: SessionPayload = {
     sub: user.id,
     email: user.email,
     role: user.role,
     exp: Math.floor(Date.now() / 1000) + SESSION_TTL_SECONDS,
+    sv: user.sessionVersion ?? 0,
+    sid: sessionId,
   };
   const encodedPayload = base64url(JSON.stringify(payload));
   return `${encodedPayload}.${sign(encodedPayload)}`;
@@ -53,10 +71,14 @@ export function createSessionToken(user: Pick<User, "id" | "email" | "role">) {
 export function verifySessionToken(token?: string): SessionPayload | null {
   if (!token) return null;
   const [encodedPayload, signature] = token.split(".");
-  if (!encodedPayload || !signature || sign(encodedPayload) !== signature) return null;
-  const payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8")) as SessionPayload;
-  if (payload.exp < Math.floor(Date.now() / 1000)) return null;
-  return payload;
+  if (!encodedPayload || !signature || !signatureMatches(encodedPayload, signature)) return null;
+  try {
+    const payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8")) as SessionPayload;
+    if (payload.exp < Math.floor(Date.now() / 1000)) return null;
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 const PENDING_2FA_COOKIE = "cyvrix_2fa_pending";
@@ -94,7 +116,7 @@ export async function readPendingTwoFactor(): Promise<string | null> {
   if (!token) return null;
 
   const [body, signature] = token.split(".");
-  if (!body || !signature || sign(body) !== signature) return null;
+  if (!body || !signature || !signatureMatches(body, signature)) return null;
 
   try {
     const payload = JSON.parse(Buffer.from(body, "base64url").toString()) as PendingPayload;
@@ -110,9 +132,39 @@ export async function clearPendingTwoFactor() {
   cookieStore.delete(PENDING_2FA_COOKIE);
 }
 
-export async function setSession(user: Pick<User, "id" | "email" | "role">) {
-  const cookieStore = await cookies();
-  cookieStore.set(SESSION_COOKIE, createSessionToken(user), {
+/** Session rows are kept this long after they end, then swept (DECISIONS §13). */
+const ENDED_SESSION_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
+/** lastSeenAt is refreshed at most this often, so reads do not become writes. */
+const LAST_SEEN_RESOLUTION_MS = 5 * 60 * 1000;
+
+/**
+ * Signs the account in on this device: records the device as a UserSession
+ * row and sets a cookie naming it. Call only from a Server Action or Route
+ * Handler, where cookies can be written.
+ */
+export async function setSession(user: SessionUser) {
+  const [cookieStore, requestHeaders] = await Promise.all([cookies(), headers()]);
+  const now = Date.now();
+  const id = randomBytes(24).toString("base64url");
+  await prisma.userSession.create({
+    data: {
+      id,
+      userId: user.id,
+      expiresAt: new Date(now + SESSION_TTL_SECONDS * 1000),
+      userAgent: requestHeaders.get("user-agent")?.slice(0, 400) ?? null,
+      ipAddress: getClientAddress(requestHeaders),
+    },
+  });
+
+  // Now and then, forget sessions that ended long enough ago.
+  if (Math.random() < 0.05) {
+    const cutoff = new Date(now - ENDED_SESSION_RETENTION_MS);
+    void prisma.userSession
+      .deleteMany({ where: { OR: [{ expiresAt: { lt: cutoff } }, { revokedAt: { lt: cutoff } }] } })
+      .catch(() => {});
+  }
+
+  cookieStore.set(SESSION_COOKIE, createSessionToken(user, id), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -121,27 +173,117 @@ export async function setSession(user: Pick<User, "id" | "email" | "role">) {
   });
 }
 
+/** Ends one device's session. Returns false if it was already ended. */
+export async function revokeSessionById(sessionId: string, reason: string) {
+  const result = await prisma.userSession.updateMany({
+    where: { id: sessionId, revokedAt: null },
+    data: { revokedAt: new Date(), revokedReason: reason },
+  });
+  return result.count > 0;
+}
+
+/** The id of the session this request is signed in with, if any. */
+export async function currentSessionId(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return verifySessionToken(cookieStore.get(SESSION_COOKIE)?.value)?.sid ?? null;
+}
+
+/** Signs out this device: ends its session row as well as deleting the cookie. */
 export async function clearSession() {
+  const sessionId = await currentSessionId();
+  // The row is ended first and the cookie deleted only once that worked. If
+  // ending it fails, the error reaches the caller and the cookie stays, so
+  // signing out can be retried; deleting it would leave a live row no one can
+  // end except by waiting for it to expire (DECISIONS §13).
+  if (sessionId) await revokeSessionById(sessionId, "signed_out");
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE);
 }
 
-export async function getSession() {
+/** Where a staff account without two-factor is sent until it enrols. */
+export const SECURITY_SETUP_PATH = "/security-setup";
+
+/**
+ * The signed-in account, before the two-factor rule is applied.
+ *
+ * A session stops working when its device row is ended or expired, when the
+ * account is deactivated, or when the account's sessionVersion has moved past
+ * the one the token was issued with. A token that names no device row (issued
+ * before rows existed) is refused.
+ */
+const readSession = React.cache(async () => {
   await connection();
   const cookieStore = await cookies();
   const payload = verifySessionToken(cookieStore.get(SESSION_COOKIE)?.value);
-  if (!payload) return null;
-  const user = await prisma.user.findUnique({
-    where: { id: payload.sub },
-    select: { id: true, email: true, name: true, role: true, active: true, clientCompanyId: true },
+  if (!payload?.sid) return null;
+  const device = await prisma.userSession.findUnique({
+    where: { id: payload.sid },
+    select: {
+      userId: true,
+      revokedAt: true,
+      expiresAt: true,
+      lastSeenAt: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          active: true,
+          clientCompanyId: true,
+          sessionVersion: true,
+          twoFactorEnrolledAt: true,
+        },
+      },
+    },
   });
-  if (!user?.active) return null;
-  return { user };
+  const now = Date.now();
+  if (!device || device.userId !== payload.sub || device.revokedAt || device.expiresAt.getTime() <= now) return null;
+  const user = device.user;
+  if (!user.active) return null;
+  if (!sessionVersionMatches(payload.sv, user.sessionVersion)) return null;
+
+  if (now - device.lastSeenAt.getTime() > LAST_SEEN_RESOLUTION_MS) {
+    await prisma.userSession
+      .update({ where: { id: payload.sid }, data: { lastSeenAt: new Date(now) } })
+      .catch(() => {});
+  }
+
+  const { sessionVersion, twoFactorEnrolledAt, ...visible } = user;
+  return {
+    user: visible,
+    sessionId: payload.sid,
+    sessionVersion,
+    // Staff accounts must have a second factor (DECISIONS §6).
+    needsSecondFactor: needsSecondFactor(user.role, twoFactorEnrolledAt),
+  };
+});
+
+/**
+ * The signed-in account, or null.
+ *
+ * A staff account that has not enrolled in two-factor reads as signed out
+ * here, so every page, action and API route that checks a session refuses it
+ * by default. Only the set-up page, through requireStaffForSecondFactorSetup,
+ * accepts it.
+ */
+export async function getSession() {
+  const session = await readSession();
+  if (!session || session.needsSecondFactor) return null;
+  return { user: session.user };
 }
 
+/**
+ * Where a request goes when it carries a cookie the server no longer accepts.
+ * `ended=1` tells the proxy to delete the cookie instead of trusting its
+ * signature and sending the browser back here, which looped.
+ */
+const SESSION_ENDED_PATH = "/login?ended=1";
+
 export async function requireUser() {
-  const session = await getSession();
-  if (!session) redirect("/login");
+  const session = await readSession();
+  if (!session) redirect(SESSION_ENDED_PATH);
+  if (session.needsSecondFactor) redirect(SECURITY_SETUP_PATH);
   return session.user;
 }
 
@@ -149,6 +291,54 @@ export async function requireAdmin() {
   const user = await requireUser();
   if (!ADMIN_ROLES.includes(user.role)) redirect("/portal");
   return user;
+}
+
+/**
+ * A staff account, enrolled in two-factor or not. Only for the two-factor
+ * set-up page and the actions it posts to.
+ */
+export async function requireStaffForSecondFactorSetup() {
+  const session = await readSession();
+  if (!session) redirect(SESSION_ENDED_PATH);
+  if (!ADMIN_ROLES.includes(session.user.role)) redirect("/portal");
+  return { ...session.user, needsSecondFactor: session.needsSecondFactor };
+}
+
+/**
+ * Ends every session the account holds, everywhere, by moving its
+ * sessionVersion on. Pass `keepCurrent` when the person acting should stay
+ * signed in on this device: their cookie is reissued at the new version.
+ */
+export async function endAllSessions(userId: string, { keepCurrent = false } = {}) {
+  return changeAccountAndEndSessions(userId, {}, { keepCurrent });
+}
+
+/**
+ * Applies a credential change and ends every session in one transaction, so
+ * a new password can never be saved while the old sessions stay valid.
+ */
+export async function changeAccountAndEndSessions(
+  userId: string,
+  change: { passwordHash?: string; name?: string },
+  { keepCurrent = false } = {},
+) {
+  const [, user] = await prisma.$transaction([
+    prisma.userSession.updateMany({
+      where: { userId, revokedAt: null },
+      data: { revokedAt: new Date(), revokedReason: "all_sessions_ended" },
+    }),
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...change,
+        ...(change.passwordHash || change.name !== undefined ? { updatedAt: new Date() } : {}),
+        sessionVersion: { increment: 1 },
+      },
+      select: { id: true, email: true, role: true, sessionVersion: true },
+    }),
+  ]);
+  if (keepCurrent) await setSession(user);
+  return user.sessionVersion;
 }
 
 export async function requireSuperAdmin() {
@@ -160,11 +350,7 @@ export async function requireSuperAdmin() {
 }
 
 // Re-exported so existing imports from "@/lib/auth" keep working.
-export { isAdminRole };
-
-export function canManageSecurityCenter(role: UserRole) {
-  return role === "SUPER_ADMIN" || role === "ADMIN";
-}
+export { isAdminRole, canManageSecurityCenter };
 
 export function canUpdateSiteSetting(role: UserRole, key: string) {
   return role === "SUPER_ADMIN" || (role === "ADMIN" && key === "securityCenter");

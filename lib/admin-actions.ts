@@ -3,10 +3,22 @@
 import crypto from "node:crypto";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
 import { LeadStatus, TicketStatus } from "@/generated/prisma";
-import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
+import {
+  canManageSecurityCenter,
+  canUpdateSiteSetting,
+  changeAccountAndEndSessions,
+  clearSession,
+  currentSessionId,
+  endAllSessions,
+  revokeSessionById,
+  requireAdmin,
+  requireStaffForSecondFactorSetup,
+  SECURITY_SETUP_PATH,
+} from "@/lib/auth";
 import { contactValueProblem, publicContactSettingKeys } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
@@ -21,6 +33,7 @@ import {
   disableTwoFactor as clearTwoFactor,
   flashRecoveryCodes,
   regenerateRecoveryCodes,
+  verifyChallenge,
 } from "@/lib/two-factor";
 import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
@@ -117,7 +130,36 @@ function trustPublicationData(formData: FormData, requiresPermission: boolean) {
   };
 }
 
-type PublicCacheTag = (typeof PUBLIC_CACHE_TAGS)[keyof typeof PUBLIC_CACHE_TAGS];
+/**
+ * Sends the administrator back to the form they submitted, with the reason it
+ * was refused shown on the page.
+ *
+ * Throwing from a form action replaced the whole admin with the public
+ * "Error 500" screen, and production builds hide the message, so a refusal as
+ * ordinary as "password too short" read as the site breaking. The destination
+ * is the submitting admin page (from the Referer, accepted only when it is an
+ * /admin path), so the message lands where the form is.
+ */
+async function returnWithError(message: string, fallbackPath: string): Promise<never> {
+  let target = fallbackPath;
+  const referer = (await headers()).get("referer");
+  if (referer) {
+    try {
+      const url = new URL(referer);
+      if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
+        url.searchParams.delete("status");
+        url.searchParams.delete("message");
+        target = `${url.pathname}${url.search}`;
+      }
+    } catch {
+      // A malformed Referer falls back to the known page.
+    }
+  }
+  const separator = target.includes("?") ? "&" : "?";
+  redirect(`${target}${separator}status=error&message=${encodeURIComponent(message)}`);
+}
+
+type PublicCacheTag =(typeof PUBLIC_CACHE_TAGS)[keyof typeof PUBLIC_CACHE_TAGS];
 
 function updatePublicCacheTags(...tags: PublicCacheTag[]) {
   for (const tag of new Set(tags)) {
@@ -192,7 +234,7 @@ export async function saveLegalPage(formData: FormData) {
   const legalSlug = sanitize((formData.get("slug") as string) || "");
   const definition = findPublicLegalPageDefinition(legalSlug);
   if (!definition) {
-    throw new Error("This legal document is not available for public publication.");
+    return returnWithError("This legal document is not available for public publication.", "/admin/legal-pages");
   }
 
   const title = sanitize((formData.get("title") as string) || "");
@@ -203,10 +245,10 @@ export async function saveLegalPage(formData: FormData) {
 
   if (status === "PUBLISHED") {
     if (formData.get("legalReviewConfirmed") !== "true") {
-      throw new Error("Confirm the legal review before publishing this document.");
+      return returnWithError("Confirm the legal review before publishing this document.", "/admin/legal-pages");
     }
     if (!document) {
-      throw new Error("Published legal documents need a title and substantive reviewed content.");
+      return returnWithError("Published legal documents need a title and substantive reviewed content.", "/admin/legal-pages");
     }
   }
 
@@ -394,7 +436,7 @@ async function serviceProductFormData(formData: FormData) {
   const description = sanitize((formData.get("description") as string) || "");
 
   if (!name || !description) {
-    throw new Error("A service product needs a name and a concise public description.");
+    return returnWithError("A service product needs a name and a concise public description.", "/admin/service-products");
   }
 
   const sortOrderCandidate = Number(formData.get("sortOrder"));
@@ -903,16 +945,16 @@ export async function updateSiteSetting(formData: FormData) {
   const keyValue = formData.get("key");
   const key = typeof keyValue === "string" ? keyValue.trim() : "";
   if (!/^[A-Za-z][A-Za-z0-9_-]{0,99}$/.test(key)) {
-    throw new Error("Invalid setting key.");
+    return returnWithError("Invalid setting key.", "/admin/settings");
   }
   if (!canUpdateSiteSetting(administrator.role, key)) {
-    throw new Error("You do not have permission to update this setting.");
+    return returnWithError("You do not have permission to update this setting.", "/admin/settings");
   }
 
   // Support dot-notation fields like value.name, value.email → build nested object
   const hasDotFields = Array.from(formData.keys()).some((k) => k.startsWith("value."));
   if (key === "emailConfig" && !hasDotFields) {
-    throw new Error("Email delivery identity must be updated through the approved settings form.");
+    return returnWithError("Email delivery identity must be updated through the approved settings form.", "/admin/settings");
   }
 
   let value: unknown;
@@ -932,10 +974,10 @@ export async function updateSiteSetting(formData: FormData) {
       const defaultFromEmail = incoming.defaultFromEmail ?? existingObj.defaultFromEmail ?? "";
       const adminNotificationEmail = incoming.adminNotificationEmail ?? existingObj.adminNotificationEmail ?? "";
       if (defaultFromEmail && !z.string().trim().email().max(254).safeParse(defaultFromEmail).success) {
-        throw new Error("Enter a valid default sender email address.");
+        return returnWithError("Enter a valid default sender email address.", "/admin/settings");
       }
       if (adminNotificationEmail && !z.string().trim().email().max(254).safeParse(adminNotificationEmail).success) {
-        throw new Error("Enter a valid admin notification email address.");
+        return returnWithError("Enter a valid admin notification email address.", "/admin/settings");
       }
       value = Object.fromEntries(
         [...emailIdentityFields].map((field) => [field, incoming[field] ?? existingObj[field] ?? ""]),
@@ -1146,43 +1188,61 @@ export async function createCmsPage(formData: FormData) {
   });
 
   revalidatePath("/admin/pages-cms");
+  // The cached page list (navigation page links, sitemap) is tagged, not
+  // path-cached, so a new page needs the tag cleared like any other edit.
+  updateCmsPageCache();
 }
 
 export async function updateCmsPage(formData: FormData) {
   await requireAdmin();
   const id = formData.get("id") as string;
-  const title = sanitize(formData.get("title") as string || "");
-  const heroTitle = sanitize(formData.get("heroTitle") as string || "");
-  const heroSubtitle = sanitize(formData.get("heroSubtitle") as string || "");
-  const featuredImage = sanitize(formData.get("featuredImage") as string || "");
-  const seoTitle = sanitize(formData.get("seoTitle") as string || "");
-  const seoDescription = sanitize(formData.get("seoDescription") as string || "");
-  const rawContentData = formData.get("contentData") as string || "{}";
 
-  let contentData = {};
-  try {
-    contentData = JSON.parse(rawContentData);
-  } catch (e) {
-    // ignore
+  // Only fields the form actually sent are written. The settings form sends
+  // title and SEO fields; treating every absent field as "" used to blank the
+  // hero title, hero subtitle and featured image, and replace the page's
+  // content block with {}, on every save.
+  //
+  // The slug is never written here. Each public page is a fixed route that
+  // looks its CMS record up by slug, so renaming one detaches the page from
+  // its content.
+  const textField = (name: string) =>
+    formData.has(name) ? sanitize((formData.get(name) as string) || "") : undefined;
+
+  const title = textField("title");
+  if (title !== undefined && !title.trim()) {
+    redirect(`/admin/pages-cms?edit=${encodeURIComponent(id)}&tab=settings&status=error&message=${encodeURIComponent("A page needs an internal title.")}`);
+  }
+
+  let contentData: unknown = undefined;
+  if (formData.has("contentData")) {
+    try {
+      contentData = JSON.parse((formData.get("contentData") as string) || "{}");
+    } catch {
+      redirect(`/admin/pages-cms?edit=${encodeURIComponent(id)}&tab=settings&status=error&message=${encodeURIComponent("Page data was not valid JSON, so nothing was saved.")}`);
+    }
   }
 
   const existing = await prisma.cmsPage.findUnique({ where: { id }, include: { ContentBlock: true } });
-  if (!existing) return;
+  if (!existing) {
+    redirect(`/admin/pages-cms?status=error&message=${encodeURIComponent("That page no longer exists.")}`);
+  }
 
   await prisma.cmsPage.update({
     where: { id },
     data: {
       title,
-      heroTitle,
-      heroSubtitle,
-      featuredImage,
-      seoTitle,
-      seoDescription,
+      heroTitle: textField("heroTitle"),
+      heroSubtitle: textField("heroSubtitle"),
+      featuredImage: textField("featuredImage"),
+      seoTitle: textField("seoTitle"),
+      seoDescription: textField("seoDescription"),
       updatedAt: new Date(),
     },
   });
 
-  if (existing.ContentBlock.length > 0) {
+  if (contentData === undefined) {
+    // No page data in this submission: leave the content block alone.
+  } else if (existing.ContentBlock.length > 0) {
     await prisma.contentBlock.update({
       where: { id: existing.ContentBlock[0].id },
       data: { content: contentData as any, updatedAt: new Date() }
@@ -1211,6 +1271,7 @@ export async function updateCmsPage(formData: FormData) {
   } else {
     updateCmsPageCache();
   }
+  redirect(`/admin/pages-cms?edit=${encodeURIComponent(id)}&tab=settings&status=success&message=${encodeURIComponent("Page settings saved.")}`);
 }
 
 export async function deleteCmsPage(formData: FormData) {
@@ -1236,7 +1297,9 @@ export async function updateBrandAsset(formData: FormData) {
   const id = formData.get("id") as string;
   const name = sanitize(formData.get("name") as string || "");
   const mediaUrl = sanitize(formData.get("mediaUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const usageContext = sanitize(formData.get("usageContext") as string || "");
   const isActive = formData.get("isActive") === "true";
 
@@ -1528,7 +1591,9 @@ export async function createPartnerLogo(formData: FormData) {
   const category = sanitize(formData.get("category") as string || "");
   const description = sanitize(formData.get("description") as string || "");
   const logoUrl = sanitize(formData.get("logoUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
   const isVisible = formData.get("isVisible") === "true";
@@ -1561,7 +1626,9 @@ export async function updatePartnerLogo(formData: FormData) {
   const category = sanitize(formData.get("category") as string || "");
   const description = sanitize(formData.get("description") as string || "");
   const logoUrl = sanitize(formData.get("logoUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
   const isVisible = formData.get("isVisible") === "true";
@@ -1616,7 +1683,9 @@ export async function createTrustedLogo(formData: FormData) {
   await requireAdmin();
   const companyName = sanitize(formData.get("companyName") as string || "");
   const logoUrl = sanitize(formData.get("logoUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
   const isVisible = formData.get("isVisible") === "true";
@@ -1645,7 +1714,9 @@ export async function updateTrustedLogo(formData: FormData) {
   const id = formData.get("id") as string;
   const companyName = sanitize(formData.get("companyName") as string || "");
   const logoUrl = sanitize(formData.get("logoUrl") as string || "");
-  const altText = sanitize(formData.get("altText") as string || "");
+  // Capped here as well as in the form: the form's limit is the browser's
+  // to enforce, and a crafted request is not bound by it.
+  const altText = sanitize(formData.get("altText") as string || "").slice(0, 160);
   const websiteUrl = sanitize(formData.get("websiteUrl") as string || "");
   const isFeatured = formData.get("isFeatured") === "true";
   const isVisible = formData.get("isVisible") === "true";
@@ -2408,7 +2479,7 @@ export async function createPortalUser(formData: FormData) {
   const clientCompanyId = formData.get("clientCompanyId") as string || "";
 
   if (!email || !password || !clientCompanyId) {
-    throw new Error("Missing required fields.");
+    return returnWithError("Missing required fields.", "/admin/client-management");
   }
 
   const { hashPassword } = await import("./password");
@@ -2489,13 +2560,9 @@ export async function changeAdminPassword(formData: FormData) {
 
   const newPasswordHash = hashPassword(newPassword);
 
-  await prisma.user.update({
-    where: { id: admin.id },
-    data: {
-      passwordHash: newPasswordHash,
-      updatedAt: new Date(),
-    },
-  });
+  // The new password and the end of every other session land together; this
+  // device stays signed in.
+  await changeAccountAndEndSessions(admin.id, { passwordHash: newPasswordHash }, { keepCurrent: true });
 
   await prisma.auditLog.create({
     data: {
@@ -2549,15 +2616,23 @@ export async function requestEmailVerification() {
   redirect(`/admin/profile?status=error&message=${encodeURIComponent(message)}`);
 }
 
+/**
+ * Where the enrolment forms are posted from. A staff account that has not
+ * enrolled cannot open the admin, so it enrols on the set-up page instead.
+ */
+function enrolmentPage(needsSecondFactor: boolean) {
+  return needsSecondFactor ? SECURITY_SETUP_PATH : "/admin/profile?enrol=2fa";
+}
+
 export async function startTwoFactorEnrolment() {
-  const admin = await requireAdmin();
+  const admin = await requireStaffForSecondFactorSetup();
   await beginEnrolment(admin.id, admin.email);
-  redirect("/admin/profile?enrol=2fa");
+  redirect(enrolmentPage(admin.needsSecondFactor));
 }
 
 /** Confirms enrolment with a live code, and returns the recovery codes once. */
 export async function confirmTwoFactorEnrolment(formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireStaffForSecondFactorSetup();
   const code = (formData.get("code") as string | null)?.trim() ?? "";
 
   const result = await confirmEnrolment(admin.id, code);
@@ -2569,8 +2644,13 @@ export async function confirmTwoFactorEnrolment(formData: FormData) {
         : result.reason === "rate_limited"
           ? "Too many attempts. Wait a few minutes and try again."
           : "Start the setup again.";
-    redirect(`/admin/profile?enrol=2fa&status=error&message=${encodeURIComponent(message)}`);
+    const page = enrolmentPage(admin.needsSecondFactor);
+    redirect(`${page}${page.includes("?") ? "&" : "?"}status=error&message=${encodeURIComponent(message)}`);
   }
+
+  // Any session signed in before the second factor existed is ended; this
+  // device stays signed in.
+  await endAllSessions(admin.id, { keepCurrent: true });
 
   await prisma.auditLog.create({
     data: {
@@ -2597,15 +2677,31 @@ export async function confirmTwoFactorEnrolment(formData: FormData) {
  * the render after a successful enrolment into a 500.
  */
 export async function dismissRecoveryCodes() {
-  await requireAdmin();
+  await requireStaffForSecondFactorSetup();
   await clearRecoveryCodeFlash();
   redirect("/admin/profile");
 }
 
-/** Turns two-factor off for the signed-in administrator. */
-export async function turnOffTwoFactor() {
+/**
+ * Removes the administrator's authenticator. Staff accounts must have one, so
+ * this is how a lost or replaced phone is swapped: every session ends and the
+ * next screen sets up the new device.
+ */
+export async function turnOffTwoFactor(formData: FormData) {
   const admin = await requireAdmin();
+  // Proof of the current factor first. Without it, anyone holding a signed-in
+  // session could swap the authenticator for their own and keep the account.
+  const code = (formData.get("code") as string | null)?.trim() ?? "";
+  const proof = await verifyChallenge(admin.id, code);
+  if (!proof.ok) {
+    const message =
+      proof.reason === "rate_limited"
+        ? "Too many attempts. Wait a few minutes and try again."
+        : "Enter a current code from your authenticator, or a recovery code, to replace it.";
+    redirect(`/admin/profile?status=error&message=${encodeURIComponent(message)}`);
+  }
   await clearTwoFactor(admin.id);
+  await endAllSessions(admin.id, { keepCurrent: true });
 
   await prisma.auditLog.create({
     data: {
@@ -2618,7 +2714,125 @@ export async function turnOffTwoFactor() {
     },
   });
 
-  redirect("/admin/profile?status=success&message=Two-factor authentication is off.");
+  redirect(SECURITY_SETUP_PATH);
+}
+
+/** Ends every session on every device, including this one. */
+export async function signOutEverywhere() {
+  const admin = await requireAdmin();
+  await endAllSessions(admin.id);
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "admin_signed_out_everywhere",
+      entityType: "User",
+      entityId: admin.id,
+      metadata: { email: admin.email },
+    },
+  });
+  await clearSession();
+  redirect("/login");
+}
+
+/**
+ * Signs one device out, from the Security Center's device list.
+ *
+ * Only roles that can open the Security Center may do it, and only a super
+ * admin may sign out a super admin's device, so an administrator cannot lock
+ * the owner out. Ending your own current session signs you out here too.
+ */
+export async function signOutDevice(formData: FormData) {
+  const admin = await requireAdmin();
+  const back = "/admin/security-center#devices";
+  if (!canManageSecurityCenter(admin.role)) redirect("/admin");
+
+  const sessionId = formData.get("sessionId");
+  if (typeof sessionId !== "string" || sessionId.length < 16 || sessionId.length > 64) {
+    return returnWithError("That device could not be found.", back);
+  }
+
+  const device = await prisma.userSession.findUnique({
+    where: { id: sessionId },
+    select: { userId: true, revokedAt: true, userAgent: true, user: { select: { email: true, role: true } } },
+  });
+  if (!device || device.revokedAt) {
+    redirect(`/admin/security-center?status=success&message=${encodeURIComponent("That device was already signed out.")}#devices`);
+  }
+  if (device.user.role === "SUPER_ADMIN" && admin.role !== "SUPER_ADMIN") {
+    return returnWithError("Only a super admin can sign out a super admin's devices.", back);
+  }
+
+  const isCurrent = (await currentSessionId()) === sessionId;
+  await revokeSessionById(sessionId, "revoked_by_admin");
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "SESSION_REVOKED",
+      entityType: "UserSession",
+      entityId: sessionId,
+      metadata: { account: device.user.email, by: admin.email, ownSession: device.userId === admin.id },
+    },
+  });
+
+  if (isCurrent) {
+    await clearSession();
+    redirect("/login");
+  }
+  revalidatePath("/admin/security-center");
+  redirect(`/admin/security-center?status=success&message=${encodeURIComponent(`Signed out a device for ${device.user.email}.`)}#devices`);
+}
+
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+// Each acts only on the signed-in administrator's own notifications.
+
+export async function markAllNotificationsRead() {
+  const admin = await requireAdmin();
+  await prisma.notification.updateMany({ where: { userId: admin.id, readAt: null }, data: { readAt: new Date() } });
+  revalidatePath("/admin", "layout");
+}
+
+export async function clearAllNotifications() {
+  const admin = await requireAdmin();
+  await prisma.notification.deleteMany({ where: { userId: admin.id } });
+  revalidatePath("/admin", "layout");
+}
+
+export async function dismissNotification(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = formData.get("id");
+  if (typeof id !== "string" || !id || id.length > 64) return;
+  await prisma.notification.deleteMany({ where: { id, userId: admin.id } });
+  revalidatePath("/admin", "layout");
+}
+
+/** Turns the firewall's bot-protection challenge on or off, from the Security Center. */
+export async function toggleBotProtection(formData: FormData) {
+  const admin = await requireAdmin();
+  if (!canManageSecurityCenter(admin.role)) redirect("/admin");
+  const enable = formData.get("enable") === "true";
+  const { setBotProtection } = await import("./bot-protection");
+  const change = await setBotProtection(enable);
+
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action:
+        change.outcome === "applied"
+          ? enable ? "BOT_PROTECTION_ENABLED" : "BOT_PROTECTION_DISABLED"
+          : change.outcome === "refused" ? "BOT_PROTECTION_CHANGE_FAILED" : "BOT_PROTECTION_CHANGE_UNCONFIRMED",
+      entityType: "Firewall",
+      metadata: { by: admin.email, requested: enable ? "on" : "off", ...(change.outcome !== "applied" ? { reason: change.message } : {}) },
+    },
+  });
+
+  const message =
+    change.outcome === "applied"
+      ? enable ? "Bot protection is on. Suspicious traffic now gets a JavaScript challenge." : "Bot protection is off."
+      : change.message;
+  redirect(`/admin/security-center?status=${change.outcome === "applied" ? "success" : "error"}&message=${encodeURIComponent(message)}#bot-protection`);
 }
 
 /** Issues a fresh set of recovery codes, invalidating the previous ones. */
@@ -2675,23 +2889,27 @@ export async function resetPortalUserPassword(formData: FormData) {
   const newPassword = formData.get("newPassword") as string || "";
 
   if (!userId || !newPassword) {
-    throw new Error("User ID and new password are required.");
+    return returnWithError("User ID and new password are required.", "/admin/client-management");
   }
 
   if (newPassword.length < 8) {
-    throw new Error("Password must be at least 8 characters long.");
+    return returnWithError("Password must be at least 8 characters long.", "/admin/client-management");
+  }
+
+  // Portal accounts only. Without this check any administrator could set the
+  // password of another administrator, including a super admin, and sign in
+  // as them.
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!target || target.role !== "CLIENT") {
+    return returnWithError("Only client portal passwords can be reset here.", "/admin/client-management");
   }
 
   const { hashPassword } = await import("./password");
   const passwordHash = hashPassword(newPassword);
 
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      passwordHash,
-      updatedAt: new Date(),
-    },
-  });
+  // Whoever was using the old password is signed out in the same transaction.
+  await changeAccountAndEndSessions(userId, { passwordHash });
+  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { email: true } });
 
   await prisma.auditLog.create({
     data: {
@@ -2796,13 +3014,13 @@ export async function sendAdminEmail(formData: FormData) {
     body: formData.get("body"),
   });
   if (!parsed.success) {
-    throw new Error("Enter a valid recipient, subject and message.");
+    return returnWithError("Enter a valid recipient, subject and message.", "/admin/email");
   }
   const { to, subject, body: messageBody } = parsed.data;
 
   const smtp = getServerSmtpConfig();
   if (!smtp) {
-    throw new Error("Server-managed SMTP is not configured. Ask a Super Admin to configure the approved environment secrets.");
+    return returnWithError("Server-managed SMTP is not configured. Ask a Super Admin to configure the approved environment secrets.", "/admin/email");
   }
 
   const nodemailer = (await import("nodemailer")).default;
@@ -2841,7 +3059,7 @@ export async function updateHomePageCMS(formData: FormData) {
     where: { slug: "home" },
   });
   if (!homePage) {
-    throw new Error("Homepage page record not found in database.");
+    return returnWithError("Homepage page record not found in database.", "/admin/home-cms");
   }
 
   // 1. Hero

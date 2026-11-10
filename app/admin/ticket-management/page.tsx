@@ -1,6 +1,7 @@
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { updateTicketStatus, assignTicket, closeTicket } from "@/lib/admin-actions";
@@ -8,6 +9,7 @@ import { AdminTicketThread } from "@/components/admin/AdminTicketThread";
 import { loadTicketThread } from "@/lib/ticket-thread";
 import { formatDistanceToNow } from "date-fns";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
+import { ADMIN_PAGE_SIZE, AdminPager, lastPageFor, parsePage } from "@/components/admin/AdminPager";
 import { MessageSquare } from "lucide-react";
 import { TicketStatus } from "@/generated/prisma";
 
@@ -71,7 +73,7 @@ export default function TicketManagementPage(props: any) {
 async function TicketManagementPageContent({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; filter?: string }>;
+  searchParams: Promise<{ view?: string; filter?: string; page?: string }>;
 }) {
   await connection();
   const admin = await requireAdmin();
@@ -81,20 +83,37 @@ async function TicketManagementPageContent({
   const requested = sp.filter ?? "all";
   const filter = (STATUS_ORDER as readonly string[]).includes(requested) ? requested : "all";
 
-  const tickets = await prisma.ticket.findMany({
-    where: filter !== "all" ? { status: filter as TicketStatus } : { status: { not: TicketStatus.CLOSED } },
-    orderBy: { createdAt: "desc" },
-    include: {
-      TicketMessage: { orderBy: { createdAt: "desc" } },
-    },
-    take: 100,
-  });
+  const page = parsePage(sp.page);
+  const where = filter !== "all" ? { status: filter as TicketStatus } : { status: { not: TicketStatus.CLOSED } };
 
-  const viewing = sp.view ? tickets.find((t) => t.id === sp.view) ?? null : null;
+  // Paged. The queue used to stop at the newest 100, so an older ticket could
+  // not be listed or opened, even from a direct link.
+  const [tickets, total] = await Promise.all([
+    prisma.ticket.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: ADMIN_PAGE_SIZE,
+      skip: (page - 1) * ADMIN_PAGE_SIZE,
+    }),
+    prisma.ticket.count({ where }),
+  ]);
+
+  // Past the last page (its last ticket was closed, or a stale link): go to
+  // the last page that has rows.
+  if (page > lastPageFor(total)) {
+    redirect(`/admin/ticket-management?filter=${filter}&page=${lastPageFor(total)}${sp.view ? `&view=${encodeURIComponent(sp.view)}` : ""}`);
+  }
+
+  // A ticket opened by link need not be on the current page or in the filter.
+  const viewing = sp.view
+    ? tickets.find((t) => t.id === sp.view) ?? (await prisma.ticket.findUnique({ where: { id: sp.view } }))
+    : null;
+  const pageHref = (p: number) => `/admin/ticket-management?filter=${filter}&page=${p}`;
+  const viewHref = (id: string) =>
+    `/admin/ticket-management?filter=${filter}${page > 1 ? `&page=${page}` : ""}&view=${id}`;
 
   // Loaded through the shared reader so the analyst and the client are looking
-  // at the same conversation, ordered the same way. The queue query above sorts
-  // messages newest-first for the row summary; a thread reads oldest-first.
+  // at the same conversation, ordered the same way (oldest first).
   const viewingThread = viewing
     ? await loadTicketThread(viewing.id, admin).then((thread) => ({
         messages: thread.map((message) => ({ ...message, createdAt: message.createdAt.toISOString() })),
@@ -113,7 +132,7 @@ async function TicketManagementPageContent({
       <div>
         <h1 className="font-outfit text-3xl font-black text-[#041635]">Ticket Management</h1>
         <p className="text-slate-500 text-sm mt-1">
-          {tickets.length} ticket{tickets.length !== 1 ? "s" : ""} shown &mdash; manage support queue and SLA status.
+          {total} ticket{total !== 1 ? "s" : ""} in this view &mdash; manage support queue and SLA status.
         </p>
       </div>
 
@@ -179,7 +198,7 @@ async function TicketManagementPageContent({
                     {formatDistanceToNow(new Date(ticket.createdAt), { addSuffix: true })}
                   </td>
                   <td className="px-5 py-4">
-                    <a href={`/admin/ticket-management?filter=${filter}&view=${ticket.id}`}
+                    <a href={viewHref(ticket.id)}
                       className="p-2 rounded-lg text-slate-400 hover:text-[#2691F0] hover:bg-blue-50 transition-colors inline-flex">
                       <MessageSquare className="h-4 w-4" />
                     </a>
@@ -191,6 +210,7 @@ async function TicketManagementPageContent({
               )}
             </tbody>
           </table>
+          <AdminPager page={page} total={total} buildHref={pageHref} noun="tickets" />
         </div>
 
         {/* Ticket detail panel */}

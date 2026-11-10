@@ -10,6 +10,8 @@ import {
   ChevronDown,
   ChevronUp,
   RefreshCw,
+  MinusCircle,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +21,10 @@ interface ScanCheck {
   label: string;
   status: "pass" | "warn" | "fail";
   detail: string;
+  /** False when the question was not answered; such a check is not a pass. */
+  assessed?: boolean;
+  /** The feature does not exist, so there was nothing to test. */
+  notApplicable?: boolean;
 }
 interface ScanResult {
   score: number;
@@ -34,6 +40,12 @@ const STATUS = {
   pass: { icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10 border-emerald-500/20", label: "Passed" },
   warn: { icon: AlertTriangle, color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20", label: "Warning" },
   fail: { icon: XCircle, color: "text-rose-400", bg: "bg-rose-500/10 border-rose-500/20", label: "Failed" },
+};
+
+/** Unanswered and not-applicable checks: neither passed nor failed. */
+const NEUTRAL = {
+  na: { icon: MinusCircle, color: "text-slate-400", bg: "bg-white/5 border-white/10", label: "N/A" },
+  unknown: { icon: HelpCircle, color: "text-slate-300", bg: "bg-white/5 border-white/10", label: "Not assessed" },
 };
 
 const RING_STROKE = { pass: "#34d399", warn: "#fbbf24", fail: "#f87171" };
@@ -88,9 +100,13 @@ export function SecurityScanCard() {
   }, []);
 
   const overall = result ? STATUS[result.overallStatus] : null;
-  const passes = result?.checks.filter((c) => c.status === "pass").length ?? 0;
-  const fails = result?.checks.filter((c) => c.status === "fail").length ?? 0;
-  const warns = result?.checks.filter((c) => c.status === "warn").length ?? 0;
+  // Only answered checks are counted as passed, warned or failed.
+  const answered = result?.checks.filter((c) => c.assessed !== false) ?? [];
+  const passes = answered.filter((c) => c.status === "pass").length;
+  const fails = answered.filter((c) => c.status === "fail").length;
+  const warns = answered.filter((c) => c.status === "warn").length;
+  // Unanswered (not "not applicable"): said out loud, and never "passed".
+  const unassessed = result?.checks.filter((c) => c.assessed === false && !c.notApplicable).length ?? 0;
 
   return (
     <div className="bg-[#041635] text-white rounded-2xl relative overflow-hidden border border-white/5">
@@ -105,7 +121,13 @@ export function SecurityScanCard() {
           <h3 className="font-outfit text-lg font-bold">Security Scan</h3>
           {result && (
             <span className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border", overall?.bg, overall?.color)}>
-              {result.overallStatus === "pass" ? "Checks passed" : result.overallStatus === "warn" ? "Warnings" : "Issues"}
+              {result.overallStatus === "pass"
+                ? unassessed > 0
+                  ? "Partly assessed"
+                  : "Checks passed"
+                : result.overallStatus === "warn"
+                  ? "Warnings"
+                  : "Issues"}
             </span>
           )}
         </div>
@@ -136,6 +158,7 @@ export function SecurityScanCard() {
                 <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 className="h-3 w-3" />{passes} passed</span>
                 {warns > 0 && <span className="flex items-center gap-1 text-amber-400"><AlertTriangle className="h-3 w-3" />{warns} warn</span>}
                 {fails > 0 && <span className="flex items-center gap-1 text-rose-400"><XCircle className="h-3 w-3" />{fails} failed</span>}
+                {unassessed > 0 && <span className="flex items-center gap-1 text-slate-300"><HelpCircle className="h-3 w-3" />{unassessed} not assessed</span>}
               </div>
               <button
                 onClick={() => setExpanded((e) => !e)}
@@ -151,7 +174,11 @@ export function SecurityScanCard() {
           {expanded && (
             <div className="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1 scrollbar-thin">
               {result.checks.map((check) => {
-                const meta = STATUS[check.status];
+                const meta = check.notApplicable
+                  ? NEUTRAL.na
+                  : check.assessed === false
+                    ? NEUTRAL.unknown
+                    : STATUS[check.status];
                 return (
                   <div key={check.id} className={cn("flex items-start gap-2.5 p-2.5 rounded-xl border", meta.bg)}>
                     <meta.icon className={cn("h-3.5 w-3.5 mt-0.5 shrink-0", meta.color)} />

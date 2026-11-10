@@ -1,90 +1,132 @@
 import "server-only";
 
-type Bucket = {
-  count: number;
-  resetAt: number;
-};
+import { createHmac } from "node:crypto";
+import { prisma } from "@/lib/prisma";
+import {
+  countHit,
+  getClientAddress,
+  MemoryStore,
+  normaliseKey,
+  RateLimitError,
+  type RateLimitOptions,
+  type RateLimitStore,
+  type Window,
+} from "@/lib/rate-limit-core";
 
-type RateLimitOptions = {
-  limit: number;
-  windowMs: number;
-};
+export { getClientAddress, RateLimitError };
 
-type PublicSubmissionLimitOptions = {
-  emailLimit: number;
-  ipLimit: number;
-  windowMs?: number;
-};
+/**
+ * Rate limits shared by every server instance.
+ *
+ * The site runs as many short-lived instances, and each used to count on its
+ * own, so attempts spread across them were barely limited. Windows now live in
+ * the RateLimitBucket table and are counted with one atomic upsert. If the
+ * database cannot be reached, counting falls back to this instance's memory
+ * rather than letting everything through.
+ *
+ * Keys are stored as an HMAC, never the raw address or email: the table is a
+ * list of who tried to sign in, and should say nothing to whoever reads it.
+ */
 
-const buckets = new Map<string, Bucket>();
-const MAX_BUCKETS = 10_000;
 const DEFAULT_WINDOW_MS = 60_000;
+const memory = new MemoryStore();
 
-export class RateLimitError extends Error {
-  readonly retryAfterSeconds: number;
-
-  constructor(retryAfterSeconds: number) {
-    super("Too many requests. Please wait a moment before trying again.");
-    this.name = "RateLimitError";
-    this.retryAfterSeconds = retryAfterSeconds;
+function keySecret() {
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  if (secret) return secret;
+  // A public fallback would make every stored key reproducible from the
+  // address or email it hides. Production refuses, as lib/auth.ts does.
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("AUTH_SECRET is missing in production; rate-limit keys cannot be protected.");
   }
+  return "development-only-change-me";
 }
 
-function pruneExpiredBuckets(now: number) {
-  if (buckets.size < MAX_BUCKETS) return;
-
-  for (const [key, bucket] of buckets) {
-    if (bucket.resetAt <= now) buckets.delete(key);
-  }
-
-  if (buckets.size < MAX_BUCKETS) return;
-
-  const oldestKey = buckets.keys().next().value;
-  if (oldestKey) buckets.delete(oldestKey);
+function storageKey(key: string) {
+  return createHmac("sha256", keySecret()).update(`rate-limit:${normaliseKey(key)}`).digest("base64url");
 }
 
-function normaliseKey(key: string) {
-  return key.trim().slice(0, 512) || "unknown";
+let lastStoreErrorAt = 0;
+let lastSweepErrorAt = 0;
+/**
+ * After a store failure, skip the database for this long and count in memory.
+ * Otherwise every sign-in and form submission during an outage would wait for
+ * the database timeout first — twice for a public submission.
+ */
+const STORE_COOLDOWN_MS = 30_000;
+let storeDownUntil = 0;
+/** Thrown while cooling down. Not a new failure, so it does not extend the cooldown. */
+const COOLING_DOWN = new Error("Rate-limit store cooling down after a failure.");
+
+function reportStoreError(error: unknown) {
+  if (error === COOLING_DOWN) return;
+  storeDownUntil = Date.now() + STORE_COOLDOWN_MS;
+  // Once a minute at most, so an outage does not flood the logs.
+  if (Date.now() - lastStoreErrorAt < 60_000) return;
+  lastStoreErrorAt = Date.now();
+  console.error("[rate-limit] Shared store unavailable; counting per instance.", {
+    message: error instanceof Error ? error.message : "Unknown error",
+  });
 }
 
-export function getClientAddress(headers: Headers) {
-  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const direct = headers.get("x-real-ip")?.trim() || headers.get("cf-connecting-ip")?.trim();
-  return normaliseKey(forwarded || direct || "unknown");
+const database: RateLimitStore = {
+  async hit(key: string, windowMs: number, now: number): Promise<Window> {
+    if (Date.now() < storeDownUntil) throw COOLING_DOWN;
+    const nowAt = new Date(now);
+    const resetAt = new Date(now + windowMs);
+    // A window that has ended starts again at 1; otherwise the count rises.
+    const rows = await prisma.$queryRaw<{ count: number; resetAt: Date }[]>`
+      INSERT INTO "public"."RateLimitBucket" ("key", "count", "resetAt")
+      VALUES (${key}, 1, ${resetAt})
+      ON CONFLICT ("key") DO UPDATE SET
+        "count"   = CASE WHEN "RateLimitBucket"."resetAt" <= ${nowAt} THEN 1 ELSE "RateLimitBucket"."count" + 1 END,
+        "resetAt" = CASE WHEN "RateLimitBucket"."resetAt" <= ${nowAt} THEN ${resetAt} ELSE "RateLimitBucket"."resetAt" END
+      RETURNING "count", "resetAt"`;
+    const row = rows[0];
+    if (!row) throw new Error("Rate-limit upsert returned no row.");
+
+    // Sweep finished windows now and then, so the table stays small.
+    if (Math.random() < 0.02) {
+      void prisma.$executeRaw`DELETE FROM "public"."RateLimitBucket" WHERE "resetAt" < ${new Date(now - 3_600_000)}`.catch(
+        (error: unknown) => {
+          // At most once a minute, like store errors, so it cannot flood the logs.
+          if (Date.now() - lastSweepErrorAt < 60_000) return;
+          lastSweepErrorAt = Date.now();
+          console.error("[rate-limit] Sweep of finished windows failed.", {
+            message: error instanceof Error ? error.message : "Unknown error",
+          });
+        },
+      );
+    }
+    return { count: Number(row.count), resetAt: new Date(row.resetAt).getTime() };
+  },
+  async reset(key: string) {
+    // Skipped while cooling down too, so a sign-in does not wait on it.
+    if (Date.now() < storeDownUntil) return;
+    await prisma.$executeRaw`DELETE FROM "public"."RateLimitBucket" WHERE "key" = ${key}`;
+  },
+};
+
+/** Counts one attempt against `key`; throws RateLimitError past the limit. Always await it. */
+export async function enforceRateLimit(key: string, options: RateLimitOptions) {
+  return countHit(database, memory, storageKey(key), options, Date.now(), reportStoreError);
 }
 
-export function enforceRateLimit(key: string, { limit, windowMs }: RateLimitOptions) {
-  const now = Date.now();
-  const safeKey = normaliseKey(key);
-  const safeLimit = Math.max(1, Math.floor(limit));
-  const safeWindowMs = Math.max(1_000, Math.floor(windowMs));
-  const bucket = buckets.get(safeKey);
-
-  if (!bucket || bucket.resetAt <= now) {
-    pruneExpiredBuckets(now);
-    buckets.set(safeKey, { count: 1, resetAt: now + safeWindowMs });
-    return { remaining: safeLimit - 1, retryAfterSeconds: Math.ceil(safeWindowMs / 1_000) };
-  }
-
-  if (bucket.count >= safeLimit) {
-    throw new RateLimitError(Math.max(1, Math.ceil((bucket.resetAt - now) / 1_000)));
-  }
-
-  bucket.count += 1;
-  return { remaining: safeLimit - bucket.count, retryAfterSeconds: Math.max(1, Math.ceil((bucket.resetAt - now) / 1_000)) };
+export async function resetRateLimit(key: string) {
+  const hashed = storageKey(key);
+  await memory.reset(hashed);
+  await database.reset(hashed).catch(reportStoreError);
 }
 
-export function resetRateLimit(key: string) {
-  buckets.delete(normaliseKey(key));
-}
+type PublicSubmissionLimitOptions = { emailLimit: number; ipLimit: number; windowMs?: number };
 
-export function enforcePublicSubmissionRateLimit(
+export async function enforcePublicSubmissionRateLimit(
   channel: string,
   email: string,
   headers: Headers,
   { emailLimit, ipLimit, windowMs = DEFAULT_WINDOW_MS }: PublicSubmissionLimitOptions,
 ) {
   const ip = getClientAddress(headers);
-  enforceRateLimit(`${channel}:ip:${ip}`, { limit: ipLimit, windowMs });
-  enforceRateLimit(`${channel}:email:${email.toLowerCase().trim()}`, { limit: emailLimit, windowMs });
+  await enforceRateLimit(`${channel}:ip:${ip}`, { limit: ipLimit, windowMs });
+  await enforceRateLimit(`${channel}:email:${email.toLowerCase().trim()}`, { limit: emailLimit, windowMs });
 }

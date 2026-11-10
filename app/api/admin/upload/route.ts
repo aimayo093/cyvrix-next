@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createClient } from "@supabase/supabase-js";
 import crypto from "node:crypto";
+import { z } from "zod";
 
 const PUBLIC_MEDIA_BUCKET = "public-media";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -47,6 +48,17 @@ function detectImage(buffer: Buffer): TrustedImage | null {
   return null;
 }
 
+/*
+ * The form carries one field, `file`. The schema checks shape and declared
+ * size; detectImage then checks the bytes, because a client-declared type or
+ * name proves nothing about the content.
+ */
+const uploadFormSchema = z.object({
+  file: z
+    .instanceof(File, { message: "No image file was provided." })
+    .refine((file) => file.size > 0 && file.size <= MAX_IMAGE_BYTES, "Image files must be between 1 byte and 5MB."),
+});
+
 function clientIp(req: Request) {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || undefined;
 }
@@ -67,14 +79,11 @@ export async function POST(req: Request) {
 
   try {
     const formData = await req.formData();
-    const formFile = formData.get("file");
-    if (!(formFile instanceof File)) {
-      return NextResponse.json({ error: "No image file was provided." }, { status: 400 });
+    const form = uploadFormSchema.safeParse({ file: formData.get("file") });
+    if (!form.success) {
+      return NextResponse.json({ error: form.error.issues[0]?.message ?? "Invalid upload." }, { status: 400 });
     }
-
-    if (formFile.size === 0 || formFile.size > MAX_IMAGE_BYTES) {
-      return NextResponse.json({ error: "Image files must be between 1 byte and 5MB." }, { status: 400 });
-    }
+    const formFile = form.data.file;
 
     const buffer = Buffer.from(await formFile.arrayBuffer());
     const image = detectImage(buffer);

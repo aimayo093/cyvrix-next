@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Read-only: CI checks code, it never writes to the repository.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # Actions are pinned to a commit, not a tag, so a moved tag cannot change
+      # what runs here. Dependabot updates the pins.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24 # matches package.json engines
+          cache: npm
+
+      - run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=moderate
+      - run: npx tsc --noEmit
+      - run: npm run check:claims
+      - name: Tests
+        run: |
+          npm run test:dashboard
+          npm run test:appsec
+          npm run test:ticket-access
+          npm run test:totp
+          npm run test:mfa
+          npm run test:scan
+      - name: Production build
+        # No database in CI; the build falls back as it does locally.
+        env:
+          DATABASE_URL: postgresql://build:build@127.0.0.1:1/build
+        run: npm run build

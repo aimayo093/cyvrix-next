@@ -687,7 +687,7 @@ export function SectionRenderer({
                           <div key={`${partner.id}-${i}`} className="flex items-center gap-2 font-bold text-white text-lg group">
                             {partner.logoUrl ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={partner.logoUrl} alt={partner.name} className="h-10 md:h-12 w-auto object-contain" />
+                              <img src={partner.logoUrl} alt={partner.altText || partner.name} className="h-10 md:h-12 w-auto object-contain" />
                             ) : (
                               <>
                                 <ShieldCheck className="h-8 w-8 text-[#2691F0]" />

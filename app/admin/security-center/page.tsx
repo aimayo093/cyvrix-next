@@ -1,4 +1,5 @@
 import * as React from "react";
+import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import { connection } from "next/server";
 import { AlertCircle, BellRing, CheckCircle2, Clock, LockKeyhole, Radar, Save, ShieldCheck, Siren, XCircle } from "lucide-react";
 import { canManageSecurityCenter, requireAdmin } from "@/lib/auth";
@@ -7,6 +8,8 @@ import { updateSiteSetting } from "@/lib/admin-actions";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { Button } from "@/components/shared/Button";
 import { SecurityScanCard } from "@/components/admin/SecurityScanCard";
+import { SignedInDevices } from "@/components/admin/SignedInDevices";
+import { BotProtectionCard } from "@/components/admin/BotProtectionCard";
 import {
   SecurityAnalystEmptyState,
   SecurityAnalystPanel,
@@ -15,7 +18,7 @@ import { buildAnalystReport } from "@/lib/security-analyst";
 import {
   DEFAULT_SECURITY_CENTER_SETTINGS,
   parseSecurityCenterSettings,
-  type SecurityScanResult,
+  readScanResult,
 } from "@/lib/security-scan";
 import { cn } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -28,18 +31,21 @@ const STATUS_META = {
   fail: { icon: XCircle, label: "Action", color: "text-rose-600", bg: "bg-rose-50 border-rose-200" },
 };
 
-export default function SecurityCenterPage() {
+type SecurityCenterSearch = { status?: string; message?: string };
+
+export default function SecurityCenterPage({ searchParams }: { searchParams: Promise<SecurityCenterSearch> }) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
-      <SecurityCenterPageContent />
+      <SecurityCenterPageContent searchParams={searchParams} />
     </React.Suspense>
   );
 }
 
-async function SecurityCenterPageContent() {
+async function SecurityCenterPageContent({ searchParams }: { searchParams: Promise<SecurityCenterSearch> }) {
   await connection();
   const administrator = await requireAdmin();
   if (!canManageSecurityCenter(administrator.role)) redirect("/admin");
+  const sp = await searchParams;
 
   const [securitySetting, lastScan, alertEvents] = await Promise.all([
     prisma.siteSetting.findUnique({ where: { key: "securityCenter" } }),
@@ -63,6 +69,7 @@ async function SecurityCenterPageContent() {
 
   return (
     <div className="space-y-8 pb-16">
+      <AdminStatusNotice status={sp.status} message={sp.message} />
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div>
           <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#2691F0]/20 bg-[#2691F0]/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-[#0f5aab]">
@@ -93,6 +100,12 @@ async function SecurityCenterPageContent() {
       </div>
 
       {analyst ? <SecurityAnalystPanel report={analyst} /> : <SecurityAnalystEmptyState />}
+
+      <React.Suspense
+        fallback={<div className="h-40 animate-pulse rounded-2xl border border-slate-200 bg-white motion-reduce:animate-none" />}
+      >
+        <SignedInDevices viewerRole={administrator.role} />
+      </React.Suspense>
 
       <div className="grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_380px]">
         <div className="space-y-8">
@@ -208,7 +221,13 @@ async function SecurityCenterPageContent() {
                   const meta = STATUS_META[check.status];
                   return (
                     <div key={check.id} className="flex items-start gap-3 px-6 py-4">
-                      <meta.icon className={cn("mt-0.5 h-4 w-4 shrink-0", meta.color)} />
+                      {check.notApplicable ? (
+                        <span className="mt-0.5 shrink-0 rounded bg-slate-100 px-1 text-[9px] font-black uppercase leading-4 text-slate-400">
+                          n/a
+                        </span>
+                      ) : (
+                        <meta.icon className={cn("mt-0.5 h-4 w-4 shrink-0", meta.color)} />
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-black text-[#041635]">{check.label}</p>
@@ -227,6 +246,12 @@ async function SecurityCenterPageContent() {
         </div>
 
         <aside className="space-y-6">
+          <React.Suspense
+            fallback={<div className="h-48 animate-pulse rounded-2xl border border-slate-200 bg-white motion-reduce:animate-none" />}
+          >
+            <BotProtectionCard />
+          </React.Suspense>
+
           <SecurityScanCard />
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -281,14 +306,6 @@ function readMetadata(value: unknown): Record<string, unknown> {
   return isRecord(value) ? value : {};
 }
 
-function readScanResult(value: unknown): SecurityScanResult | null {
-  const result = readMetadata(value).result;
-  if (!isRecord(result) || !Array.isArray(result.checks)) return null;
-  if (typeof result.score !== "number" || typeof result.durationMs !== "number" || typeof result.timestamp !== "string") return null;
-  if (result.overallStatus !== "pass" && result.overallStatus !== "warn" && result.overallStatus !== "fail") return null;
-  if (result.trigger !== "manual" && result.trigger !== "background") return null;
-  return result as unknown as SecurityScanResult;
-}
 
 function ToggleField({
   name,

@@ -9,6 +9,50 @@ import { rejectCrossOrigin } from "@/lib/same-origin";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
 import crypto from "node:crypto";
+import { z } from "zod";
+
+/*
+ * The body is a flat map of field names to values. This route serves 22
+ * models, so it cannot know each model's columns; Prisma rejects unknown
+ * fields. What the schema does guarantee: the body is an object (not an
+ * array, string or null), keys look like field names, and the fields this
+ * route owns — id and the timestamps — cannot be supplied by the caller.
+ * Before this, a POST body's `id` silently replaced the generated one.
+ */
+const PROTECTED_FIELDS = ["id", "createdAt", "updatedAt"] as const;
+
+const cmsBodySchema = z
+  .record(z.string().regex(/^[A-Za-z][A-Za-z0-9_]{0,63}$/, "Field names must be identifiers."), z.unknown())
+  .refine((body) => Object.keys(body).length > 0, "The body has no fields.")
+  .refine((body) => Object.keys(body).length <= 100, "The body has too many fields.")
+  .refine(
+    (body) => PROTECTED_FIELDS.every((field) => !(field in body)),
+    `These fields are set by the server: ${PROTECTED_FIELDS.join(", ")}.`
+  );
+
+const listQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(500).default(100),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+
+async function readCmsBody(req: Request) {
+  let raw: unknown;
+  try {
+    raw = await req.json();
+  } catch {
+    return { error: NextResponse.json({ error: "The body must be JSON." }, { status: 400 }) };
+  }
+  const parsed = cmsBodySchema.safeParse(raw);
+  if (!parsed.success) {
+    return {
+      error: NextResponse.json(
+        { error: "Invalid CMS record.", issues: parsed.error.issues.map((issue) => issue.message) },
+        { status: 400 }
+      ),
+    };
+  }
+  return { body: sanitize(parsed.data) as Record<string, unknown> };
+}
 
 
 /* ── Module → Prisma model map (exact PascalCase from schema) ──────────── */
@@ -119,8 +163,14 @@ export async function GET(
       return NextResponse.json(record);
     }
 
-    const take = Math.min(parseInt(searchParams.get("limit") ?? "100"), 500);
-    const skip = parseInt(searchParams.get("offset") ?? "0");
+    const query = listQuerySchema.safeParse({
+      limit: searchParams.get("limit") ?? undefined,
+      offset: searchParams.get("offset") ?? undefined,
+    });
+    if (!query.success) {
+      return NextResponse.json({ error: "limit must be 1–500 and offset 0 or more." }, { status: 400 });
+    }
+    const { limit: take, offset: skip } = query.data;
 
     const records = await model.findMany({ take, skip, orderBy: { createdAt: "desc" } });
     return NextResponse.json({ data: records, count: records.length });
@@ -145,11 +195,13 @@ export async function POST(
   const model = getModel(module);
   if (!model) return NextResponse.json({ error: `Unknown module: ${module}` }, { status: 404 });
 
+  const input = await readCmsBody(req);
+  if (input.error) return input.error;
+
   try {
-    const body = sanitize(await req.json()) as Record<string, unknown>;
     const id = crypto.randomUUID();
     const record = await model.create({
-      data: { id, updatedAt: new Date(), ...body },
+      data: { ...input.body, id, updatedAt: new Date() },
     });
     await auditLog(administrator.id, clientIp(req), `${module.toUpperCase()}_CREATED`, module, record.id);
     return NextResponse.json(record, { status: 201 });
@@ -177,14 +229,13 @@ export async function PATCH(
   const id = new URL(req.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "Missing ?id=" }, { status: 400 });
 
-  try {
-    const body = sanitize(await req.json()) as Record<string, unknown>;
-    delete body.id;
-    delete body.createdAt;
+  const input = await readCmsBody(req);
+  if (input.error) return input.error;
 
+  try {
     const record = await model.update({
       where: { id },
-      data: { updatedAt: new Date(), ...body },
+      data: { ...input.body, updatedAt: new Date() },
     });
     await auditLog(administrator.id, clientIp(req), `${module.toUpperCase()}_UPDATED`, module, id);
     return NextResponse.json(record);

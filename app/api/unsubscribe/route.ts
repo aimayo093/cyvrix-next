@@ -23,9 +23,9 @@ import { rejectCrossOrigin } from "@/lib/same-origin";
  * used as free database load. Generous, because a real person clicking twice
  * should never see it.
  */
-function limit(req: Request): boolean {
+async function limit(req: Request): Promise<boolean> {
   try {
-    enforceRateLimit(`unsubscribe:${getClientAddress(req.headers)}`, { limit: 30, windowMs: 60_000 });
+    await enforceRateLimit(`unsubscribe:${getClientAddress(req.headers)}`, { limit: 30, windowMs: 60_000 });
     return true;
   } catch (error) {
     if (error instanceof RateLimitError) return false;
@@ -56,7 +56,7 @@ async function unsubscribe(email: string) {
 }
 
 export async function GET(req: Request) {
-  if (!limit(req)) {
+  if (!(await limit(req))) {
     return new NextResponse(unsubscribePage("Too many requests. Try again shortly.", false), {
       headers: { "Content-Type": "text/html" },
       status: 429,
@@ -103,7 +103,7 @@ export async function POST(req: Request) {
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
 
-  if (!limit(req)) {
+  if (!(await limit(req))) {
     return NextResponse.json({ error: "Too many requests." }, { status: 429 });
   }
 

@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   try {
     // A rights request is low-volume by nature; these limits stop the endpoint
     // being used to generate mail to the DPO.
-    enforceRateLimit(`privacy-request:ip:${clientAddress}`, { limit: 5, windowMs: 60 * 60_000 });
+    await enforceRateLimit(`privacy-request:ip:${clientAddress}`, { limit: 5, windowMs: 60 * 60_000 });
 
     const formData = await request.formData();
     const raw = Object.fromEntries(formData);
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
         : redirectWithError(request, message);
     }
 
-    enforceRateLimit(`privacy-request:email:${parsed.data.email}`, { limit: 3, windowMs: 60 * 60_000 });
+    await enforceRateLimit(`privacy-request:email:${parsed.data.email}`, { limit: 3, windowMs: 60 * 60_000 });
 
     const outcome = await submitPrivacyRequest({
       requestType: parsed.data.requestType,

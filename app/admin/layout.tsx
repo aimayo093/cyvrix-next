@@ -9,6 +9,7 @@ import {
   AdminNotificationsButtonFallback,
 } from "@/components/admin/AdminHeaderMenus";
 import { AdminChromeFallback } from "@/components/admin/AdminChromeFallback";
+import { EnquiriesBadge, TicketsBadge } from "@/components/admin/NavBadges";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 
 export const metadata: Metadata = {
@@ -55,6 +56,18 @@ async function AdminLayoutContent({
           <AdminNotifications userId={user.id} />
         </React.Suspense>
       }
+      badgeSlots={{
+        enquiries: (
+          <React.Suspense fallback={null}>
+            <EnquiriesBadge />
+          </React.Suspense>
+        ),
+        tickets: (
+          <React.Suspense fallback={null}>
+            <TicketsBadge />
+          </React.Suspense>
+        ),
+      }}
     >
       <React.Suspense fallback={<PrivateRouteFallback />}>{children}</React.Suspense>
     </AdminLayoutClient>
@@ -70,19 +83,28 @@ async function AdminLayoutContent({
  * in when the query returns.
  */
 async function AdminNotifications({ userId }: { userId: string }) {
-  const notifications = await prisma.notification
-    .findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 15,
-      select: { id: true, title: true, body: true, createdAt: true, readAt: true },
-    })
-    .catch((error) => {
-      // A header that cannot list notifications is a small problem. A header
-      // that fails to render is a much bigger one.
-      console.error("[admin-layout] could not load notifications", error);
-      return [];
-    });
+  const [notifications, unreadCount] = await Promise.all([
+    prisma.notification
+      .findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 15,
+        select: { id: true, title: true, body: true, createdAt: true, readAt: true },
+      })
+      .catch((error) => {
+        // A header that cannot list notifications is a small problem. A header
+        // that fails to render is a much bigger one.
+        console.error("[admin-layout] could not load notifications", error);
+        return [];
+      }),
+    // Counted, not inferred from the fifteen shown, so the badge is right
+    // when more are waiting.
+    // Unreadable is null, not 0: the bell then shows no count rather than "none".
+    prisma.notification.count({ where: { userId, readAt: null } }).catch((error) => {
+      console.error("[admin-layout] could not count unread notifications", error);
+      return null;
+    }),
+  ]);
 
   return (
     <AdminNotificationsMenu
@@ -93,7 +115,7 @@ async function AdminNotifications({ userId }: { userId: string }) {
         createdAt: notification.createdAt.toISOString(),
         read: notification.readAt !== null,
       }))}
-      unreadCount={notifications.filter((notification) => notification.readAt === null).length}
+      unreadCount={unreadCount}
     />
   );
 }

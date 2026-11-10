@@ -60,6 +60,39 @@ export async function beginEnrolment(userId: string, account: string): Promise<E
   };
 }
 
+/**
+ * The enrolment offer to show on a page render. Reuses a pending (unconfirmed)
+ * secret when there is one, so refreshing the page or opening it in a second
+ * tab does not replace the QR code someone has already scanned.
+ */
+export async function pendingEnrolmentOffer(userId: string, account: string): Promise<EnrolmentOffer> {
+  const read = () =>
+    prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { twoFactorSecret: true, twoFactorEnrolledAt: true } });
+
+  let user = await read();
+  // Never on an enrolled account: replacing its secret would switch two-factor
+  // off. A confirmation that lands between the caller's check and here ends up
+  // in this branch, so it refuses rather than overwrites.
+  if (user.twoFactorEnrolledAt) throw new Error("Two-factor is already enrolled on this account.");
+
+  if (!user.twoFactorSecret || !openSecret(user.twoFactorSecret)) {
+    // Set only if nothing is pending yet, then read back what is stored: two
+    // renders racing here both show the one secret that won, never a QR whose
+    // secret was overwritten.
+    await prisma.user.updateMany({
+      where: { id: userId, twoFactorEnrolledAt: null, OR: [{ twoFactorSecret: null }, { twoFactorSecret: user.twoFactorSecret }] },
+      data: { twoFactorSecret: sealSecret(generateTotpSecret()), twoFactorReady: false, twoFactorLastCounter: null },
+    });
+    user = await read();
+    if (user.twoFactorEnrolledAt) throw new Error("Two-factor is already enrolled on this account.");
+  }
+
+  const pending = user.twoFactorSecret ? openSecret(user.twoFactorSecret) : null;
+  if (!pending) throw new Error("The pending two-factor secret could not be read.");
+  const url = otpauthUrl({ secret: pending, account, issuer: ISSUER });
+  return { secret: pending, otpauthUrl: url, qrSvg: await QRCode.toString(url, { type: "svg", margin: 1, width: 200 }) };
+}
+
 export type ConfirmResult =
   | { ok: true; recoveryCodes: string[] }
   | { ok: false; reason: "no_pending_enrolment" | "bad_code" | "rate_limited" };
@@ -72,7 +105,7 @@ export type ConfirmResult =
  */
 export async function confirmEnrolment(userId: string, submittedCode: string): Promise<ConfirmResult> {
   try {
-    enforceRateLimit(`2fa:enrol:${userId}`, { limit: 10, windowMs: 15 * 60_000 });
+    await enforceRateLimit(`2fa:enrol:${userId}`, { limit: 10, windowMs: 15 * 60_000 });
   } catch (error) {
     if (error instanceof RateLimitError) return { ok: false, reason: "rate_limited" };
     throw error;
@@ -122,7 +155,7 @@ export type ChallengeResult =
  */
 export async function verifyChallenge(userId: string, submitted: string): Promise<ChallengeResult> {
   try {
-    enforceRateLimit(`2fa:challenge:${userId}`, { limit: 10, windowMs: 15 * 60_000 });
+    await enforceRateLimit(`2fa:challenge:${userId}`, { limit: 10, windowMs: 15 * 60_000 });
   } catch (error) {
     if (error instanceof RateLimitError) return { ok: false, reason: "rate_limited" };
     throw error;

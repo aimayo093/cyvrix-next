@@ -108,6 +108,38 @@ for (const key of ["DATABASE_URL", "DIRECT_URL"]) {
   }
 }
 
+// Optional: the admin Today dashboard's traffic tile. Absent is fine — the
+// tile says "Not connected" — so this reports, it never counts as a problem.
+//
+// These are usually set in the hosting project's environment, which this
+// script cannot see; it reads the local files only, and says so.
+/** The first of these keys with a non-blank value locally: an empty `KEY=` is not set. */
+const firstSet = (...keys: string[]) => {
+  for (const key of keys) {
+    const entry = effective.get(key);
+    if (entry && entry.value.trim()) return entry;
+  }
+  return undefined;
+};
+const NOT_LOCAL =
+  "not set to a non-blank value in the local env files, so locally the card shows Not connected (production reads the hosting project's environment variables)";
+
+console.log("\n  Vercel Analytics on the dashboard (optional)");
+const analyticsToken = firstSet("VERCEL_ANALYTICS_TOKEN");
+const analyticsProject = firstSet("VERCEL_ANALYTICS_PROJECT_ID");
+console.log(`    VERCEL_ANALYTICS_TOKEN: ${analyticsToken ? `set in ${analyticsToken.file} (value hidden)` : NOT_LOCAL}`);
+console.log(
+  `    VERCEL_ANALYTICS_PROJECT_ID: ${analyticsProject ? `set in ${analyticsProject.file}` : "not set locally — Vercel's own VERCEL_PROJECT_ID is used when deployed"}`
+);
+console.log(`    VERCEL_ANALYTICS_TEAM_ID: ${firstSet("VERCEL_ANALYTICS_TEAM_ID") ? "set" : "not set locally (fine for a personal account)"}`);
+
+// Optional: the Security Center's Bot protection switch.
+console.log("\n  Bot protection switch (optional)");
+const firewallToken = firstSet("FIREWALL_API_TOKEN", "VERCEL_FIREWALL_TOKEN");
+console.log(
+  `    ${firewallToken ? `${firewallToken.key}: set in ${firewallToken.file} (value hidden)` : `FIREWALL_API_TOKEN: ${NOT_LOCAL}`}`
+);
+
 console.log(
   problems === 0
     ? "\n  No issues found.\n"

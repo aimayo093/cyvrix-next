@@ -118,8 +118,16 @@ not establish that — it means no unreviewed `dangerouslySetInnerHTML` exists.
 Every check therefore carries what it looked at and what it cannot tell you.
 
 Where a question cannot be answered, the check says **not assessed** rather than
-passing. Two currently do: password reset (no such flow exists) and webhook
-signatures (no webhooks exist).
+passing, and the analyst lists it as a blind spot.
+
+Where the scan looked and the feature **does not exist** — no password reset, no
+webhook, no upload route — it says **not applicable** (November 2026). Neither
+is a pass and both are left out of the score, but "not applicable" is not a
+blind spot: the question was answered, and the answer is "there is nothing
+here". Calling it "not assessed" put an "incomplete picture" badge on a scan
+with nothing missing, and it was being stored as a warning, so every scheduled
+scan reported "found warnings" and raised a notification. Only answered checks
+now count towards warnings and failures.
 
 **Scoring.** Score is computed over *assessed* checks only, with a warning worth
 half a pass and a failure none. The earlier rule — passes ÷ total checks — had
@@ -140,6 +148,27 @@ false positives — file uploads flagged routes that only read text fields,
 object-level authorisation flagged create-only routes, input validation flagged
 a route with no body. A security tool that cries wolf gets ignored, which is
 worse than not having one. **Verify a new detector by hand before trusting it.**
+
+**The dependency check compares against a release worth moving to.** It asks
+the registry for each package's `latest` document (a few kilobytes; the full
+record timed out for large packages, which then dropped out of the count
+silently). A package the registry does not answer for is reported as
+unchecked, never as current. Pre-releases are ignored. `@types/node` is
+compared with the running Node.js major, because types newer than the runtime
+describe APIs the server does not have.
+
+**A newer major that cannot be adopted is listed, not warned about.** The build
+records each installed package's peer range for our direct dependencies
+(`npm run scan:deps`, into `lib/generated/dependency-holds.json`). When a
+latest major falls outside one of those ranges — ESLint 10 while
+eslint-config-next's plugins stop at 9, TypeScript 7 while typescript-eslint
+stops below 6.1 — the scan names the package and what holds it instead of
+raising a warning nobody can act on. It is not a blind spot: Dependabot
+proposes the upgrade once the ceiling lifts, and CI's
+`npm audit --omit=dev --audit-level=moderate` still blocks a production
+dependency with a moderate or worse advisory. That audit does not cover
+development-only packages, which is where both of today's held-back packages
+sit.
 
 ---
 
@@ -167,6 +196,20 @@ Decisions worth keeping:
 - **Recovery codes exist because there is no password reset.** Enabling
   two-factor on the only administrator account would otherwise be a lock-out
   waiting to happen.
+- **Staff accounts must have it (November 2026).** `getSession` reads a staff
+  account without a second factor as signed out, so every page, action and API
+  route refuses it without needing its own check — a rule each route had to
+  remember would eventually be forgotten by one. The one way in is
+  `/security-setup`, through `requireStaffForSecondFactorSetup`. "Turn off"
+  became "Replace authenticator" for the same reason, and it asks for a
+  current code first, so a stolen session cannot swap the authenticator.
+  Client accounts are not required to enrol.
+- **A pending enrolment secret is reused until confirmed.** Refreshing the
+  set-up page, or opening it in a second tab, used to replace the secret and
+  make the QR code already scanned fail. The trade-off: a screenshot of an
+  unconfirmed QR code stays usable until enrolment completes or "Start again"
+  issues a new one. Only a signed-in staff member can see it, and confirming
+  still needs a live code from the phone that scanned it.
 
 `lib/secret-box.ts` and `lib/recovery-codes.ts` deliberately omit `server-only`,
 which would make them untestable. The guard is not lost: both import
@@ -225,6 +268,19 @@ the thing to remember is that the write and the flush are separate steps.
 - **`new Date()` in a prerendered Server Component** either fails the build or
   freezes at build time. Use `connection()` inside a Suspense boundary, or state
   a fact that does not age ("since 2009" rather than "17 years").
+- **The request-time auth gate lives in `proxy.ts`, not `middleware.ts`.** Next
+  16 renamed the file convention; the function is `export async function proxy`.
+  Two consequences that are not visible from the file itself. Proxy now defaults
+  to the **Node.js runtime**, and setting a `runtime` config option in a proxy
+  file throws rather than being ignored — `lib/auth-edge.ts` stays on Web Crypto
+  so it is correct on either runtime. And `scripts/analyse-appsec.mts` names
+  `proxy.ts` individually in its scan list, guarded by `existsSync`: renaming the
+  file without updating that list drops the authentication gate out of the
+  Security Center scan **silently**, with no error and only `fileCount` moving.
+- **The gate is not the whole of authorisation.** A Server Function is a POST to
+  the route it is used from, so a matcher that excludes a path also removes proxy
+  coverage from the actions on it. Each action must therefore authorise itself;
+  `proxy.ts` is the first gate, never the only one.
 
 ---
 
@@ -235,11 +291,136 @@ the thing to remember is that the write and the flush are separate steps.
   later positioning statement proposes four *pillars* — Managed IT, Cloud,
   Cybersecurity, Infrastructure — with Field Engineering and Professional
   Services as supporting capabilities. **Unresolved.**
-- **MFA enrolment and the sign-in challenge** are not built. The core and
-  storage layer are.
-- **Email verification** has no flow, so `emailVerified` cannot honestly be set.
+- ~~MFA enrolment and the sign-in challenge are not built.~~ Built since:
+  enrolment is on the admin Profile page and sign-in asks for a TOTP or
+  recovery code when `twoFactorEnrolledAt` is set (`app/(auth)/login`).
+- ~~Email verification has no flow.~~ Built since: `lib/email-verification.ts`
+  sends a single-use link, and `/verify-email` is the only place
+  `emailVerified` is set.
 - **CV upload** is unwired. The scanner is built and tested; it needs a private
   bucket, not `public-media`.
 - **Three legal pages** (`acceptable-use-policy`, `data-processing-addendum`,
   `service-level-agreement`) exist in the CMS with no public route. An SLA and a
   DPA are per-client contract annexes and arguably should not be website pages.
+- **The Sentry build-time advisory is resolved (10 Nov 2026).** `glob` and its
+  `minimatch` inside `@sentry/bundler-plugins` were fixed by the move to Sentry
+  11 (§12); `npm audit --omit=dev` reports nothing.
+- **Majors: each is its own upgrade, checked before it lands.** On 10 November
+  2026 `@sentry/nextjs` 11 (§12), `framer-motion` 14 and `@types/node` 24 (to
+  match the runtime) were each upgraded in their own commit, with the type
+  check, tests and production build passing; the animated pages (login,
+  contact, case studies) were not separately checked; `postgres` was removed
+  rather than upgraded, since `pg` already covers it. What remains is held back
+  by a peer dependency and reported as such (§5): `eslint` 10 and `typescript` 7.
+
+---
+
+## 10. Admin form refusals
+
+**An admin action that refuses input redirects back with `?status=error&message=`;
+it never throws.**
+
+A thrown error from a form action replaced the whole admin with the public
+"Error 500" screen, and production builds hide the message, so "password too
+short" looked like the site breaking. `returnWithError` in
+`lib/admin-actions.ts` sends the administrator back to the page they submitted
+from, and `AdminStatusNotice` shows the reason beside the form.
+`app/admin/error.tsx` exists for genuinely unexpected failures only.
+
+Two traps worth remembering:
+
+- `redirect()` works by throwing. A `try` around it swallows the redirect —
+  the email page reported "NEXT_REDIRECT" as a failure after the email had
+  been sent. Call `unstable_rethrow(err)` first in any such `catch`.
+- An update action writes **only the fields the form sent** (`formData.has`).
+  Treating an absent field as `""` blanked the hero and featured image of a
+  CMS page whenever its settings were saved.
+
+---
+
+## 11. The admin Today dashboard
+
+**The admin opens on what is waiting on staff, and every figure on it is real
+or marked as unreadable.**
+
+- A block whose data cannot be read shows `—` and says so. Loaders in
+  `lib/dashboard/loaders.ts` return `{ ok: false }` instead of throwing or
+  returning zero, because a zero on a dashboard reads as a quiet day.
+- **Overdue uses only dates staff set** — a ticket's `slaDueAt`, a lead's
+  `followUpDate`. There is no invented reply-time target; one would be a claim
+  about service levels the company has not made (§2).
+- Days are London days. The per-day SQL converts `createdAt` (stored as UTC
+  `timestamp` without zone) with `AT TIME ZONE 'UTC' AT TIME ZONE
+  'Europe/London'`. If the columns ever become `timestamptz`, drop the first
+  conversion.
+- **Website traffic comes from the Vercel Web Analytics API** and is
+  admin-only. It is never shown publicly: visitor numbers on the public site
+  would be a scale claim (§1) with no register behind it. Headline visitors use
+  the count endpoint — summing daily unique visitors would double-count anyone
+  who came twice. Cached for an hour; without `VERCEL_ANALYTICS_TOKEN` the tile
+  says "Not connected" (DEPLOYMENT.md).
+- `npm run test:dashboard` fails if an admin page is missing from the sidebar
+  (`lib/admin-nav.ts`), so a new page cannot be added and then be unreachable.
+
+---
+
+## 12. What error monitoring may collect
+
+Sentry 11 (November 2026) replaced `sendDefaultPii` with `dataCollection` and
+turned almost everything on by default: request and response bodies, headers,
+cookies, user details, database query values and stack-frame local variables.
+Here that would send sign-in passwords, contact-form contents and session
+cookies to a third party, which the privacy notice does not cover.
+
+- Every one of those is switched off in `lib/sentry-options.ts`, which the
+  browser (`instrumentation-client.ts`), server and edge set-ups all import.
+  One module, so the three cannot drift apart.
+- What remains — the error, its stack trace and the route — is enough to find
+  a fault without identifying a visitor.
+- Turning any of them back on is a privacy-notice change first and a code
+  change second. Do not do it to debug one error.
+
+---
+
+## 13. Sessions and rate limits
+
+**Sessions can be ended everywhere.** Each token carries the account's
+`sessionVersion` at issue; `getSession` refuses one that no longer matches.
+Changing a password, changing two-factor, or "Sign out of all devices" moves
+the version on, which ends every session at once — previously a stolen cookie
+stayed valid for its full eight hours whatever the owner did. Tokens issued
+before this existed carry no version and read as 0, so the change signed
+nobody out. The migration must be applied **before** the code is deployed
+(DEPLOYMENT.md).
+
+**An administrator can reset only client portal passwords.** The reset action
+used to accept any user ID, which let any administrator set a super admin's
+password and sign in as them.
+
+**Rate limits are counted in the database, shared by every instance.** The
+site runs as many short-lived server instances and each used to keep its own
+count, so attempts spread across them were barely limited. One atomic upsert
+per rate-limit key (`RateLimitBucket`) now counts them together; a sign-in or a
+form submission checks two keys (address, and address-or-email), so it costs
+two. After a store failure the database is skipped for 30 seconds, so an
+outage does not make every attempt wait for its timeout. Keys are an HMAC,
+never the raw address or email. If the database cannot be reached the count
+falls back to the instance's memory: an outage must not switch limiting off.
+
+- Every call is awaited. An un-awaited limit never throws, so it silently
+  stops applying; `npm run test:appsec` fails on one.
+- The proxy's broad per-address limit on `/api` stays in memory: it runs on
+  every API request, and a database round trip there would cost more than it
+  protects. Broad flood protection belongs at the edge, in the hosting
+  firewall (DEPLOYMENT.md).
+
+**Each signed-in device is a row (`UserSession`).** The session cookie names
+its row, so the Security Center lists every signed-in device, across all
+accounts, and can end any one of them. Ending a row ends that device's next
+request; signing out ends the row as well as deleting the cookie, so a copied
+cookie stops working too. Only a super admin can sign out a super admin's
+devices. A row records the browser's user agent and the IP address, to tell
+devices apart; both are kept while the session lives and swept 30 days after
+it ends. `lastSeenAt` is refreshed at most every five minutes, so reading a
+session rarely writes. Tokens from before rows existed name none and are
+refused, which signed every account out once when this shipped.

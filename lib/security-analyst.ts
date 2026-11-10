@@ -33,6 +33,8 @@ export type AnalystFinding = {
   remediation: string;
   /** True when the underlying signal could not be read at all. */
   unknown?: boolean;
+  /** True when the feature checked for does not exist, so there was nothing to test. */
+  notApplicable?: boolean;
 };
 
 export type PostureBand = "healthy" | "attention" | "at-risk" | "unknown";
@@ -60,6 +62,8 @@ export type AnalystReport = {
   authActivity: AuthActivitySummary;
   /** Signals the analyst could not read on this run. */
   blindSpots: string[];
+  /** Checks for features this site does not have. Neither passes nor gaps. */
+  notApplicable: string[];
 };
 
 /**
@@ -159,6 +163,35 @@ function severityForCheck(check: SecurityScanCheck): Severity {
 }
 
 function toFinding(check: SecurityScanCheck): AnalystFinding {
+  // A question the scan could not answer is a blind spot, not a defect. Ranking
+  // it as a low finding would put it in triage with "this check did not pass",
+  // which says something the scan never established. See docs/DECISIONS.md §5.
+  if (check.notApplicable) {
+    return {
+      id: check.id,
+      title: check.label,
+      severity: "info",
+      category: check.category,
+      observation: check.detail,
+      impact: "Not applicable: the site does not have this feature, so there is nothing here to attack or to test.",
+      remediation: "Nothing to do. If the feature is added, the scan checks it automatically.",
+      notApplicable: true,
+    };
+  }
+
+  if (check.assessed === false) {
+    return {
+      id: check.id,
+      title: check.label,
+      severity: "info",
+      category: check.category,
+      observation: check.detail,
+      impact: "Not assessed, so this is neither a pass nor a failure. The scan could not answer the question on this run.",
+      remediation: "Read the detail to see why. Nothing needs fixing unless the reason given no longer holds.",
+      unknown: true,
+    };
+  }
+
   const guidance = CHECK_GUIDANCE[check.id] ?? DEFAULT_GUIDANCE;
   return {
     id: check.id,
@@ -342,15 +375,28 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
   const auth = authFindings(activity);
 
   const findings = [...scanFindings, ...hygiene.findings, ...auth.findings, icoRegistrationFinding()];
-  const blindSpots = [...hygiene.blindSpots, ...auth.blindSpots];
+  const blindSpots = [
+    ...scan.checks
+      .filter((check) => check.assessed === false && !check.notApplicable)
+      .map((check) => `${check.label}: ${check.detail.replace(/^Not assessed\.\s*/, "").split(" Method:")[0]}`),
+    ...hygiene.blindSpots,
+    ...auth.blindSpots,
+  ];
 
+  // "info" is the Clear tile. An unanswered check or an absent feature is not
+  // clear, so neither is counted there (DECISIONS §5).
   const counts = SEVERITY_ORDER.reduce(
-    (acc, severity) => ({ ...acc, [severity]: findings.filter((f) => f.severity === severity).length }),
+    (acc, severity) => ({
+      ...acc,
+      [severity]: findings.filter((f) => f.severity === severity && !f.unknown && !f.notApplicable).length,
+    }),
     {} as Record<Severity, number>
   );
 
+  // Unreadable signals are blind spots, not work items, so the tiles, the
+  // queue and the band all agree on them.
   const triage = findings
-    .filter((finding) => finding.severity !== "info")
+    .filter((finding) => finding.severity !== "info" && !finding.unknown)
     .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
 
   const highestSeverity = triage.length > 0 ? triage[0].severity : null;
@@ -370,8 +416,11 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
     counts,
     findings,
     triage,
-    passing: findings.filter((finding) => finding.severity === "info" && !finding.unknown).length,
+    passing: findings.filter((finding) => finding.severity === "info" && !finding.unknown && !finding.notApplicable).length,
     authActivity: activity,
     blindSpots,
+    notApplicable: scan.checks
+      .filter((check) => check.notApplicable)
+      .map((check) => `${check.label}: ${check.detail.replace(/^Not applicable\.\s*/, "").split(" Method:")[0]}`),
   };
 }

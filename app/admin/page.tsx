@@ -1,134 +1,76 @@
 import type { Metadata } from "next";
-import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import * as React from "react";
-import { connection } from "next/server";
-import Link from "next/link";
-import { 
-  Users, 
-  Shield, 
-  Server, 
-  ArrowUpRight, 
-  Clock,
-} from "lucide-react";
-import { getAdminStats, getRecentActivities } from "@/lib/data-fetchers";
-import { formatDistanceToNow } from "date-fns";
-import { SecurityScanCard } from "@/components/admin/SecurityScanCard";
+import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
+import {
+  ActivityBlock,
+  ChartBlock,
+  QueueBlock,
+  SecurityBlock,
+  TilesBlock,
+  TodayHeader,
+  WebsiteBlock,
+} from "@/components/admin/dashboard/blocks";
+import { BlockSkeleton } from "@/components/admin/dashboard/parts";
+import { parseRange } from "@/lib/dashboard/time";
 
 export const metadata: Metadata = {
-  title: "Dashboard",
-  description: "CYVRIX internal management dashboard.",
+  title: "Today",
+  description: "What is waiting on the CYVRIX team today.",
 };
 
+type TodaySearch = { range?: string };
 
-export default function AdminDashboard() {
+/**
+ * The admin home: what is waiting on staff, then the trends behind it.
+ * Design: docs/superpowers/specs/2026-11-09-admin-today-dashboard-design.md.
+ *
+ * Each block streams in its own Suspense boundary and reports its own failure,
+ * so a slow or failed query blanks one card, never the page (DECISIONS §8).
+ */
+export default function TodayPage({ searchParams }: { searchParams: Promise<TodaySearch> }) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
-      <AdminDashboardContent />
+      <TodayContent searchParams={searchParams} />
     </React.Suspense>
   );
 }
 
-async function AdminDashboardContent() {
-  await connection();
-  const [statsData, activities] = await Promise.all([
-    getAdminStats(),
-    getRecentActivities(6)
-  ]);
-
-  const stats = [
-    { name: "Active clients", value: statsData.totalClients.toString(), context: "Active company records", icon: Users },
-    { name: "New enquiries", value: statsData.newLeads.toString(), context: "Awaiting triage", icon: Shield },
-    { name: "Newsletter", value: statsData.totalSubscribers.toString(), context: "Subscribed contacts", icon: ArrowUpRight },
-    { name: "Open support tickets", value: statsData.activeTickets.toString(), context: "Not marked closed", icon: Server },
-  ];
+async function TodayContent({ searchParams }: { searchParams: Promise<TodaySearch> }) {
+  const range = parseRange((await searchParams).range);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-outfit text-3xl font-black text-[#041635] mb-2">Systems Overview</h1>
-        <p className="text-slate-500 font-medium">Operational records and recent audit activity.</p>
-      </div>
+    <div className="mx-auto max-w-7xl space-y-6 pb-16">
+      <React.Suspense fallback={<div className="h-16 animate-pulse rounded-2xl bg-slate-100" aria-hidden="true" />}>
+        <TodayHeader range={range} />
+      </React.Suspense>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
-          <div key={stat.name} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <div className="p-3 rounded-xl bg-slate-50 text-[#2691F0]">
-                <stat.icon className="h-6 w-6" />
-              </div>
-              <p className="max-w-28 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">
-                {stat.context}
-              </p>
-            </div>
-            <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{stat.name}</p>
-            <p className="text-3xl font-black text-[#041635] mt-1">{stat.value}</p>
-          </div>
-        ))}
-      </div>
+      <React.Suspense fallback={<BlockSkeleton className="h-32" />}>
+        <TilesBlock range={range} />
+      </React.Suspense>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Activity */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="font-outfit font-black text-[#041635]">Recent Operations</h3>
-            <Link href="/admin/audit-logs" className="text-xs font-bold text-[#2691F0] hover:underline">View all</Link>
-          </div>
-          <div className="divide-y divide-slate-50">
-            {activities.length > 0 ? (
-              activities.map((item) => (
-                <div key={item.id} className="px-6 py-4 flex items-center gap-4 hover:bg-slate-50 transition-colors">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-[#041635]">{item.action}</p>
-                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                      <Clock className="h-3 w-3" />
-                      {item.timestamp ? formatDistanceToNow(new Date(item.timestamp), { addSuffix: true }) : "Recent"}
-                      <span className="mx-1">•</span>
-                      <span className="capitalize">{item.type.toLowerCase()}</span>
-                    </p>
-                  </div>
-                  <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                    <ChevronRight className="h-4 w-4 text-slate-300" />
-                  </button>
-                </div>
-              ))
-            ) : (
-              <div className="px-6 py-12 text-center text-slate-400">
-                <p className="text-sm font-medium">No recent operations logged.</p>
-              </div>
-            )}
-          </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <React.Suspense fallback={<BlockSkeleton className="h-80" />}>
+            <QueueBlock />
+          </React.Suspense>
         </div>
-
-        {/* Quick Actions */}
         <div className="space-y-6">
-          {/* Security Scan — fully interactive client component */}
-          <SecurityScanCard />
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <h3 className="font-outfit font-black text-[#041635] mb-4">Quick Links</h3>
-            <div className="space-y-3">
-              {[
-                { name: "Security Center", href: "/admin/security-center" },
-                { name: "Client Portal Settings", href: "/admin/settings" },
-                { name: "Service CMS", href: "/admin/services-cms" },
-                { name: "Infrastructure Logs", href: "/admin/audit-logs" },
-                { name: "Support Queue", href: "/admin/ticket-management" },
-              ].map((link) => (
-                <Link key={link.name} href={link.href} className="w-full text-left text-sm font-bold text-slate-600 hover:text-[#2691F0] py-2 transition-colors flex items-center justify-between group">
-                  {link.name}
-                  <ArrowUpRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </Link>
-              ))}
-            </div>
-          </div>
+          <React.Suspense fallback={<BlockSkeleton className="h-44" />}>
+            <SecurityBlock />
+          </React.Suspense>
+          <React.Suspense fallback={<BlockSkeleton className="h-56" />}>
+            <WebsiteBlock range={range} />
+          </React.Suspense>
         </div>
       </div>
+
+      <React.Suspense fallback={<BlockSkeleton className="h-60" />}>
+        <ChartBlock range={range} />
+      </React.Suspense>
+
+      <React.Suspense fallback={<BlockSkeleton className="h-64" />}>
+        <ActivityBlock />
+      </React.Suspense>
     </div>
   );
 }
-
-const ChevronRight = ({ className }: { className?: string }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>
-);
