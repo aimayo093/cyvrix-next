@@ -33,6 +33,8 @@ export type AnalystFinding = {
   remediation: string;
   /** True when the underlying signal could not be read at all. */
   unknown?: boolean;
+  /** True when the feature checked for does not exist, so there was nothing to test. */
+  notApplicable?: boolean;
 };
 
 export type PostureBand = "healthy" | "attention" | "at-risk" | "unknown";
@@ -60,6 +62,8 @@ export type AnalystReport = {
   authActivity: AuthActivitySummary;
   /** Signals the analyst could not read on this run. */
   blindSpots: string[];
+  /** Checks for features this site does not have. Neither passes nor gaps. */
+  notApplicable: string[];
 };
 
 /**
@@ -162,6 +166,19 @@ function toFinding(check: SecurityScanCheck): AnalystFinding {
   // A question the scan could not answer is a blind spot, not a defect. Ranking
   // it as a low finding would put it in triage with "this check did not pass",
   // which says something the scan never established. See docs/DECISIONS.md §5.
+  if (check.notApplicable) {
+    return {
+      id: check.id,
+      title: check.label,
+      severity: "info",
+      category: check.category,
+      observation: check.detail,
+      impact: "Not applicable: the site does not have this feature, so there is nothing here to attack or to test.",
+      remediation: "Nothing to do. If the feature is added, the scan checks it automatically.",
+      notApplicable: true,
+    };
+  }
+
   if (check.assessed === false) {
     return {
       id: check.id,
@@ -360,7 +377,7 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
   const findings = [...scanFindings, ...hygiene.findings, ...auth.findings, icoRegistrationFinding()];
   const blindSpots = [
     ...scan.checks
-      .filter((check) => check.assessed === false)
+      .filter((check) => check.assessed === false && !check.notApplicable)
       .map((check) => `${check.label}: ${check.detail.replace(/^Not assessed\.\s*/, "").split(" Method:")[0]}`),
     ...hygiene.blindSpots,
     ...auth.blindSpots,
@@ -392,8 +409,11 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
     counts,
     findings,
     triage,
-    passing: findings.filter((finding) => finding.severity === "info" && !finding.unknown).length,
+    passing: findings.filter((finding) => finding.severity === "info" && !finding.unknown && !finding.notApplicable).length,
     authActivity: activity,
     blindSpots,
+    notApplicable: scan.checks
+      .filter((check) => check.notApplicable)
+      .map((check) => `${check.label}: ${check.detail.replace(/^Not applicable\.\s*/, "").split(" Method:")[0]}`),
   };
 }

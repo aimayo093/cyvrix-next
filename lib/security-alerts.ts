@@ -62,17 +62,21 @@ export async function createSecurityNotifications(result: SecurityScanResult) {
     select: { id: true },
   }).catch(() => []);
 
+  const title = result.overallStatus === "fail" ? "Security scan found issues" : "Security scan found warnings";
+  const body = `Security Center score ${result.score}%. Review the latest scan report.`;
+
+  // The same unread alert is moved to the top rather than repeated: a daily
+  // scan with an unchanged result used to add an identical row every day.
   await Promise.all(
-    admins.map((admin) =>
-      prisma.notification.create({
-        data: {
-          id: crypto.randomUUID(),
-          userId: admin.id,
-          title: result.overallStatus === "fail" ? "Security scan found issues" : "Security scan found warnings",
-          body: `Security Center score ${result.score}%. Review the latest scan report.`,
-        },
-      }).catch(() => null),
-    ),
+    admins.map(async (admin) => {
+      const refreshed = await prisma.notification
+        .updateMany({ where: { userId: admin.id, title, body, readAt: null }, data: { createdAt: new Date() } })
+        .catch(() => ({ count: 0 }));
+      if (refreshed.count > 0) return;
+      await prisma.notification
+        .create({ data: { id: crypto.randomUUID(), userId: admin.id, title, body } })
+        .catch(() => null);
+    }),
   );
 }
 

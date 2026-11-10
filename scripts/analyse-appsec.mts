@@ -18,7 +18,13 @@
 import fs from "node:fs";
 import path from "node:path";
 
-type Severity = "pass" | "warn" | "fail" | "unknown";
+/**
+ * "not_applicable": the scan looked and the feature does not exist (no
+ * password reset, no webhook, no upload route), so there is nothing to test.
+ * "unknown": the scan could not answer. Neither is a pass; only "unknown" is a
+ * blind spot (DECISIONS §5).
+ */
+type Severity = "pass" | "warn" | "fail" | "unknown" | "not_applicable";
 
 export type AppSecFinding = {
   id: string;
@@ -153,7 +159,7 @@ const add = (f: AppSecFinding) => findings.push(f);
   add({
     id: "appsec_uploads",
     label: "File upload validation",
-    status: uploadRoutes.length === 0 ? "unknown" : unvalidated.length === 0 ? "pass" : "fail",
+    status: uploadRoutes.length === 0 ? "not_applicable" : unvalidated.length === 0 ? "pass" : "fail",
     method: `Examined ${uploadRoutes.length} route(s) that read request bodies as form data or binary.`,
     detail:
       uploadRoutes.length === 0
@@ -235,7 +241,7 @@ const add = (f: AppSecFinding) => findings.push(f);
   add({
     id: "appsec_password_reset",
     label: "Password reset flow",
-    status: resetFiles.length === 0 ? "unknown" : hasExpiry && hasSingleUse ? "pass" : "warn",
+    status: resetFiles.length === 0 ? "not_applicable" : hasExpiry && hasSingleUse ? "pass" : "warn",
     method: "Looked for a self-service password reset and, if present, whether its tokens expire and are single use.",
     detail:
       resetFiles.length === 0
@@ -349,7 +355,7 @@ const add = (f: AppSecFinding) => findings.push(f);
   add({
     id: "appsec_webhooks",
     label: "Webhook signature verification",
-    status: webhooks.length === 0 ? "unknown" : unsigned.length === 0 ? "pass" : "fail",
+    status: webhooks.length === 0 ? "not_applicable" : unsigned.length === 0 ? "pass" : "fail",
     method: `Looked for inbound webhook routes and whether each verifies a signature.`,
     detail:
       webhooks.length === 0
@@ -464,7 +470,7 @@ const counts = findings.reduce<Record<string, number>>((acc, f) => {
 
 console.log(`\n  Analysed ${sourceFiles.length} source files, ${apiRoutes.length} API routes (${mutatingRoutes.length} state-changing).\n`);
 for (const f of findings) {
-  const mark = f.status === "pass" ? "pass " : f.status === "warn" ? "WARN " : f.status === "fail" ? "FAIL " : "n/a  ";
+  const mark = f.status === "pass" ? "pass " : f.status === "warn" ? "WARN " : f.status === "fail" ? "FAIL " : f.status === "not_applicable" ? "n/a  " : "???  ";
   console.log(`  ${mark} ${f.label}`);
   console.log(`         ${f.detail}`);
   if (f.evidence.length) console.log(`         evidence: ${f.evidence.slice(0, 4).join(", ")}${f.evidence.length > 4 ? ` (+${f.evidence.length - 4})` : ""}`);

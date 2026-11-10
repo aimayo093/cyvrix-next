@@ -221,7 +221,13 @@ async function SecurityCenterPageContent({ searchParams }: { searchParams: Promi
                   const meta = STATUS_META[check.status];
                   return (
                     <div key={check.id} className="flex items-start gap-3 px-6 py-4">
-                      <meta.icon className={cn("mt-0.5 h-4 w-4 shrink-0", meta.color)} />
+                      {check.notApplicable ? (
+                        <span className="mt-0.5 shrink-0 rounded bg-slate-100 px-1 text-[9px] font-black uppercase leading-4 text-slate-400">
+                          n/a
+                        </span>
+                      ) : (
+                        <meta.icon className={cn("mt-0.5 h-4 w-4 shrink-0", meta.color)} />
+                      )}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <p className="text-sm font-black text-[#041635]">{check.label}</p>

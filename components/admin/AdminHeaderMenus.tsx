@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, CircleUserRound, LogOut, Settings, ShieldCheck } from "lucide-react";
+import { Bell, CheckCheck, CircleUserRound, LogOut, Settings, ShieldCheck, Trash2, X } from "lucide-react";
+import { clearAllNotifications, dismissNotification, markAllNotificationsRead } from "@/lib/admin-actions";
 
 export type AdminIdentity = {
   name: string | null;
@@ -158,6 +159,31 @@ export function AdminNotificationsMenu({
             )}
           </div>
 
+          {notifications.length > 0 && (
+            <div className="flex items-center justify-end gap-1 border-b border-slate-100 px-2 py-1.5">
+              {unreadCount > 0 && (
+                <form action={markAllNotificationsRead}>
+                  <button
+                    type="submit"
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold text-[#0f5aab] hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
+                    Mark all read
+                  </button>
+                </form>
+              )}
+              <form action={clearAllNotifications}>
+                <button
+                  type="submit"
+                  className="inline-flex min-h-9 items-center gap-1.5 rounded-lg px-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  Clear all
+                </button>
+              </form>
+            </div>
+          )}
+
           {notifications.length === 0 ? (
             <div className="px-4 py-8 text-center">
               <ShieldCheck className="mx-auto h-6 w-6 text-slate-300" />
@@ -177,7 +203,7 @@ export function AdminNotificationsMenu({
                     {!notification.read && (
                       <span aria-hidden="true" className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2691F0]" />
                     )}
-                    <div className={notification.read ? "pl-4" : ""}>
+                    <div className={`min-w-0 flex-1 ${notification.read ? "pl-4" : ""}`}>
                       <p className="text-sm font-bold leading-snug text-[#041635]">{notification.title}</p>
                       {notification.body && (
                         <p className="mt-1 text-xs font-medium leading-relaxed text-slate-600">
@@ -188,6 +214,16 @@ export function AdminNotificationsMenu({
                         {relativeTime(notification.createdAt, openedAt)}
                       </p>
                     </div>
+                    <form action={dismissNotification} className="shrink-0">
+                      <input type="hidden" name="id" value={notification.id} />
+                      <button
+                        type="submit"
+                        aria-label={`Dismiss: ${notification.title}`}
+                        className="-mr-1 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-[#041635] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
+                      >
+                        <X className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    </form>
                   </div>
                 </li>
               ))}

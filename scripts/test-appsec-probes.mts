@@ -9,6 +9,7 @@ import { deviceLabel } from "../lib/device-label";
 import { verifySessionToken as verifyAtProxy } from "../lib/auth-edge";
 import { createHmac } from "node:crypto";
 import { botProtectionUpdate, parseBotProtection } from "../lib/bot-protection-parse";
+import { staticAppSecChecks } from "../lib/appsec-checks";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -83,6 +84,17 @@ check("refused token is not shown as off", parseBotProtection(403, null).state, 
 check("server error is not shown as off", parseBotProtection(500, { error: "x" }).state, "unavailable");
 check("turn-on body", botProtectionUpdate(true), { action: "managedRules.update", id: "bot_protection", value: { active: true, action: "challenge" } });
 check("turn-off body", botProtectionUpdate(false).value.active, false);
+
+// Features the site does not have are "not applicable": not a pass, not a
+// blind spot, never a warning, and out of the score.
+{
+  const checks = staticAppSecChecks();
+  const reset = checks.find((check) => check.id === "appsec_password_reset");
+  const webhooks = checks.find((check) => check.id === "appsec_webhooks");
+  check("password reset is not applicable", [reset?.notApplicable, reset?.assessed, reset?.detail.startsWith("Not applicable.")], [true, false, true]);
+  check("webhooks are not applicable", [webhooks?.notApplicable, webhooks?.assessed], [true, false]);
+  check("no unanswered static check is left as a warning", checks.filter((c) => c.assessed === false && !c.notApplicable && c.status === "warn").map((c) => c.id), []);
+}
 
 // Held-back majors.
 const eslintHolds = [

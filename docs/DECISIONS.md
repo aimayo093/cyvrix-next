@@ -118,8 +118,16 @@ not establish that — it means no unreviewed `dangerouslySetInnerHTML` exists.
 Every check therefore carries what it looked at and what it cannot tell you.
 
 Where a question cannot be answered, the check says **not assessed** rather than
-passing. Two currently do: password reset (no such flow exists) and webhook
-signatures (no webhooks exist).
+passing, and the analyst lists it as a blind spot.
+
+Where the scan looked and the feature **does not exist** — no password reset, no
+webhook, no upload route — it says **not applicable** (November 2026). Neither
+is a pass and both are left out of the score, but "not applicable" is not a
+blind spot: the question was answered, and the answer is "there is nothing
+here". Calling it "not assessed" put an "incomplete picture" badge on a scan
+with nothing missing, and it was being stored as a warning, so every scheduled
+scan reported "found warnings" and raised a notification. Only answered checks
+now count towards warnings and failures.
 
 **Scoring.** Score is computed over *assessed* checks only, with a warning worth
 half a pass and a failure none. The earlier rule — passes ÷ total checks — had

@@ -83,19 +83,24 @@ async function AdminLayoutContent({
  * in when the query returns.
  */
 async function AdminNotifications({ userId }: { userId: string }) {
-  const notifications = await prisma.notification
-    .findMany({
-      where: { userId },
-      orderBy: { createdAt: "desc" },
-      take: 15,
-      select: { id: true, title: true, body: true, createdAt: true, readAt: true },
-    })
-    .catch((error) => {
-      // A header that cannot list notifications is a small problem. A header
-      // that fails to render is a much bigger one.
-      console.error("[admin-layout] could not load notifications", error);
-      return [];
-    });
+  const [notifications, unreadCount] = await Promise.all([
+    prisma.notification
+      .findMany({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        take: 15,
+        select: { id: true, title: true, body: true, createdAt: true, readAt: true },
+      })
+      .catch((error) => {
+        // A header that cannot list notifications is a small problem. A header
+        // that fails to render is a much bigger one.
+        console.error("[admin-layout] could not load notifications", error);
+        return [];
+      }),
+    // Counted, not inferred from the fifteen shown, so the badge is right
+    // when more are waiting.
+    prisma.notification.count({ where: { userId, readAt: null } }).catch(() => 0),
+  ]);
 
   return (
     <AdminNotificationsMenu
@@ -106,7 +111,7 @@ async function AdminNotifications({ userId }: { userId: string }) {
         createdAt: notification.createdAt.toISOString(),
         read: notification.readAt !== null,
       }))}
-      unreadCount={notifications.filter((notification) => notification.readAt === null).length}
+      unreadCount={unreadCount}
     />
   );
 }

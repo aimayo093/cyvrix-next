@@ -22,7 +22,7 @@ import { clientBundlePaths } from "@/lib/appsec-probe-parse";
 type ManifestFinding = {
   id: string;
   label: string;
-  status: "pass" | "warn" | "fail" | "unknown";
+  status: "pass" | "warn" | "fail" | "unknown" | "not_applicable";
   method: string;
   detail: string;
   limitation: string;
@@ -51,18 +51,30 @@ export function appSecManifestAge(nowMs: number): { generatedAt: string; ageDays
 }
 
 export function staticAppSecChecks(): SecurityScanCheck[] {
-  return (manifest.findings as ManifestFinding[]).map((finding) => ({
-    id: finding.id,
-    label: finding.label,
-    status: toStatus(finding.status),
-    category: "security" as const,
-    // An unanswerable question is not a failing one.
-    assessed: finding.status !== "unknown",
-    detail:
-      finding.status === "unknown"
-        ? `Not assessed. ${describe(finding)}`
-        : describe(finding),
-  }));
+  return (manifest.findings as ManifestFinding[]).map((finding) => {
+    // The feature does not exist, so there is nothing to test. Not a pass, not
+    // a blind spot; excluded from the score like an unanswered question.
+    if (finding.status === "not_applicable") {
+      return {
+        id: finding.id,
+        label: finding.label,
+        status: "pass" as const,
+        category: "security" as const,
+        assessed: false,
+        notApplicable: true,
+        detail: `Not applicable. ${describe(finding)}`,
+      };
+    }
+    return {
+      id: finding.id,
+      label: finding.label,
+      status: toStatus(finding.status),
+      category: "security" as const,
+      // An unanswerable question is not a failing one.
+      assessed: finding.status !== "unknown",
+      detail: finding.status === "unknown" ? `Not assessed. ${describe(finding)}` : describe(finding),
+    };
+  });
 }
 
 async function probe(url: string, signal: AbortSignal) {

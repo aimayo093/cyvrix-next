@@ -107,6 +107,19 @@ export function SecurityAnalystPanel({ report }: { report: AnalystReport }) {
         </div>
       )}
 
+      {report.notApplicable?.length > 0 && (
+        <div className="border-b border-slate-100 px-6 py-3">
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Not applicable to this site</p>
+          <ul className="mt-1.5 space-y-1">
+            {report.notApplicable.map((item) => (
+              <li key={item} className="text-xs font-medium leading-5 text-slate-500">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="p-6">
         {report.triage.length === 0 ? (
           <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">

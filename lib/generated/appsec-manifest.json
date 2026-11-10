@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-09T22:57:25.860Z",
-  "fileCount": 207,
+  "generatedAt": "2026-11-10T14:32:13.406Z",
+  "fileCount": 218,
   "apiRouteCount": 12,
   "mutatingRouteCount": 9,
   "findings": [
@@ -56,7 +56,7 @@
     {
       "id": "appsec_password_reset",
       "label": "Password reset flow",
-      "status": "unknown",
+      "status": "not_applicable",
       "method": "Looked for a self-service password reset and, if present, whether its tokens expire and are single use.",
       "detail": "No self-service password reset exists. Nothing to attack, and nothing for a locked-out administrator either.",
       "limitation": "Cannot verify token entropy, or that the reset email goes only to a verified address.",
@@ -105,7 +105,7 @@
     {
       "id": "appsec_webhooks",
       "label": "Webhook signature verification",
-      "status": "unknown",
+      "status": "not_applicable",
       "method": "Looked for inbound webhook routes and whether each verifies a signature.",
       "detail": "No inbound webhook endpoint exists, so there is no unsigned webhook to exploit.",
       "limitation": "Identifies routes by name. A webhook under a different name would be missed.",

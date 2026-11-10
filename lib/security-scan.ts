@@ -30,6 +30,12 @@ export interface SecurityScanCheck {
    * Defaults to true, so existing checks are unaffected.
    */
   assessed?: boolean;
+  /**
+   * True when the scan looked and the feature does not exist, so there is
+   * nothing to test. Always with `assessed: false`; shown as "Not applicable",
+   * not as a blind spot. `status` is then meaningless and ignored.
+   */
+  notApplicable?: boolean;
 }
 
 export interface SecurityScanResult {
@@ -469,8 +475,11 @@ export async function runSecurityScan(options: {
   }
 
   const passCount = checks.filter((check) => check.status === "pass").length;
-  const failCount = checks.filter((check) => check.status === "fail").length;
-  const warnCount = checks.filter((check) => check.status === "warn").length;
+  // Only answered questions count. An unanswered check used to be stored as a
+  // warning and counted here, so a site with nothing wrong still reported
+  // "found warnings" and raised a notification on every scheduled scan.
+  const failCount = checks.filter((check) => check.assessed !== false && check.status === "fail").length;
+  const warnCount = checks.filter((check) => check.assessed !== false && check.status === "warn").length;
 
   /*
    * Scored over the checks that could actually be answered, with a warning

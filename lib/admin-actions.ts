@@ -2768,6 +2768,29 @@ export async function signOutDevice(formData: FormData) {
   redirect(`/admin/security-center?status=success&message=${encodeURIComponent(`Signed out a device for ${device.user.email}.`)}#devices`);
 }
 
+// ─── NOTIFICATIONS ───────────────────────────────────────────────────────────
+// Each acts only on the signed-in administrator's own notifications.
+
+export async function markAllNotificationsRead() {
+  const admin = await requireAdmin();
+  await prisma.notification.updateMany({ where: { userId: admin.id, readAt: null }, data: { readAt: new Date() } });
+  revalidatePath("/admin", "layout");
+}
+
+export async function clearAllNotifications() {
+  const admin = await requireAdmin();
+  await prisma.notification.deleteMany({ where: { userId: admin.id } });
+  revalidatePath("/admin", "layout");
+}
+
+export async function dismissNotification(formData: FormData) {
+  const admin = await requireAdmin();
+  const id = formData.get("id");
+  if (typeof id !== "string" || !id || id.length > 64) return;
+  await prisma.notification.deleteMany({ where: { id, userId: admin.id } });
+  revalidatePath("/admin", "layout");
+}
+
 /** Turns the firewall's bot-protection challenge on or off, from the Security Center. */
 export async function toggleBotProtection(formData: FormData) {
   const admin = await requireAdmin();
