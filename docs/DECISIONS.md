@@ -175,6 +175,13 @@ Decisions worth keeping:
 - **Recovery codes exist because there is no password reset.** Enabling
   two-factor on the only administrator account would otherwise be a lock-out
   waiting to happen.
+- **Staff accounts must have it (November 2026).** `getSession` reads a staff
+  account without a second factor as signed out, so every page, action and API
+  route refuses it without needing its own check — a rule each route had to
+  remember would eventually be forgotten by one. The one way in is
+  `/security-setup`, through `requireStaffForSecondFactorSetup`. "Turn off"
+  became "Replace authenticator" for the same reason. Client accounts are not
+  required to enrol.
 
 `lib/secret-box.ts` and `lib/recovery-codes.ts` deliberately omit `server-only`,
 which would make them untestable. The guard is not lost: both import
@@ -347,3 +354,34 @@ cookies to a third party, which the privacy notice does not cover.
   a fault without identifying a visitor.
 - Turning any of them back on is a privacy-notice change first and a code
   change second. Do not do it to debug one error.
+
+---
+
+## 13. Sessions and rate limits
+
+**Sessions can be ended everywhere.** Each token carries the account's
+`sessionVersion` at issue; `getSession` refuses one that no longer matches.
+Changing a password, changing two-factor, or "Sign out of all devices" moves
+the version on, which ends every session at once — previously a stolen cookie
+stayed valid for its full eight hours whatever the owner did. Tokens issued
+before this existed carry no version and read as 0, so the change signed
+nobody out. The migration must be applied **before** the code is deployed
+(DEPLOYMENT.md).
+
+**An administrator can reset only client portal passwords.** The reset action
+used to accept any user ID, which let any administrator set a super admin's
+password and sign in as them.
+
+**Rate limits are counted in the database, shared by every instance.** The
+site runs as many short-lived server instances and each used to keep its own
+count, so attempts spread across them were barely limited. One atomic upsert
+per attempt (`RateLimitBucket`) now counts them together. Keys are an HMAC,
+never the raw address or email. If the database cannot be reached the count
+falls back to the instance's memory: an outage must not switch limiting off.
+
+- Every call is awaited. An un-awaited limit never throws, so it silently
+  stops applying; `npm run test:appsec` fails on one.
+- The proxy's broad per-address limit on `/api` stays in memory: it runs on
+  every API request, and a database round trip there would cost more than it
+  protects. Broad flood protection belongs at the edge, in the hosting
+  firewall (DEPLOYMENT.md).

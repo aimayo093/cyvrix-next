@@ -90,7 +90,7 @@ export async function POST(req: Request) {
     }
 
     const transportKey = emailTransportKey();
-    enforcePublicSubmissionRateLimit("newsletter", data.email, req.headers, { ipLimit: 5, emailLimit: 2 });
+    await enforcePublicSubmissionRateLimit("newsletter", data.email, req.headers, { ipLimit: 5, emailLimit: 2 });
 
     await prisma.newsletterSubscriber.upsert({
       where: { email: data.email },

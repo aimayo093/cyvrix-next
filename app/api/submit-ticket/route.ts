@@ -72,7 +72,7 @@ export async function POST(req: Request) {
     }
 
     const data = parsed.data;
-    enforcePublicSubmissionRateLimit("ticket", data.email, req.headers, { ipLimit: 5, emailLimit: 3 });
+    await enforcePublicSubmissionRateLimit("ticket", data.email, req.headers, { ipLimit: 5, emailLimit: 3 });
     const number = await ticketNumber();
 
     await prisma.ticket.create({

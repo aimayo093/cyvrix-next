@@ -840,9 +840,16 @@ exports.Prisma.UserScalarFieldEnum = {
   twoFactorEnrolledAt: 'twoFactorEnrolledAt',
   twoFactorRecoveryCodes: 'twoFactorRecoveryCodes',
   twoFactorLastCounter: 'twoFactorLastCounter',
+  sessionVersion: 'sessionVersion',
   clientCompanyId: 'clientCompanyId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RateLimitBucketScalarFieldEnum = {
+  key: 'key',
+  count: 'count',
+  resetAt: 'resetAt'
 };
 
 exports.Prisma.VerificationTokenScalarFieldEnum = {
@@ -1569,6 +1576,7 @@ exports.Prisma.ModelName = {
   TicketAttachment: 'TicketAttachment',
   TicketMessage: 'TicketMessage',
   User: 'User',
+  RateLimitBucket: 'RateLimitBucket',
   VerificationToken: 'VerificationToken',
   WebsiteSection: 'WebsiteSection',
   audit_logs: 'audit_logs',

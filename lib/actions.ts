@@ -109,7 +109,7 @@ function sanitize(value: string) {
 }
 
 async function limitSubmission(channel: string, email: string, emailLimit: number, ipLimit: number) {
-  enforcePublicSubmissionRateLimit(channel, email, await headers(), { emailLimit, ipLimit });
+  await enforcePublicSubmissionRateLimit(channel, email, await headers(), { emailLimit, ipLimit });
 }
 
 async function notify(template: string, to: string, subject: string, body: string) {

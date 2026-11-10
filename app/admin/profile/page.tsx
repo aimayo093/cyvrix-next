@@ -4,7 +4,7 @@ import { AlertCircle, CheckCircle2, KeyRound, Save, ShieldCheck, UserRound } fro
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { changeAdminPassword, requestEmailVerification, updateAdminProfile } from "@/lib/admin-actions";
+import { changeAdminPassword, requestEmailVerification, signOutEverywhere, updateAdminProfile } from "@/lib/admin-actions";
 import { TwoFactorPanel } from "@/components/admin/TwoFactorPanel";
 import { beginEnrolment, getTwoFactorState, peekRecoveryCodes, type EnrolmentOffer } from "@/lib/two-factor";
 import { Button } from "@/components/shared/Button";
@@ -218,6 +218,23 @@ async function AdminProfileContent({ searchParams }: ProfilePageProps) {
                 <KeyRound className="h-4 w-4" />
                 Change password
               </Button>
+            </form>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="font-outfit font-black text-[#041635]">Sign out everywhere</h2>
+            <p className="mt-1 max-w-2xl text-sm font-medium leading-relaxed text-slate-500">
+              Ends every session on every device, including this one. Use it if a device is lost or you
+              signed in somewhere you should not have. Changing your password does this for your other
+              devices automatically.
+            </p>
+            <form action={signOutEverywhere} className="mt-5">
+              <button
+                type="submit"
+                className="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+              >
+                Sign out of all devices
+              </button>
             </form>
           </section>
         </div>

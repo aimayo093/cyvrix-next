@@ -96,7 +96,7 @@ export async function POST(req: Request) {
     }
 
     const data = parsed.data;
-    enforcePublicSubmissionRateLimit("contact", data.email, req.headers, { ipLimit: 8, emailLimit: 3 });
+    await enforcePublicSubmissionRateLimit("contact", data.email, req.headers, { ipLimit: 8, emailLimit: 3 });
 
     await prisma.lead.create({
       data: {

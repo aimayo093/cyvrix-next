@@ -7,7 +7,14 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import type { Prisma } from "@/generated/prisma";
 import { LeadStatus, TicketStatus } from "@/generated/prisma";
-import { canUpdateSiteSetting, requireAdmin } from "@/lib/auth";
+import {
+  canUpdateSiteSetting,
+  clearSession,
+  endAllSessions,
+  requireAdmin,
+  requireStaffForSecondFactorSetup,
+  SECURITY_SETUP_PATH,
+} from "@/lib/auth";
 import { contactValueProblem, publicContactSettingKeys } from "@/lib/contact-settings";
 import { PUBLIC_CACHE_TAGS } from "@/lib/public-cache";
 import { getReviewedPage } from "@/lib/reviewed-page-content";
@@ -2546,6 +2553,9 @@ export async function changeAdminPassword(formData: FormData) {
     },
   });
 
+  // A new password ends every other session; this device stays signed in.
+  await endAllSessions(admin.id, { keepCurrent: true });
+
   await prisma.auditLog.create({
     data: {
       id: crypto.randomUUID(),
@@ -2598,15 +2608,23 @@ export async function requestEmailVerification() {
   redirect(`/admin/profile?status=error&message=${encodeURIComponent(message)}`);
 }
 
+/**
+ * Where the enrolment forms are posted from. A staff account that has not
+ * enrolled cannot open the admin, so it enrols on the set-up page instead.
+ */
+function enrolmentPage(needsSecondFactor: boolean) {
+  return needsSecondFactor ? SECURITY_SETUP_PATH : "/admin/profile?enrol=2fa";
+}
+
 export async function startTwoFactorEnrolment() {
-  const admin = await requireAdmin();
+  const admin = await requireStaffForSecondFactorSetup();
   await beginEnrolment(admin.id, admin.email);
-  redirect("/admin/profile?enrol=2fa");
+  redirect(enrolmentPage(admin.needsSecondFactor));
 }
 
 /** Confirms enrolment with a live code, and returns the recovery codes once. */
 export async function confirmTwoFactorEnrolment(formData: FormData) {
-  const admin = await requireAdmin();
+  const admin = await requireStaffForSecondFactorSetup();
   const code = (formData.get("code") as string | null)?.trim() ?? "";
 
   const result = await confirmEnrolment(admin.id, code);
@@ -2618,8 +2636,13 @@ export async function confirmTwoFactorEnrolment(formData: FormData) {
         : result.reason === "rate_limited"
           ? "Too many attempts. Wait a few minutes and try again."
           : "Start the setup again.";
-    redirect(`/admin/profile?enrol=2fa&status=error&message=${encodeURIComponent(message)}`);
+    const page = enrolmentPage(admin.needsSecondFactor);
+    redirect(`${page}${page.includes("?") ? "&" : "?"}status=error&message=${encodeURIComponent(message)}`);
   }
+
+  // Any session signed in before the second factor existed is ended; this
+  // device stays signed in.
+  await endAllSessions(admin.id, { keepCurrent: true });
 
   await prisma.auditLog.create({
     data: {
@@ -2646,15 +2669,20 @@ export async function confirmTwoFactorEnrolment(formData: FormData) {
  * the render after a successful enrolment into a 500.
  */
 export async function dismissRecoveryCodes() {
-  await requireAdmin();
+  await requireStaffForSecondFactorSetup();
   await clearRecoveryCodeFlash();
   redirect("/admin/profile");
 }
 
-/** Turns two-factor off for the signed-in administrator. */
+/**
+ * Removes the administrator's authenticator. Staff accounts must have one, so
+ * this is how a lost or replaced phone is swapped: every session ends and the
+ * next screen sets up the new device.
+ */
 export async function turnOffTwoFactor() {
   const admin = await requireAdmin();
   await clearTwoFactor(admin.id);
+  await endAllSessions(admin.id, { keepCurrent: true });
 
   await prisma.auditLog.create({
     data: {
@@ -2667,7 +2695,25 @@ export async function turnOffTwoFactor() {
     },
   });
 
-  redirect("/admin/profile?status=success&message=Two-factor authentication is off.");
+  redirect(SECURITY_SETUP_PATH);
+}
+
+/** Ends every session on every device, including this one. */
+export async function signOutEverywhere() {
+  const admin = await requireAdmin();
+  await endAllSessions(admin.id);
+  await prisma.auditLog.create({
+    data: {
+      id: crypto.randomUUID(),
+      userId: admin.id,
+      action: "admin_signed_out_everywhere",
+      entityType: "User",
+      entityId: admin.id,
+      metadata: { email: admin.email },
+    },
+  });
+  await clearSession();
+  redirect("/login");
 }
 
 /** Issues a fresh set of recovery codes, invalidating the previous ones. */
@@ -2731,6 +2777,14 @@ export async function resetPortalUserPassword(formData: FormData) {
     return returnWithError("Password must be at least 8 characters long.", "/admin/client-management");
   }
 
+  // Portal accounts only. Without this check any administrator could set the
+  // password of another administrator, including a super admin, and sign in
+  // as them.
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
+  if (!target || target.role !== "CLIENT") {
+    return returnWithError("Only client portal passwords can be reset here.", "/admin/client-management");
+  }
+
   const { hashPassword } = await import("./password");
   const passwordHash = hashPassword(newPassword);
 
@@ -2741,6 +2795,9 @@ export async function resetPortalUserPassword(formData: FormData) {
       updatedAt: new Date(),
     },
   });
+
+  // Whoever was using the old password is signed out.
+  await endAllSessions(userId);
 
   await prisma.auditLog.create({
     data: {

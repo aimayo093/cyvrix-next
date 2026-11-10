@@ -8,7 +8,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth";
+import { endAllSessions, requireUser } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/password";
 
 const ticketSchema = z.object({
@@ -235,6 +235,8 @@ export async function updatePortalProfile(_prevState: unknown, formData: FormDat
     });
 
     if (updateData.passwordHash) {
+      // A new password ends every other session; this device stays signed in.
+      await endAllSessions(user.id, { keepCurrent: true });
       await prisma.auditLog.create({
         data: {
           id: crypto.randomUUID(),

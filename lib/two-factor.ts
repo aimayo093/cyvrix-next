@@ -72,7 +72,7 @@ export type ConfirmResult =
  */
 export async function confirmEnrolment(userId: string, submittedCode: string): Promise<ConfirmResult> {
   try {
-    enforceRateLimit(`2fa:enrol:${userId}`, { limit: 10, windowMs: 15 * 60_000 });
+    await enforceRateLimit(`2fa:enrol:${userId}`, { limit: 10, windowMs: 15 * 60_000 });
   } catch (error) {
     if (error instanceof RateLimitError) return { ok: false, reason: "rate_limited" };
     throw error;
@@ -122,7 +122,7 @@ export type ChallengeResult =
  */
 export async function verifyChallenge(userId: string, submitted: string): Promise<ChallengeResult> {
   try {
-    enforceRateLimit(`2fa:challenge:${userId}`, { limit: 10, windowMs: 15 * 60_000 });
+    await enforceRateLimit(`2fa:challenge:${userId}`, { limit: 10, windowMs: 15 * 60_000 });
   } catch (error) {
     if (error instanceof RateLimitError) return { ok: false, reason: "rate_limited" };
     throw error;

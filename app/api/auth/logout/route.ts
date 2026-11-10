@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   // endpoint being hammered — and the origin check above already means this
   // cannot be aimed at somebody else's session from another page.
   try {
-    enforceRateLimit(`logout:${getClientAddress(request.headers)}`, { limit: 30, windowMs: 60_000 });
+    await enforceRateLimit(`logout:${getClientAddress(request.headers)}`, { limit: 30, windowMs: 60_000 });
   } catch (error) {
     if (error instanceof RateLimitError) {
       return new Response("Too many requests.", { status: 429 });

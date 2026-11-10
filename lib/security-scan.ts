@@ -150,7 +150,7 @@ function withTimeout(ms: number) {
  * used to drop out of the count silently.
  */
 function registryUrl(packageName: string) {
-  return `https://registry.npmjs.org/${encodeURIComponent(packageName).replace("%2F", "%2f")}/latest`;
+  return `https://registry.npmjs.org/${encodeURIComponent(packageName).replaceAll("%2F", "%2f")}/latest`;
 }
 
 async function checkDependencyFreshness(checks: SecurityScanCheck[]) {

@@ -35,8 +35,8 @@ export async function login(formData: FormData) {
   const attemptKey = `login:ip-email:${clientAddress}:${parsed.data.email}`;
 
   try {
-    enforceRateLimit(ipKey, { limit: 20, windowMs: 15 * 60_000 });
-    enforceRateLimit(attemptKey, { limit: 5, windowMs: 15 * 60_000 });
+    await enforceRateLimit(ipKey, { limit: 20, windowMs: 15 * 60_000 });
+    await enforceRateLimit(attemptKey, { limit: 5, windowMs: 15 * 60_000 });
 
     const user = await prisma.user.findUnique({ 
       where: { email: parsed.data.email } 
@@ -62,8 +62,8 @@ export async function login(formData: FormData) {
     // second factor is proved.
     if (user.twoFactorEnrolledAt) {
       await setPendingTwoFactor(user.id);
-      resetRateLimit(ipKey);
-      resetRateLimit(attemptKey);
+      await resetRateLimit(ipKey);
+      await resetRateLimit(attemptKey);
 
       await recordAuthEvent({
         action: "auth.second_factor_required",
@@ -76,8 +76,8 @@ export async function login(formData: FormData) {
     }
 
     await setSession(user);
-    resetRateLimit(ipKey);
-    resetRateLimit(attemptKey);
+    await resetRateLimit(ipKey);
+    await resetRateLimit(attemptKey);
 
     await recordAuthEvent({
       action: "auth.sign_in_succeeded",
@@ -143,7 +143,7 @@ export async function submitTwoFactor(formData: FormData) {
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, email: true, role: true, active: true },
+    select: { id: true, email: true, role: true, active: true, sessionVersion: true },
   });
 
   if (!user?.active) {

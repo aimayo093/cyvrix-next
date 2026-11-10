@@ -177,14 +177,15 @@ export function TwoFactorPanel({
         <form action={turnOffTwoFactor} className="mt-5 border-t border-slate-100 pt-5">
           <p className="mb-3 flex items-start gap-2 text-xs font-medium leading-relaxed text-slate-500">
             <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
-            Turning this off leaves your password as the only thing protecting an administrator account,
-            and the Security Center will report it.
+            New phone or lost device? Staff accounts must keep a second factor, so this removes the
+            current authenticator, signs you out of every other device, and takes you straight to set up
+            the new one.
           </p>
           <button
             type="submit"
             className="rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-black text-rose-700 transition-colors hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
           >
-            Turn off two-factor
+            Replace authenticator
           </button>
         </form>
       </section>

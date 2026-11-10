@@ -27,7 +27,7 @@ const POLLING_PREFIX = "/api/tickets/";
 const MAX_POLLING_REQUESTS = 240;
 
 // Routes that require authentication (any role)
-const PROTECTED_ROUTES = ["/portal", "/admin"];
+const PROTECTED_ROUTES = ["/portal", "/admin", "/security-setup"];
 
 // Routes that require an internal/admin role
 const ADMIN_ROUTES = ["/admin"];

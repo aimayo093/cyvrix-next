@@ -72,6 +72,19 @@ The token is read only on the server and sent only to `api.vercel.com`.
 `npm run check:env` reports whether it is set without printing it. Hobby plans
 keep one month of analytics, so a 90-day view says how many days are available.
 
+## Before merging the November 2026 security changes
+
+Apply `prisma/migrations/20261110000000_session_version_and_rate_limits`
+to the production database **first** (Supabase SQL editor, or
+`npx prisma migrate deploy` with the production `DATABASE_URL`). It only adds
+a column and a table, so the site keeps working while it runs. The new code
+reads `User.sessionVersion` on every signed-in request, so deploying the code
+before the migration signs everyone out with errors until it is applied.
+
+After deploying, staff accounts without two-factor are sent to
+`/security-setup` and cannot use the admin until they enrol. Have an
+authenticator app ready.
+
 ## Dependency updates
 
 Dependabot (`.github/dependabot.yml`) opens pull requests every Monday morning:
