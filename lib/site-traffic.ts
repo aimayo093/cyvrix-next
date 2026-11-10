@@ -66,7 +66,10 @@ async function fetchTraffic(range: RangeDays, todayKey: string): Promise<Traffic
   // good answer is kept for the hour, a failure or missing token is retried
   // within minutes rather than showing "Could not reach" for an hour.
   const result = await readTraffic(range, todayKey);
-  cacheLife(trafficCacheProfile(result));
+  // Two literal calls, not cacheLife(profile): the build's generated types
+  // have one overload per profile and reject the "hours" | "minutes" union.
+  if (trafficCacheProfile(result) === "hours") cacheLife("hours");
+  else cacheLife("minutes");
   return result;
 }
 
