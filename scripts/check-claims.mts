@@ -16,48 +16,7 @@ import path from "node:path";
 import { reviewedPages, findDisallowedSections } from "../lib/reviewed-page-content";
 import { founder } from "../lib/founder";
 import { companyFacts } from "../lib/company-facts";
-
-type Rule = { name: string; pattern: RegExp; note: string };
-
-const RULES: Rule[] = [
-  {
-    name: "certification held",
-    // "ISO 27001 certified" is a claim. "ISO 27001 readiness" is a service.
-    pattern:
-      /\b(ISO\s?(\/?\s?IEC\s?)?27001|ISO\s?9001|CREST|Cyber\s?Essentials|SOC\s?2|PCI[\s-]?DSS)\b(?!\s*(readiness|submission|preparation|gap|assessment|in progress|not yet|questionnaire))/i,
-    note: "Name a certification only as work we help with, or as explicitly not held.",
-  },
-  {
-    name: "uptime or SLA figure",
-    pattern: /\b\d{1,3}(\.\d+)?\s?%\s*(uptime|sla|availability|adherence|satisfaction)/i,
-    note: "We do not publish availability figures.",
-  },
-  {
-    name: "response time commitment",
-    pattern: /\b(<|under|within|less than)\s?\d+\s?(min|minute|hour|hr|second|sec)\b/i,
-    note: "We do not publish response times.",
-  },
-  {
-    name: "rating",
-    pattern: /\b\d(\.\d)?\s?\/\s?5\b|\b\d(\.\d)?\s?out of\s?5\b/i,
-    note: "We have no published review corpus.",
-  },
-  {
-    name: "scale claim",
-    pattern: /\b\d{2,}\+?\s?(clients?|customers?|engineers?|staff|employees|businesses|users|endpoints|devices)\b/i,
-    note: "We do not publish counts of clients or staff.",
-  },
-  {
-    name: "superlative",
-    pattern: /\b(award[- ]winning|leading provider|number one|#1|best[- ]in[- ]class|market leader|world[- ]class)\b/i,
-    note: "Unsupportable positioning language.",
-  },
-  {
-    name: "guarantee",
-    pattern: /\b(guarantee[sd]?|100%\s?(secure|safe|protected)|zero\s?(downtime|breaches))\b/i,
-    note: "Nothing in security is guaranteed.",
-  },
-];
+import { CLAIM_RULES as RULES } from "../lib/claim-rules";
 
 type Failure = { where: string; rule: string; excerpt: string; note: string };
 const failures: Failure[] = [];

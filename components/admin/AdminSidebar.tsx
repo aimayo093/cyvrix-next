@@ -20,6 +20,7 @@ import {
   LayoutDashboard,
   ExternalLink,
   LogOut,
+  Sparkles,
   Mail,
   Menu as MenuIcon,
   MessageSquare,
@@ -42,6 +43,7 @@ import { ADMIN_NAV, isInMore, type AdminNavIcon, type AdminNavItem } from "@/lib
 
 const ICONS: Record<AdminNavIcon, LucideIcon> = {
   today: LayoutDashboard,
+  drafts: Sparkles,
   inbox: Inbox,
   ticket: MessageSquare,
   building: Building2,
@@ -85,7 +87,7 @@ function readMoreOpen(): boolean | null {
   }
 }
 
-export type BadgeSlots = { enquiries: React.ReactNode; tickets: React.ReactNode };
+export type BadgeSlots = { enquiries: React.ReactNode; tickets: React.ReactNode; drafts: React.ReactNode };
 
 /**
  * The admin navigation. Used twice by AdminLayoutClient: docked at `lg` and

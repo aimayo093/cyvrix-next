@@ -43,6 +43,8 @@ jobs:
           npm run test:totp
           npm run test:mfa
           npm run test:scan
+          npm run test:feed
+          npm run test:paperclip
       - name: Production build
         # No database in CI; the build falls back as it does locally.
         env:

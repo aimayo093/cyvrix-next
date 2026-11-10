@@ -79,6 +79,25 @@ production. It is idempotent: the grants it revokes are already revoked on
 production, so on that database it only adds two indexes (unread notifications,
 ended sessions). Nothing depends on it, so it can go before or after a deploy.
 
+## Paperclip AI drafts (20261111120000)
+
+**Done 10 November 2026:** applied to production (Cyvrix-Technology) and verified: 17 columns, 4 indexes, the four statuses, row-level security on, no anon or authenticated access.
+
+Apply `prisma/migrations/20261111120000_agent_drafts` to production. It adds
+the `AgentDraft` table (row-level security on, no anon or authenticated
+access). Nothing uses it until `PAPERCLIP_DRAFT_TOKEN` is set, so it can go
+before or after a deploy; until it is applied, /admin/ai-drafts says the
+drafts could not be loaded.
+
+It was dry-run against production inside a transaction that was rolled back:
+an unknown kind, an unknown status and a duplicate idempotency key were all
+refused, new drafts defaulted to PENDING, anon had no
+access, and row-level security was on.
+
+Then follow `docs/PAPERCLIP.md`: two tokens, the firewall bypass rule, and
+the agent skill file. Before setting the read token, the privacy notice line
+about Paperclip must be published (DECISIONS section 15).
+
 ## Tamper-evident audit log (20261111000000)
 
 **Done 10 November 2026:** applied to production (Cyvrix-Technology) and verified: all 455 existing entries chained and verified, three triggers active, an UPDATE and a DELETE refused, and no anon or authenticated access to the functions.

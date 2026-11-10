@@ -10,7 +10,7 @@ import {
   AdminNotificationsButtonFallback,
 } from "@/components/admin/AdminHeaderMenus";
 import { AdminChromeFallback } from "@/components/admin/AdminChromeFallback";
-import { EnquiriesBadge, TicketsBadge } from "@/components/admin/NavBadges";
+import { DraftsBadge, EnquiriesBadge, TicketsBadge } from "@/components/admin/NavBadges";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 
 export const metadata: Metadata = {
@@ -68,6 +68,11 @@ async function AdminLayoutContent({
         tickets: (
           <React.Suspense fallback={null}>
             <TicketsBadge />
+          </React.Suspense>
+        ),
+        drafts: (
+          <React.Suspense fallback={null}>
+            <DraftsBadge />
           </React.Suspense>
         ),
       }}

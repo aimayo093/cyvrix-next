@@ -4,6 +4,7 @@ import path from "node:path";
 import type { Prisma } from "@/generated/prisma";
 import { appSecManifestAge, liveAppSecChecks, staticAppSecChecks } from "@/lib/appsec-checks";
 import { auditChainCheck, auditChainNotSetUp, type AuditChainRow } from "@/lib/audit-chain";
+import { paperclipTokenCheck } from "@/lib/paperclip-auth";
 import { prisma } from "@/lib/prisma";
 import { cleanVersion, heldBackBy, upgradeTarget, type DependencyHold } from "@/lib/dependency-freshness";
 import dependencyHolds from "@/lib/generated/dependency-holds.json";
@@ -407,6 +408,8 @@ export async function runSecurityScan(options: {
     category: "platform",
     detail: missingEnv.length === 0 ? "All required environment variables are set." : `Missing: ${missingEnv.join(", ")}`,
   });
+
+  checks.push(paperclipTokenCheck());
 
   const authSecret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET || "";
   if (!authSecret || authSecret === "development-only-change-me") {
