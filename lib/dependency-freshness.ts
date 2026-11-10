@@ -41,8 +41,11 @@ export function upgradeTarget(name: string, declared: string, latest: string, ru
   }
   if (/^\d+\.\d+\.\d+-/.test(latest.trim())) return null;
   const order = compareVersions(declared, latest);
-  // A declared pre-release (^8.0.0-rc.1) is older than its own release (8.0.0).
-  if (order === 0 && /\d+\.\d+\.\d+-/.test(declared)) return latest;
+  // A declared pre-release (^8.0.0-rc.1) is older than its own release (8.0.0),
+  // unless another part of the range already names a release
+  // (^8.0.0-rc.33 || ^8.0.0).
+  const onlyPreReleases = declared.split("||").every((part) => /\d+\.\d+\.\d+-/.test(part));
+  if (order === 0 && onlyPreReleases) return latest;
   return order < 0 ? latest : null;
 }
 

@@ -64,10 +64,12 @@ async function getPublishedSitemapRecords() {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Outside the try: connection() signals dynamic rendering by throwing, and
+  // the catch below would swallow that and fall back to the static list.
+  await connection();
+  const now = Date.now();
   try {
     const [pages, allPosts, legalPages] = await getPublishedSitemapRecords();
-    await connection();
-    const now = Date.now();
     const posts = allPosts.filter((post) => !post.publishAt || new Date(post.publishAt).getTime() <= now);
 
     const pageRoutes = pages.map((page) => ({

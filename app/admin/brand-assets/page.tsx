@@ -200,7 +200,8 @@ async function BrandAssetsCMSPageContent({
                     <input
                       name="altText"
                       defaultValue={editing.altText || ""}
-                      placeholder="e.g. CYVRIX primary colored brand logo"
+                      maxLength={160}
+                      placeholder="e.g. CYVRIX primary colored brand logo (160 characters at most)"
                       className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none"
                     />
                   </label>

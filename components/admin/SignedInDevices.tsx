@@ -71,11 +71,13 @@ export async function SignedInDevices({ viewerRole }: { viewerRole: string }) {
         <p className="px-6 py-5 text-sm font-semibold text-slate-500">No devices are signed in.</p>
       ) : (
         <>
-        {total !== null && total > sessions.length && (
-          // Never silently: say how many are not listed, and how to end them.
+        {(total !== null ? total > sessions.length : sessions.length >= MAX_LISTED) && (
+          // Never silently: when the list is cut, say so, even if the count
+          // itself could not be read.
           <p className="border-b border-slate-100 bg-amber-50 px-6 py-3 text-xs font-semibold text-amber-900">
-            Showing the {sessions.length} most recently active of {total} signed-in devices. To end the rest, use
-            &ldquo;Sign out of all devices&rdquo; on the account&apos;s profile, or change its password.
+            {total !== null
+              ? `Showing the ${sessions.length} most recently active of ${total} signed-in devices. The rest are not listed here.`
+              : `Showing the ${sessions.length} most recently active signed-in devices. There may be more that are not listed here.`}
           </p>
         )}
         <ul className="divide-y divide-slate-100">
@@ -113,7 +115,7 @@ export async function SignedInDevices({ viewerRole }: { viewerRole: string }) {
                     <input type="hidden" name="sessionId" value={session.id} />
                     <button
                       type="submit"
-                      aria-label={`Sign out ${label} for ${session.user.name?.trim() || session.user.email}`}
+                      aria-label={`${isMine ? "Sign out this device" : "Sign out"}: ${label}, ${session.user.name?.trim() || session.user.email}`}
                       className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 text-sm font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                     >
                       <LogOut className="h-4 w-4" aria-hidden="true" />

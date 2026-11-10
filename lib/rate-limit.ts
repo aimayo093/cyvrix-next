@@ -47,6 +47,7 @@ function storageKey(key: string) {
 }
 
 let lastStoreErrorAt = 0;
+let lastSweepErrorAt = 0;
 /**
  * After a store failure, skip the database for this long and count in memory.
  * Otherwise every sign-in and form submission during an outage would wait for
@@ -87,15 +88,21 @@ const database: RateLimitStore = {
     // Sweep finished windows now and then, so the table stays small.
     if (Math.random() < 0.02) {
       void prisma.$executeRaw`DELETE FROM "public"."RateLimitBucket" WHERE "resetAt" < ${new Date(now - 3_600_000)}`.catch(
-        (error: unknown) =>
+        (error: unknown) => {
+          // At most once a minute, like store errors, so it cannot flood the logs.
+          if (Date.now() - lastSweepErrorAt < 60_000) return;
+          lastSweepErrorAt = Date.now();
           console.error("[rate-limit] Sweep of finished windows failed.", {
             message: error instanceof Error ? error.message : "Unknown error",
-          }),
+          });
+        },
       );
     }
     return { count: Number(row.count), resetAt: new Date(row.resetAt).getTime() };
   },
   async reset(key: string) {
+    // Skipped while cooling down too, so a sign-in does not wait on it.
+    if (Date.now() < storeDownUntil) return;
     await prisma.$executeRaw`DELETE FROM "public"."RateLimitBucket" WHERE "key" = ${key}`;
   },
 };

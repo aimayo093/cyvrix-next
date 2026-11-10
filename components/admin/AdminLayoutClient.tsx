@@ -99,7 +99,9 @@ export function AdminLayoutClient({ children, identity, notificationsSlot, badge
       return () => document.removeEventListener("keydown", onKey);
     }
     if (wasOpen.current) {
-      menuButtonRef.current?.focus();
+      // Back to the menu button, unless it is hidden because the window is now
+      // desktop width; then focus is left where the browser puts it.
+      if (menuButtonRef.current?.offsetParent) menuButtonRef.current.focus();
       wasOpen.current = false;
     }
   }, [drawerOpen]);

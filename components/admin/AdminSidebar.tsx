@@ -73,11 +73,13 @@ const ICONS: Record<AdminNavIcon, LucideIcon> = {
 
 const MORE_KEY = "admin_nav_more_open";
 
-function readMoreOpen(): boolean {
+/** The saved choice: true, false, or null when nothing was saved. */
+function readMoreOpen(): boolean | null {
   try {
-    return localStorage.getItem(MORE_KEY) === "true";
+    const saved = localStorage.getItem(MORE_KEY);
+    return saved === "true" ? true : saved === "false" ? false : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -109,7 +111,7 @@ export function AdminSidebar({
   const [moreOpen, setMoreOpen] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
-    const restore = window.setTimeout(() => setMoreOpen((current) => current ?? (readMoreOpen() || null)), 0);
+    const restore = window.setTimeout(() => setMoreOpen((current) => current ?? readMoreOpen()), 0);
     return () => window.clearTimeout(restore);
   }, []);
   const showMore = moreOpen ?? (activeHref !== null && isInMore(activeHref));

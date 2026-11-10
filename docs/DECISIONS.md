@@ -201,8 +201,15 @@ Decisions worth keeping:
   route refuses it without needing its own check — a rule each route had to
   remember would eventually be forgotten by one. The one way in is
   `/security-setup`, through `requireStaffForSecondFactorSetup`. "Turn off"
-  became "Replace authenticator" for the same reason. Client accounts are not
-  required to enrol.
+  became "Replace authenticator" for the same reason, and it asks for a
+  current code first, so a stolen session cannot swap the authenticator.
+  Client accounts are not required to enrol.
+- **A pending enrolment secret is reused until confirmed.** Refreshing the
+  set-up page, or opening it in a second tab, used to replace the secret and
+  make the QR code already scanned fail. The trade-off: a screenshot of an
+  unconfirmed QR code stays usable until enrolment completes or "Start again"
+  issues a new one. Only a signed-in staff member can see it, and confirming
+  still needs a live code from the phone that scanned it.
 
 `lib/secret-box.ts` and `lib/recovery-codes.ts` deliberately omit `server-only`,
 which would make them untestable. The guard is not lost: both import
@@ -300,8 +307,9 @@ the thing to remember is that the write and the flush are separate steps.
   11 (§12); `npm audit --omit=dev` reports nothing.
 - **Majors: each is its own upgrade, checked before it lands.** On 10 November
   2026 `@sentry/nextjs` 11 (§12), `framer-motion` 14 and `@types/node` 24 (to
-  match the runtime) were each upgraded with the build and the animated pages
-  (login, contact, case studies) checked in production; `postgres` was removed
+  match the runtime) were each upgraded in their own commit, with the type
+  check, tests and production build passing; the animated pages (login,
+  contact, case studies) were not separately checked; `postgres` was removed
   rather than upgraded, since `pg` already covers it. What remains is held back
   by a peer dependency and reported as such (§5): `eslint` 10 and `typescript` 7.
 

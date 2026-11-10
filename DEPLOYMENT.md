@@ -72,6 +72,20 @@ The token is read only on the server and sent only to `api.vercel.com`.
 `npm run check:env` reports whether it is set without printing it. Hobby plans
 keep one month of analytics, so a 90-day view says how many days are available.
 
+## Server-only grants and indexes (20261110130000)
+
+Apply `prisma/migrations/20261110130000_server_only_grants_and_indexes` to
+production. It is idempotent: the grants it revokes are already revoked on
+production, so on that database it only adds two indexes (unread notifications,
+ended sessions). Nothing depends on it, so it can go before or after a deploy.
+
+## Running scripts/apply-migrations.mjs
+
+The script verifies the database's TLS certificate and will not run without
+it. Download the CA certificate (Supabase: Project Settings → Database → SSL
+Configuration → Download certificate) and set `DATABASE_CA_CERT` to the file's
+path, along with `DIRECT_URL` or `DATABASE_URL`.
+
 ## Before deploying signed-in devices
 
 **Done 10 November 2026:** applied to production (Cyvrix-Technology) and verified: columns, three indexes, cascade on account delete, row-level security with no policies, no anon or authenticated access.

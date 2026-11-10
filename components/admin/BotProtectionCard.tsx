@@ -22,7 +22,9 @@ export async function BotProtectionCard() {
   await connection();
   const current = await readBotProtection();
   const on = current.state === "on";
-  const known = current.state === "on" || current.state === "off";
+  // A switch only when the state is known, or when there is no configuration
+  // yet and turning it on is how one is created.
+  const known = current.state === "on" || current.state === "off" || current.state === "no_firewall_config";
 
   return (
     <section id="bot-protection" className="scroll-mt-24 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -75,6 +77,12 @@ export async function BotProtectionCard() {
           <p>
             <span className="font-black text-[#041635]">Off.</span>{" "}
             {current.mode === "log" ? "Bots are only being logged, not stopped." : "No traffic is being challenged."}
+          </p>
+        )}
+        {current.state === "no_firewall_config" && (
+          <p>
+            The firewall has no configuration for this project yet, so this is not switched on. Turning it on creates
+            one. If you expected bot protection to be on already, check the project and team ids (DEPLOYMENT.md).
           </p>
         )}
         {current.state === "not_configured" && (

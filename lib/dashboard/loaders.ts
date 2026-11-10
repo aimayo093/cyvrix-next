@@ -45,11 +45,12 @@ function endOfLondonToday(now: Date): Date {
 }
 
 /**
- * Rows per queue group. The queue shows eight, so each group fetches more than
- * that from its own most-urgent end. One capped query over everything let 200
- * older rows push out a newer overdue ticket or due follow-up entirely.
+ * Rows per queue group, each fetched from its own most-urgent end: one capped
+ * query over everything let 200 older rows push out a newer overdue ticket or
+ * due follow-up entirely. The cap is high because the summary sentence counts
+ * these rows ("3 enquiries waiting"); past 200 in one group it undercounts.
  */
-const PER_GROUP = 25;
+const PER_GROUP = 200;
 
 export function loadQueue(now: Date): Promise<Loaded<QueueItem[]>> {
   return load("Work queue", async () => {
@@ -203,7 +204,6 @@ const CONTENT_ENTITY_TYPES = [
   "SiteSetting",
   "BrandAsset",
   "NavigationItem",
-  "Testimonial",
   "MediaAsset",
 ];
 

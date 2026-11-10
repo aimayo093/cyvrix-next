@@ -71,7 +71,10 @@ async function fetchTraffic(range: RangeDays, todayKey: string): Promise<Traffic
   const result = await readTraffic(range, todayKey);
   // Two literal calls, not cacheLife(profile): the build's generated types
   // have one overload per profile and reject the "hours" | "minutes" union.
-  if (trafficCacheProfile(result) === "hours") cacheLife("hours");
+  // A part that failed (top pages) is a failure for caching too, so its
+  // "could not be read" is retried within minutes, not held for the hour.
+  const partFailed = result.state === "ok" && result.traffic.topPages === null;
+  if (trafficCacheProfile(result) === "hours" && !partFailed) cacheLife("hours");
   else cacheLife("minutes");
   return result;
 }

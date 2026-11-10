@@ -76,6 +76,13 @@ export async function setBotProtection(enabled: boolean): Promise<BotProtectionC
     if (response.status === 401 || response.status === 403) {
       return { outcome: "refused", message: "The firewall refused the access token." };
     }
+    // A server error means the request arrived but its outcome is unknown.
+    if (response.status >= 500) {
+      return {
+        outcome: "unconfirmed",
+        message: `The firewall answered ${response.status}, so the change may or may not have applied. Check the state shown before trying again.`,
+      };
+    }
     return { outcome: "refused", message: `The firewall refused the change (${response.status}).` };
   } catch (error) {
     console.error("[bot-protection] Update unconfirmed.", { reason: error instanceof Error ? error.name : "unknown" });

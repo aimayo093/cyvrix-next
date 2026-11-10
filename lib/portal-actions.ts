@@ -230,15 +230,15 @@ export async function updatePortalProfile(_prevState: unknown, formData: FormDat
       newPasswordHash = hashPassword(data.password);
     }
 
-    await prisma.user.update({
-      where: { id: user.id },
-      data: updateData
-    });
+    if (newPasswordHash) {
+      // Name, new password and the end of every other session land together,
+      // so a failure saves none of them; this device stays signed in.
+      await changeAccountAndEndSessions(user.id, { passwordHash: newPasswordHash, name: data.name }, { keepCurrent: true });
+    } else {
+      await prisma.user.update({ where: { id: user.id }, data: updateData });
+    }
 
     if (newPasswordHash) {
-      // The new password and the end of every other session land together;
-      // this device stays signed in.
-      await changeAccountAndEndSessions(user.id, { passwordHash: newPasswordHash }, { keepCurrent: true });
       await prisma.auditLog.create({
         data: {
           id: crypto.randomUUID(),

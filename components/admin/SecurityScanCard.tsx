@@ -105,6 +105,8 @@ export function SecurityScanCard() {
   const passes = answered.filter((c) => c.status === "pass").length;
   const fails = answered.filter((c) => c.status === "fail").length;
   const warns = answered.filter((c) => c.status === "warn").length;
+  // Unanswered (not "not applicable"): said out loud, and never "passed".
+  const unassessed = result?.checks.filter((c) => c.assessed === false && !c.notApplicable).length ?? 0;
 
   return (
     <div className="bg-[#041635] text-white rounded-2xl relative overflow-hidden border border-white/5">
@@ -119,7 +121,13 @@ export function SecurityScanCard() {
           <h3 className="font-outfit text-lg font-bold">Security Scan</h3>
           {result && (
             <span className={cn("text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border", overall?.bg, overall?.color)}>
-              {result.overallStatus === "pass" ? "Checks passed" : result.overallStatus === "warn" ? "Warnings" : "Issues"}
+              {result.overallStatus === "pass"
+                ? unassessed > 0
+                  ? "Partly assessed"
+                  : "Checks passed"
+                : result.overallStatus === "warn"
+                  ? "Warnings"
+                  : "Issues"}
             </span>
           )}
         </div>
@@ -150,6 +158,7 @@ export function SecurityScanCard() {
                 <span className="flex items-center gap-1 text-emerald-400"><CheckCircle2 className="h-3 w-3" />{passes} passed</span>
                 {warns > 0 && <span className="flex items-center gap-1 text-amber-400"><AlertTriangle className="h-3 w-3" />{warns} warn</span>}
                 {fails > 0 && <span className="flex items-center gap-1 text-rose-400"><XCircle className="h-3 w-3" />{fails} failed</span>}
+                {unassessed > 0 && <span className="flex items-center gap-1 text-slate-300"><HelpCircle className="h-3 w-3" />{unassessed} not assessed</span>}
               </div>
               <button
                 onClick={() => setExpanded((e) => !e)}

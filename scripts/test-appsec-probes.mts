@@ -49,6 +49,7 @@ check("pre-release is not a target", upgradeTarget("prisma", "^7.10.1", "8.0.0-r
 check("@types/node on runtime major is current", upgradeTarget("@types/node", "^24.19.2", "26.6.6", 24), null);
 check("@types/node off runtime major is flagged", upgradeTarget("@types/node", "^20.19.43", "26.6.6", 24), "24.x (the Node.js runtime)");
 check("a declared pre-release is older than its release", upgradeTarget("prisma", "^8.0.0-rc.33", "8.0.0", 24), "8.0.0");
+check("a range that already names the release is current", upgradeTarget("prisma", "^8.0.0-rc.33 || ^8.0.0", "8.0.0", 24), null);
 check("@types/node target is held by a peer ceiling", heldBackBy("24.x (the Node.js runtime)", [{ by: "x", range: "<23", maxMajor: 22 }]).length, 1);
 check("unpinned range is skipped", upgradeTarget("@types/react", "^19", "19.3.0", 24), null);
 
@@ -83,7 +84,8 @@ check("no user agent", deviceLabel(null), "Unknown device");
 check("challenge active reads as on", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "challenge", updatedAt: "2026-11-10T12:00:00Z" } } }), { state: "on", mode: "challenge", updatedAt: "2026-11-10T12:00:00Z" });
 check("inactive reads as off", parseBotProtection(200, { managedRules: { bot_protection: { active: false } } }), { state: "off", mode: null, updatedAt: null });
 check("log-only is not protection", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "log" } } }).state, "off");
-check("a 404 is not shown as off (could be a wrong id)", parseBotProtection(404, null).state, "unavailable");
+check("a 404 is not shown as off (could be a wrong id)", parseBotProtection(404, null).state, "no_firewall_config");
+check("a malformed managedRules is unavailable", parseBotProtection(200, { managedRules: "x" }).state, "unavailable");
 check("a config without the ruleset reads as off", parseBotProtection(200, { managedRules: {} }).state, "off");
 check("unreadable JSON is not shown as off", parseBotProtection(200, "unreadable").state, "unavailable");
 check("active in an unknown mode is not shown as on", parseBotProtection(200, { managedRules: { bot_protection: { active: true, action: "mystery" } } }).state, "unavailable");

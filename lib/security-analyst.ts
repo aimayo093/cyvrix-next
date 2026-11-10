@@ -393,8 +393,10 @@ export async function buildAnalystReport(scan: SecurityScanResult): Promise<Anal
     {} as Record<Severity, number>
   );
 
+  // Unreadable signals are blind spots, not work items, so the tiles, the
+  // queue and the band all agree on them.
   const triage = findings
-    .filter((finding) => finding.severity !== "info")
+    .filter((finding) => finding.severity !== "info" && !finding.unknown)
     .sort((a, b) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
 
   const highestSeverity = triage.length > 0 ? triage[0].severity : null;

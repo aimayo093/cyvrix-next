@@ -121,7 +121,8 @@ const firstSet = (...keys: string[]) => {
   }
   return undefined;
 };
-const NOT_LOCAL = "not in the local env files (production reads the hosting project's environment variables)";
+const NOT_LOCAL =
+  "not set to a non-blank value in the local env files, so locally the card shows Not connected (production reads the hosting project's environment variables)";
 
 console.log("\n  Vercel Analytics on the dashboard (optional)");
 const analyticsToken = firstSet("VERCEL_ANALYTICS_TOKEN");

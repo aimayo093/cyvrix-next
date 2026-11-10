@@ -183,7 +183,7 @@ export function TwoFactorPanel({
           </p>
           <div className="flex flex-wrap items-end gap-2">
             <div>
-              <label htmlFor="replace-code" className="block text-[10px] font-black uppercase tracking-wider text-slate-500">
+              <label htmlFor="replace-code" className="block text-xs font-black uppercase tracking-wider text-slate-500">
                 Current code or recovery code
               </label>
               <input

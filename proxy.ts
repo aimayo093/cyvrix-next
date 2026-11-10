@@ -124,11 +124,16 @@ export async function proxy(request: NextRequest) {
     // is all this file can check, so it is deleted here rather than trusted:
     // trusting it would send the browser straight back to a page that refuses it.
     //
-    // Only for a same-site arrival. The server's own redirect comes from this
-    // site; a link on another site to /login?ended=1 must not be able to sign
-    // a visitor out (the reason sign-out itself is POST-only).
-    if (request.nextUrl.searchParams.get("ended") === "1" && request.headers.get("sec-fetch-site") !== "cross-site") {
-      if (token) response.cookies.delete(SESSION_COOKIE);
+    // The login page is always shown for ended=1 (never bounced back to the
+    // admin, which would loop). The cookie is deleted only for an arrival this
+    // site made: a link elsewhere to /login?ended=1 must not sign a visitor
+    // out (the reason sign-out itself is POST-only). Allow-listed, so a client
+    // that sends no Fetch Metadata does not get the deletion.
+    if (request.nextUrl.searchParams.get("ended") === "1") {
+      const site = request.headers.get("sec-fetch-site");
+      if (token && (site === "same-origin" || site === "same-site" || site === "none")) {
+        response.cookies.delete(SESSION_COOKIE);
+      }
       return response;
     }
     const session = await verifySessionToken(token);

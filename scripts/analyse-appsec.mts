@@ -349,16 +349,16 @@ const add = (f: AppSecFinding) => findings.push(f);
 
 // ── 31. Webhook signatures ─────────────────────────────────────────────────
 {
-  // By name and by behaviour, so a webhook under another name is still found:
-  // signature headers from common providers, provider event parsing, and
-  // reading the raw body (which signature checks need).
+  // By name and by behaviour, so a webhook under another name is still found.
+  // Behaviour means a provider's signature header or event parser: a raw-body
+  // read alone is also what uploads and ordinary endpoints do.
   const webhooks = apiRoutes.filter(
     (r) =>
       /webhook|hook|callback|notify|ipn/i.test(r.path) ||
       // A webhook is called by another service, never with a user session, so
       // behaviour only counts on routes that do not check one.
       (!/getSession|requireAdmin|requireUser|requireSuperAdmin/.test(r.source) &&
-        /stripe-signature|x-hub-signature|svix-|webhook-signature|x-signature|constructEvent\(|\.text\(\)|\.arrayBuffer\(\)/i.test(r.source)),
+        /stripe-signature|x-hub-signature|svix-|webhook-signature|x-signature|constructEvent\(/i.test(r.source)),
   );
   const unsigned = webhooks
     .filter((r) => !/signature|hmac|createHmac|timingSafeEqual|verify/i.test(r.source))
@@ -368,14 +368,14 @@ const add = (f: AppSecFinding) => findings.push(f);
     id: "appsec_webhooks",
     label: "Webhook signature verification",
     status: webhooks.length === 0 ? "not_applicable" : unsigned.length === 0 ? "pass" : "fail",
-    method: `Looked for inbound webhook routes, by name and by behaviour (provider signature headers, event parsing, raw-body reads), and whether each verifies a signature.`,
+    method: `Looked for inbound webhook routes, by name and by behaviour (provider signature headers, event parsing), and whether each verifies a signature.`,
     detail:
       webhooks.length === 0
         ? "No inbound webhook endpoint exists, so there is no unsigned webhook to exploit."
         : unsigned.length === 0
           ? "Every webhook route verifies a signature."
           : `${unsigned.length} webhook route(s) accept unsigned requests.`,
-    limitation: "A webhook that neither has a webhook-like name nor reads a signature header or raw body would be missed.",
+    limitation: "A webhook that neither has a webhook-like name nor reads a provider signature header would be missed.",
     evidence: unsigned,
   });
 }

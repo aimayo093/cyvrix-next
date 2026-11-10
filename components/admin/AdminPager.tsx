@@ -5,7 +5,9 @@ export const ADMIN_PAGE_SIZE = 50;
 
 /** Reads `?page=` as a 1-based page number; anything unusable (`2junk`, `0`, `-1`) is page 1. */
 export function parsePage(value: string | undefined): number {
-  if (!value || !/^[1-9][0-9]{0,8}$/.test(value)) return 1;
+  // At most seven digits, so (page - 1) * pageSize stays far inside the 32-bit
+  // range the database accepts for `skip`; anything larger is a crafted URL.
+  if (!value || !/^[1-9][0-9]{0,6}$/.test(value)) return 1;
   return Number(value);
 }
 

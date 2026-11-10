@@ -191,15 +191,13 @@ export async function currentSessionId(): Promise<string | null> {
 /** Signs out this device: ends its session row as well as deleting the cookie. */
 export async function clearSession() {
   const sessionId = await currentSessionId();
+  // The row is ended first and the cookie deleted only once that worked. If
+  // ending it fails, the error reaches the caller and the cookie stays, so
+  // signing out can be retried; deleting it would leave a live row no one can
+  // end except by waiting for it to expire (DECISIONS §13).
+  if (sessionId) await revokeSessionById(sessionId, "signed_out");
   const cookieStore = await cookies();
-  try {
-    // If this fails the error reaches the caller: a sign-out that leaves the
-    // server-side session alive must not look like it worked, because a copied
-    // cookie would keep working (DECISIONS §13).
-    if (sessionId) await revokeSessionById(sessionId, "signed_out");
-  } finally {
-    cookieStore.delete(SESSION_COOKIE);
-  }
+  cookieStore.delete(SESSION_COOKIE);
 }
 
 /** Where a staff account without two-factor is sent until it enrols. */
@@ -321,7 +319,7 @@ export async function endAllSessions(userId: string, { keepCurrent = false } = {
  */
 export async function changeAccountAndEndSessions(
   userId: string,
-  change: { passwordHash?: string },
+  change: { passwordHash?: string; name?: string },
   { keepCurrent = false } = {},
 ) {
   const [, user] = await prisma.$transaction([
@@ -333,7 +331,7 @@ export async function changeAccountAndEndSessions(
       where: { id: userId },
       data: {
         ...change,
-        ...(change.passwordHash ? { updatedAt: new Date() } : {}),
+        ...(change.passwordHash || change.name !== undefined ? { updatedAt: new Date() } : {}),
         sessionVersion: { increment: 1 },
       },
       select: { id: true, email: true, role: true, sessionVersion: true },

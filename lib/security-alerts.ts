@@ -65,22 +65,21 @@ export async function createSecurityNotifications(result: SecurityScanResult) {
   const title = result.overallStatus === "fail" ? "Security scan found issues" : "Security scan found warnings";
   const body = `Security Center score ${result.score}%. Review the latest scan report.`;
 
-  // One unread copy of an alert at most. The newest copy is moved to the top
-  // (or one is created), then every other unread copy is removed. That also
-  // collapses rows left by the old daily insert, and by two scans that
-  // overlap: whichever runs second removes the other's copy.
+  // One copy of an alert per administrator, by construction: the id is derived
+  // from who it is for and what it says, so writing it is one atomic upsert.
+  // Two overlapping scans land on the same row instead of racing to create
+  // (and then delete) different ones. A repeat moves it to the top and marks
+  // it unread again. Rows from the old random-id insert are then removed.
   await Promise.all(
     admins.map(async (admin) => {
       try {
-        const same = { userId: admin.id, title, body, readAt: null };
-        const newest = await prisma.notification.findFirst({ where: same, orderBy: { createdAt: "desc" }, select: { id: true } });
-        const keepId = newest?.id ?? crypto.randomUUID();
-        if (newest) {
-          await prisma.notification.update({ where: { id: keepId }, data: { createdAt: new Date() } });
-        } else {
-          await prisma.notification.create({ data: { id: keepId, userId: admin.id, title, body } });
-        }
-        await prisma.notification.deleteMany({ where: { ...same, id: { not: keepId } } });
+        const id = `alert-${crypto.createHash("sha256").update(`${admin.id}\n${title}\n${body}`).digest("hex").slice(0, 40)}`;
+        await prisma.notification.upsert({
+          where: { id },
+          create: { id, userId: admin.id, title, body },
+          update: { readAt: null, createdAt: new Date() },
+        });
+        await prisma.notification.deleteMany({ where: { userId: admin.id, title, body, readAt: null, id: { not: id } } });
       } catch (error) {
         console.error("[security-alerts] Could not record a notification.", {
           message: error instanceof Error ? error.message : "Unknown error",

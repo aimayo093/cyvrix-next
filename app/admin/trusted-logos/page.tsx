@@ -247,7 +247,8 @@ function TrustedFormFields({ defaults }: { defaults?: any }) {
         <input
           name="altText"
           defaultValue={defaults?.altText}
-          placeholder="e.g. Acme Solutions corporate logo"
+          maxLength={160}
+          placeholder="e.g. Acme Solutions corporate logo (160 characters at most)"
           className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none"
         />
       </label>

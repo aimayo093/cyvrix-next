@@ -1,7 +1,9 @@
--- Server-only tables, and two indexes for queries that run on every admin page.
+-- Server-only grants, and two indexes: one for the unread-notification count
+-- on every admin page, one for the occasional sweep of ended sessions.
 --
--- Additive and idempotent. The REVOKE was first appended to an
--- already-applied migration, which changes its checksum; it lives here instead.
+-- Idempotent; it changes only grants and indexes. The REVOKE for
+-- RateLimitBucket was first appended to an already-applied migration, which
+-- changes its checksum; it lives here instead.
 
 -- Supabase grants its public API roles access to new tables by default. Row
 -- level security already hides every row; this removes the grant too. Guarded,

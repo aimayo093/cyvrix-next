@@ -27,5 +27,6 @@ CREATE INDEX IF NOT EXISTS "UserSession_userId_revokedAt_idx"
 CREATE INDEX IF NOT EXISTS "UserSession_expiresAt_idx"
   ON "public"."UserSession" ("expiresAt");
 
--- Server only. The public API roles lose their grant in 20261110130000.
+-- Server only: not reachable through the public Supabase API.
 ALTER TABLE "public"."UserSession" ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON TABLE "public"."UserSession" FROM anon, authenticated;

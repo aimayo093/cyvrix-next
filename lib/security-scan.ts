@@ -217,9 +217,13 @@ async function checkDependencyFreshness(checks: SecurityScanCheck[]) {
     const held = heldBack.length
       ? ` Held back, not yet adoptable: ${heldBack
           .map((item) => {
-            const names = [...new Set(item.holders.map((hold) => hold.by))];
-            const ceiling = Math.min(...item.holders.map((hold) => hold.maxMajor));
-            return `${item.name} ${item.target} (${names.slice(0, 2).join(", ")}${names.length > 2 ? ` and ${names.length - 2} more` : ""} support up to ${ceiling}.x; newer ${ceiling}.x releases are not checked)`;
+            // Each holder with its own ceiling, so one package's limit is not
+            // attributed to another.
+            const ceilingFor = new Map<string, number>();
+            for (const hold of item.holders) ceilingFor.set(hold.by, Math.min(ceilingFor.get(hold.by) ?? Infinity, hold.maxMajor));
+            const named = [...ceilingFor].map(([by, max]) => `${by} up to ${max}.x`);
+            const ceiling = Math.min(...ceilingFor.values());
+            return `${item.name} ${item.target} (${named.slice(0, 2).join(", ")}${named.length > 2 ? ` and ${named.length - 2} more` : ""}; newer ${ceiling}.x releases are not checked)`;
           })
           .join("; ")}.`
       : "";
@@ -551,11 +555,6 @@ function isScanRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-/**
- * The scan result stored in a SECURITY_SCAN_RUN audit entry's metadata, or
- * null when the entry is missing, malformed or from an older format. Shared
- * by the Security Centre and the admin Today dashboard.
- */
 function isStoredCheck(value: unknown): boolean {
   if (!isScanRecord(value)) return false;
   return (
@@ -569,6 +568,11 @@ function isStoredCheck(value: unknown): boolean {
   );
 }
 
+/**
+ * The scan result stored in a SECURITY_SCAN_RUN audit entry's metadata, or
+ * null when the entry is missing, malformed or from an older format. Shared
+ * by the Security Centre and the admin Today dashboard.
+ */
 export function readScanResult(metadata: unknown): SecurityScanResult | null {
   let value: unknown = metadata;
   if (typeof value === "string") {
