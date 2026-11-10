@@ -26,24 +26,20 @@ export default async function HomePage() {
   cacheLife("hours");
   cacheTag(PUBLIC_CACHE_TAGS.home);
 
-  const {
-    services,
-    pageData,
-    testimonials,
-    partners,
-    trustedLogos,
-  } = await getHomePageData().catch((error) => {
-    console.error("[home-page] failed to load cached homepage data", error);
-    return {
-      services: [],
-      pageData: null,
-      testimonials: [],
-      partners: [],
-      trustedLogos: [],
-    };
-  });
-
-  const siteImages = await getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} }));
+  const [homeData, siteImages] = await Promise.all([
+    getHomePageData().catch((error) => {
+      console.error("[home-page] failed to load cached homepage data", error);
+      return {
+        services: [],
+        pageData: null,
+        testimonials: [],
+        partners: [],
+        trustedLogos: [],
+      };
+    }),
+    getSiteImages().catch((): SiteImages => ({ engines: {}, industries: {} })),
+  ]);
+  const { services, pageData, testimonials, partners, trustedLogos } = homeData;
 
   /*
    * The four bands Home Page CMS writes.
