@@ -16,6 +16,7 @@
  * its own words rather than reporting a bare pass.
  */
 import fs from "node:fs";
+import { credentialLogCalls } from "../lib/appsec-probe-parse";
 import path from "node:path";
 
 /**
@@ -443,16 +444,14 @@ const add = (f: AppSecFinding) => findings.push(f);
 {
   const risky = sourceFiles
     .map((f) => ({ path: rel(f), source: read(f) }))
-    .filter(({ source }) =>
-      /console\.(log|error|warn|info)\s*\([^)]*(password|secret|token|apiKey|passwordHash|authorization)/i.test(source)
-    )
+    .filter(({ source }) => credentialLogCalls(source).length > 0)
     .map((f) => f.path);
 
   add({
     id: "appsec_log_exposure",
     label: "Sensitive values in logs",
     status: risky.length === 0 ? "pass" : "fail",
-    method: "Searched every log statement for credential-shaped variable names.",
+    method: "Searched every log statement's code (not its message text) for credential-shaped names.",
     detail:
       risky.length === 0
         ? "No log statement writes a credential-shaped value."

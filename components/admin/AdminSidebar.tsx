@@ -18,6 +18,7 @@ import {
   Image as ImageIcon,
   Inbox,
   LayoutDashboard,
+  ExternalLink,
   LogOut,
   Mail,
   Menu as MenuIcon,
@@ -35,7 +36,8 @@ import {
   Wrench,
   type LucideIcon,
 } from "lucide-react";
-import { Logo } from "@/components/nav-main/Logo";
+import Image from "next/image";
+import type { AdminBrand } from "@/lib/admin-brand";
 import { ADMIN_NAV, isInMore, type AdminNavIcon, type AdminNavItem } from "@/lib/admin-nav";
 
 const ICONS: Record<AdminNavIcon, LucideIcon> = {
@@ -96,6 +98,7 @@ export function AdminSidebar({
   badges,
   firstLinkRef,
   onNavigate,
+  brand,
 }: {
   pathname: string;
   activeHref: string | null;
@@ -104,6 +107,8 @@ export function AdminSidebar({
   firstLinkRef?: React.Ref<HTMLAnchorElement>;
   /** Called when a link is chosen, including the page already open (closes the drawer). */
   onNavigate?: () => void;
+  /** The logo from Brand Assets, or the bundled one. */
+  brand: AdminBrand;
 }) {
   // null until the person toggles: then the stored preference, or open when
   // the current page lives under "More". Once they toggle, their choice wins —
@@ -152,7 +157,26 @@ export function AdminSidebar({
   return (
     <div className="flex h-full flex-col">
       <div className={`flex shrink-0 items-center border-b border-slate-200 ${collapsed ? "h-14 justify-center" : "h-16 px-5"}`}>
-        <Logo variant={collapsed ? "icon" : "full"} theme="light" />
+        <Link
+          href="/admin"
+          onClick={onNavigate}
+          aria-label={`${brand.alt} admin, Today`}
+          className="flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
+        >
+          {collapsed ? (
+            <Image src={brand.icon} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+          ) : (
+            // Sized to sit inside the 64px header: the old text placeholder was
+            // taller than the header and was clipped at the top.
+            <Image
+              src={brand.logo}
+              alt=""
+              width={176}
+              height={40}
+              className="h-9 w-auto max-w-[11rem] object-contain object-left"
+            />
+          )}
+        </Link>
       </div>
 
       <nav aria-label="Admin" className="flex-1 space-y-5 overflow-y-auto overflow-x-hidden px-3 py-4">
@@ -187,7 +211,25 @@ export function AdminSidebar({
         ))}
       </nav>
 
-      <div className="border-t border-slate-200 p-3">
+      <div className="space-y-0.5 border-t border-slate-200 p-3">
+        <Link
+          href="/"
+          target="_blank"
+          rel="noopener"
+          title={collapsed ? "View website (opens in a new tab)" : undefined}
+          className={`flex min-h-11 w-full items-center rounded-lg text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#041635] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] lg:min-h-9 ${
+            collapsed ? "justify-center px-2" : "gap-3 px-3"
+          }`}
+        >
+          <ExternalLink className="h-4 w-4 shrink-0" aria-hidden="true" />
+          {collapsed ? (
+            <span className="sr-only">View website (opens in a new tab)</span>
+          ) : (
+            <span>
+              View website<span className="sr-only"> (opens in a new tab)</span>
+            </span>
+          )}
+        </Link>
         <form action="/api/auth/logout" method="POST">
           <button
             type="submit"

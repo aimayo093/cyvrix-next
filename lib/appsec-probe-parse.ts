@@ -16,3 +16,62 @@ export function clientBundlePaths(html: string, limit = 3): string[] {
   const paths = [...html.matchAll(/src="(\/_next\/static\/[^"?#]+\.js)(?:[?#][^"]*)?"/g)].map((match) => match[1]);
   return [...new Set(paths)].slice(0, limit);
 }
+
+/**
+ * Log calls whose arguments name a credential-shaped value, as code.
+ *
+ * Text inside string literals is removed first, keeping only the `${...}`
+ * expressions of template literals, so a message that merely mentions a word
+ * ("[breached-passwords] lookup failed") is not mistaken for logging one.
+ * Returns the offending call snippets.
+ */
+const CREDENTIAL_NAME = /\b\w*(password|secret|token|apikey|api_key|passwordhash|authorization)\w*\b/i;
+
+export function credentialLogCalls(source: string): string[] {
+  const found: string[] = [];
+  const call = /console\.(log|error|warn|info|debug)\s*\(/g;
+  let match: RegExpExecArray | null;
+  while ((match = call.exec(source))) {
+    // Walk to the matching close paren, skipping over strings.
+    let depth = 1;
+    let i = call.lastIndex;
+    let code = "";
+    while (i < source.length && depth > 0) {
+      const ch = source[i];
+      if (ch === '"' || ch === "'") {
+        const end = source.indexOf(ch, i + 1);
+        i = end === -1 ? source.length : end + 1;
+        code += '""';
+        continue;
+      }
+      if (ch === "`") {
+        i += 1;
+        while (i < source.length && source[i] !== "`") {
+          if (source[i] === "\\") { i += 2; continue; }
+          if (source[i] === "$" && source[i + 1] === "{") {
+            let inner = 1;
+            let j = i + 2;
+            while (j < source.length && inner > 0) {
+              if (source[j] === "{") inner += 1;
+              else if (source[j] === "}") inner -= 1;
+              j += 1;
+            }
+            code += ` ${source.slice(i + 2, j - 1)} `;
+            i = j;
+            continue;
+          }
+          i += 1;
+        }
+        i += 1;
+        code += '""';
+        continue;
+      }
+      if (ch === "(") depth += 1;
+      else if (ch === ")") depth -= 1;
+      if (depth > 0) code += ch;
+      i += 1;
+    }
+    if (CREDENTIAL_NAME.test(code)) found.push(`console.${match[1]}(${code.trim().slice(0, 80)})`);
+  }
+  return found;
+}

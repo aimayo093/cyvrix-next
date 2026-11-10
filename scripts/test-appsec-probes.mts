@@ -1,7 +1,7 @@
 /**
  * Parsing behind the live Security Center probes. Run: npm run test:appsec
  */
-import { clientBundlePaths } from "../lib/appsec-probe-parse";
+import { clientBundlePaths, credentialLogCalls } from "../lib/appsec-probe-parse";
 import { heldBackBy, upgradeTarget } from "../lib/dependency-freshness";
 import { countHit, MemoryStore, RateLimitError, type RateLimitStore } from "../lib/rate-limit-core";
 import { needsSecondFactor, sessionVersionMatches } from "../lib/session-rules";
@@ -203,6 +203,15 @@ check("client is not required to", needsSecondFactor("CLIENT", null), false);
   check("suffix match ignores case", breachCountFromRange(body, suffix.toLowerCase()), 10434004);
   check("padding line (count 0) is not a breach", breachCountFromRange(body, "ABCDEF0123456789ABCDEF0123456789ABC"), 0);
   check("absent suffix is clear", breachCountFromRange(body, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), 0);
+}
+
+// Credential-in-log detection looks at code, not message text.
+{
+  check("a word inside a log message is not a credential", credentialLogCalls(`console.warn("[breached-passwords] lookup failed", error.name);`), []);
+  check("template text is ignored too", credentialLogCalls("console.warn(`[breached-passwords] returned ${response.status}`);"), []);
+  check("a credential variable is caught", credentialLogCalls(`console.log("login", password);`).length, 1);
+  check("a credential inside a template expression is caught", credentialLogCalls("console.error(`token was ${session.accessToken}`);").length, 1);
+  check("a credential property is caught", credentialLogCalls(`console.info(user.passwordHash)`).length, 1);
 }
 
 // Audit-log hash chain, as the Security Center reports it.
