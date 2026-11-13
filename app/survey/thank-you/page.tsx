@@ -1,6 +1,7 @@
 import * as React from "react";
 import { CheckCircle2, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { companyFacts } from "@/lib/company-facts";
 
 export const metadata = {
   title: "Thank You",
@@ -58,7 +59,7 @@ export default function ThankYouPage() {
         </div>
 
         <div className="text-slate-600 text-[10px] uppercase font-bold tracking-widest pt-8">
-          CYVRIX Technologies Ltd
+          {companyFacts.registeredName}
         </div>
       </div>
     </main>
