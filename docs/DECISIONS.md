@@ -170,6 +170,24 @@ dependency with a moderate or worse advisory. That audit does not cover
 development-only packages, which is where both of today's held-back packages
 sit.
 
+**A firewall challenge is not the site's answer** (13 November 2026). The live
+checks request the site's own public URL, so Vercel's bot protection
+challenges them like any other non-browser client: HTTP 429, with
+`x-vercel-mitigated: challenge`, before the site is reached. The scan was
+reading that page as the site's, which gave false failures in both directions:
+"security headers missing" and "routes erroring (429)", while the probes for
+exposed `.env` and `.git` files *passed*, because a 429 is not a 200. A false
+pass on a security check is the worse of the two. Now every live request:
+- sends `x-cyvrix-scan-key` when `SECURITY_SCAN_BYPASS_KEY` is set (at least
+  32 characters), which a firewall rule bypasses (DEPLOYMENT.md, "Let the
+  Security Center's scan through");
+- reports a challenged response as **not assessed**, never pass or fail
+  (`lib/firewall-challenge.ts`).
+
+The key bypasses bot protection only. It is a header rather than a path rule,
+because the scan probes paths such as `/.env` that must stay challenged for
+everyone else. Do not "fix" a blocked scan by turning bot protection off.
+
 ---
 
 ## 6. Two-factor authentication
