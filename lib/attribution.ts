@@ -165,6 +165,11 @@ export function payloadFor(memory: TouchMemory, formPage: string): string {
 }
 
 // Page-lifetime only: no cookie, no storage. A full page load starts again.
+// The public header and footer links force full page loads (app/(public)/
+// layout.tsx, FORCE_FULL_PAGE_RELOAD), so a campaign is kept only when the
+// visitor reaches a form without using them. Founder decision, 14 November
+// 2026 (DECISIONS §16): accept that rather than store anything on the device;
+// "How did you hear about us?" and aggregate analytics cover the rest.
 let memory: TouchMemory = null;
 
 export function recordTouch(): void {

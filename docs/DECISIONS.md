@@ -564,6 +564,15 @@ enquiry source only (Paperclip CYV-31, CYV-32).
   (`lib/legal-content.ts`) discloses it ("How you found us") with legitimate
   interest as the basis. The **published** policy is the CMS copy, which must
   be updated through Admin → Legal Pages before this ships (§3).
+- **Known limit, accepted (founder, 14 November 2026).** The public header
+  and footer links force a full page load (`FORCE_FULL_PAGE_RELOAD`, so a page
+  never reappears with stale state), and a full load clears the tab's memory.
+  A visitor who lands from a campaign and then clicks Contact in the header is
+  recorded by what the contact page can see, usually "direct". Considered and
+  declined: keeping the source in session storage for visitors who accept
+  analytics cookies, which needs a cookie-policy entry and more privacy
+  wording. "How did you hear about us?" and aggregate traffic figures carry
+  the rest. Revisit if campaign-level attribution becomes worth that change.
 - **`Lead.source` is not reused.** It says which form an enquiry came from and
   the CRM list and dashboards depend on it; the marketing source is separate.
 - **The server decides.** The browser's JSON is a hint: keys allow-listed,
