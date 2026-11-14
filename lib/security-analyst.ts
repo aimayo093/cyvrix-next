@@ -140,6 +140,12 @@ const CHECK_GUIDANCE: Record<
     impact: "The audit log is the record of who changed what. Without it, administrative activity cannot be reconstructed.",
     remediation: "Confirm the audit_log table is present and writable by the application role.",
   },
+  audit_chain: {
+    failSeverity: "high",
+    warnSeverity: "medium",
+    impact: "A broken hash chain means an audit entry was changed or removed after it was written, so the record of who changed what can no longer be trusted.",
+    remediation: "Treat as a possible incident: note the first broken entry, compare the latest fingerprint with the last one recorded outside the database, and review database access since then.",
+  },
   tickets: {
     failSeverity: "low",
     warnSeverity: "info",

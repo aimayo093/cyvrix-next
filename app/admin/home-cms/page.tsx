@@ -1,3 +1,4 @@
+import type { CmsJson } from "@/lib/cms-json";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -10,7 +11,7 @@ import { Save, Home, Layout, MessageSquare, Megaphone, AlertCircle, CheckCircle2
 
 export const metadata = { title: "Home Page CMS" };
 
-export default function HomeCmsPage(props: any) {
+export default function HomeCmsPage(props: React.ComponentProps<typeof HomeCmsPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <HomeCmsPageContent {...props} />
@@ -50,12 +51,12 @@ async function HomeCmsPageContent({
   const sections = homePage.sections;
   
   const hero = sections.find((s) => s.sectionType === "Hero");
-  const heroSettings = ((hero?.settingsJson ?? {}) as Record<string, any>);
+  const heroSettings = ((hero?.settingsJson ?? {}) as CmsJson);
   
   const services = sections.find((s) => s.sectionType === "Service cards");
   
   const why = sections.find((s) => s.sectionType === "Image and text");
-  const whySettings = ((why?.settingsJson ?? {}) as Record<string, any>);
+  const whySettings = ((why?.settingsJson ?? {}) as CmsJson);
   
   const testimonials = sections.find((s) => s.sectionType === "Testimonials");
   

@@ -16,18 +16,14 @@ import {
   MessageSquare,
   Sparkles,
   AlertTriangle,
-  Mail,
-  Clock,
   CheckCircle2,
   Settings,
-  List,
   RefreshCw,
-  Search,
 } from "lucide-react";
 
 export const metadata = { title: "Satisfaction Surveys" };
 
-export default function SurveysAdminPage(props: any) {
+export default function SurveysAdminPage(props: React.ComponentProps<typeof SurveysAdminPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <SurveysAdminPageContent {...props} />
@@ -347,7 +343,7 @@ async function SurveysAdminPageContent({
                       {/* Comments */}
                       {resp.comments && (
                         <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-xs text-slate-600 italic">
-                          "{resp.comments}"
+                          &quot;{resp.comments}&quot;
                         </div>
                       )}
 
@@ -444,7 +440,7 @@ async function SurveysAdminPageContent({
                         {activeResponse.internalNotes && (
                           <div className="border-t border-emerald-200/50 pt-2 mt-2">
                             <p className="font-bold text-slate-800">Internal Audit Notes:</p>
-                            <p className="italic text-slate-600 mt-1">"{activeResponse.internalNotes}"</p>
+                            <p className="italic text-slate-600 mt-1">&quot;{activeResponse.internalNotes}&quot;</p>
                           </div>
                         )}
                       </div>
@@ -473,7 +469,7 @@ async function SurveysAdminPageContent({
                   <div className="text-center py-12 text-slate-300">
                     <MessageSquare className="h-10 w-10 mx-auto mb-3" />
                     <p className="text-sm font-semibold text-slate-400">
-                      Click "Review details" on a survey submission to view metadata and add internal notes.
+                      Click &quot;Review details&quot; on a survey submission to view metadata and add internal notes.
                     </p>
                   </div>
                 )}

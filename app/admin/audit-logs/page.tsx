@@ -27,7 +27,7 @@ const ACTION_COLORS: Record<string, string> = {
   site_setting_updated: "bg-purple-50 text-purple-600 border-purple-100",
 };
 
-export default function AuditLogsPage(props: any) {
+export default function AuditLogsPage(props: React.ComponentProps<typeof AuditLogsPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <AuditLogsPageContent {...props} />

@@ -16,7 +16,12 @@
  * its own words rather than reporting a bare pass.
  */
 import fs from "node:fs";
+import { credentialLogCalls } from "../lib/appsec-probe-parse";
 import path from "node:path";
+
+/** The route passes every request through the Paperclip gate: bearer token and rate limit. */
+const usesBearerGate = (source: string) =>
+  /from\s+["']@\/lib\/paperclip-route["']/.test(source) && /\bawait\s+guard\(req,\s*["'](read|draft)["']\)/.test(source);
 
 /**
  * "not_applicable": the scan looked and the feature does not exist (no
@@ -128,8 +133,12 @@ const add = (f: AppSecFinding) => findings.push(f);
 
 // ── 20. CSRF ───────────────────────────────────────────────────────────────
 {
+  // A route that authenticates only with a bearer token is not exposed to
+  // CSRF: a forged cross-site request carries the victim's cookies, never an
+  // Authorization header. The Paperclip gate (lib/paperclip-route.ts) is one.
   const unprotected = mutatingRoutes
     .filter((r) => !/origin|referer|csrf|x-requested-with/i.test(r.source))
+    .filter((r) => !usesBearerGate(r.source))
     .map((r) => r.path);
 
   add({
@@ -301,7 +310,10 @@ const add = (f: AppSecFinding) => findings.push(f);
 // ── 28. Rate limits ────────────────────────────────────────────────────────
 {
   const publicMutating = mutatingRoutes.filter((r) => !/\/admin\/|\/cron\//.test(r.path));
-  const unlimited = publicMutating.filter((r) => !/enforceRateLimit|rateLimit/i.test(r.source)).map((r) => r.path);
+  // The Paperclip gate rate-limits by address and by scope before any work.
+  const unlimited = publicMutating
+    .filter((r) => !/enforceRateLimit|rateLimit/i.test(r.source) && !usesBearerGate(r.source))
+    .map((r) => r.path);
 
   add({
     id: "appsec_rate_limits",
@@ -443,16 +455,14 @@ const add = (f: AppSecFinding) => findings.push(f);
 {
   const risky = sourceFiles
     .map((f) => ({ path: rel(f), source: read(f) }))
-    .filter(({ source }) =>
-      /console\.(log|error|warn|info)\s*\([^)]*(password|secret|token|apiKey|passwordHash|authorization)/i.test(source)
-    )
+    .filter(({ source }) => credentialLogCalls(source).length > 0)
     .map((f) => f.path);
 
   add({
     id: "appsec_log_exposure",
     label: "Sensitive values in logs",
     status: risky.length === 0 ? "pass" : "fail",
-    method: "Searched every log statement for credential-shaped variable names.",
+    method: "Searched every log statement's code (not its message text) for credential-shaped names.",
     detail:
       risky.length === 0
         ? "No log statement writes a credential-shaped value."

@@ -64,7 +64,7 @@ async function verifyHmac(
   data: string
 ): Promise<boolean> {
   const enc = new TextEncoder();
-  return crypto.subtle.verify("HMAC", key, signature as any, enc.encode(data));
+  return crypto.subtle.verify("HMAC", key, signature as BufferSource, enc.encode(data));
 }
 
 /**

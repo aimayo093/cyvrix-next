@@ -1,5 +1,6 @@
 "use client";
 
+import type { CmsJson } from "@/lib/cms-json";
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,7 +10,7 @@ import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
-  navItems: any[];
+  navItems: CmsJson[];
   logoDefault?: string;
   logoWhite?: string;
   logoDark?: string;
@@ -68,6 +69,14 @@ export function Navbar({
   const [activeDropdown, setActiveDropdown] = React.useState<string | null>(null);
   const pathname = usePathname();
 
+  // Close menus when the path changes. Adjusted during render rather than in
+  // an effect, so the closed state is drawn in the same pass.
+  const [menuPath, setMenuPath] = React.useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setActiveDropdown(null);
+  }
+
   React.useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", handleScroll);
@@ -82,9 +91,8 @@ export function Navbar({
     }
   }, []);
 
-  // Close menus on path changes
+  // Reset scroll and the mobile menu toggle on path changes.
   React.useEffect(() => {
-    setActiveDropdown(null);
     if (typeof window !== "undefined") {
       window.scrollTo(0, 0);
       const mobileNavigationToggle = document.getElementById("cyvrix-mobile-navigation-toggle") as HTMLInputElement | null;
@@ -101,7 +109,7 @@ export function Navbar({
     items.forEach((item) => {
       map.set(item.id, { ...item, children: [] });
     });
-    const roots: any[] = [];
+    const roots: CmsJson[] = [];
     items.forEach((item) => {
       const mapped = map.get(item.id);
       if (item.parentId && map.has(item.parentId)) {
@@ -232,7 +240,7 @@ export function Navbar({
                           "absolute left-0 mt-2 w-64 rounded-xl border p-2 shadow-2xl transition-all duration-200 opacity-0 invisible translate-y-2 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 z-50",
                           scrolled ? "bg-[#041635] border-white/10" : "bg-white border-slate-100"
                         )}>
-                          {item.children.map((child: any) => (
+                          {item.children.map((child: CmsJson) => (
                             <CustomLink
                               key={child.id}
                               href={child.url}
@@ -261,6 +269,7 @@ export function Navbar({
                 <div className={cn("flex items-center pl-6 border-l", scrolled ? "border-white/10" : "border-slate-200")}>
                   {(() => {
                     const cta = menuTree.find((i) => i.iconKey === "button-cta");
+                    if (!cta) return null;
                     return (
                       <Button
                         size="default"
@@ -314,7 +323,7 @@ export function Navbar({
                       </CustomLink>
                       {hasChildren && (
                         <div className="pl-4 space-y-1.5 mt-1 pb-2">
-                          {item.children.map((child: any) => (
+                          {item.children.map((child: CmsJson) => (
                             <CustomLink
                               key={child.id}
                               href={child.url}
@@ -357,6 +366,7 @@ export function Navbar({
                     <Button className="w-full justify-center bg-[#2691F0] text-white rounded font-bold py-3.5" asChild>
                       {(() => {
                         const cta = menuTree.find((i) => i.iconKey === "button-cta");
+                        if (!cta) return null;
                         return (
                           <CustomLink
                             href={cta.url}

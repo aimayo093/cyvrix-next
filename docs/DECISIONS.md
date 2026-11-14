@@ -424,3 +424,123 @@ devices apart; both are kept while the session lives and swept 30 days after
 it ends. `lastSeenAt` is refreshed at most every five minutes, so reading a
 session rarely writes. Tokens from before rows existed name none and are
 refused, which signed every account out once when this shipped.
+
+## 14. Tier 2 hardening: script policy, leaked passwords, audit log
+
+**The script policy still allows inline scripts, on purpose.** A strict
+policy needs a per-request nonce, and Next.js can only add one to a page that
+renders on every request. That would turn off the cached pages that keep server cost down,
+for every visitor. What the policy forbids instead:
+inline event-handler attributes (`script-src-attr 'none'`, the usual way an
+injected `<img onerror>` runs), connections to any other origin
+(`connect-src 'self'` -- Sentry and Analytics both go through this origin), and
+plain-http subresources (`upgrade-insecure-requests`). CMS HTML is sanitised
+before render (`lib/rich-text.ts`). Revisit a nonce policy for `/admin` and
+`/portal` alone if those routes ever stop using cached shells.
+
+**New passwords are checked against known breaches.** Setting or changing any
+password (staff, portal, admin-created portal accounts) asks Have I Been
+Pwned's range API whether it has appeared in a breach. Only the first five
+characters of its SHA-1 leave the server, and padding is requested, so the
+service learns nothing usable. The check **fails open**: if the service is
+down or slow (3 seconds) the password is judged on length alone and a warning
+is logged. Refusing every password change during someone else's outage would
+trap people in the password they are trying to replace. Sign-in is not
+checked; the existing password was already accepted and a breach notice there
+would only teach people to ignore it. Portal accounts created by an
+administrator now also need 8 characters, which they did not before.
+
+**The audit log is append-only and hash-chained.** The database, not the
+application, numbers each entry and stores the SHA-256 of its contents plus
+the previous entry's hash (migration 20261111000000), under an advisory lock
+so concurrent writers cannot fork the chain. Triggers refuse UPDATE, DELETE
+and TRUNCATE. `audit_log_verify()` walks the chain and the Security Center
+reports the first entry that no longer matches.
+
+- What it does not stop: the database owner can drop the triggers and rewrite
+  the whole chain from the edited entry on. The latest fingerprint is shown in
+  the Security Center check so it can be noted elsewhere; a copy kept outside
+  the database is what would catch a full rewrite.
+- The Prisma client omits the three chain columns from every query
+  (`lib/prisma.ts`), so a BigInt never reaches a page or a cache.
+- Audit entries can contain an email address. They are kept as security
+  records; erasing one is a deliberate owner-level step (DEPLOYMENT.md), not
+  something the app can do.
+
+**security.txt** is served at `/.well-known/security.txt`. Its contact is the
+support address from Contact Us CMS, falling back to the DPO address, so it
+never names an inbox nobody reads. `Expires` is 180 days from when the file was
+last built, and it is rebuilt hourly, so it only lapses if the site stops
+being maintained.
+
+---
+
+## 15. The Executive OS feed and Paperclip
+
+**The website shares its enquiries with the Executive OS (CYVRIX's operations
+app, repository aimayo093/AI-CEO) through a read-only pull feed, not a push.**
+
+Why: the Executive OS runs on the company's own computer, not on the internet,
+so the website cannot reach it. It calls
+`GET /api/integrations/executive-os/feed` every few minutes with a bearer
+token (`EXECUTIVE_OS_FEED_TOKEN`, at least 32 characters, compared in
+constant time). Unset, the route answers 404.
+
+What it returns is deliberately narrow:
+- **Leads** (contact form, consultation bookings, assessment and quote requests). Only the visitor's own answers from the payload are included.
+- **Tickets**, and **client-visible ticket messages** only.
+- **Privacy rights requests**, so the statutory clock is visible in both places.
+- **Unsubscribed newsletter addresses**, so outreach from the Executive OS never contacts them.
+
+It never writes, and never returns staff accounts, internal notes, staff-only
+messages, sessions or settings. The website stays the system of record for
+everything it owns: ticket replies and lead status are still managed in
+`/admin`.
+
+**Would change it:** the Executive OS moving to a public HTTPS host. The website
+could then push enquiries as they arrive and embed its chat assistant, which
+needs `script-src` and `frame-src` in `next.config.ts` to allow that host.
+
+### Paperclip: agents read and propose; a person publishes
+
+**Paperclip** (an open-source system that runs AI agents as a company) runs on
+the company's own computer and uses the same pull model as the feed above: its
+agents call the website, never the other way round. Setup is
+`docs/PAPERCLIP.md`; what agents are told is `docs/paperclip-skill.md`.
+
+- **Two tokens, two scopes.** `PAPERCLIP_READ_TOKEN` reads the feed and the
+  company snapshot. `PAPERCLIP_DRAFT_TOKEN` submits drafts and reads their
+  review result, and cannot read client data, so an agent that only writes
+  copy never holds it. If the two are set to the same value, drafting is
+  switched off: one leaked secret must not grant both. `EXECUTIVE_OS_FEED_TOKEN`
+  still opens the read scope, and `/api/integrations/executive-os/feed` is kept
+  as an alias.
+- **Agents never change a record.** In this version they submit blog posts,
+  emails, social posts and proposals into `AgentDraft`. Approving a blog draft
+  creates an *unpublished* post; approving an email fills in the Email page;
+  social posts are copied and posted by hand; proposals are carried out by a
+  person. Nothing an agent sends is public without a person's action.
+- **The claims rules block approval.** `lib/claim-rules.ts` is the single list
+  used by `npm run check:claims` and by every draft. A blog, email or social
+  draft with a finding cannot be approved until it is edited clean; there is
+  no override, for the same reason as section 2. Proposals are internal and
+  never published, so they are not blocked.
+- **Plain text only.** The blog renders paragraphs as text, email goes as text,
+  social posts are text: HTML from an agent is stripped, not sanitised. The
+  blog shows at most 24 paragraphs and 8 tags and silently dropped the rest, so
+  drafts over those limits are refused at submission instead.
+- **Client data leaves Vercel.** The read scope hands enquiry and ticket
+  details to a machine outside Vercel and Supabase, where Paperclip's agents
+  may pass them to an AI model provider. The privacy notice must say so before
+  the read token is set; the proposed wording is in the pull request that
+  added this, for sign-off, because it is a public statement.
+- **Firewall.** Bot protection challenges non-browser requests, so the
+  integration needs a Vercel firewall bypass rule for `/api/integrations/`
+  (docs/PAPERCLIP.md step 3). The routes are still token-protected and
+  rate-limited.
+
+**Would change it:** letting an approved proposal carry itself out (moving a
+lead's status, sending a ticket reply) is a deliberate next step, not an
+oversight; it needs an allow-list of actions and its own review. Scheduled
+blog publishing, and a webhook from the site to Paperclip, need Paperclip on a
+public HTTPS host.

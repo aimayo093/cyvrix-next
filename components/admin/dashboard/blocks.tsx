@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowRight, CheckCircle2, Shield, ShieldAlert, ShieldCheck } from "lucide-react";
+import { pendingDraftCount } from "@/lib/agent-drafts";
 import { loadRecentActivity, loadSecuritySummary, loadWebsiteActivity } from "@/lib/dashboard/loaders";
 import { QUEUE_LIMIT, summarySentence, type QueueKind } from "@/lib/dashboard/queue";
 import { seriesTotal, type DayCount } from "@/lib/dashboard/series";
@@ -228,12 +229,23 @@ export async function SecurityBlock() {
 // ── Website ────────────────────────────────────────────────────────────────
 
 export async function WebsiteBlock({ range }: { range: RangeDays }) {
-  const [activity, traffic] = await Promise.all([loadWebsiteActivity(), todayTraffic(range)]);
+  const [activity, traffic, aiDrafts] = await Promise.all([
+    loadWebsiteActivity(),
+    todayTraffic(range),
+    pendingDraftCount().catch(() => null),
+  ]);
   return (
     <section aria-labelledby="website-heading" className={`${CARD} p-5`}>
       <h2 id="website-heading" className="font-outfit text-lg font-black text-[#041635]">
         Website
       </h2>
+      {aiDrafts !== null && aiDrafts > 0 && (
+        <p className="mt-2 text-sm font-semibold text-slate-600">
+          <Link href="/admin/ai-drafts" className="text-[#0f5aab] hover:underline">
+            {aiDrafts} AI {aiDrafts === 1 ? "draft" : "drafts"} waiting for review
+          </Link>
+        </p>
+      )}
       {!activity.ok ? (
         <div className="mt-2">
           <BlockError what="Recent site changes" />
