@@ -18,6 +18,7 @@
  */
 import { companyFacts } from "@/lib/company-facts";
 import { canPublishFounderIdentity, founder, founderCertifications } from "@/lib/founder";
+import { REGISTERED_OFFICE } from "@/lib/company-registered-office";
 
 export const SITE_URL = "https://cyvrix.co.uk";
 
@@ -63,7 +64,7 @@ function toIsoDate(readable: string): string | undefined {
  */
 function registeredAddress(): JsonLdObject {
   if (companyFacts.publishRegisteredOffice) {
-    const [street, locality, region, postcode] = companyFacts.registeredOffice
+    const [street, locality, region, postcode] = REGISTERED_OFFICE
       .split(",")
       .map((part) => part.trim());
 
