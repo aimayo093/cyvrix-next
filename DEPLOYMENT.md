@@ -228,9 +228,23 @@ A new release waits three days before Dependabot proposes it, which keeps the
 site clear of most hijacked-package incidents.
 
 Every PR runs CI (`.github/workflows/ci.yml`): a production dependency audit,
-the type check, `check:claims`, the test suites and a production build. Merge a
-Dependabot PR when CI is green and the Vercel preview looks right. Nothing
-merges itself.
+the type check, `check:claims`, the test suites and a production build.
+
+**Patch and minor updates merge themselves once CI passes**
+(`.github/workflows/dependabot-auto-merge.yml`, founder decision 14 November
+2026); the merge deploys to production like any other. **Major updates never
+do**: the workflow comments on the PR, and a person merges it after reading
+the changelog and checking the Vercel preview.
+
+This needs two repository settings, once:
+
+1. **Settings → General → Pull Requests → Allow auto-merge**: on.
+2. **Settings → Branches** (or Rules) for `main`: `CI / verify` is a required
+   status check, so auto-merge waits for it. Without a required check,
+   auto-merge would merge immediately.
+
+If the AI code reviewer is required to resolve its comments before merging, a
+Dependabot PR it comments on waits for a person too.
 
 `@types/node` follows the Node.js runtime in `package.json` `engines`
 (currently 24.x), not the newest Node. To move to a new Node major, change
@@ -242,6 +256,19 @@ ESLint stays on 9 until `eslint-config-next`'s bundled plugins
 ## Former Laravel Request
 
 The Laravel project was removed per earlier instruction. If CYVRIX later needs a Laravel backend/admin, host that separately on Laravel-friendly hosting and keep this Next.js app as either the frontend or a replacement full-stack platform.
+
+## Email history and Inbox (20261114180000)
+
+1. Apply `prisma/migrations/20261114180000_email_messages` to production
+   **before** deploying: the send action records each message in the new
+   `EmailMessage` table.
+2. The Inbox reads the SMTP account over IMAP on port 993 by default
+   (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`). Set `IMAP_HOST`, `IMAP_PORT`,
+   `IMAP_USER` or `IMAP_PASSWORD` only if the inbox differs. A port other than
+   993 must support STARTTLS; the sync refuses to log in without TLS.
+3. `vercel.json` adds a daily `/api/cron/email-sync` (06:30 UTC), which uses
+   the existing `CRON_SECRET`. It syncs the Inbox and deletes email history
+   older than 24 months, and returns 500 if either fails.
 
 ## Password reset (20261115090000)
 

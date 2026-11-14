@@ -95,3 +95,22 @@ export function getServerSmtpConfig(): ServerSmtpConfig | null {
 
   return { host, port, user, password };
 }
+
+export type ServerImapConfig = { host: string; port: number; user: string; password: string };
+
+/**
+ * The mailbox the admin Inbox reads (DECISIONS §17). Defaults to the SMTP
+ * account, since one mailbox usually serves both on the same host; the
+ * IMAP_* variables override any part. Port 993 is implicit TLS.
+ */
+export function getServerImapConfig(): ServerImapConfig | null {
+  const host = firstEnvironmentValue("IMAP_HOST", "SMTP_HOST", "MAIL_HOST");
+  const user = firstEnvironmentValue("IMAP_USER", "SMTP_USER", "MAIL_USERNAME");
+  const password = firstEnvironmentValue("IMAP_PASSWORD", "SMTP_PASSWORD", "MAIL_PASSWORD");
+  const port = Number.parseInt(firstEnvironmentValue("IMAP_PORT") || "993", 10);
+
+  if (!host || !user || !password || !Number.isInteger(port) || port < 1 || port > 65_535) {
+    return null;
+  }
+  return { host, port, user, password };
+}

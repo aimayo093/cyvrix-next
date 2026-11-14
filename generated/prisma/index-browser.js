@@ -1430,6 +1430,23 @@ exports.Prisma.PasswordResetTokenScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.EmailMessageScalarFieldEnum = {
+  id: 'id',
+  direction: 'direction',
+  mailbox: 'mailbox',
+  status: 'status',
+  externalId: 'externalId',
+  fromAddress: 'fromAddress',
+  toAddress: 'toAddress',
+  subject: 'subject',
+  textBody: 'textBody',
+  attachmentNames: 'attachmentNames',
+  error: 'error',
+  sentById: 'sentById',
+  occurredAt: 'occurredAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1674,7 +1691,8 @@ exports.Prisma.ModelName = {
   SurveyResponse: 'SurveyResponse',
   WorkOrder: 'WorkOrder',
   AgentDraft: 'AgentDraft',
-  PasswordResetToken: 'PasswordResetToken'
+  PasswordResetToken: 'PasswordResetToken',
+  EmailMessage: 'EmailMessage'
 };
 
 /**

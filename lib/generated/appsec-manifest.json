@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-14T23:11:18.580Z",
-  "fileCount": 254,
-  "apiRouteCount": 17,
+  "generatedAt": "2026-11-14T23:47:57.933Z",
+  "fileCount": 257,
+  "apiRouteCount": 18,
   "mutatingRouteCount": 10,
   "findings": [
     {
