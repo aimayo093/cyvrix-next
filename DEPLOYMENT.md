@@ -116,8 +116,12 @@ the Security Center shows "Audit Log Integrity" as not assessed.
 **The baseline order is not evidence of history.** Existing entries are chained
 in `createdAt, id` order, because the original insertion order is not recorded.
 Entries with the same timestamp are ordered by id, which is arbitrary. The
-chain proves entries were not changed *after* the migration; it says nothing
-about the order or completeness of entries written before it.
+chain detects changes made after the migration through the application or by
+anyone without owner rights. A database owner who drops the triggers and
+rewrites an entry and every hash after it would still pass; only comparing the
+latest fingerprint with one recorded outside the database catches that. It
+says nothing about the order or completeness of entries written before the
+migration.
 
 Before it was applied, it was dry-run against production inside a transaction
 that was rolled back: 455 entries chained and verified, a client-supplied hash
