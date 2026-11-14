@@ -154,6 +154,7 @@ check("snapshot queue items carry no name, company or subject", /item\.(title|de
   check("fragments are dropped", pages.some((p) => p.path === "/contact"), true);
   check("a lookalike public path is kept", pages.some((p) => p.path === "/administration-services"), true);
   check("no personal value survives", JSON.stringify(pages).includes("@"), false);
+  check("an overlong path is skipped, not truncated", publicTopPages([{ path: `/${"a".repeat(250)}`, pageviews: 1 }, { path: `/${"a".repeat(250)}b`, pageviews: 1 }]), []);
   check("at most ten pages", publicTopPages(Array.from({ length: 20 }, (_, i) => ({ path: `/p${i}`, pageviews: i }))).length, 10);
 }
 

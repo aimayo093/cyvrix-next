@@ -13,14 +13,17 @@ const PRIVATE_PREFIXES = ["/admin", "/portal", "/login", "/api", "/security-setu
 /**
  * The website's most-viewed public pages, for the snapshot: query strings and
  * fragments removed (they can carry campaign or personal values), private or
- * token-bearing routes left out, at most ten. Agents run on a model outside the
- * UK, so only page paths and their counts leave the site.
+ * token-bearing routes left out. The analytics query returns five pages
+ * (lib/site-traffic.ts); ten is only a ceiling. Agents run on a model outside
+ * the UK, so only page paths and their counts leave the site.
  */
 export function publicTopPages(pages: { path: string; pageviews: number }[]): { path: string; pageviews: number }[] {
   const totals = new Map<string, number>();
   for (const page of pages) {
-    const path = (page.path.split(/[?#]/)[0] || "/").slice(0, 200);
-    if (!path.startsWith("/")) continue;
+    const path = page.path.split(/[?#]/)[0] || "/";
+    // Skipped, not truncated: cutting would merge distinct long paths under
+    // a path that may not exist.
+    if (!path.startsWith("/") || path.length > 200) continue;
     if (PRIVATE_PREFIXES.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) continue;
     totals.set(path, (totals.get(path) ?? 0) + page.pageviews);
   }

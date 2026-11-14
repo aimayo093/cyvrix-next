@@ -559,8 +559,9 @@ agents call the website, never the other way round. Setup is
 - **No personal data to a model outside the UK.** Cyvrix's agents run on
   DeepSeek, which processes data in China, and there is no lawful transfer
   basis for client personal data. So `/snapshot` carries counts, kinds and
-  ages only (no names, companies, subjects or ticket numbers), plus the ten
-  most-viewed public page paths with their counts: query strings dropped,
+  ages only (no names, companies, subjects or ticket numbers), plus the
+  most-viewed public page paths with their counts (five, as the analytics
+  query returns them): query strings dropped, overlong paths skipped,
   survey, unsubscribe, privacy-request and signed-in routes left out
   (`lib/paperclip-snapshot-core.ts`). The read
   token must not be given to any agent on such a provider while `/feed` holds
