@@ -34,8 +34,20 @@ export const SOCIAL_NETWORKS = ["linkedin", "facebook", "x", "instagram"] as con
  * sanitization). The output is text only, so a literal "<" in prose is lost;
  * that is the price of never emitting markup.
  */
+/** ASCII-only lower case: same length as the input, so indexes line up ("İ" would not). */
+const asciiLower = (value: string) => value.replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+
+/** Index of `</tag` followed by a name boundary (space, "/", ">" or the end), from `from`. */
+function closingTagAt(lower: string, tag: string, from: number): number {
+  for (let at = lower.indexOf(`</${tag}`, from); at !== -1; at = lower.indexOf(`</${tag}`, at + 1)) {
+    const after = lower[at + tag.length + 2];
+    if (after === undefined || after === ">" || after === "/" || /\s/.test(after)) return at;
+  }
+  return -1;
+}
+
 function stripMarkupOnce(value: string): string {
-  const lower = value.toLowerCase();
+  const lower = asciiLower(value);
   let out = "";
   let i = 0;
   while (i < value.length) {
@@ -50,13 +62,16 @@ function stripMarkupOnce(value: string): string {
       continue;
     }
     const close = value.indexOf(">", i + 1);
-    if (close === -1) break; // an unclosed tag drops the rest
+    if (close === -1) {
+      i += 1; // an unmatched "<" in prose ("x < 3") is dropped; the text after it stays
+      continue;
+    }
     const isClosing = lower[i + 1] === "/";
     const name = lower.slice(isClosing ? i + 2 : i + 1, close).trim().split(/[\s/]/)[0];
     if (!isClosing && (name.startsWith("script") || name.startsWith("style"))) {
       const tag = name.startsWith("script") ? "script" : "style";
-      const end = lower.indexOf(`</${tag}`, close + 1);
-      if (end === -1) break;
+      const end = closingTagAt(lower, tag, close + 1);
+      if (end === -1) break; // an unclosed script or style block drops the rest
       const endClose = value.indexOf(">", end);
       i = endClose === -1 ? value.length : endClose + 1;
       continue;
