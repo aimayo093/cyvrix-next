@@ -31,6 +31,10 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
     {
       heading: "Who we are",
       paragraphs: [
+        // No address argument on purpose: this module is also read by Node
+        // scripts (tests, check:claims), which cannot import the server-only
+        // lib/company-registered-office.ts. If publishRegisteredOffice is ever
+        // set to true, pass REGISTERED_OFFICE in from the legal page itself.
         registeredCompanyLine(),
         `We are the data controller for personal information collected through this website and the CYVRIX client portal. In this policy, "we", "us" and "our" mean ${companyFacts.registeredName}, trading as ${companyFacts.tradingName}.`,
         companyFacts.icoRegistered && isIcoRegistrationCurrent()

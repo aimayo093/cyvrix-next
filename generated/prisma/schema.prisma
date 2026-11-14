@@ -516,6 +516,13 @@ model AuditLog {
   ipAddress  String?
   metadata   Json     @default("{}")
   createdAt  DateTime @default(now())
+  /// Position in the hash chain. Set by the database on insert, never by the app.
+  seq        BigInt?  @unique
+  /// The previous entry's hash. Set by the database on insert.
+  prevHash   String?
+  /// SHA-256 of this entry and prevHash. Set by the database on insert.
+  /// Rows cannot be updated or deleted; see migration 20261111000000.
+  hash       String?
 
   @@schema("public")
 }
@@ -1931,5 +1938,42 @@ model WorkOrder {
   ClientCompany ClientCompany? @relation(fields: [clientCompanyId], references: [id])
 
   @@map("work_orders")
+  @@schema("public")
+}
+
+/// A draft or proposal submitted by a Paperclip agent. Never public until an
+/// administrator approves it in /admin/ai-drafts. See migration 20261111120000.
+model AgentDraft {
+  id               String           @id
+  /// blog, email, social or proposal
+  kind             String
+  status           AgentDraftStatus @default(PENDING)
+  title            String
+  body             String
+  payload          Json             @default("{}")
+  claimFindings    Json             @default("[]")
+  sourceAgent      String
+  sourceRole       String?
+  paperclipIssueId String?
+  idempotencyKey   String           @unique
+  reviewerId       String?
+  reviewNote       String?
+  reviewedAt       DateTime?
+  publishedRef     String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @default(now()) @updatedAt
+
+  @@index([status, kind, createdAt])
+  @@index([updatedAt])
+  @@schema("public")
+}
+
+/// Where a Paperclip draft is in review. PUBLISHED means sent or posted.
+enum AgentDraftStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PUBLISHED
+
   @@schema("public")
 }

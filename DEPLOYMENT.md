@@ -79,6 +79,59 @@ production. It is idempotent: the grants it revokes are already revoked on
 production, so on that database it only adds two indexes (unread notifications,
 ended sessions). Nothing depends on it, so it can go before or after a deploy.
 
+## Paperclip AI drafts (20261111120000)
+
+**Done 10 November 2026:** applied to production (Cyvrix-Technology) and verified: 17 columns, 4 indexes, the four statuses, row-level security on, no anon or authenticated access.
+
+Apply `prisma/migrations/20261111120000_agent_drafts` to production. It adds
+the `AgentDraft` table (row-level security on, no anon or authenticated
+access). Nothing uses it until `PAPERCLIP_DRAFT_TOKEN` is set, so it can go
+before or after a deploy; until it is applied, /admin/ai-drafts says the
+drafts could not be loaded.
+
+It was dry-run against production inside a transaction that was rolled back:
+an unknown kind, an unknown status and a duplicate idempotency key were all
+refused, new drafts defaulted to PENDING, anon had no
+access, and row-level security was on.
+
+Then follow `docs/PAPERCLIP.md`: two tokens, the firewall bypass rule, and
+the agent skill file. Before setting the read token, the privacy notice line
+about Paperclip must be published (DECISIONS section 15).
+
+## Tamper-evident audit log (20261111000000)
+
+**Status: applied to production (Cyvrix-Technology) on 10 November 2026** and
+verified there: all 455 existing entries chained and verified, three triggers
+active, an UPDATE and a DELETE refused, and no anon or authenticated access to
+the functions. Nothing further to do for production.
+
+**For any other database** (a new environment, a restore into a fresh
+project): apply `prisma/migrations/20261111000000_tamper_evident_audit_log`.
+It adds three columns to `AuditLog`, chains every existing entry, and installs
+triggers that chain each new entry and refuse UPDATE, DELETE and TRUNCATE. The
+application never updates or deletes audit entries and leaves the new columns
+out of its queries, so it can go before or after a deploy. Until it is applied
+the Security Center shows "Audit Log Integrity" as not assessed.
+
+**The baseline order is not evidence of history.** Existing entries are chained
+in `createdAt, id` order, because the original insertion order is not recorded.
+Entries with the same timestamp are ordered by id, which is arbitrary. The
+chain detects changes made after the migration through the application or by
+anyone without owner rights. A database owner who drops the triggers and
+rewrites an entry and every hash after it would still pass; only comparing the
+latest fingerprint with one recorded outside the database catches that. It
+says nothing about the order or completeness of entries written before the
+migration.
+
+Before it was applied, it was dry-run against production inside a transaction
+that was rolled back: 455 entries chained and verified, a client-supplied hash
+was overwritten, and an UPDATE and a DELETE were both refused.
+
+**Erasing an audit entry** (for example a court order) now takes the table
+owner dropping `AuditLog_no_update_delete`, deleting, and recreating the
+trigger. The chain will then report the gap from that entry on, which is the
+point: record why in the audit log itself straight afterwards.
+
 ## Running scripts/apply-migrations.mjs
 
 The script verifies the database's TLS certificate and will not run without

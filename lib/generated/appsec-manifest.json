@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-14T01:20:35.630Z",
-  "fileCount": 223,
-  "apiRouteCount": 12,
-  "mutatingRouteCount": 9,
+  "generatedAt": "2026-11-14T05:11:54.273Z",
+  "fileCount": 247,
+  "apiRouteCount": 17,
+  "mutatingRouteCount": 10,
   "findings": [
     {
       "id": "appsec_xss",
@@ -21,7 +21,7 @@
       "id": "appsec_csrf",
       "label": "Cross-site request forgery",
       "status": "pass",
-      "method": "Checked 9 state-changing API route(s) for an origin, referer or CSRF token check.",
+      "method": "Checked 10 state-changing API route(s) for an origin, referer or CSRF token check.",
       "detail": "Every state-changing API route inspects request origin.",
       "limitation": "Server actions carry framework CSRF protection and are not counted here. The session cookie is SameSite, which already blocks the cross-site form post this describes, so an unflagged route is not necessarily exploitable.",
       "evidence": []
@@ -88,7 +88,7 @@
       "id": "appsec_rate_limits",
       "label": "Rate limiting on public endpoints",
       "status": "pass",
-      "method": "Checked 6 public state-changing route(s) for a rate limit call.",
+      "method": "Checked 7 public state-changing route(s) for a rate limit call.",
       "detail": "Every public state-changing route enforces a rate limit.",
       "limitation": "Does not evaluate whether the configured limits are appropriate, nor cover server actions.",
       "evidence": []
@@ -124,7 +124,7 @@
       "id": "appsec_input_validation",
       "label": "Request body validation",
       "status": "pass",
-      "method": "Checked 6 state-changing route(s) that read a request body for schema validation. Routes with no body are excluded.",
+      "method": "Checked 7 state-changing route(s) that read a request body for schema validation. Routes with no body are excluded.",
       "detail": "Every state-changing route validates its body against a schema.",
       "limitation": "Presence of a schema is not the same as a schema that constrains the right things.",
       "evidence": []
@@ -133,7 +133,7 @@
       "id": "appsec_log_exposure",
       "label": "Sensitive values in logs",
       "status": "pass",
-      "method": "Searched every log statement for credential-shaped variable names.",
+      "method": "Searched every log statement's code (not its message text) for credential-shaped names.",
       "detail": "No log statement writes a credential-shaped value.",
       "limitation": "Matches names. Logging a whole request or user object that happens to contain a secret would not be caught.",
       "evidence": []

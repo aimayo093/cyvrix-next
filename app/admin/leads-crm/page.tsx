@@ -9,7 +9,7 @@ import { formatDistanceToNow } from "date-fns";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { ADMIN_PAGE_SIZE, AdminPager, lastPageFor, parsePage } from "@/components/admin/AdminPager";
-import { Trash2, StickyNote } from "lucide-react";
+import { StickyNote } from "lucide-react";
 import { LeadStatus } from "@/generated/prisma";
 import { enquirySourceRows } from "@/lib/attribution-server";
 
@@ -53,7 +53,7 @@ const STATUS_COLORS: Record<LeadStatus, string> = {
   ARCHIVED: "bg-slate-50 text-slate-400 border-slate-100",
 };
 
-export default function LeadsCRMPage(props: any) {
+export default function LeadsCRMPage(props: React.ComponentProps<typeof LeadsCRMPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <LeadsCRMPageContent {...props} />

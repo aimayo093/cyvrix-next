@@ -1,3 +1,5 @@
+import Link from "next/link";
+import type { CmsJson } from "@/lib/cms-json";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -19,7 +21,7 @@ import { Plus, Pencil, Layers, ExternalLink, ArrowUp, ArrowDown } from "lucide-r
 
 export const metadata = { title: "Footer Builder CMS" };
 
-export default function FooterBuilderCMSPage(props: any) {
+export default function FooterBuilderCMSPage(props: React.ComponentProps<typeof FooterBuilderCMSPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <FooterBuilderCMSPageContent {...props} />
@@ -79,13 +81,13 @@ async function FooterBuilderCMSPageContent({
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
-          <a
+          <Link
             href="/admin/footer-builder?newSection=true"
             className="inline-flex items-center gap-2 bg-[#041635] text-white font-bold text-xs px-4 py-2.5 rounded-xl hover:bg-[#2691F0] transition-colors"
           >
             <Plus className="h-4 w-4" />
             Add Footer Column
-          </a>
+          </Link>
           {selectedSection && (
             <a
               href={`/admin/footer-builder?sectionId=${selectedSectionId}&newLink=true`}
@@ -446,7 +448,7 @@ function LinkFormFields({
   defaults,
 }: {
   pages: { id: string; title: string; slug: string }[];
-  defaults?: any;
+  defaults?: CmsJson;
 }) {
   return (
     <>

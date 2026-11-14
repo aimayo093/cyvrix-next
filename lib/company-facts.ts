@@ -19,15 +19,11 @@ export const companyFacts = {
   incorporatedOn: "17 August 2024",
   registeredIn: "England and Wales",
   /**
-   * The registered office as filed at Companies House.
-   *
-   * WITHHELD FROM THE PUBLIC SITE. It is a residential address, and
-   * `publishRegisteredOffice` is false, so nothing may render this value:
-   * not the footer, not a page, not JSON-LD. `scripts/check-claims.mts`
-   * enforces that. It stays here because it is the true filed fact and the
-   * site should not pretend otherwise internally.
+   * Whether the filed registered office may be published. It is residential,
+   * so false (DECISIONS §4). The address itself is NOT in this module, which
+   * client components import: it is in `lib/company-registered-office.ts`,
+   * behind `server-only`, so it can never reach a browser bundle.
    */
-  registeredOffice: "44 Addison Road, Neath, Wales, SA11 2AY",
   publishRegisteredOffice: false,
 
   /** Where we are based, for places a full postal address is more than is wanted. */
@@ -129,9 +125,11 @@ export const unverifiedDetails = [
  * company is registered in and the company number, and states the trading
  * location instead of the filed address.
  */
-export function registeredCompanyLine(): string {
-  const office = companyFacts.publishRegisteredOffice
-    ? `, with its registered office at ${companyFacts.registeredOffice}`
+export function registeredCompanyLine(registeredOffice?: string): string {
+  // The address is passed in by server code only (lib/company-registered-office.ts);
+  // client callers never have it, so they always state the location.
+  const office = companyFacts.publishRegisteredOffice && registeredOffice
+    ? `, with its registered office at ${registeredOffice}`
     : `, based in ${companyFacts.registeredLocation}`;
 
   return `${companyFacts.registeredName} is a ${companyFacts.companyType.toLowerCase()} registered in ${companyFacts.registeredIn}, company number ${companyFacts.companyNumber}${office}.`;

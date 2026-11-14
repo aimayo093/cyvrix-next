@@ -7,14 +7,14 @@ import { approveTestimonial, toggleFeaturedTestimonial, deleteTestimonial, creat
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { TrustPublicationFields } from "@/components/admin/TrustPublicationFields";
-import { Star, Trash2, CheckCircle, XCircle, Bookmark } from "lucide-react";
+import { Star, CheckCircle, XCircle, Bookmark } from "lucide-react";
 
 export const metadata = { title: "Testimonials" };
 
-export default function TestimonialsPage(props: any) {
+export default function TestimonialsPage() {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
-      <TestimonialsPageContent {...props} />
+      <TestimonialsPageContent />
     </React.Suspense>
   );
 }

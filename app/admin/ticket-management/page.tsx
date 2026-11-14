@@ -52,17 +52,7 @@ const STATUS_LABELS: Record<TicketStatus, string> = {
   CLOSED: "Closed",
 };
 
-const STATUS_COLORS: Record<TicketStatus, string> = {
-  NEW: "bg-blue-50 text-blue-600 border-blue-100",
-  OPEN: "bg-indigo-50 text-indigo-600 border-indigo-100",
-  IN_PROGRESS: "bg-violet-50 text-violet-600 border-violet-100",
-  WAITING_ON_CLIENT: "bg-amber-50 text-amber-600 border-amber-100",
-  ESCALATED: "bg-rose-50 text-rose-600 border-rose-100",
-  RESOLVED: "bg-emerald-50 text-emerald-600 border-emerald-100",
-  CLOSED: "bg-slate-50 text-slate-400 border-slate-100",
-};
-
-export default function TicketManagementPage(props: any) {
+export default function TicketManagementPage(props: React.ComponentProps<typeof TicketManagementPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <TicketManagementPageContent {...props} />

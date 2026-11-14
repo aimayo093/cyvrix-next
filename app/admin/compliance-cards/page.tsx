@@ -1,3 +1,5 @@
+import Link from "next/link";
+import type { CmsJson } from "@/lib/cms-json";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -18,7 +20,7 @@ import { Plus, Pencil, ShieldCheck, ArrowUp, ArrowDown } from "lucide-react";
 
 export const metadata = { title: "Compliance Framework Cards CMS" };
 
-export default function ComplianceCardsCMSPage(props: any) {
+export default function ComplianceCardsCMSPage(props: React.ComponentProps<typeof ComplianceCardsCMSPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <ComplianceCardsCMSPageContent {...props} />
@@ -55,13 +57,13 @@ async function ComplianceCardsCMSPageContent({
             Record evidence-backed credentials and frameworks. Nothing is public until it passes the review gate.
           </p>
         </div>
-        <a
+        <Link
           href="/admin/compliance-cards?newItem=true"
           className="inline-flex items-center gap-2 bg-[#2691F0] text-white font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-[#041635] transition-colors shrink-0"
         >
           <Plus className="h-4 w-4" />
           Add Trust Card
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -226,9 +228,9 @@ async function ComplianceCardsCMSPageContent({
                   <Button type="submit" className="flex-1 bg-[#041635] text-white hover:bg-[#2691F0] py-3 rounded-xl font-bold">
                     Create Card
                   </Button>
-                  <a href="/admin/compliance-cards" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl text-sm text-center">
+                  <Link href="/admin/compliance-cards" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl text-sm text-center">
                     Cancel
-                  </a>
+                  </Link>
                 </div>
               </form>
             )}
@@ -242,9 +244,9 @@ async function ComplianceCardsCMSPageContent({
                   <Button type="submit" className="flex-1 bg-[#041635] text-white hover:bg-[#2691F0] py-3 rounded-xl font-bold">
                     Save Changes
                   </Button>
-                  <a href="/admin/compliance-cards" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl text-sm text-center">
+                  <Link href="/admin/compliance-cards" className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-4 py-3 rounded-xl text-sm text-center">
                     Cancel
-                  </a>
+                  </Link>
                 </div>
               </form>
             )}
@@ -265,7 +267,7 @@ async function ComplianceCardsCMSPageContent({
   );
 }
 
-function ComplianceFormFields({ defaults }: { defaults?: any }) {
+function ComplianceFormFields({ defaults }: { defaults?: CmsJson }) {
   return (
     <>
       <label className="block text-sm font-bold text-slate-700">

@@ -1,5 +1,6 @@
 "use client";
 
+import type { CmsJson } from "@/lib/cms-json";
 import * as React from "react";
 import Link from "next/link";
 import {
@@ -22,9 +23,6 @@ import {
   Cpu,
   MonitorSmartphone,
   Check,
-  HelpCircle,
-  Phone,
-  Mail,
   MapPin,
   Lock,
   LockKeyhole,
@@ -36,17 +34,17 @@ import { cn } from "@/lib/utils";
 import { EnquirySourceFields } from "@/components/shared/enquiry-source-fields";
 
 interface SectionRendererProps {
-  sections: any[];
-  services?: any[];
-  industries?: any[];
-  testimonials?: any[];
-  faqs?: any[];
-  caseStudies?: any[];
-  partners?: any[];
-  trustedLogos?: any[];
-  complianceCards?: any[];
-  pricingPackages?: any[];
-  careerJobs?: any[];
+  sections: CmsJson[];
+  services?: CmsJson[];
+  industries?: CmsJson[];
+  testimonials?: CmsJson[];
+  faqs?: CmsJson[];
+  caseStudies?: CmsJson[];
+  partners?: CmsJson[];
+  trustedLogos?: CmsJson[];
+  complianceCards?: CmsJson[];
+  pricingPackages?: CmsJson[];
+  careerJobs?: CmsJson[];
   forceFullPageReload?: boolean;
 }
 
@@ -70,7 +68,7 @@ function resolveColor(value?: string | null, defaultClass: string = "") {
  * values and rendered no button. One reader for both, so the next section to
  * need it cannot pick the wrong half.
  */
-function secondaryCta(settings: Record<string, any>): { label: string; url: string } | null {
+function secondaryCta(settings: CmsJson): { label: string; url: string } | null {
   const label = settings.secondaryCtaLabel || settings.secondaryBtnLabel || "";
   const url = settings.secondaryCtaUrl || settings.secondaryBtnUrl || "";
   return label && url ? { label, url } : null;
@@ -191,7 +189,7 @@ export function SectionRenderer({
   return (
     <div className="space-y-0">
       {visibleSections.map((sec) => {
-        const settings = (sec.settingsJson as Record<string, any>) || {};
+        const settings = (sec.settingsJson as CmsJson) || {};
         const bgStyle = sec.backgroundStyle || "dark";
         const layout = sec.layoutStyle || "left";
 
@@ -329,6 +327,7 @@ export function SectionRenderer({
                       <div className="relative hidden lg:block">
                         <div className="aspect-[4/3] rounded-lg glass-panel overflow-hidden relative border border-white/10">
                           {settings.cardImage ? (
+                            // eslint-disable-next-line @next/next/no-img-element -- CMS image URLs can be on any host, and next/image only serves listed hosts.
                             <img
                               src={settings.cardImage}
                               alt={cardTitle || "Hero panel image"}
@@ -447,7 +446,7 @@ export function SectionRenderer({
                     <div className={cn("relative", layout === "right" && "lg:order-1")}>
                       <div className="aspect-square rounded-lg glass-panel overflow-hidden relative border border-white/10">
                         {sec.mediaId ? (
-                          // eslint-disable-next-line @next/next/no-img-element
+                          // eslint-disable-next-line @next/next/no-img-element -- CMS image URLs can be on any host, and next/image only serves listed hosts.
                           <img src={sec.mediaId} alt={sec.title || "Image block"} className="w-full h-full object-cover" />
                         ) : (
                           <div className="absolute inset-0 flex items-center justify-center text-slate-400 flex-col gap-4 p-8 text-center">
@@ -481,7 +480,7 @@ export function SectionRenderer({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {features.map((feat: any, idx: number) => {
+                    {features.map((feat: CmsJson, idx: number) => {
                       const FeatIcon = getIcon(feat.icon || "Shield");
                       return (
                         <div key={idx} className="glass-panel-subtle p-8 rounded-xl border-white/5 flex flex-col hover:border-[#2691F0]/30 transition-all group">
@@ -520,7 +519,7 @@ export function SectionRenderer({
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {services.slice(0, limitSvc).map((service) => {
                       const IconComponent = getIcon(service.icon_name || "Headphones");
-                      const imageUrl = (service.content as any)?.image;
+                      const imageUrl = (service.content as CmsJson | null)?.image;
                       return (
                         <div
                           key={service.slug}
@@ -528,6 +527,7 @@ export function SectionRenderer({
                         >
                           {imageUrl && (
                             <div className="absolute inset-0 z-0 overflow-hidden">
+                              {/* eslint-disable-next-line @next/next/no-img-element -- CMS image URLs can be on any host, and next/image only serves listed hosts. */}
                               <img
                                 src={imageUrl}
                                 alt=""
@@ -582,7 +582,7 @@ export function SectionRenderer({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {industries.map((ind) => {
-                      const imageUrl = (ind.content as any)?.image;
+                      const imageUrl = (ind.content as CmsJson | null)?.image;
                       return (
                         <div
                           key={ind.slug}
@@ -590,6 +590,7 @@ export function SectionRenderer({
                         >
                           {imageUrl && (
                             <div className="absolute inset-0 z-0 overflow-hidden">
+                              {/* eslint-disable-next-line @next/next/no-img-element -- CMS image URLs can be on any host, and next/image only serves listed hosts. */}
                               <img
                                 src={imageUrl}
                                 alt=""
@@ -605,7 +606,7 @@ export function SectionRenderer({
                               </div>
                               <h3 className="font-outfit text-xl font-bold text-white mb-3">{ind.title}</h3>
                               <p className="text-slate-400 text-sm leading-relaxed mb-6 line-clamp-3">
-                                {(ind.content as any)?.help || "Reliable and high performing systems integration."}
+                                {(ind.content as CmsJson | null)?.help || "Reliable and high performing systems integration."}
                               </p>
                             </div>
                             <CustomLink href={`/industries/${ind.slug}`} className="inline-flex items-center text-sm font-bold text-[#2691F0] hover:text-white transition-colors mt-4">
@@ -634,7 +635,7 @@ export function SectionRenderer({
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {complianceCards.map((card) => {
                       const CompIcon = getCardIcon(card.iconKey);
-                      const displayStatus = getSafeDisplayStatus(card);
+                      const displayStatus = getSafeDisplayStatus(card as Parameters<typeof getSafeDisplayStatus>[0]);
 
                       return (
                         <div key={card.id} className="glass-panel-subtle p-6 rounded-xl border-white/5 flex flex-col justify-between hover:border-[#2691F0]/40 transition-all group">
@@ -642,6 +643,7 @@ export function SectionRenderer({
                             <div className="flex items-center justify-between mb-6">
                               <div className="w-10 h-10 rounded bg-[#2691F0]/10 border border-[#2691F0]/20 flex items-center justify-center text-[#2691F0] overflow-hidden">
                                 {card.logoUrl ? (
+                                  // eslint-disable-next-line @next/next/no-img-element -- CMS image URLs can be on any host, and next/image only serves listed hosts.
                                   <img src={card.logoUrl} alt={card.title} className="w-full h-full object-contain p-1" />
                                 ) : (
                                   <CompIcon className="h-5 w-5" />
@@ -687,7 +689,7 @@ export function SectionRenderer({
                         {partners.map((partner) => (
                           <div key={`${partner.id}-${i}`} className="flex items-center gap-2 font-bold text-white text-lg group">
                             {partner.logoUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
+                              // eslint-disable-next-line @next/next/no-img-element -- CMS image URLs can be on any host, and next/image only serves listed hosts.
                               <img src={partner.logoUrl} alt={partner.altText || partner.name} className="h-10 md:h-12 w-auto object-contain" />
                             ) : (
                               <>
@@ -722,7 +724,7 @@ export function SectionRenderer({
                         {trustedLogos.map((client) => (
                           <div key={`${client.id}-${i}`} className="flex flex-col items-center gap-1 opacity-40 hover:opacity-100 transition-opacity duration-300">
                             {client.logoUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
+                              // eslint-disable-next-line @next/next/no-img-element -- CMS image URLs can be on any host, and next/image only serves listed hosts.
                               <img src={client.logoUrl} alt={client.companyName} className="h-12 md:h-14 w-auto object-contain" />
                             ) : (
                               <div className="flex flex-col items-center">
@@ -936,7 +938,7 @@ export function SectionRenderer({
                             className="mt-2 w-full rounded-xl border border-white/10 bg-[#020817] px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0]"
                           >
                             <option value="Future opening / General application" className="bg-[#020817] text-white">General Application / Future opening</option>
-                            {(careerJobs || []).map((job: any) => (
+                            {(careerJobs || []).map((job: CmsJson) => (
                               <option key={job.id} value={job.title} className="bg-[#020817] text-white">
                                 {job.title} ({job.location || "Remote"})
                               </option>
@@ -996,7 +998,7 @@ export function SectionRenderer({
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {activeJobs.map((job: any) => (
+                    {activeJobs.map((job: CmsJson) => (
                       <div key={job.id} className="glass-panel p-8 rounded-2xl border-white/10 flex flex-col justify-between hover:border-[#2691F0]/30 hover:shadow-2xl hover:shadow-blue-500/5 transition-all duration-300">
                         <div>
                           <div className="flex items-start justify-between gap-4 mb-4">
@@ -1087,7 +1089,7 @@ export function SectionRenderer({
               <section key={sec.id} className={cn("py-20 bg-[#041635] text-white", bgClass)}>
                 <div className="max-w-7xl mx-auto px-5 lg:px-8">
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-                    {stats.map((stat: any, idx: number) => (
+                    {stats.map((stat: CmsJson, idx: number) => (
                       <div key={idx} className="space-y-2">
                         <p className="text-4xl md:text-5xl font-black text-white">{stat.value}</p>
                         <p className="text-xs font-black uppercase tracking-widest text-[#2691F0]">{stat.label}</p>
@@ -1111,7 +1113,7 @@ export function SectionRenderer({
                   </div>
 
                   <div className="relative border-l border-white/10 max-w-3xl mx-auto pl-8 space-y-12">
-                    {steps.map((step: any, idx: number) => (
+                    {steps.map((step: CmsJson, idx: number) => (
                       <div key={idx} className="relative group">
                         <span className="absolute -left-12 top-0.5 w-8 h-8 rounded-full bg-[#2691F0] text-white font-black text-sm flex items-center justify-center shadow-lg">
                           {idx + 1}
@@ -1137,7 +1139,7 @@ export function SectionRenderer({
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {gallery.map((image: any, idx: number) => (
+                    {gallery.map((image: CmsJson, idx: number) => (
                       <div key={idx} className="aspect-square rounded-xl overflow-hidden glass-panel-subtle border-white/5 relative group">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={image.url} alt={image.alt || "Gallery image"} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -1171,7 +1173,7 @@ export function SectionRenderer({
 }
 
 // ─── Helper client-side testimonials slider ─────────────────────────────────
-function TestimonialsSlider({ testimonials }: { testimonials: any[] }) {
+function TestimonialsSlider({ testimonials }: { testimonials: CmsJson[] }) {
   const [index, setIndex] = React.useState(0);
 
   React.useEffect(() => {
@@ -1189,7 +1191,7 @@ function TestimonialsSlider({ testimonials }: { testimonials: any[] }) {
     <div className="relative">
       <div className="transition-all duration-700 ease-in-out transform opacity-100 scale-100">
         <h2 className="text-2xl md:text-3xl lg:text-4xl font-outfit font-black text-white leading-relaxed mb-8 max-w-3xl mx-auto italic">
-          "{active.quote || "CYVRIX is an exceptional technological partner."}"
+          &quot;{active.quote || "CYVRIX is an exceptional technological partner."}&quot;
         </h2>
         <div className="flex flex-col items-center">
           <p className="font-black text-white text-lg">{active.clientName || "Client Specialist"}</p>

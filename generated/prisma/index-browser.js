@@ -436,7 +436,10 @@ exports.Prisma.AuditLogScalarFieldEnum = {
   entityId: 'entityId',
   ipAddress: 'ipAddress',
   metadata: 'metadata',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  seq: 'seq',
+  prevHash: 'prevHash',
+  hash: 'hash'
 };
 
 exports.Prisma.BlogPostScalarFieldEnum = {
@@ -1398,6 +1401,26 @@ exports.Prisma.WorkOrderScalarFieldEnum = {
   updatedBy: 'updatedBy'
 };
 
+exports.Prisma.AgentDraftScalarFieldEnum = {
+  id: 'id',
+  kind: 'kind',
+  status: 'status',
+  title: 'title',
+  body: 'body',
+  payload: 'payload',
+  claimFindings: 'claimFindings',
+  sourceAgent: 'sourceAgent',
+  sourceRole: 'sourceRole',
+  paperclipIssueId: 'paperclipIssueId',
+  idempotencyKey: 'idempotencyKey',
+  reviewerId: 'reviewerId',
+  reviewNote: 'reviewNote',
+  reviewedAt: 'reviewedAt',
+  publishedRef: 'publishedRef',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1539,6 +1562,13 @@ exports.user_role = exports.$Enums.user_role = {
   client: 'client'
 };
 
+exports.AgentDraftStatus = exports.$Enums.AgentDraftStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED',
+  PUBLISHED: 'PUBLISHED'
+};
+
 exports.Prisma.ModelName = {
   audit_log_entries: 'audit_log_entries',
   custom_oauth_providers: 'custom_oauth_providers',
@@ -1633,7 +1663,8 @@ exports.Prisma.ModelName = {
   SurveySetting: 'SurveySetting',
   SurveyRequest: 'SurveyRequest',
   SurveyResponse: 'SurveyResponse',
-  WorkOrder: 'WorkOrder'
+  WorkOrder: 'WorkOrder',
+  AgentDraft: 'AgentDraft'
 };
 
 /**

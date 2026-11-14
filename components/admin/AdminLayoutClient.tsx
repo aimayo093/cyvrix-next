@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Menu, PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { AdminAccountMenu, type AdminIdentity } from "@/components/admin/AdminHeaderMenus";
 import { AdminSidebar, type BadgeSlots } from "@/components/admin/AdminSidebar";
+import type { AdminBrand } from "@/lib/admin-brand";
 import { activeNavItem } from "@/lib/admin-nav";
 
 interface AdminLayoutClientProps {
@@ -18,6 +19,8 @@ interface AdminLayoutClientProps {
   notificationsSlot: React.ReactNode;
   /** Live sidebar counts, each in its own Suspense boundary for the same reason. */
   badgeSlots: BadgeSlots;
+  /** The sidebar logo, from Brand Assets. */
+  brand: AdminBrand;
 }
 
 const COLLAPSED_KEY = "admin_sidebar_collapsed";
@@ -27,7 +30,7 @@ const COLLAPSED_KEY = "admin_sidebar_collapsed";
  * below it, and a header naming the current page. See DESIGN.md — the admin
  * is light; the public site is dark.
  */
-export function AdminLayoutClient({ children, identity, notificationsSlot, badgeSlots }: AdminLayoutClientProps) {
+export function AdminLayoutClient({ children, identity, notificationsSlot, badgeSlots, brand }: AdminLayoutClientProps) {
   const pathname = usePathname();
   const active = activeNavItem(pathname);
   const [collapsed, setCollapsed] = React.useState(false);
@@ -126,7 +129,7 @@ export function AdminLayoutClient({ children, identity, notificationsSlot, badge
           collapsed ? "w-16" : "w-64"
         } hidden shrink-0 border-r border-slate-200 bg-white transition-[width] duration-300 lg:block`}
       >
-        <AdminSidebar pathname={pathname} activeHref={active?.href ?? null} collapsed={collapsed} badges={badgeSlots} />
+        <AdminSidebar pathname={pathname} activeHref={active?.href ?? null} collapsed={collapsed} badges={badgeSlots} brand={brand} />
       </aside>
 
       {/* Drawer, below lg */}
@@ -156,6 +159,7 @@ export function AdminLayoutClient({ children, identity, notificationsSlot, badge
               activeHref={active?.href ?? null}
               collapsed={false}
               badges={badgeSlots}
+              brand={brand}
               firstLinkRef={firstDrawerLinkRef}
               onNavigate={() => setDrawerOpen(false)}
             />

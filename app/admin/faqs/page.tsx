@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -6,11 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { createFAQ, updateFAQ, toggleFAQPublish, deleteFAQ } from "@/lib/admin-actions";
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
-import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Eye, EyeOff } from "lucide-react";
 
 export const metadata = { title: "FAQ CMS" };
 
-export default function FAQsPage(props: any) {
+export default function FAQsPage(props: React.ComponentProps<typeof FAQsPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <FAQsPageContent {...props} />
@@ -47,10 +48,10 @@ async function FAQsPageContent({
             {faqs.length} FAQ{faqs.length !== 1 ? "s" : ""} across {Object.keys(grouped).length} categories.
           </p>
         </div>
-        <a href="/admin/faqs?edit=new"
+        <Link href="/admin/faqs?edit=new"
           className="inline-flex items-center gap-2 bg-[#2691F0] text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-[#041635] transition-colors">
           <Plus className="h-4 w-4" /> Add FAQ
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

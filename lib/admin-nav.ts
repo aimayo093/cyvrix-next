@@ -16,6 +16,7 @@ export type AdminNavIcon =
   | "pages"
   | "home"
   | "blog"
+  | "drafts"
   | "services"
   | "navigation"
   | "footer"
@@ -42,7 +43,7 @@ export type AdminNavItem = {
   name: string;
   href: string;
   icon: AdminNavIcon;
-  badge?: "enquiries" | "tickets";
+  badge?: "enquiries" | "tickets" | "drafts";
 };
 
 export type AdminNavGroup = {
@@ -69,6 +70,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { name: "Pages", href: "/admin/pages-cms", icon: "pages" },
       { name: "Home page", href: "/admin/home-cms", icon: "home" },
       { name: "Blog", href: "/admin/blog-and-insights", icon: "blog" },
+      { name: "AI drafts", href: "/admin/ai-drafts", icon: "drafts", badge: "drafts" },
       { name: "Services", href: "/admin/services-cms", icon: "services" },
       { name: "Navigation", href: "/admin/navigation", icon: "navigation" },
     ],

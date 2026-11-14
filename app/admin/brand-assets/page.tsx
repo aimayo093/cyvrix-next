@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -6,11 +7,11 @@ import { prisma } from "@/lib/prisma";
 import { updateBrandAsset } from "@/lib/admin-actions";
 import { Button } from "@/components/shared/Button";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Settings, AlertTriangle, ShieldCheck, Image as ImageIcon } from "lucide-react";
+import { Settings, AlertTriangle, Image as ImageIcon } from "lucide-react";
 
 export const metadata = { title: "Brand Assets CMS" };
 
-export default function BrandAssetsCMSPage(props: any) {
+export default function BrandAssetsCMSPage(props: React.ComponentProps<typeof BrandAssetsCMSPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <BrandAssetsCMSPageContent {...props} />
@@ -27,7 +28,7 @@ async function BrandAssetsCMSPageContent({
   await requireAdmin();
   const sp = await searchParams;
 
-  let assets = await prisma.brandAsset.findMany({
+  const assets = await prisma.brandAsset.findMany({
     orderBy: { assetKey: "asc" },
   });
 
@@ -235,12 +236,12 @@ async function BrandAssetsCMSPageContent({
                   >
                     Save Asset Changes
                   </Button>
-                  <a
+                  <Link
                     href="/admin/brand-assets"
                     className="bg-slate-100 text-slate-600 hover:bg-slate-200 px-5 py-3 rounded-xl font-bold text-center text-sm transition-all"
                   >
                     Cancel
-                  </a>
+                  </Link>
                 </div>
               </form>
             ) : (

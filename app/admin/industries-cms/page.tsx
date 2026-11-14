@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
@@ -12,11 +13,11 @@ import {
 import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
-import { Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Eye, EyeOff } from "lucide-react";
 
 export const metadata = { title: "Industries CMS" };
 
-export default function IndustriesCMSPage(props: any) {
+export default function IndustriesCMSPage(props: React.ComponentProps<typeof IndustriesCMSPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <IndustriesCMSPageContent {...props} />
@@ -48,10 +49,10 @@ async function IndustriesCMSPageContent({
             {industries.length} industr{industries.length !== 1 ? "ies" : "y"} &mdash; manage sector-specific pages.
           </p>
         </div>
-        <a href="/admin/industries-cms?edit=new"
+        <Link href="/admin/industries-cms?edit=new"
           className="inline-flex items-center gap-2 bg-[#2691F0] text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-[#041635] transition-colors">
           <Plus className="h-4 w-4" /> Add Industry
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

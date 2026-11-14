@@ -40,6 +40,9 @@ In your Vercel project settings under **Settings > Environment Variables**, add 
 | `SMTP_PORT` | `587` | SMTP port. |
 | `SMTP_USER` | `service-account@example.co.uk` | SMTP service-account username. Keep this server-managed. |
 | `SMTP_PASSWORD` | *Secret-manager value* | SMTP service-account password. Keep this in Vercel's encrypted environment settings only. |
+| `EXECUTIVE_OS_FEED_TOKEN` | *Random string, 48+ chars* | Optional. Turns on the read-only enquiry feed for the Executive OS (`/api/integrations/executive-os/feed`). Generate with `openssl rand -base64 48` and put the same value in the Executive OS `.env` as `WEBSITE_FEED_TOKEN`. Unset, the route answers 404. See docs/DECISIONS.md section 15. |
+| `PAPERCLIP_READ_TOKEN` | *Random, `openssl rand -hex 32`* | Optional. Lets Paperclip agents read the feed and company snapshot. Must differ from the draft token. See docs/PAPERCLIP.md. |
+| `PAPERCLIP_DRAFT_TOKEN` | *Random, `openssl rand -hex 32`* | Optional. Lets Paperclip agents submit drafts to /admin/ai-drafts. Cannot read client data. See docs/PAPERCLIP.md. |
 
 `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME` and `MAIL_PASSWORD` remain supported as compatibility names. Do not store SMTP credentials in System Settings, CMS content or any browser-visible configuration.
 
