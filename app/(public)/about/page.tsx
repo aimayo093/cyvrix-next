@@ -7,6 +7,7 @@ import { getPublicPageData, getPublicPageSeoMetadata, getSiteImages, type SiteIm
 import { companyFacts } from "@/lib/company-facts";
 import { getPageHero } from "@/lib/page-heroes";
 import { stripBrandSuffix } from "@/lib/utils";
+import { REGISTERED_OFFICE } from "@/lib/company-registered-office";
 
 export async function generateMetadata() {
   const page = await getPublicPageSeoMetadata("about");
@@ -150,7 +151,7 @@ function AboutFallback({ heroImage }: { heroImage?: string }) {
                 <dt className="font-black uppercase tracking-wider text-slate-500">Based in</dt>
                 <dd className="mt-1 font-semibold leading-6 text-slate-200">
                   {companyFacts.publishRegisteredOffice
-                    ? companyFacts.registeredOffice
+                    ? REGISTERED_OFFICE
                     : companyFacts.registeredLocation}
                 </dd>
               </div>

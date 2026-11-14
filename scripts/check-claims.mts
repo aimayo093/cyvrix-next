@@ -133,7 +133,7 @@ const WITHHELD: Withheld[] = [
     withheld: !companyFacts.publishRegisteredOffice,
     // The street line and the postcode, either of which identifies the property.
     needles: ["44 Addison Road", "SA11 2AY"],
-    owner: path.join("lib", "company-facts.ts"),
+    owner: path.join("lib", "company-registered-office.ts"),
     rule: "withheld registered office",
     note: "companyFacts.publishRegisteredOffice is false. The filed address is residential. Use companyFacts.registeredLocation, or set the flag to true if it should be published.",
   },
