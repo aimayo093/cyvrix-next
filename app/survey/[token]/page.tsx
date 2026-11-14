@@ -1,9 +1,8 @@
 import * as React from "react";
-import { notFound, redirect } from "next/navigation";
+import { redirect } from "next/navigation";
 import { connection } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SurveyForm } from "./SurveyForm";
-import Image from "next/image";
 
 export const metadata = {
   title: "Customer Feedback Survey",

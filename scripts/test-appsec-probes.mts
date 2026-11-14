@@ -1,7 +1,7 @@
 /**
  * Parsing behind the live Security Center probes. Run: npm run test:appsec
  */
-import { clientBundlePaths } from "../lib/appsec-probe-parse";
+import { clientBundlePaths, credentialLogCalls, maskNonCode } from "../lib/appsec-probe-parse";
 import { heldBackBy, upgradeTarget } from "../lib/dependency-freshness";
 import { countHit, MemoryStore, RateLimitError, type RateLimitStore } from "../lib/rate-limit-core";
 import { needsSecondFactor, sessionVersionMatches } from "../lib/session-rules";
@@ -10,6 +10,9 @@ import { verifySessionToken as verifyAtProxy } from "../lib/auth-edge";
 import { createHmac } from "node:crypto";
 import { botProtectionUpdate, parseBotProtection } from "../lib/bot-protection-parse";
 import { staticAppSecChecks } from "../lib/appsec-checks";
+import { buildSecurityTxt, isPublishableMailbox } from "../lib/security-txt";
+import { breachCountFromRange, passwordHashParts } from "../lib/breached-passwords-core";
+import { auditChainCheck } from "../lib/audit-chain";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -176,6 +179,61 @@ check("client is not required to", needsSecondFactor("CLIENT", null), false);
     });
   }
   check("every rate-limit call is awaited", unawaited, []);
+}
+
+// security.txt (RFC 9116)
+{
+  const now = new Date("2026-11-11T09:30:15.123Z");
+  const txt = buildSecurityTxt({ contacts: ["  ", "support@cyvrix.co.uk", "not an email", "support@cyvrix.co.uk", "dpo@cyvrix.co.uk"], siteUrl: "https://cyvrix.co.uk", now });
+  check("security.txt lists valid contacts once, best first", txt?.split("\n").filter((l) => l.startsWith("Contact:")), [
+    "Contact: mailto:support@cyvrix.co.uk",
+    "Contact: mailto:dpo@cyvrix.co.uk",
+  ]);
+  check("security.txt expires 180 days out, whole seconds", txt?.match(/^Expires: (.*)$/m)?.[1], "2027-05-10T09:30:15Z");
+  check("security.txt names its canonical URL", /^Canonical: https:\/\/cyvrix\.co\.uk\/\.well-known\/security\.txt$/m.test(txt ?? ""), true);
+  check("security.txt with no usable contact is not served", buildSecurityTxt({ contacts: ["", null, "nope"], siteUrl: "https://cyvrix.co.uk", now }), null);
+  for (const bad of ["a?subject=x@cyvrix.co.uk", "a@cyvrix.co.uk?cc=x@evil.test", "a#b@cyvrix.co.uk", "a%40b@cyvrix.co.uk", "a&b@cyvrix.co.uk", ".a@cyvrix.co.uk", "a..b@cyvrix.co.uk", "a@b@cyvrix.co.uk", "a@-cyvrix.co.uk", "a@cyvrix", "a@cyvrix.c0"]) {
+    check(`mailbox refused: ${bad}`, isPublishableMailbox(bad), false);
+  }
+  for (const good of ["support@cyvrix.co.uk", "security+reports@cyvrix.co.uk", "first.last@sub.cyvrix.co.uk"]) {
+    check(`mailbox accepted: ${good}`, isPublishableMailbox(good), true);
+  }
+}
+
+// Leaked-password check: only the prefix leaves the server; padding is ignored.
+{
+  const { prefix, suffix } = passwordHashParts("password");
+  check("SHA-1 split into 5-char prefix and suffix", [prefix, suffix], ["5BAA6", "1E4C9B93F3F0682250B6CF8331B7EE68FD8"]);
+  const body = "0018A45C4D1DEF81644B54AB7F969B88D65:1\r\n1E4C9B93F3F0682250B6CF8331B7EE68FD8:10434004\r\nABCDEF0123456789ABCDEF0123456789ABC:0";
+  check("breached suffix is counted", breachCountFromRange(body, suffix), 10434004);
+  check("suffix match ignores case", breachCountFromRange(body, suffix.toLowerCase()), 10434004);
+  check("padding line (count 0) is not a breach", breachCountFromRange(body, "ABCDEF0123456789ABCDEF0123456789ABC"), 0);
+  check("absent suffix is clear", breachCountFromRange(body, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"), 0);
+}
+
+// Credential-in-log detection looks at code, not message text.
+{
+  check("a word inside a log message is not a credential", credentialLogCalls(`console.warn("[breached-passwords] lookup failed", error.name);`), []);
+  check("template text is ignored too", credentialLogCalls("console.warn(`[breached-passwords] returned ${response.status}`);"), []);
+  check("a credential variable is caught", credentialLogCalls(`console.log("login", password);`).length, 1);
+  check("a credential inside a template expression is caught", credentialLogCalls("console.error(`token was ${session.accessToken}`);").length, 1);
+  check("a credential property is caught", credentialLogCalls(`console.info(user.passwordHash)`).length, 1);
+  check("a call inside a line comment is not a call", credentialLogCalls(`// console.log(password)\nconst x = 1;`), []);
+  check("a call inside a block comment is not a call", credentialLogCalls(`/* console.log(token) */`), []);
+  check("a call inside a string is not a call", credentialLogCalls(`const help = "never console.log(password)";`), []);
+  check("an escaped quote does not hide a real call", credentialLogCalls(`const s = "say \\"hi\\""; console.log(apiKey);`).length, 1);
+  check("a nested template expression is still code", credentialLogCalls("console.log(`a ${`b ${user.secretValue}`}`);").length, 1);
+  check("masking keeps length and line breaks", maskNonCode(`a // c\n"x\\"y" \`t\${z}\``), `a     \n"    " \` \${z}\``);
+}
+
+// Audit-log hash chain, as the Security Center reports it.
+{
+  check("intact chain passes", auditChainCheck({ checked: BigInt(457), firstBadSeq: null, problem: null, headSeq: BigInt(457), headHash: "ab".repeat(32) }).status, "pass");
+  const broken = auditChainCheck({ checked: BigInt(120), firstBadSeq: BigInt(121), problem: "this row was changed after it was written", headSeq: null, headHash: null });
+  check("broken chain fails and names the entry", [broken.status, broken.detail.includes("entry 121")], ["fail", true]);
+  const empty = auditChainCheck({ checked: BigInt(0), firstBadSeq: null, problem: null, headSeq: null, headHash: null });
+  check("empty log passes without a fingerprint", [empty.status, empty.detail.includes("fingerprint")], ["pass", false]);
+  check("no answer is not assessed", auditChainCheck(null).assessed, false);
 }
 
 if (failures) {

@@ -90,9 +90,9 @@ export function SecurityScanButton() {
       setResult(data);
       setState("done");
       setOpen(true);
-    } catch (err: any) {
+    } catch (err) {
       clearInterval(interval);
-      setErrorMsg(err?.message || "Scan failed. Please try again.");
+      setErrorMsg(err instanceof Error && err.message ? err.message : "Scan failed. Please try again.");
       setState("error");
     }
   }

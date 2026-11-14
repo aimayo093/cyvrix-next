@@ -1,10 +1,11 @@
+import Link from "next/link";
+import type { CmsJson } from "@/lib/cms-json";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  createCmsPage,
   updateCmsPage,
   deleteCmsPage,
   createPageSection,
@@ -19,11 +20,11 @@ import { Button } from "@/components/shared/Button";
 import { DeleteButton } from "@/components/admin/DeleteButton";
 import { ImageUpload } from "@/components/admin/ImageUpload";
 import { SectionTypeSelect } from "@/components/admin/SectionTypeSelect";
-import { Plus, Pencil, ArrowUp, ArrowDown, Layers, FileText, Settings, Sparkles, AlertTriangle, CheckCircle2, AlertCircle } from "lucide-react";
+import { Plus, Pencil, ArrowUp, ArrowDown, Layers, FileText, Sparkles, CheckCircle2, AlertCircle } from "lucide-react";
 
 export const metadata = { title: "Pages & Core Sections Builder" };
 
-export default function PagesCMSPage(props: any) {
+export default function PagesCMSPage(props: React.ComponentProps<typeof PagesCMSPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <PagesCMSPageContent {...props} />
@@ -152,13 +153,13 @@ async function PagesCMSPageContent({
             Build modern, fully editable corporate pages, rearrange rich sections, rewrite content, and upload media assets instantly.
           </p>
         </div>
-        <a
+        <Link
           href="/admin/pages-cms?edit=new"
           className="inline-flex items-center gap-2 bg-[#2691F0] text-white font-bold text-xs px-5 py-2.5 rounded-xl hover:bg-[#041635] transition-colors shrink-0 font-outfit"
         >
           <Plus className="h-4 w-4" />
           Create Public Page
-        </a>
+        </Link>
       </div>
 
       <RestoreReviewedContent pages={restorablePages} action={restoreReviewedPageContent} />
@@ -528,7 +529,7 @@ async function PagesCMSPageContent({
   );
 }
 
-function SectionFormFields({ defaults, sectionType }: { defaults?: any; sectionType?: string }) {
+function SectionFormFields({ defaults, sectionType }: { defaults?: CmsJson; sectionType?: string }) {
   const normalized = (sectionType || defaults?.sectionType || "").toLowerCase();
   const isHero = normalized === "hero" || normalized === "pricing_hero" || normalized === "contact_hero" || normalized === "support_hero" || normalized === "faq_hero";
 

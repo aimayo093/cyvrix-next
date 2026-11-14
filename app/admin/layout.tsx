@@ -4,12 +4,13 @@ import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminLayoutClient } from "@/components/admin/AdminLayoutClient";
+import { getAdminBrandWithin } from "@/lib/admin-brand";
 import {
   AdminNotificationsMenu,
   AdminNotificationsButtonFallback,
 } from "@/components/admin/AdminHeaderMenus";
 import { AdminChromeFallback } from "@/components/admin/AdminChromeFallback";
-import { EnquiriesBadge, TicketsBadge } from "@/components/admin/NavBadges";
+import { DraftsBadge, EnquiriesBadge, TicketsBadge } from "@/components/admin/NavBadges";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 
 export const metadata: Metadata = {
@@ -43,14 +44,17 @@ async function AdminLayoutContent({
 }) {
   await connection();
 
-  // The only query the chrome waits on. Everything else streams in, so a slow
-  // or starved database cannot leave an administrator staring at a skeleton
-  // with no sidebar and no header.
-  const user = await requireAdmin();
+  // The only queries the chrome waits on. Everything else streams in, so a
+  // slow or starved database cannot leave an administrator staring at a
+  // skeleton with no sidebar and no header. The logo is cached for hours,
+  // and on a cache miss is waited on for at most 1.5 seconds before the
+  // bundled file is used.
+  const [user, brand] = await Promise.all([requireAdmin(), getAdminBrandWithin()]);
 
   return (
     <AdminLayoutClient
       identity={{ name: user.name, email: user.email, role: user.role }}
+      brand={brand}
       notificationsSlot={
         <React.Suspense fallback={<AdminNotificationsButtonFallback />}>
           <AdminNotifications userId={user.id} />
@@ -65,6 +69,11 @@ async function AdminLayoutContent({
         tickets: (
           <React.Suspense fallback={null}>
             <TicketsBadge />
+          </React.Suspense>
+        ),
+        drafts: (
+          <React.Suspense fallback={null}>
+            <DraftsBadge />
           </React.Suspense>
         ),
       }}

@@ -1,3 +1,5 @@
+import Link from "next/link";
+import type { CmsJson } from "@/lib/cms-json";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import { connection } from "next/server";
@@ -11,7 +13,7 @@ import { Plus, Pencil, Power, UserPlus, Users, KeyRound } from "lucide-react";
 
 export const metadata = { title: "Client Management" };
 
-export default function ClientManagementPage(props: any) {
+export default function ClientManagementPage(props: React.ComponentProps<typeof ClientManagementPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <ClientManagementPageContent {...props} />
@@ -53,10 +55,10 @@ async function ClientManagementPageContent({
             {active} active &bull; {inactive} inactive client{clients.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <a href="/admin/client-management?edit=new"
+        <Link href="/admin/client-management?edit=new"
           className="inline-flex items-center gap-2 bg-[#2691F0] text-white font-bold text-sm px-5 py-2.5 rounded-xl hover:bg-[#041635] transition-colors">
           <Plus className="h-4 w-4" /> Add Client
-        </a>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -145,13 +147,13 @@ async function ClientManagementPageContent({
                     <h3 className="font-outfit text-sm font-black text-[#041635] flex items-center gap-1.5">
                       <Users className="h-4 w-4 text-[#2691F0]" /> Portal User Accounts
                     </h3>
-                    <p className="text-slate-400 text-[10px] mt-0.5 font-medium">Active accounts authorized to log in to this client company's portal.</p>
+                    <p className="text-slate-400 text-[10px] mt-0.5 font-medium">Active accounts authorized to log in to this client company&apos;s portal.</p>
                   </div>
 
                   {/* Active Users List */}
                   <div className="space-y-2">
                     {editing.User && editing.User.length > 0 ? (
-                      editing.User.map((user: any) => (
+                      editing.User.map((user: CmsJson) => (
                         <div key={user.id} className="p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-2 text-xs">
                           <div className="flex items-center justify-between gap-3">
                             <div>

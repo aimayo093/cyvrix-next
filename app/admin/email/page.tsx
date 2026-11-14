@@ -2,6 +2,7 @@ import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { connection } from "next/server";
 import * as React from "react";
 import { requireAdmin } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { sendAdminEmail } from "@/lib/admin-actions";
 import { Button } from "@/components/shared/Button";
 import { Mail, AlertCircle, CheckCircle2, Send } from "lucide-react";
@@ -9,7 +10,7 @@ import { redirect, unstable_rethrow } from "next/navigation";
 
 export const metadata = { title: "Email Broadcasts" };
 
-export default function EmailBroadcastPage(props: any) {
+export default function EmailBroadcastPage(props: React.ComponentProps<typeof EmailBroadcastPageContent>) {
   return (
     <React.Suspense fallback={<PrivateRouteFallback />}>
       <EmailBroadcastPageContent {...props} />
@@ -23,11 +24,21 @@ async function EmailBroadcastPageContent({
   searchParams: Promise<{
     status?: string;
     message?: string;
+    draft?: string;
   }>;
 }) {
   await connection();
   await requireAdmin();
   const sp = await searchParams;
+
+  // An approved AI email draft, opened from /admin/ai-drafts. Sending is still
+  // this page's button: approving a draft never sends anything by itself.
+  const draft =
+    sp.draft && /^[0-9a-f-]{36}$/i.test(sp.draft)
+      ? await prisma.agentDraft
+          .findFirst({ where: { id: sp.draft, kind: "email", status: "APPROVED" }, select: { id: true, title: true, body: true, sourceAgent: true } })
+          .catch(() => null)
+      : null;
 
   async function handleSendEmail(formData: FormData) {
     "use server";
@@ -83,6 +94,14 @@ async function EmailBroadcastPageContent({
           <h2 className="font-outfit font-black text-[#041635]">Compose Email</h2>
         </div>
         <form action={handleSendEmail} className="p-6 space-y-4">
+          {draft && (
+            <>
+              <input type="hidden" name="agentDraftId" value={draft.id} />
+              <p className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-[#0f5aab]">
+                Filled in from an AI draft by {draft.sourceAgent}. Check it, add the recipient, then send.
+              </p>
+            </>
+          )}
           <label className="block text-sm font-bold text-slate-700">
             Recipient Email (To)
             <input 
@@ -99,6 +118,7 @@ async function EmailBroadcastPageContent({
             <input 
               name="subject" 
               required
+              defaultValue={draft?.title}
               placeholder="Important Update regarding your Service" 
               className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none" 
             />
@@ -109,6 +129,7 @@ async function EmailBroadcastPageContent({
             <textarea 
               name="body" 
               required
+              defaultValue={draft?.body}
               rows={8}
               placeholder="Dear Client,&#10;&#10;We are writing to inform you..." 
               className="mt-1.5 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm text-[#041635] focus:ring-2 focus:ring-[#2691F0] focus:outline-none resize-none font-mono" 

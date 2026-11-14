@@ -10,6 +10,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { changeAccountAndEndSessions, requireUser } from "@/lib/auth";
 import { hashPassword, verifyPassword } from "@/lib/password";
+import { breachedPasswordProblem } from "@/lib/breached-passwords";
 
 const ticketSchema = z.object({
   subject: z.string().trim().min(5).max(200).transform(sanitize),
@@ -226,6 +227,9 @@ export async function updatePortalProfile(_prevState: unknown, formData: FormDat
         // wrong, so a failed attempt says nothing about the account.
         return { success: false, message: "The current password you entered is incorrect." };
       }
+
+      const breached = await breachedPasswordProblem(data.password);
+      if (breached) return { success: false, message: breached };
 
       newPasswordHash = hashPassword(data.password);
     }

@@ -1,3 +1,4 @@
+import type { CmsJson } from "../lib/cms-json";
 import { prisma } from '../lib/prisma';
 import fs from 'fs';
 import path from 'path';
@@ -38,7 +39,7 @@ async function main() {
         where: { pageId: homePage.id, sectionType: 'Hero' }
       });
       if (heroSection) {
-        let settings = heroSection.settingsJson as any || {};
+        const settings = (heroSection.settingsJson as CmsJson | null) || {};
         settings.backgroundImage = heroBg;
         await prisma.pageSection.update({
           where: { id: heroSection.id },

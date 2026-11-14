@@ -5,13 +5,29 @@ import { withSentryConfig, type SentryBuildOptions } from "@sentry/nextjs/config
 import "./patch-exfat.js";
 
 const isDevelopment = process.env.NODE_ENV === "development";
+/**
+ * Content-Security-Policy. See DECISIONS section 14 for why `script-src` still
+ * allows inline scripts: nonces would make every page render per request and
+ * undo the cached pages. What is locked down instead:
+ *
+ * - script-src-attr 'none': no inline event handlers (onerror=, onclick=). An
+ *   injected `<img onerror>` is the usual way stored XSS runs; React never
+ *   emits these attributes, so nothing legitimate is lost.
+ * - connect-src 'self': the browser only talks to this origin. Sentry goes
+ *   through the /monitoring tunnel and Vercel Analytics through /_vercel, so a
+ *   script that did run could not post data anywhere else.
+ * - upgrade-insecure-requests: an http:// image or link in CMS content is
+ *   fetched over https instead of downgrading the page.
+ */
 const contentSecurityPolicy = [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+  "script-src-attr 'none'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' blob: data: https:",
   "font-src 'self' data:",
-  "connect-src 'self' https:",
+  // Development adds the hot-reload websocket.
+  `connect-src 'self'${isDevelopment ? " ws: wss:" : ""}`,
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
@@ -19,6 +35,7 @@ const contentSecurityPolicy = [
   "frame-src 'self'",
   "manifest-src 'self'",
   "worker-src 'self' blob:",
+  ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const securityHeaders = [

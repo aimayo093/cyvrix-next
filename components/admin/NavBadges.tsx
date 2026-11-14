@@ -1,6 +1,7 @@
 import * as React from "react";
 import { connection } from "next/server";
 import { loadNavCounts } from "@/lib/dashboard/loaders";
+import { pendingDraftCount } from "@/lib/agent-drafts";
 
 /**
  * Live counts beside Enquiries and Tickets in the admin sidebar.
@@ -46,4 +47,12 @@ export async function TicketsBadge() {
       label={overdueTickets > 0 ? `tickets waiting, ${overdueTickets} overdue` : "tickets waiting"}
     />
   );
+}
+
+/** AI drafts waiting for review. Nothing when the table cannot be read. */
+export async function DraftsBadge() {
+  await connection();
+  const count = await pendingDraftCount().catch(() => null);
+  if (count === null) return null;
+  return <Badge count={count} urgent={false} label="AI drafts waiting for review" />;
 }
