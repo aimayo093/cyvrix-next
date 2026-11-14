@@ -17,12 +17,20 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const sync = await syncInbox({ force: true });
-  const purged = await purgeOldEmail().catch(() => null);
+  let purged: number | null = null;
+  let purgeFailed = false;
+  try {
+    purged = await purgeOldEmail();
+  } catch (error) {
+    purgeFailed = true;
+    console.error("[cron/email-sync] retention purge failed", error instanceof Error ? error.name : "error");
+  }
+  // A failed sync or purge returns 500, so the hosting platform's cron monitoring shows it:
+  // a silently skipped retention purge would break the privacy policy's promise.
+  const ok = sync.state !== "error" && !purgeFailed;
   // Counts and states only: no addresses or subjects in the cron log.
-  return NextResponse.json({
-    ok: sync.state !== "error",
-    sync: sync.state,
-    stored: sync.state === "ok" ? sync.stored : 0,
-    purged,
-  });
+  return NextResponse.json(
+    { ok, sync: sync.state, stored: sync.state === "ok" ? sync.stored : 0, purged },
+    { status: ok ? 200 : 500 },
+  );
 }

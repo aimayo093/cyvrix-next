@@ -27,8 +27,18 @@ CREATE TABLE IF NOT EXISTS "public"."EmailMessage" (
 CREATE UNIQUE INDEX IF NOT EXISTS "EmailMessage_externalId_key" ON "public"."EmailMessage" ("externalId");
 CREATE INDEX IF NOT EXISTS "EmailMessage_direction_occurredAt_idx" ON "public"."EmailMessage" ("direction", "occurredAt");
 CREATE INDEX IF NOT EXISTS "EmailMessage_fromAddress_idx" ON "public"."EmailMessage" ("fromAddress");
+-- The retention purge filters on occurredAt alone, across both directions.
+CREATE INDEX IF NOT EXISTS "EmailMessage_occurredAt_idx" ON "public"."EmailMessage" ("occurredAt");
 
 -- Server only: not reachable through the public Supabase API. Received mail
 -- holds other people's personal data.
 ALTER TABLE "public"."EmailMessage" ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON TABLE "public"."EmailMessage" FROM anon, authenticated;
+-- The Supabase roles exist in production; a plain Postgres (CI, local) has
+-- neither, so the REVOKE only runs where they do.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') AND EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
+    EXECUTE 'REVOKE ALL ON TABLE "public"."EmailMessage" FROM anon, authenticated';
+  END IF;
+END
+$$;

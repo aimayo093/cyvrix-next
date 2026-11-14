@@ -250,7 +250,8 @@ The Laravel project was removed per earlier instruction. If CYVRIX later needs a
    `EmailMessage` table.
 2. The Inbox reads the SMTP account over IMAP on port 993 by default
    (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`). Set `IMAP_HOST`, `IMAP_PORT`,
-   `IMAP_USER` or `IMAP_PASSWORD` only if the inbox differs.
+   `IMAP_USER` or `IMAP_PASSWORD` only if the inbox differs. A port other than
+   993 must support STARTTLS; the sync refuses to log in without TLS.
 3. `vercel.json` adds a daily `/api/cron/email-sync` (06:30 UTC), which uses
    the existing `CRON_SECRET`. It syncs the Inbox and deletes email history
-   older than 24 months.
+   older than 24 months, and returns 500 if either fails.

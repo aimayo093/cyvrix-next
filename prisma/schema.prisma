@@ -2005,5 +2005,6 @@ model EmailMessage {
 
   @@index([direction, occurredAt])
   @@index([fromAddress])
+  @@index([occurredAt])
   @@schema("public")
 }

@@ -29,14 +29,15 @@ const ukDateTime = (value: Date) =>
 
 /** The page waits for a sync at most this long; a slow mail server never holds it up. */
 const PAGE_SYNC_WAIT_MS = 8_000;
+const CHECK_NOW_WAIT_MS = 20_000;
 
-async function syncWithin(ms: number): Promise<InboxSyncResult | { state: "slow" }> {
+async function syncWithin(ms: number, options: { force?: boolean } = {}): Promise<InboxSyncResult | { state: "slow" }> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const slow = new Promise<{ state: "slow" }>((resolve) => {
     timer = setTimeout(() => resolve({ state: "slow" }), ms);
   });
   try {
-    return await Promise.race([syncInbox(), slow]);
+    return await Promise.race([syncInbox(options), slow]);
   } finally {
     clearTimeout(timer);
   }
@@ -93,7 +94,9 @@ async function EmailBroadcastPageContent({
   async function handleSyncNow() {
     "use server";
     await requireAdmin();
-    const result = await syncInbox({ force: true });
+    // Bounded like the page load: a hung mail server never holds the request
+    // open. A slow sync keeps its lease and finishes or expires on its own.
+    const result = await syncWithin(CHECK_NOW_WAIT_MS, { force: true });
     const note =
       result.state === "ok"
         ? `Inbox checked: ${result.stored} new message${result.stored === 1 ? "" : "s"}.`
@@ -101,8 +104,13 @@ async function EmailBroadcastPageContent({
           ? "No mailbox is configured for the Inbox."
           : result.state === "error"
             ? `Could not read the mailbox: ${result.error}`
-            : "Inbox checked.";
-    redirect(`/admin/email?tab=inbox&status=${result.state === "error" || result.state === "not_configured" ? "error" : "success"}&message=${encodeURIComponent(note)}`);
+            : result.state === "busy"
+              ? "A check is already running. Refresh in a moment."
+              : result.state === "slow"
+                ? "The mailbox is slow to answer. Refresh in a moment to see new messages."
+                : "Inbox checked.";
+    const failed = result.state === "error" || result.state === "not_configured";
+    redirect(`/admin/email?tab=inbox&status=${failed ? "error" : "success"}&message=${encodeURIComponent(note)}`);
   }
 
   const viewing = sp.view && /^[0-9a-f-]{36}$/i.test(sp.view) ? await getEmailMessage(sp.view).catch(() => null) : null;
@@ -209,7 +217,7 @@ async function EmailBroadcastPageContent({
             </label>
 
             <p className="text-[10px] text-slate-400 font-semibold mb-4">
-              Emails use server-managed SMTP credentials. The sender identity is managed in System Settings. Every send is kept in the Sent list.
+              Emails use server-managed SMTP credentials. The sender identity is managed in System Settings. Sends from this page are kept in the Sent list.
             </p>
 
             <Button type="submit" className="bg-[#041635] text-white hover:bg-[#2691F0] px-6 py-2.5 rounded-xl font-bold flex items-center gap-2">
@@ -224,8 +232,8 @@ async function EmailBroadcastPageContent({
               <span>
                 {!status?.configured
                   ? "No mailbox is configured. Set SMTP_* (or IMAP_*) in the hosting environment."
-                  : sync?.state === "slow"
-                    ? "The mailbox is slow to answer; showing what is stored. Refresh in a moment."
+                  : sync?.state === "slow" || sync?.state === "busy"
+                    ? "The mailbox is being checked; showing what is stored. Refresh in a moment."
                     : status.lastError
                       ? `Last check failed: ${status.lastError}`
                       : status.lastSyncedAt
