@@ -9,6 +9,7 @@ import { Shield, ArrowLeft, Mail, Loader2, AlertCircle, LockKeyhole, ServerCog ,
 import { Button } from "@/components/shared/Button";
 import { PasswordInput } from "@/components/shared/PasswordInput";
 import { login, submitTwoFactor } from "./actions";
+import { companyFacts } from "@/lib/company-facts";
 
 function getSafeDestination(next: string | null, fallback: string) {
   if (!next) return fallback;
@@ -196,7 +197,7 @@ function LoginForm() {
         </motion.div>
 
         <p className="text-center mt-8 text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">
-          &copy; {new Date().getFullYear()} CYVRIX Technologies Ltd &bull; Secure Systems
+          &copy; {new Date().getFullYear()} {companyFacts.registeredName} &bull; Secure Systems
         </p>
       </div>
       </div>

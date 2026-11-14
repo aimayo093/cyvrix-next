@@ -705,7 +705,7 @@ export function Footer({
         {/* Footer Bottom bar */}
         <div className="pt-6 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-slate-500 text-xs font-bold uppercase tracking-wide text-center md:text-left">
-            {(copyright || "CYVRIX Technologies Ltd.").replace(/all rights reserved\.?/gi, "").trim()}{" "}
+            {(copyright || `${companyFacts.registeredName}.`).replace(/all rights reserved\.?/gi, "").trim()}{" "}
             <span className="hidden sm:inline">All rights reserved.</span>
           </p>
           <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
