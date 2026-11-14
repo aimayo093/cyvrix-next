@@ -6,7 +6,7 @@
  * yields all-null columns and never fails the enquiry. Pure, so
  * scripts/test-enquiry-source.mts can exercise it.
  */
-import { ATTRIBUTION_MAX_LENGTH, cleanToken } from "@/lib/attribution";
+import { ATTRIBUTION_CAPS, ATTRIBUTION_MAX_LENGTH, CONFIDENCES, cleanToken, type Confidence } from "@/lib/attribution";
 import { heardAboutLabel, normaliseHeardAbout, normaliseHeardAboutOther } from "@/lib/heard-about";
 import type { Prisma } from "@/generated/prisma";
 
@@ -14,7 +14,7 @@ export type SourceColumns = {
   leadSource: string | null;
   leadMedium: string | null;
   leadCampaign: string | null;
-  sourceConfidence: "utm" | "referrer" | "direct" | null;
+  sourceConfidence: Confidence | null;
   sourceDetail: Prisma.InputJsonValue | undefined;
 };
 
@@ -26,8 +26,10 @@ const NONE: SourceColumns = {
   sourceDetail: undefined,
 };
 
-const CONFIDENCE = new Set(["utm", "referrer", "direct"]);
-const CAP = { source: 80, medium: 80, campaign: 120, term: 80, content: 120, landingPage: 200, referrerDomain: 120 } as const;
+// The same limits and confidence set the browser uses (lib/attribution.ts),
+// so a change on one side can never silently truncate on the other.
+const CONFIDENCE = new Set<string>(CONFIDENCES);
+const CAP = ATTRIBUTION_CAPS;
 const KEYS = Object.keys(CAP) as (keyof typeof CAP)[];
 
 function touch(input: unknown): Record<string, string> | null {

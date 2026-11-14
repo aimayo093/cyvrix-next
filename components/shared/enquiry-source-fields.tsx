@@ -47,7 +47,9 @@ export function EnquirySourceFields({
         If somewhere else, where? <span className="font-normal text-slate-500">(optional)</span>
         <input name="heard_about_other" type="text" maxLength={200} autoComplete="off" className={inputClassName} />
       </label>
-      <input ref={attributionRef} type="hidden" name="attribution" defaultValue="" />
+      {/* No value or defaultValue: React would reset the attribute on every
+          re-render (each keystroke in the contact form) and wipe the payload. */}
+      <input ref={attributionRef} type="hidden" name="attribution" />
     </div>
   );
 }

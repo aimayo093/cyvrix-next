@@ -12,7 +12,7 @@
  * functions below it touch `window` only when called.
  */
 
-export type Confidence = "utm" | "referrer" | "direct";
+export type Confidence = (typeof CONFIDENCES)[number];
 
 export type Touch = {
   source: string;
@@ -27,13 +27,36 @@ export type Touch = {
 
 export const ATTRIBUTION_MAX_LENGTH = 2000;
 
-const CAP = { source: 80, medium: 80, campaign: 120, term: 80, content: 120, page: 200, domain: 120 };
+/** Length limits for every captured value. The server imports these, so both sides agree. */
+export const ATTRIBUTION_CAPS = {
+  source: 80,
+  medium: 80,
+  campaign: 120,
+  term: 80,
+  content: 120,
+  landingPage: 200,
+  referrerDomain: 120,
+} as const;
+
+export const CONFIDENCES = ["utm", "referrer", "direct"] as const;
+
+const CAP = {
+  source: ATTRIBUTION_CAPS.source,
+  medium: ATTRIBUTION_CAPS.medium,
+  campaign: ATTRIBUTION_CAPS.campaign,
+  term: ATTRIBUTION_CAPS.term,
+  content: ATTRIBUTION_CAPS.content,
+  page: ATTRIBUTION_CAPS.landingPage,
+  domain: ATTRIBUTION_CAPS.referrerDomain,
+};
 
 /** Signed-in and machine routes never record a touch. */
 const EXCLUDED = ["/portal", "/login", "/admin", "/api", "/security-setup"];
 
 const SEARCH: [RegExp, string][] = [
-  [/(^|\.)google\.[a-z.]+$/, "google"],
+  // Google's own search hosts only (google.com, www.google.co.uk, google.de,
+  // google.com.au): not Gmail, Docs or any host that merely contains "google.".
+  [/^(www\.)?google\.(com|co\.[a-z]{2}|com\.[a-z]{2}|[a-z]{2})$/, "google"],
   [/(^|\.)bing\.com$/, "bing"],
   [/(^|\.)duckduckgo\.com$/, "duckduckgo"],
   [/(^|\.)search\.yahoo\.com$/, "yahoo"],
@@ -112,26 +135,46 @@ export function touchFrom(href: string, referrer: string | null | undefined): To
   return { ...base, source: "direct", medium: "none", confidence: "direct" };
 }
 
-// Page-lifetime only. The first touch is kept; a later campaign link in the
-// same tab replaces the last touch. Plain internal navigation changes nothing.
-let memory: { first: Touch; last: Touch } | null = null;
+export type TouchMemory = { first: Touch; last: Touch } | null;
+
+/**
+ * The rule for what the tab remembers, pure so it can be tested: the first
+ * touch is kept for good; a later campaign (utm) link replaces the last touch;
+ * a referrer or direct page view after the first changes nothing.
+ */
+export function nextMemory(memory: TouchMemory, touch: Touch): TouchMemory {
+  if (!memory) return { first: touch, last: touch };
+  if (touch.confidence === "utm") return { first: memory.first, last: touch };
+  return memory;
+}
+
+/**
+ * The hidden field's JSON for a memory and form page. If the caps still let it
+ * run past ATTRIBUTION_MAX_LENGTH, the first touch is trimmed to its essentials
+ * rather than the whole source being dropped. Pure.
+ */
+export function payloadFor(memory: TouchMemory, formPage: string): string {
+  if (!memory) return "";
+  const build = (first: Partial<Touch>) =>
+    JSON.stringify({ v: 1, firstTouch: first, lastTouch: memory.last, formPage: cleanToken(formPage, CAP.page) || "/" });
+  const full = build(memory.first);
+  if (full.length <= ATTRIBUTION_MAX_LENGTH) return full;
+  const { source, medium, confidence, landingPage } = memory.first;
+  const trimmed = build({ source, medium, confidence, landingPage });
+  return trimmed.length <= ATTRIBUTION_MAX_LENGTH ? trimmed : "";
+}
+
+// Page-lifetime only: no cookie, no storage. A full page load starts again.
+let memory: TouchMemory = null;
 
 export function recordTouch(): void {
   if (typeof window === "undefined" || isExcludedPath(window.location.pathname)) return;
-  const touch = touchFrom(window.location.href, document.referrer);
-  if (!memory) memory = { first: touch, last: touch };
-  else if (touch.confidence === "utm") memory = { first: memory.first, last: touch };
+  memory = nextMemory(memory, touchFrom(window.location.href, document.referrer));
 }
 
 /** The JSON sent in the enquiry's hidden `attribution` field, or "" if nothing could be read. */
 export function attributionPayload(): string {
   recordTouch();
-  if (!memory || typeof window === "undefined") return "";
-  const payload = JSON.stringify({
-    v: 1,
-    firstTouch: memory.first,
-    lastTouch: memory.last,
-    formPage: cleanToken(window.location.pathname, CAP.page) || "/",
-  });
-  return payload.length <= ATTRIBUTION_MAX_LENGTH ? payload : "";
+  if (typeof window === "undefined") return "";
+  return payloadFor(memory, window.location.pathname);
 }

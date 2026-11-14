@@ -560,8 +560,10 @@ enquiry source only (Paperclip CYV-31, CYV-32).
 - **No storage on the device.** The source is held in a page-lifetime variable
   (`lib/attribution.ts`) and travels only inside an enquiry the visitor submits.
   No cookie, no localStorage, no request of its own, so no consent gate and no
-  cookie-policy entry. The privacy policy discloses it ("How you found us") with
-  legitimate interest as the basis.
+  cookie-policy entry. The privacy policy's default text
+  (`lib/legal-content.ts`) discloses it ("How you found us") with legitimate
+  interest as the basis. The **published** policy is the CMS copy, which must
+  be updated through Admin → Legal Pages before this ships (§3).
 - **`Lead.source` is not reused.** It says which form an enquiry came from and
   the CRM list and dashboards depend on it; the marketing source is separate.
 - **The server decides.** The browser's JSON is a hint: keys allow-listed,
@@ -575,9 +577,14 @@ enquiry source only (Paperclip CYV-31, CYV-32).
 - **Old leads read "Not captured", never "direct".** Missing data is not zero
   (§11).
 
-**Reporting:** counts by `leadSource`, `leadMedium` and `heardAbout` (indexed
-with `createdAt`). Counts may go to the AI workforce; names, companies, email
-addresses and message text may not (§15).
+**Reporting:** counts by `leadSource`, `leadMedium` and `heardAbout`.
+`leadSource` and `heardAbout` have `createdAt` indexes, created in SQL only
+(the migration), not declared in `schema.prisma`, as with the existing
+`Lead_status_createdAt_idx`; `prisma migrate` is not used against production,
+so nothing proposes dropping them. `leadMedium` has none: the table holds a
+handful of rows and medium is read alongside source. Add one if reporting by
+medium alone ever becomes slow. Counts may go to the AI workforce; names,
+companies, email addresses and message text may not (§15).
 
 **Would change it:** paid media, which needs per-campaign cost to make the
 counts mean anything; and an internal link must never carry `utm_*`, because it

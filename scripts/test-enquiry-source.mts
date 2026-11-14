@@ -1,7 +1,7 @@
 /**
  * Enquiry-source capture (DECISIONS §16). Run: npm run test:enquiry-source
  */
-import { ATTRIBUTION_MAX_LENGTH, isExcludedPath, touchFrom } from "../lib/attribution";
+import { ATTRIBUTION_MAX_LENGTH, isExcludedPath, nextMemory, payloadFor, touchFrom } from "../lib/attribution";
 import { enquirySourceColumns, enquirySourceRows, sanitiseAttribution } from "../lib/attribution-server";
 import { HEARD_ABOUT, heardAboutLabel, normaliseHeardAbout, normaliseHeardAboutOther } from "../lib/heard-about";
 import { getDefaultLegalDocument } from "../lib/legal-content";
@@ -24,6 +24,28 @@ const site = "https://cyvrix.co.uk";
 
   const google = touchFrom(`${site}/`, "https://www.google.co.uk/");
   check("google.co.uk is organic search", [google.source, google.medium, google.confidence], ["google", "organic", "referrer"]);
+  check("google.com.au is search", touchFrom(`${site}/`, "https://www.google.com.au/").source, "google");
+  check("Gmail is not search", touchFrom(`${site}/`, "https://mail.google.com/mail/u/0/").medium, "referral");
+  check("a host that merely contains google. is not search", touchFrom(`${site}/`, "https://notgoogle.example/").medium, "referral");
+  check("google.attacker.example is not search", touchFrom(`${site}/`, "https://google.attacker.example/").medium, "referral");
+
+  // What the tab remembers.
+  const campaign = touchFrom(`${site}/?utm_source=flyer&utm_medium=print`, "");
+  const later = touchFrom(`${site}/services?utm_source=linkedin&utm_medium=social`, "");
+  const plain = touchFrom(`${site}/contact`, `${site}/services`);
+  const one = nextMemory(null, campaign);
+  check("the first touch starts the memory", [one?.first.source, one?.last.source], ["flyer", "flyer"]);
+  check("a plain page view changes nothing", nextMemory(one, plain), one);
+  const two = nextMemory(one, later);
+  check("a later campaign replaces the last touch only", [two?.first.source, two?.last.source], ["flyer", "linkedin"]);
+  check("a referrer view after the first changes nothing", nextMemory(two, touchFrom(`${site}/`, "https://www.bing.com/")), two);
+
+  // The hidden field never silently drops everything.
+  const long = touchFrom(`${site}/${"p".repeat(300)}?utm_source=${"s".repeat(200)}&utm_medium=${"m".repeat(200)}&utm_campaign=${"c".repeat(300)}&utm_term=${"t".repeat(200)}&utm_content=${"x".repeat(300)}`, "https://" + "r".repeat(150) + ".example/");
+  const bigPayload = payloadFor({ first: long, last: long }, "/" + "f".repeat(300));
+  check("an oversized payload is trimmed, not dropped", bigPayload.length > 0 && bigPayload.length <= ATTRIBUTION_MAX_LENGTH, true);
+  check("trimming keeps the last touch's campaign", JSON.parse(bigPayload).lastTouch.campaign?.length, 120);
+  check("no memory gives an empty field", payloadFor(null, "/contact"), "");
   check("bing is organic search", touchFrom(`${site}/`, "https://www.bing.com/search?q=x").source, "bing");
   check("t.co is X, social", [touchFrom(`${site}/`, "https://t.co/abc").source, touchFrom(`${site}/`, "https://t.co/abc").medium], ["x", "social"]);
   check("other site is a referral by domain", [touchFrom(`${site}/`, "https://www.npt.gov.uk/business").source, touchFrom(`${site}/`, "https://www.npt.gov.uk/business").medium], ["npt.gov.uk", "referral"]);
