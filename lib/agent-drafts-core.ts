@@ -24,13 +24,73 @@ export type DraftStatus = (typeof DRAFT_STATUSES)[number];
 
 export const SOCIAL_NETWORKS = ["linkedin", "facebook", "x", "instagram"] as const;
 
-/** Remove markup an agent may have added. Script and style bodies go entirely. */
+/**
+ * One pass over `value`: tags removed, <br> as a line break, </p> as a
+ * paragraph break, <script> and <style> blocks removed with their bodies (an
+ * unclosed one drops everything after it), and no "<" or ">" left at all.
+ *
+ * A character scanner rather than regular expressions, so no replacement can
+ * rebuild a tag from its pieces (CodeQL js/incomplete-multi-character-
+ * sanitization). The output is text only, so a literal "<" in prose is lost;
+ * that is the price of never emitting markup.
+ */
+/** ASCII-only lower case: same length as the input, so indexes line up ("İ" would not). */
+const asciiLower = (value: string) => value.replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+
+/** Index of `</tag` followed by a name boundary (space, "/", ">" or the end), from `from`. */
+function closingTagAt(lower: string, tag: string, from: number): number {
+  for (let at = lower.indexOf(`</${tag}`, from); at !== -1; at = lower.indexOf(`</${tag}`, at + 1)) {
+    const after = lower[at + tag.length + 2];
+    if (after === undefined || after === ">" || after === "/" || /\s/.test(after)) return at;
+  }
+  return -1;
+}
+
+function stripMarkupOnce(value: string): string {
+  const lower = asciiLower(value);
+  let out = "";
+  let i = 0;
+  while (i < value.length) {
+    const ch = value[i];
+    if (ch === ">") {
+      i += 1; // a stray closing bracket is dropped
+      continue;
+    }
+    if (ch !== "<") {
+      out += ch;
+      i += 1;
+      continue;
+    }
+    const close = value.indexOf(">", i + 1);
+    if (close === -1) {
+      i += 1; // an unmatched "<" in prose ("x < 3") is dropped; the text after it stays
+      continue;
+    }
+    const isClosing = lower[i + 1] === "/";
+    const name = lower.slice(isClosing ? i + 2 : i + 1, close).trim().split(/[\s/]/)[0];
+    if (!isClosing && (name.startsWith("script") || name.startsWith("style"))) {
+      const tag = name.startsWith("script") ? "script" : "style";
+      const end = closingTagAt(lower, tag, close + 1);
+      if (end === -1) break; // an unclosed script or style block drops the rest
+      const endClose = value.indexOf(">", end);
+      i = endClose === -1 ? value.length : endClose + 1;
+      continue;
+    }
+    if (!isClosing && name === "br") out += "\n";
+    if (isClosing && name === "p") out += "\n\n";
+    i = close + 1;
+  }
+  return out;
+}
+
+/** Remove markup an agent may have added, repeated until nothing changes. */
 export function plainText(value: string): string {
-  return value
-    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p\s*>/gi, "\n\n")
-    .replace(/<[^>]*>/g, "")
+  let stripped = value;
+  for (let previous = ""; stripped !== previous; ) {
+    previous = stripped;
+    stripped = stripMarkupOnce(stripped);
+  }
+  return stripped
     .replace(/\r\n/g, "\n")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")

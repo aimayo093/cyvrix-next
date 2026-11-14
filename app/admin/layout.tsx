@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminLayoutClient } from "@/components/admin/AdminLayoutClient";
-import { getAdminBrand } from "@/lib/admin-brand";
+import { getAdminBrandWithin } from "@/lib/admin-brand";
 import {
   AdminNotificationsMenu,
   AdminNotificationsButtonFallback,
@@ -46,9 +46,10 @@ async function AdminLayoutContent({
 
   // The only queries the chrome waits on. Everything else streams in, so a
   // slow or starved database cannot leave an administrator staring at a
-  // skeleton with no sidebar and no header. The logo is cached for hours and
-  // falls back to the bundled file on any failure, so it adds no real wait.
-  const [user, brand] = await Promise.all([requireAdmin(), getAdminBrand()]);
+  // skeleton with no sidebar and no header. The logo is cached for hours,
+  // and on a cache miss is waited on for at most 1.5 seconds before the
+  // bundled file is used.
+  const [user, brand] = await Promise.all([requireAdmin(), getAdminBrandWithin()]);
 
   return (
     <AdminLayoutClient

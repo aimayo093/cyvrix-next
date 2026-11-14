@@ -100,19 +100,32 @@ about Paperclip must be published (DECISIONS section 15).
 
 ## Tamper-evident audit log (20261111000000)
 
-**Done 10 November 2026:** applied to production (Cyvrix-Technology) and verified: all 455 existing entries chained and verified, three triggers active, an UPDATE and a DELETE refused, and no anon or authenticated access to the functions.
+**Status: applied to production (Cyvrix-Technology) on 10 November 2026** and
+verified there: all 455 existing entries chained and verified, three triggers
+active, an UPDATE and a DELETE refused, and no anon or authenticated access to
+the functions. Nothing further to do for production.
 
-Apply `prisma/migrations/20261111000000_tamper_evident_audit_log` to
-production. It adds three columns to `AuditLog`, chains every existing entry
-in the order written, and installs triggers that chain each new entry and
-refuse UPDATE, DELETE and TRUNCATE. The application never updates or deletes
-audit entries and leaves the new columns out of its queries, so it can go
-before or after a deploy. Until it is applied the Security Center shows
-"Audit Log Integrity" as not assessed.
+**For any other database** (a new environment, a restore into a fresh
+project): apply `prisma/migrations/20261111000000_tamper_evident_audit_log`.
+It adds three columns to `AuditLog`, chains every existing entry, and installs
+triggers that chain each new entry and refuse UPDATE, DELETE and TRUNCATE. The
+application never updates or deletes audit entries and leaves the new columns
+out of its queries, so it can go before or after a deploy. Until it is applied
+the Security Center shows "Audit Log Integrity" as not assessed.
 
-It was dry-run against production inside a transaction that was rolled back:
-455 entries chained and verified, a client-supplied hash was overwritten, and
-an UPDATE and a DELETE were both refused.
+**The baseline order is not evidence of history.** Existing entries are chained
+in `createdAt, id` order, because the original insertion order is not recorded.
+Entries with the same timestamp are ordered by id, which is arbitrary. The
+chain detects changes made after the migration through the application or by
+anyone without owner rights. A database owner who drops the triggers and
+rewrites an entry and every hash after it would still pass; only comparing the
+latest fingerprint with one recorded outside the database catches that. It
+says nothing about the order or completeness of entries written before the
+migration.
+
+Before it was applied, it was dry-run against production inside a transaction
+that was rolled back: 455 entries chained and verified, a client-supplied hash
+was overwritten, and an UPDATE and a DELETE were both refused.
 
 **Erasing an audit entry** (for example a court order) now takes the table
 owner dropping `AuditLog_no_update_delete`, deleting, and recreating the

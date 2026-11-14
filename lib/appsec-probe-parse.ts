@@ -27,7 +27,78 @@ export function clientBundlePaths(html: string, limit = 3): string[] {
  */
 const CREDENTIAL_NAME = /\b\w*(password|secret|token|apikey|api_key|passwordhash|authorization)\w*\b/i;
 
-export function credentialLogCalls(source: string): string[] {
+/**
+ * The source with every comment and the text of every string literal replaced
+ * by spaces (same length, quotes kept), so the scan below sees only code.
+ * Escapes are honoured, and a template literal's `${…}` expressions stay as
+ * code, nested to any depth. Limit: regular-expression literals are not
+ * recognised, so a quote or `//` inside one can mis-mask the rest of its line.
+ */
+export function maskNonCode(source: string): string {
+  const out = source.split("");
+  const blank = (from: number, to: number) => {
+    for (let k = from; k < to; k += 1) if (out[k] !== "\n") out[k] = " ";
+  };
+
+  // Scans code from `start` until an unmatched "}" (when inside a template
+  // expression) or the end. Returns the index just past where it stopped.
+  const code = (start: number, inExpression: boolean): number => {
+    let i = start;
+    let braces = 0;
+    while (i < source.length) {
+      const ch = source[i];
+      const next = source[i + 1];
+      if (ch === "/" && next === "/") {
+        const end = source.indexOf("\n", i);
+        const stop = end === -1 ? source.length : end;
+        blank(i, stop);
+        i = stop;
+      } else if (ch === "/" && next === "*") {
+        const end = source.indexOf("*/", i + 2);
+        const stop = end === -1 ? source.length : end + 2;
+        blank(i, stop);
+        i = stop;
+      } else if (ch === '"' || ch === "'") {
+        let j = i + 1;
+        while (j < source.length && source[j] !== ch && source[j] !== "\n") j += source[j] === "\\" ? 2 : 1;
+        blank(i + 1, Math.min(j, source.length));
+        i = j + 1;
+      } else if (ch === "`") {
+        let j = i + 1;
+        while (j < source.length && source[j] !== "`") {
+          if (source[j] === "\\") {
+            blank(j, j + 2);
+            j += 2;
+          } else if (source[j] === "$" && source[j + 1] === "{") {
+            j = code(j + 2, true);
+          } else {
+            blank(j, j + 1);
+            j += 1;
+          }
+        }
+        i = j + 1;
+      } else if (inExpression && ch === "{") {
+        braces += 1;
+        i += 1;
+      } else if (inExpression && ch === "}") {
+        if (braces === 0) return i + 1;
+        braces -= 1;
+        i += 1;
+      } else {
+        i += 1;
+      }
+    }
+    return i;
+  };
+
+  code(0, false);
+  return out.join("");
+}
+
+export function credentialLogCalls(rawSource: string): string[] {
+  // Calls inside comments or strings are not calls, and an escaped quote must
+  // not end a string early, so the scan runs on code only.
+  const source = maskNonCode(rawSource);
   const found: string[] = [];
   const call = /console\.(log|error|warn|info|debug)\s*\(/g;
   let match: RegExpExecArray | null;
