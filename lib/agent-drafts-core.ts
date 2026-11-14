@@ -24,13 +24,26 @@ export type DraftStatus = (typeof DRAFT_STATUSES)[number];
 
 export const SOCIAL_NETWORKS = ["linkedin", "facebook", "x", "instagram"] as const;
 
-/** Remove markup an agent may have added. Script and style bodies go entirely. */
+/**
+ * Remove markup an agent may have added. Script and style bodies go entirely.
+ *
+ * Repeated until nothing changes, because one pass can rebuild a tag from its
+ * pieces ("<scr<script></script>ipt>"), then any angle bracket left over is
+ * dropped. The output is text only, so a literal "<" in prose is lost; that is
+ * the price of never emitting a tag (CodeQL js/incomplete-multi-character-sanitization).
+ */
 export function plainText(value: string): string {
-  return value
-    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p\s*>/gi, "\n\n")
-    .replace(/<[^>]*>/g, "")
+  let stripped = value;
+  for (let previous = ""; stripped !== previous; ) {
+    previous = stripped;
+    stripped = stripped
+      .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/p\s*>/gi, "\n\n")
+      .replace(/<[^>]*>/g, "");
+  }
+  return stripped
+    .replace(/[<>]/g, "")
     .replace(/\r\n/g, "\n")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
