@@ -36,7 +36,14 @@ export function auditChainCheck(row: AuditChainRow | null | undefined): Security
   return {
     ...base,
     status: "pass",
-    detail: `All ${checked.toLocaleString("en-GB")} audit entries verified against their hash chain; none was changed or removed after it was written.${head}`,
+    // Says what it proves and no more: a database owner could delete an entry
+    // and rewrite every hash after it, and this check would still pass. Only a
+    // fingerprint recorded outside the database catches that.
+    detail:
+      `All ${checked.toLocaleString("en-GB")} audit entries match their hash chain; no break was detected.` +
+      (row.headHash
+        ? ` Limit: a full rewrite of the chain by the database owner is caught only by comparing the latest fingerprint with one recorded outside the database.${head}`
+        : ""),
   };
 }
 

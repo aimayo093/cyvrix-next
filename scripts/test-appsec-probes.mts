@@ -1,7 +1,7 @@
 /**
  * Parsing behind the live Security Center probes. Run: npm run test:appsec
  */
-import { clientBundlePaths, credentialLogCalls } from "../lib/appsec-probe-parse";
+import { clientBundlePaths, credentialLogCalls, maskNonCode } from "../lib/appsec-probe-parse";
 import { heldBackBy, upgradeTarget } from "../lib/dependency-freshness";
 import { countHit, MemoryStore, RateLimitError, type RateLimitStore } from "../lib/rate-limit-core";
 import { needsSecondFactor, sessionVersionMatches } from "../lib/session-rules";
@@ -10,7 +10,7 @@ import { verifySessionToken as verifyAtProxy } from "../lib/auth-edge";
 import { createHmac } from "node:crypto";
 import { botProtectionUpdate, parseBotProtection } from "../lib/bot-protection-parse";
 import { staticAppSecChecks } from "../lib/appsec-checks";
-import { buildSecurityTxt } from "../lib/security-txt";
+import { buildSecurityTxt, isPublishableMailbox } from "../lib/security-txt";
 import { breachCountFromRange, passwordHashParts } from "../lib/breached-passwords-core";
 import { auditChainCheck } from "../lib/audit-chain";
 import fs from "node:fs";
@@ -192,6 +192,12 @@ check("client is not required to", needsSecondFactor("CLIENT", null), false);
   check("security.txt expires 180 days out, whole seconds", txt?.match(/^Expires: (.*)$/m)?.[1], "2027-05-10T09:30:15Z");
   check("security.txt names its canonical URL", /^Canonical: https:\/\/cyvrix\.co\.uk\/\.well-known\/security\.txt$/m.test(txt ?? ""), true);
   check("security.txt with no usable contact is not served", buildSecurityTxt({ contacts: ["", null, "nope"], siteUrl: "https://cyvrix.co.uk", now }), null);
+  for (const bad of ["a?subject=x@cyvrix.co.uk", "a@cyvrix.co.uk?cc=x@evil.test", "a#b@cyvrix.co.uk", "a%40b@cyvrix.co.uk", "a&b@cyvrix.co.uk", ".a@cyvrix.co.uk", "a..b@cyvrix.co.uk", "a@b@cyvrix.co.uk", "a@-cyvrix.co.uk", "a@cyvrix", "a@cyvrix.c0"]) {
+    check(`mailbox refused: ${bad}`, isPublishableMailbox(bad), false);
+  }
+  for (const good of ["support@cyvrix.co.uk", "security+reports@cyvrix.co.uk", "first.last@sub.cyvrix.co.uk"]) {
+    check(`mailbox accepted: ${good}`, isPublishableMailbox(good), true);
+  }
 }
 
 // Leaked-password check: only the prefix leaves the server; padding is ignored.
@@ -212,6 +218,12 @@ check("client is not required to", needsSecondFactor("CLIENT", null), false);
   check("a credential variable is caught", credentialLogCalls(`console.log("login", password);`).length, 1);
   check("a credential inside a template expression is caught", credentialLogCalls("console.error(`token was ${session.accessToken}`);").length, 1);
   check("a credential property is caught", credentialLogCalls(`console.info(user.passwordHash)`).length, 1);
+  check("a call inside a line comment is not a call", credentialLogCalls(`// console.log(password)\nconst x = 1;`), []);
+  check("a call inside a block comment is not a call", credentialLogCalls(`/* console.log(token) */`), []);
+  check("a call inside a string is not a call", credentialLogCalls(`const help = "never console.log(password)";`), []);
+  check("an escaped quote does not hide a real call", credentialLogCalls(`const s = "say \\"hi\\""; console.log(apiKey);`).length, 1);
+  check("a nested template expression is still code", credentialLogCalls("console.log(`a ${`b ${user.secretValue}`}`);").length, 1);
+  check("masking keeps length and line breaks", maskNonCode(`a // c\n"x\\"y" \`t\${z}\``), `a     \n"    " \` \${z}\``);
 }
 
 // Audit-log hash chain, as the Security Center reports it.

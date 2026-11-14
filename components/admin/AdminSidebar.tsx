@@ -166,7 +166,7 @@ export function AdminSidebar({
           className="flex items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0]"
         >
           {collapsed ? (
-            <Image src={brand.icon} alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+            <Image src={brand.icon} alt="" width={32} height={32} unoptimized className="h-8 w-8 object-contain" />
           ) : (
             // Sized to sit inside the 64px header: the old text placeholder was
             // taller than the header and was clipped at the top.
@@ -175,6 +175,10 @@ export function AdminSidebar({
               alt=""
               width={176}
               height={40}
+              // Brand Assets URLs can be on any storage host; next/image would
+              // refuse a host missing from remotePatterns and the logo would
+              // vanish. The CSP allows https: images, and a logo needs no resizing.
+              unoptimized
               className="h-9 w-auto max-w-[11rem] object-contain object-left"
             />
           )}
@@ -218,6 +222,8 @@ export function AdminSidebar({
           href="/"
           target="_blank"
           rel="noopener"
+          // Closes the mobile drawer, so the admin tab is usable on return.
+          onClick={onNavigate}
           title={collapsed ? "View website (opens in a new tab)" : undefined}
           className={`flex min-h-11 w-full items-center rounded-lg text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-100 hover:text-[#041635] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2691F0] lg:min-h-9 ${
             collapsed ? "justify-center px-2" : "gap-3 px-3"

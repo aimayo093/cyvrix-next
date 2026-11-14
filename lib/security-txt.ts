@@ -13,7 +13,30 @@
  */
 export const SECURITY_TXT_LIFETIME_DAYS = 180;
 
-const EMAIL = /^[^\s@<>()"',;:]+@[^\s@<>()"',;:]+\.[^\s@<>()"',;:]+$/;
+/**
+ * A deliberately strict mailbox, because the value is published as a mailto:
+ * URI: letters, digits and . _ + - before the @ (no leading, trailing or double
+ * dot), and a real hostname after it. Characters that mean something in a URI
+ * (? # % & / and the like) are refused rather than escaped, so a bad CMS value
+ * can never publish an ambiguous contact.
+ */
+const LOCAL = /^[A-Za-z0-9_+-]+(?:\.[A-Za-z0-9_+-]+)*$/;
+const LABEL = /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
+
+export function isPublishableMailbox(value: string): boolean {
+  if (value.length > 254) return false;
+  const at = value.lastIndexOf("@");
+  if (at <= 0 || at !== value.indexOf("@")) return false;
+  const local = value.slice(0, at);
+  const labels = value.slice(at + 1).split(".");
+  return (
+    local.length <= 64 &&
+    LOCAL.test(local) &&
+    labels.length >= 2 &&
+    labels.every((label) => LABEL.test(label)) &&
+    /^[A-Za-z]{2,63}$/.test(labels[labels.length - 1])
+  );
+}
 
 export function buildSecurityTxt(options: {
   /** Candidate contact addresses, best first. Blank or malformed ones are skipped. */
@@ -24,7 +47,7 @@ export function buildSecurityTxt(options: {
   const contacts = [...new Set(
     options.contacts
       .map((value) => (typeof value === "string" ? value.trim() : ""))
-      .filter((value) => EMAIL.test(value)),
+      .filter(isPublishableMailbox),
   )];
   // A security.txt with no way to reach anyone is worse than none at all.
   if (contacts.length === 0) return null;
