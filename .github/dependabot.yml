@@ -1,8 +1,10 @@
 # Keeps every dependency on this platform current. See DEPLOYMENT.md#dependency-updates.
 #
 # Each update arrives as a pull request, and CI (.github/workflows/ci.yml) runs
-# the type check, claims check, tests and a production build on it before it
-# can be merged. Nothing merges itself.
+# the type check, claims check, tests and a production build on it. Patch and
+# minor updates then merge themselves once CI passes
+# (.github/workflows/dependabot-auto-merge.yml); major updates wait for a
+# person. Founder decision, 14 November 2026.
 version: 2
 updates:
   - package-ecosystem: npm
