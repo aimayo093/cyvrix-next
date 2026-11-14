@@ -37,6 +37,7 @@ jobs:
         run: |
           npm run test:dashboard
           npm run test:appsec
+          npm run test:enquiry-source
           npm run test:ticket-access
           npm run test:totp
           npm run test:mfa

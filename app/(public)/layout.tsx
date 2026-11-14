@@ -2,6 +2,7 @@ import * as React from "react";
 import { Navbar } from "@/components/nav-main/Navbar";
 import { Footer } from "@/components/nav-main/Footer";
 import { CookieConsent } from "@/components/shared/CookieConsent";
+import { AttributionRecorder } from "@/components/shared/attribution-recorder";
 import { JsonLd } from "@/components/public/JsonLd";
 import { getPublicShellData } from "@/lib/public-cache";
 import { organisationSchema, webSiteSchema } from "@/lib/structured-data";
@@ -76,6 +77,7 @@ export default function PublicLayout({
         <PublicFooter />
       </React.Suspense>
       <CookieConsent />
+      <AttributionRecorder />
     </>
   );
 }

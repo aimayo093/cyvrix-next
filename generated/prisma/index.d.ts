@@ -53268,6 +53268,12 @@ export namespace Prisma {
     assignedStaff: string | null
     followUpDate: Date | null
     conversionStatus: string | null
+    heardAbout: string | null
+    heardAboutOther: string | null
+    leadSource: string | null
+    leadMedium: string | null
+    leadCampaign: string | null
+    sourceConfidence: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -53282,6 +53288,12 @@ export namespace Prisma {
     assignedStaff: string | null
     followUpDate: Date | null
     conversionStatus: string | null
+    heardAbout: string | null
+    heardAboutOther: string | null
+    leadSource: string | null
+    leadMedium: string | null
+    leadCampaign: string | null
+    sourceConfidence: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -53297,6 +53309,13 @@ export namespace Prisma {
     followUpDate: number
     conversionStatus: number
     payload: number
+    heardAbout: number
+    heardAboutOther: number
+    leadSource: number
+    leadMedium: number
+    leadCampaign: number
+    sourceConfidence: number
+    sourceDetail: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -53313,6 +53332,12 @@ export namespace Prisma {
     assignedStaff?: true
     followUpDate?: true
     conversionStatus?: true
+    heardAbout?: true
+    heardAboutOther?: true
+    leadSource?: true
+    leadMedium?: true
+    leadCampaign?: true
+    sourceConfidence?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -53327,6 +53352,12 @@ export namespace Prisma {
     assignedStaff?: true
     followUpDate?: true
     conversionStatus?: true
+    heardAbout?: true
+    heardAboutOther?: true
+    leadSource?: true
+    leadMedium?: true
+    leadCampaign?: true
+    sourceConfidence?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -53342,6 +53373,13 @@ export namespace Prisma {
     followUpDate?: true
     conversionStatus?: true
     payload?: true
+    heardAbout?: true
+    heardAboutOther?: true
+    leadSource?: true
+    leadMedium?: true
+    leadCampaign?: true
+    sourceConfidence?: true
+    sourceDetail?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -53430,6 +53468,13 @@ export namespace Prisma {
     followUpDate: Date | null
     conversionStatus: string | null
     payload: JsonValue
+    heardAbout: string | null
+    heardAboutOther: string | null
+    leadSource: string | null
+    leadMedium: string | null
+    leadCampaign: string | null
+    sourceConfidence: string | null
+    sourceDetail: JsonValue | null
     createdAt: Date
     updatedAt: Date
     _count: LeadCountAggregateOutputType | null
@@ -53462,6 +53507,13 @@ export namespace Prisma {
     followUpDate?: boolean
     conversionStatus?: boolean
     payload?: boolean
+    heardAbout?: boolean
+    heardAboutOther?: boolean
+    leadSource?: boolean
+    leadMedium?: boolean
+    leadCampaign?: boolean
+    sourceConfidence?: boolean
+    sourceDetail?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     LeadNote?: boolean | Lead$LeadNoteArgs<ExtArgs>
@@ -53479,6 +53531,13 @@ export namespace Prisma {
     followUpDate?: boolean
     conversionStatus?: boolean
     payload?: boolean
+    heardAbout?: boolean
+    heardAboutOther?: boolean
+    leadSource?: boolean
+    leadMedium?: boolean
+    leadCampaign?: boolean
+    sourceConfidence?: boolean
+    sourceDetail?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["lead"]>
@@ -53494,6 +53553,13 @@ export namespace Prisma {
     followUpDate?: boolean
     conversionStatus?: boolean
     payload?: boolean
+    heardAbout?: boolean
+    heardAboutOther?: boolean
+    leadSource?: boolean
+    leadMedium?: boolean
+    leadCampaign?: boolean
+    sourceConfidence?: boolean
+    sourceDetail?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }, ExtArgs["result"]["lead"]>
@@ -53509,11 +53575,18 @@ export namespace Prisma {
     followUpDate?: boolean
     conversionStatus?: boolean
     payload?: boolean
+    heardAbout?: boolean
+    heardAboutOther?: boolean
+    leadSource?: boolean
+    leadMedium?: boolean
+    leadCampaign?: boolean
+    sourceConfidence?: boolean
+    sourceDetail?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type LeadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "company" | "source" | "status" | "assignedStaff" | "followUpDate" | "conversionStatus" | "payload" | "createdAt" | "updatedAt", ExtArgs["result"]["lead"]>
+  export type LeadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "email" | "company" | "source" | "status" | "assignedStaff" | "followUpDate" | "conversionStatus" | "payload" | "heardAbout" | "heardAboutOther" | "leadSource" | "leadMedium" | "leadCampaign" | "sourceConfidence" | "sourceDetail" | "createdAt" | "updatedAt", ExtArgs["result"]["lead"]>
   export type LeadInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     LeadNote?: boolean | Lead$LeadNoteArgs<ExtArgs>
     _count?: boolean | LeadCountOutputTypeDefaultArgs<ExtArgs>
@@ -53537,6 +53610,17 @@ export namespace Prisma {
       followUpDate: Date | null
       conversionStatus: string | null
       payload: Prisma.JsonValue
+      /**
+       * Enquiry source (DECISIONS §16). `source` above is which form; these are
+       * how the visitor reached the site. Null on leads created before them.
+       */
+      heardAbout: string | null
+      heardAboutOther: string | null
+      leadSource: string | null
+      leadMedium: string | null
+      leadCampaign: string | null
+      sourceConfidence: string | null
+      sourceDetail: Prisma.JsonValue | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["lead"]>
@@ -53973,6 +54057,13 @@ export namespace Prisma {
     readonly followUpDate: FieldRef<"Lead", 'DateTime'>
     readonly conversionStatus: FieldRef<"Lead", 'String'>
     readonly payload: FieldRef<"Lead", 'Json'>
+    readonly heardAbout: FieldRef<"Lead", 'String'>
+    readonly heardAboutOther: FieldRef<"Lead", 'String'>
+    readonly leadSource: FieldRef<"Lead", 'String'>
+    readonly leadMedium: FieldRef<"Lead", 'String'>
+    readonly leadCampaign: FieldRef<"Lead", 'String'>
+    readonly sourceConfidence: FieldRef<"Lead", 'String'>
+    readonly sourceDetail: FieldRef<"Lead", 'Json'>
     readonly createdAt: FieldRef<"Lead", 'DateTime'>
     readonly updatedAt: FieldRef<"Lead", 'DateTime'>
   }
@@ -119479,6 +119570,13 @@ export namespace Prisma {
     followUpDate: 'followUpDate',
     conversionStatus: 'conversionStatus',
     payload: 'payload',
+    heardAbout: 'heardAbout',
+    heardAboutOther: 'heardAboutOther',
+    leadSource: 'leadSource',
+    leadMedium: 'leadMedium',
+    leadCampaign: 'leadCampaign',
+    sourceConfidence: 'sourceConfidence',
+    sourceDetail: 'sourceDetail',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -123933,6 +124031,13 @@ export namespace Prisma {
     followUpDate?: DateTimeNullableFilter<"Lead"> | Date | string | null
     conversionStatus?: StringNullableFilter<"Lead"> | string | null
     payload?: JsonFilter<"Lead">
+    heardAbout?: StringNullableFilter<"Lead"> | string | null
+    heardAboutOther?: StringNullableFilter<"Lead"> | string | null
+    leadSource?: StringNullableFilter<"Lead"> | string | null
+    leadMedium?: StringNullableFilter<"Lead"> | string | null
+    leadCampaign?: StringNullableFilter<"Lead"> | string | null
+    sourceConfidence?: StringNullableFilter<"Lead"> | string | null
+    sourceDetail?: JsonNullableFilter<"Lead">
     createdAt?: DateTimeFilter<"Lead"> | Date | string
     updatedAt?: DateTimeFilter<"Lead"> | Date | string
     LeadNote?: LeadNoteListRelationFilter
@@ -123949,6 +124054,13 @@ export namespace Prisma {
     followUpDate?: SortOrderInput | SortOrder
     conversionStatus?: SortOrderInput | SortOrder
     payload?: SortOrder
+    heardAbout?: SortOrderInput | SortOrder
+    heardAboutOther?: SortOrderInput | SortOrder
+    leadSource?: SortOrderInput | SortOrder
+    leadMedium?: SortOrderInput | SortOrder
+    leadCampaign?: SortOrderInput | SortOrder
+    sourceConfidence?: SortOrderInput | SortOrder
+    sourceDetail?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     LeadNote?: LeadNoteOrderByRelationAggregateInput
@@ -123968,6 +124080,13 @@ export namespace Prisma {
     followUpDate?: DateTimeNullableFilter<"Lead"> | Date | string | null
     conversionStatus?: StringNullableFilter<"Lead"> | string | null
     payload?: JsonFilter<"Lead">
+    heardAbout?: StringNullableFilter<"Lead"> | string | null
+    heardAboutOther?: StringNullableFilter<"Lead"> | string | null
+    leadSource?: StringNullableFilter<"Lead"> | string | null
+    leadMedium?: StringNullableFilter<"Lead"> | string | null
+    leadCampaign?: StringNullableFilter<"Lead"> | string | null
+    sourceConfidence?: StringNullableFilter<"Lead"> | string | null
+    sourceDetail?: JsonNullableFilter<"Lead">
     createdAt?: DateTimeFilter<"Lead"> | Date | string
     updatedAt?: DateTimeFilter<"Lead"> | Date | string
     LeadNote?: LeadNoteListRelationFilter
@@ -123984,6 +124103,13 @@ export namespace Prisma {
     followUpDate?: SortOrderInput | SortOrder
     conversionStatus?: SortOrderInput | SortOrder
     payload?: SortOrder
+    heardAbout?: SortOrderInput | SortOrder
+    heardAboutOther?: SortOrderInput | SortOrder
+    leadSource?: SortOrderInput | SortOrder
+    leadMedium?: SortOrderInput | SortOrder
+    leadCampaign?: SortOrderInput | SortOrder
+    sourceConfidence?: SortOrderInput | SortOrder
+    sourceDetail?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: LeadCountOrderByAggregateInput
@@ -124005,6 +124131,13 @@ export namespace Prisma {
     followUpDate?: DateTimeNullableWithAggregatesFilter<"Lead"> | Date | string | null
     conversionStatus?: StringNullableWithAggregatesFilter<"Lead"> | string | null
     payload?: JsonWithAggregatesFilter<"Lead">
+    heardAbout?: StringNullableWithAggregatesFilter<"Lead"> | string | null
+    heardAboutOther?: StringNullableWithAggregatesFilter<"Lead"> | string | null
+    leadSource?: StringNullableWithAggregatesFilter<"Lead"> | string | null
+    leadMedium?: StringNullableWithAggregatesFilter<"Lead"> | string | null
+    leadCampaign?: StringNullableWithAggregatesFilter<"Lead"> | string | null
+    sourceConfidence?: StringNullableWithAggregatesFilter<"Lead"> | string | null
+    sourceDetail?: JsonNullableWithAggregatesFilter<"Lead">
     createdAt?: DateTimeWithAggregatesFilter<"Lead"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Lead"> | Date | string
   }
@@ -132342,6 +132475,13 @@ export namespace Prisma {
     followUpDate?: Date | string | null
     conversionStatus?: string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: string | null
+    heardAboutOther?: string | null
+    leadSource?: string | null
+    leadMedium?: string | null
+    leadCampaign?: string | null
+    sourceConfidence?: string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt: Date | string
     LeadNote?: LeadNoteCreateNestedManyWithoutLeadInput
@@ -132358,6 +132498,13 @@ export namespace Prisma {
     followUpDate?: Date | string | null
     conversionStatus?: string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: string | null
+    heardAboutOther?: string | null
+    leadSource?: string | null
+    leadMedium?: string | null
+    leadCampaign?: string | null
+    sourceConfidence?: string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt: Date | string
     LeadNote?: LeadNoteUncheckedCreateNestedManyWithoutLeadInput
@@ -132374,6 +132521,13 @@ export namespace Prisma {
     followUpDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     conversionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: NullableStringFieldUpdateOperationsInput | string | null
+    heardAboutOther?: NullableStringFieldUpdateOperationsInput | string | null
+    leadSource?: NullableStringFieldUpdateOperationsInput | string | null
+    leadMedium?: NullableStringFieldUpdateOperationsInput | string | null
+    leadCampaign?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceConfidence?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     LeadNote?: LeadNoteUpdateManyWithoutLeadNestedInput
@@ -132390,6 +132544,13 @@ export namespace Prisma {
     followUpDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     conversionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: NullableStringFieldUpdateOperationsInput | string | null
+    heardAboutOther?: NullableStringFieldUpdateOperationsInput | string | null
+    leadSource?: NullableStringFieldUpdateOperationsInput | string | null
+    leadMedium?: NullableStringFieldUpdateOperationsInput | string | null
+    leadCampaign?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceConfidence?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     LeadNote?: LeadNoteUncheckedUpdateManyWithoutLeadNestedInput
@@ -132406,6 +132567,13 @@ export namespace Prisma {
     followUpDate?: Date | string | null
     conversionStatus?: string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: string | null
+    heardAboutOther?: string | null
+    leadSource?: string | null
+    leadMedium?: string | null
+    leadCampaign?: string | null
+    sourceConfidence?: string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt: Date | string
   }
@@ -132421,6 +132589,13 @@ export namespace Prisma {
     followUpDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     conversionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: NullableStringFieldUpdateOperationsInput | string | null
+    heardAboutOther?: NullableStringFieldUpdateOperationsInput | string | null
+    leadSource?: NullableStringFieldUpdateOperationsInput | string | null
+    leadMedium?: NullableStringFieldUpdateOperationsInput | string | null
+    leadCampaign?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceConfidence?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -132436,6 +132611,13 @@ export namespace Prisma {
     followUpDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     conversionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: NullableStringFieldUpdateOperationsInput | string | null
+    heardAboutOther?: NullableStringFieldUpdateOperationsInput | string | null
+    leadSource?: NullableStringFieldUpdateOperationsInput | string | null
+    leadMedium?: NullableStringFieldUpdateOperationsInput | string | null
+    leadCampaign?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceConfidence?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -140418,6 +140600,13 @@ export namespace Prisma {
     followUpDate?: SortOrder
     conversionStatus?: SortOrder
     payload?: SortOrder
+    heardAbout?: SortOrder
+    heardAboutOther?: SortOrder
+    leadSource?: SortOrder
+    leadMedium?: SortOrder
+    leadCampaign?: SortOrder
+    sourceConfidence?: SortOrder
+    sourceDetail?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -140432,6 +140621,12 @@ export namespace Prisma {
     assignedStaff?: SortOrder
     followUpDate?: SortOrder
     conversionStatus?: SortOrder
+    heardAbout?: SortOrder
+    heardAboutOther?: SortOrder
+    leadSource?: SortOrder
+    leadMedium?: SortOrder
+    leadCampaign?: SortOrder
+    sourceConfidence?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -140446,6 +140641,12 @@ export namespace Prisma {
     assignedStaff?: SortOrder
     followUpDate?: SortOrder
     conversionStatus?: SortOrder
+    heardAbout?: SortOrder
+    heardAboutOther?: SortOrder
+    leadSource?: SortOrder
+    leadMedium?: SortOrder
+    leadCampaign?: SortOrder
+    sourceConfidence?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -153741,6 +153942,13 @@ export namespace Prisma {
     followUpDate?: Date | string | null
     conversionStatus?: string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: string | null
+    heardAboutOther?: string | null
+    leadSource?: string | null
+    leadMedium?: string | null
+    leadCampaign?: string | null
+    sourceConfidence?: string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt: Date | string
   }
@@ -153756,6 +153964,13 @@ export namespace Prisma {
     followUpDate?: Date | string | null
     conversionStatus?: string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: string | null
+    heardAboutOther?: string | null
+    leadSource?: string | null
+    leadMedium?: string | null
+    leadCampaign?: string | null
+    sourceConfidence?: string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt: Date | string
   }
@@ -153787,6 +154002,13 @@ export namespace Prisma {
     followUpDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     conversionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: NullableStringFieldUpdateOperationsInput | string | null
+    heardAboutOther?: NullableStringFieldUpdateOperationsInput | string | null
+    leadSource?: NullableStringFieldUpdateOperationsInput | string | null
+    leadMedium?: NullableStringFieldUpdateOperationsInput | string | null
+    leadCampaign?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceConfidence?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -153802,6 +154024,13 @@ export namespace Prisma {
     followUpDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     conversionStatus?: NullableStringFieldUpdateOperationsInput | string | null
     payload?: JsonNullValueInput | InputJsonValue
+    heardAbout?: NullableStringFieldUpdateOperationsInput | string | null
+    heardAboutOther?: NullableStringFieldUpdateOperationsInput | string | null
+    leadSource?: NullableStringFieldUpdateOperationsInput | string | null
+    leadMedium?: NullableStringFieldUpdateOperationsInput | string | null
+    leadCampaign?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceConfidence?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceDetail?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

@@ -7,6 +7,7 @@ import { submitQuote } from "@/lib/actions";
 import { industries, services } from "@/lib/cyvrix-data";
 import { PageHeroImage } from "@/components/public/PageHeroImage";
 import { getPageHero } from "@/lib/page-heroes";
+import { EnquirySourceFields } from "@/components/shared/enquiry-source-fields";
 
 export const metadata: Metadata = {
   title: "Request a Quote",
@@ -98,6 +99,11 @@ export default function RequestQuotePage() {
                 className="w-full rounded-2xl border border-white/10 bg-[#020817] p-4 text-sm text-white placeholder-slate-500 outline-none focus:border-[#2691F0] focus:ring-2 focus:ring-[#2691F0]/20 transition-all font-semibold resize-none"
               />
             </div>
+
+            <EnquirySourceFields
+              labelClassName="block text-xs font-black text-white uppercase tracking-widest"
+              inputClassName="mt-2 w-full rounded-2xl border border-white/10 bg-[#020817] p-4 text-sm text-white outline-none focus:border-[#2691F0] focus:ring-2 focus:ring-[#2691F0]/20 transition-all font-semibold normal-case tracking-normal"
+            />
 
             <div className="p-4 bg-[#041635]/50 rounded-2xl border border-white/5 flex gap-3 items-start text-xs text-slate-400">
               <Info className="h-4.5 w-4.5 text-[#2691F0] shrink-0 mt-0.5" />

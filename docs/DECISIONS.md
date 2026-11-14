@@ -424,3 +424,41 @@ devices apart; both are kept while the session lives and swept 30 days after
 it ends. `lastSeenAt` is refreshed at most every five minutes, so reading a
 session rarely writes. Tokens from before rows existed name none and are
 refused, which signed every account out once when this shipped.
+
+---
+
+## 16. Enquiry source: enquiry data, not analytics
+
+**What:** the contact, CMS support and quote forms record how the visitor
+reached the site (campaign tags, referring domain, landing and form page) and
+an optional "How did you hear about us?" answer, stored as seven nullable
+columns on `Lead` and shown read-only in the Leads CRM panel. Founder
+decisions, 14 November 2026: keep Vercel Web Analytics unchanged; capture
+enquiry source only (Paperclip CYV-31, CYV-32).
+
+**Why it is built this way:**
+- **No storage on the device.** The source is held in a page-lifetime variable
+  (`lib/attribution.ts`) and travels only inside an enquiry the visitor submits.
+  No cookie, no localStorage, no request of its own, so no consent gate and no
+  cookie-policy entry. The privacy policy discloses it ("How you found us") with
+  legitimate interest as the basis.
+- **`Lead.source` is not reused.** It says which form an enquiry came from and
+  the CRM list and dashboards depend on it; the marketing source is separate.
+- **The server decides.** The browser's JSON is a hint: keys allow-listed,
+  values re-cleaned and capped, confidence from a fixed set
+  (`lib/attribution-server.ts`). A malformed hint stores nulls and never fails
+  the enquiry. The answer list is fixed in code (`lib/heard-about.ts`) so a CMS
+  edit cannot put free text into the CRM; the free-text box is kept only with
+  "Somewhere else".
+- **Not on job applications.** The careers form shares the CMS section and the
+  handler but does not show the fields: an applicant is not a marketing lead.
+- **Old leads read "Not captured", never "direct".** Missing data is not zero
+  (§11).
+
+**Reporting:** counts by `leadSource`, `leadMedium` and `heardAbout` (indexed
+with `createdAt`). Counts may go to the AI workforce; names, companies, email
+addresses and message text may not (§15).
+
+**Would change it:** paid media, which needs per-campaign cost to make the
+counts mean anything; and an internal link must never carry `utm_*`, because it
+would overwrite the real source.

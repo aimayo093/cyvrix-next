@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { cn } from "@/lib/utils";
+import { EnquirySourceFields } from "@/components/shared/enquiry-source-fields";
 
 interface SectionRendererProps {
   sections: any[];
@@ -954,6 +955,14 @@ export function SectionRenderer({
                           ? "For your privacy, do not upload a CV or other personal documents here. Submit your interest and CYVRIX will provide an approved sharing route if your application progresses."
                           : "For privacy and document security, this form does not accept attachments. Describe your requirements and CYVRIX will provide an approved sharing route if documents are needed."}
                       </p>
+
+                      {/* Enquiries only: a job application is not a marketing lead. */}
+                      {!isCareersForm && (
+                        <EnquirySourceFields
+                          labelClassName="block text-sm font-bold text-slate-300"
+                          inputClassName="mt-2 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-[#2691F0]"
+                        />
+                      )}
 
                       <label className="flex items-start gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm leading-relaxed text-slate-300">
                         <input required type="checkbox" name="consent" className="mt-0.5 h-4 w-4 shrink-0 accent-[#2691F0]" />

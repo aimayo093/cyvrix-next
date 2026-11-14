@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { enforcePublicSubmissionRateLimit } from "@/lib/rate-limit";
+import { enquirySourceColumns } from "@/lib/attribution-server";
 
 type SubmissionType = "contact" | "quote" | "ticket" | "newsletter" | "career" | "cms";
 
@@ -240,6 +241,12 @@ export async function submitQuote(formData: FormData) {
   try {
     const data = parse(quoteSchema, formData);
     await limitSubmission("quote", data.email, 2, 6);
+    // Outside the schema on purpose: a bad source hint never fails the quote.
+    const enquirySource = enquirySourceColumns({
+      heardAbout: formData.get("heard_about"),
+      heardAboutOther: formData.get("heard_about_other"),
+      attribution: formData.get("attribution"),
+    });
     await prisma.$transaction(async (tx) => {
       await tx.quoteRequest.create({
         data: {
@@ -267,6 +274,7 @@ export async function submitQuote(formData: FormData) {
           email: data.email,
           company: data.businessName,
           source: "quote_request",
+          ...enquirySource,
           status: "NEW",
           payload: data,
         },
