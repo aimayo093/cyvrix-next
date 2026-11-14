@@ -18,13 +18,15 @@ import type { PublicLegalDocument } from "@/lib/public-legal";
  */
 
 const LAST_REVIEWED = "21 August 2026";
+/** The privacy policy changed on this date: the "How you found us" disclosure. */
+const PRIVACY_LAST_REVIEWED = "14 November 2026";
 
 const REVIEW_NOTICE =
   "This document describes how the CYVRIX website and client portal currently operate. It is maintained by CYVRIX and has not been through external legal review. If you need a contractual position confirmed, please contact us before relying on this page.";
 
 export const defaultPrivacyPolicy: PublicLegalDocument = {
   title: "Privacy Policy",
-  lastReviewed: LAST_REVIEWED,
+  lastReviewed: PRIVACY_LAST_REVIEWED,
   reviewNotice: REVIEW_NOTICE,
   paragraphs: [],
   sections: [
@@ -119,7 +121,7 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
     {
       heading: "Changes to this policy",
       paragraphs: [
-        `This policy was last reviewed on ${LAST_REVIEWED}. If we change how we handle personal information we will update this page, and where the change is significant we will make that clear.`,
+        `This policy was last reviewed on ${PRIVACY_LAST_REVIEWED}. If we change how we handle personal information we will update this page, and where the change is significant we will make that clear.`,
       ],
     },
   ],

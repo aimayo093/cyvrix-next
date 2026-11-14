@@ -101,11 +101,15 @@ export async function POST(req: Request) {
 
     // Outside the schema on purpose: a malformed source hint is discarded,
     // never a reason to refuse the enquiry (lib/attribution-server.ts).
-    const enquirySource = enquirySourceColumns({
-      heardAbout: raw.heard_about,
-      heardAboutOther: raw.heard_about_other,
-      attribution: raw.attribution,
-    });
+    // A job application (it names a role) is never a marketing lead, so no
+    // source is stored even if the fields arrive.
+    const enquirySource = data.role
+      ? enquirySourceColumns({})
+      : enquirySourceColumns({
+          heardAbout: raw.heard_about,
+          heardAboutOther: raw.heard_about_other,
+          attribution: raw.attribution,
+        });
 
     await prisma.lead.create({
       data: {
