@@ -1421,6 +1421,23 @@ exports.Prisma.AgentDraftScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.EmailMessageScalarFieldEnum = {
+  id: 'id',
+  direction: 'direction',
+  mailbox: 'mailbox',
+  status: 'status',
+  externalId: 'externalId',
+  fromAddress: 'fromAddress',
+  toAddress: 'toAddress',
+  subject: 'subject',
+  textBody: 'textBody',
+  attachmentNames: 'attachmentNames',
+  error: 'error',
+  sentById: 'sentById',
+  occurredAt: 'occurredAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1664,7 +1681,8 @@ exports.Prisma.ModelName = {
   SurveyRequest: 'SurveyRequest',
   SurveyResponse: 'SurveyResponse',
   WorkOrder: 'WorkOrder',
-  AgentDraft: 'AgentDraft'
+  AgentDraft: 'AgentDraft',
+  EmailMessage: 'EmailMessage'
 };
 
 /**

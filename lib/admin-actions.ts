@@ -40,6 +40,7 @@ import {
 import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
 import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
+import { recordOutboundEmail } from "@/lib/email-history";
 import xss from "xss";
 import { z } from "zod";
 
@@ -3055,12 +3056,20 @@ export async function sendAdminEmail(formData: FormData) {
   const identity = await getEmailIdentity("CYVRIX Admin");
   const fromAddress = identity.from || smtp.user;
 
-  await transporter.sendMail({
-    from: fromAddress,
-    to,
-    subject,
-    text: messageBody,
-  });
+  // Every attempt is recorded, sent or failed, so the Email page's Sent
+  // history shows what went out and what did not (DECISIONS §17).
+  try {
+    await transporter.sendMail({
+      from: fromAddress,
+      to,
+      subject,
+      text: messageBody,
+    });
+  } catch (error) {
+    await recordOutboundEmail({ mailbox: fromAddress, from: fromAddress, to, subject, text: messageBody, status: "failed", error, sentById: administrator.id });
+    throw error;
+  }
+  await recordOutboundEmail({ mailbox: fromAddress, from: fromAddress, to, subject, text: messageBody, status: "sent", sentById: administrator.id });
 
   await prisma.auditLog.create({
     data: { id: crypto.randomUUID(), userId: administrator.id, action: "admin_email_sent", entityType: "Email", metadata: { to, subject } },

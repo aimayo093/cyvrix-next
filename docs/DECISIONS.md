@@ -633,3 +633,57 @@ companies, email addresses and message text may not (§15).
 **Would change it:** paid media, which needs per-campaign cost to make the
 counts mean anything; and an internal link must never carry `utm_*`, because it
 would overwrite the real source.
+
+---
+
+## 17. Email history and the admin Inbox
+
+**What:** the admin Email page has three tabs. **Compose** is unchanged.
+**Sent** lists the emails sent from that page that were handed to the mail
+server, including ones the server refused, with its reason. A send stopped
+earlier (a missing field, SMTP not configured, no sender identity) is shown
+on the page as an error and not recorded. It is best effort: a history write that fails is logged and
+never turns a sent email into a reported failure. Other site email
+(verification, password reset, privacy requests, alerts) is not listed.
+The audit log records successful sends only. **Inbox** shows mail received at the mailbox in `getServerImapConfig()`,
+which is admin@cyvrix.co.uk (founder decision, 14 November 2026). Both are
+stored in `EmailMessage` and kept for 24 months, then deleted by the daily
+`/api/cron/email-sync`.
+
+**Why it is built this way:**
+- **The audit log was not a history.** It records the recipient and subject of
+  each successful send but not the message, and it is not shown on the Email
+  page.
+- **Plain text only.** A received message is reduced to text (`mailparser`) and
+  shown escaped in a `<pre>`; its HTML is never rendered, so a hostile email
+  cannot script the admin. Attachments are not copied, only their names.
+- **The mailbox defaults to the SMTP account.** One mailbox on one host usually
+  serves both; `IMAP_*` overrides any part if they ever differ.
+- **Sync on open, plus daily.** Vercel Hobby crons run once a day, so the page
+  checks the mailbox when the Inbox is opened (at most every two minutes,
+  waiting at most eight seconds; "Check now" waits at most twenty). A first
+  sync reaches back 60 days; a run reads at most 100 messages, oldest first,
+  so a backlog drains over later runs. Messages are de-duplicated by a hash
+  of the Message-ID, or, without one, by server, UIDVALIDITY and UID. One run
+  at a time: a sync claims a 90-second lease in the settings row. A message
+  that cannot be parsed, or is over 5 MB, is stored from its envelope with a
+  note, so it never blocks later ones. Port 993 is implicit TLS; any other
+  port must upgrade with STARTTLS before logging in.
+- **Server only.** `EmailMessage` has row level security and no API grants.
+  Received mail holds other people's personal data, so it **never** reaches
+  the Paperclip integration (§15); `test:email-history` checks the snapshot,
+  feed and drafts code never reads it.
+- **Errors without secrets.** Mail-server errors are stored with the mail
+  passwords replaced wherever they appear, anything after AUTH, PASS or LOGIN
+  removed, and password fields and URL credentials redacted.
+- **Failures are loud.** The cron returns 500 when the sync or the retention
+  purge fails, so a skipped purge shows in Vercel rather than silently
+  breaking the 24-month promise.
+
+**Known gap:** the Email page sends *from* the identity in System Settings
+(support@cyvrix.co.uk), so replies to those emails arrive at support@, not at
+the admin@ Inbox, unless the sender identity is changed to admin@.
+
+**Privacy notice:** the default text discloses that emails to the admin@
+mailbox and from the admin system are kept there, and for how long; the published CMS copy must be updated through Admin → Legal Pages
+(§3) after founder sign-off.
