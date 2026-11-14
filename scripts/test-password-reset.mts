@@ -68,7 +68,9 @@ check("the page's redirect comes only from that rule", /redirect\(resetRequestRe
 // ── Structural guards on the server code ──────────────────────────────────
 const server = fs.readFileSync(path.join(process.cwd(), "lib/password-reset.ts"), "utf8");
 const page = fs.readFileSync(path.join(process.cwd(), "app/(auth)/forgot-password/page.tsx"), "utf8");
-check("reset link uses the configured site URL", page.includes("SITE_URL") && !/headers\(\)\.get\(["']host["']\)|x-forwarded-host/i.test(page + server), true);
+check("the page passes SITE_URL straight to the sender", /sendPasswordResetIfAccount\(email, SITE_URL\)/.test(page), true);
+check("the link is built from that siteUrl argument", /const link = `\$\{siteUrl\.replace\(/.test(server), true);
+check("no request-derived host anywhere", /headers\(\)\.get\(["']host["']\)|x-forwarded-host|request\.url|req\.url/i.test(page + server), false);
 check("only the token hash is stored", /tokenHash: hashResetToken\(token\)/.test(server), true);
 check("a reset ends every session", /changeAccountAndEndSessions\(/.test(server), true);
 check("leaked passwords are refused", /breachedPasswordProblem\(/.test(server), true);
@@ -76,7 +78,12 @@ check("requests are rate limited", /enforcePublicSubmissionRateLimit\(/.test(ser
 check("tokens are consumed", /passwordResetToken\.deleteMany\(/.test(server), true);
 const resetPage = fs.readFileSync(path.join(process.cwd(), "app/(auth)/reset-password/page.tsx"), "utf8");
 check("the reset page sends no referrer", /referrer: "no-referrer"/.test(resetPage), true);
-check("a token is claimed atomically before the password changes", server.includes("claimed.count !== 1") && server.indexOf("claimed.count") < server.indexOf("changeAccountAndEndSessions("), true);
+// One pattern: the claiming delete (bound to id, hash and expiry), its count guard, then the password change.
+check(
+  "a token is claimed atomically, unexpired, before the password changes",
+  /const claimed = await prisma\.passwordResetToken\.deleteMany\(\{ where: \{ id: record\.id, tokenHash: record\.tokenHash, expiresAt: \{ gt: new Date\(\) \} \} \}\);\s*if \(claimed\.count !== 1\) return invalid;[\s\S]*?changeAccountAndEndSessions\(record\.userId/.test(server),
+  true,
+);
 check("the account lookup runs after the response", /after\(\(\) =>\s*sendPasswordResetIfAccount/.test(page), true);
 check("the request step does no account lookup", !server.slice(server.indexOf("export async function admitPasswordResetRequest"), server.indexOf("export async function sendPasswordResetIfAccount")).includes("prisma.user"), true);
 check("both pages read the URL inside Suspense", [page, resetPage].every((src) => src.includes("React.Suspense")), true);

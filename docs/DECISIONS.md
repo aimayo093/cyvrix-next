@@ -653,8 +653,11 @@ themselves.
   verification, so a database copy yields no working links. A link works once,
   for 30 minutes, and only while the account's email is still the address it
   was sent to; a newer request invalidates older links.
-- **The link's address comes from configuration** (`SITE_URL`), never the
-  request's Host header, which an attacker could set to their own domain.
+- **The link always points at the production site** (`SITE_URL`, the fixed
+  canonical `https://cyvrix.co.uk` in `lib/structured-data.ts`), never the
+  request's Host header, which an attacker could set to their own domain. A
+  reset requested on a preview or staging deployment therefore links to
+  production.
 - **A reset signs the account out everywhere** (`changeAccountAndEndSessions`)
   and emails a notice to the account, so a reset someone else triggered is
   noticed at once.
@@ -673,7 +676,9 @@ themselves.
 - **An earlier link survives a failed send.** A new link replaces older ones
   only once its email has gone; expired links are cleared on every request.
 - **Rate limited** per network (10) and per address (3) per window, so the form
-  cannot flood a mailbox.
+  cannot flood a mailbox. If the database is unreachable the limiter falls back
+  to per-instance memory (§13), so during such an outage several server
+  instances could each allow their own three.
 - **Opening the link proves the mailbox**, so an unverified address is marked
   verified when a reset completes.
 - The reset page sends no referrer, since its URL carries the token. After a

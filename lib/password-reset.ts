@@ -155,7 +155,9 @@ export async function completePasswordReset(token: unknown, password: unknown, c
 
   // Claimed atomically: of two submissions racing with the same link, only
   // the one whose delete removes the row may go on to set a password.
-  const claimed = await prisma.passwordResetToken.deleteMany({ where: { id: record.id, tokenHash: record.tokenHash } });
+  // Expiry is enforced here too: the breach lookup above can take seconds,
+  // and a link must not be redeemed after its 30 minutes.
+  const claimed = await prisma.passwordResetToken.deleteMany({ where: { id: record.id, tokenHash: record.tokenHash, expiresAt: { gt: new Date() } } });
   if (claimed.count !== 1) return invalid;
   // Any other outstanding link for the account goes too.
   await prisma.passwordResetToken.deleteMany({ where: { userId: record.userId } });
