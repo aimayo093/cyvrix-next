@@ -105,7 +105,8 @@ check("turn-off body", botProtectionUpdate(false).value.active, false);
   const checks = staticAppSecChecks();
   const reset = checks.find((check) => check.id === "appsec_password_reset");
   const webhooks = checks.find((check) => check.id === "appsec_webhooks");
-  check("password reset is not applicable", [reset?.notApplicable, reset?.assessed, reset?.detail.startsWith("Not applicable.")], [true, false, true]);
+  // A self-service reset exists since §18: it is assessed, and its tokens expire and are single use.
+  check("password reset is assessed and passes", [reset?.notApplicable ?? false, reset?.status, /expiry: present.*Single use: present/.test(reset?.detail ?? "")], [false, "pass", true]);
   check("webhooks are not applicable", [webhooks?.notApplicable, webhooks?.assessed], [true, false]);
   check("no unanswered static check is left as a warning", checks.filter((c) => c.assessed === false && !c.notApplicable && c.status === "warn").map((c) => c.id), []);
 }

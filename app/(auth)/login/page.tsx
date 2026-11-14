@@ -31,7 +31,10 @@ function LoginForm() {
   // Set once a password is accepted on an account that owes a second factor.
   const [awaitingCode, setAwaitingCode] = React.useState(false);
   const next = searchParams.get("next");
-  const message = searchParams.get("message");
+  // After a self-service reset (DECISIONS §18) the page says so, in its own words.
+  const message = searchParams.get("reset") === "1"
+    ? "Your password has been changed and every device was signed out. Sign in with your new password."
+    : searchParams.get("message");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -156,8 +159,8 @@ function LoginForm() {
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Password</label>
-                <Link href="/contact" className="text-[10px] font-black text-[#2691F0] hover:underline uppercase tracking-wider">
-                  Need help?
+                <Link href="/forgot-password" className="text-[10px] font-black text-[#2691F0] hover:underline uppercase tracking-wider">
+                  Forgot password?
                 </Link>
               </div>
               <PasswordInput

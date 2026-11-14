@@ -269,3 +269,10 @@ The Laravel project was removed per earlier instruction. If CYVRIX later needs a
 3. `vercel.json` adds a daily `/api/cron/email-sync` (06:30 UTC), which uses
    the existing `CRON_SECRET`. It syncs the Inbox and deletes email history
    older than 24 months, and returns 500 if either fails.
+
+## Password reset (20261115090000)
+
+Apply `prisma/migrations/20261115090000_password_reset_tokens` to production
+**before** merging (a merge deploys): `/forgot-password` writes to the new table. Reset emails
+use the same transport as other site email (SMTP if set, otherwise Resend); if
+neither is configured, requests are accepted but no email can be sent.

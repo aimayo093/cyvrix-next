@@ -215,9 +215,11 @@ Decisions worth keeping:
 - **Secrets are sealed, never plaintext** (`lib/secret-box.ts`). AES-256-GCM
   under a key derived from `AUTH_SECRET` by HKDF with its own info label, so the
   encryption key and the session-signing key are different values from one root.
-- **Recovery codes exist because there is no password reset.** Enabling
-  two-factor on the only administrator account would otherwise be a lock-out
-  waiting to happen.
+- **Recovery codes are the way back from a lost authenticator.** They were
+  added when there was no password reset at all. A self-service reset now
+  exists (§18), but it only replaces the password: a staff account still needs
+  its authenticator code or a recovery code to sign in, so the codes still
+  matter.
 - **Staff accounts must have it (November 2026).** `getSession` reads a staff
   account without a second factor as signed out, so every page, action and API
   route refuses it without needing its own check — a rule each route had to
@@ -687,3 +689,53 @@ the admin@ Inbox, unless the sender identity is changed to admin@.
 **Privacy notice:** the default text discloses that emails to the admin@
 mailbox and from the admin system are kept there, and for how long; the published CMS copy must be updated through Admin → Legal Pages
 (§3) after founder sign-off.
+
+## 18. Self-service password reset
+
+**What:** "Forgot password?" on the sign-in page leads to `/forgot-password`.
+Anyone with an active account can have a reset link emailed to them, and use
+it at `/reset-password` to choose a new password. Founder request, 14 November
+2026: customers who forget their password must be able to recover it
+themselves.
+
+**Why it is built this way:**
+- **The same reply for every address.** The form never says whether an account
+  exists, so it cannot be used to find out who is a customer.
+- **Only a hash is stored** (`PasswordResetToken.tokenHash`), as with email
+  verification, so a database copy yields no working links. A link works once,
+  for 30 minutes, and only while the account's email is still the address it
+  was sent to; a newer request invalidates older links.
+- **The link always points at the production site** (`SITE_URL`, the fixed
+  canonical `https://cyvrix.co.uk` in `lib/structured-data.ts`), never the
+  request's Host header, which an attacker could set to their own domain. A
+  reset requested on a preview or staging deployment therefore links to
+  production.
+- **A reset signs the account out everywhere** (`changeAccountAndEndSessions`)
+  and emails a notice to the account, so a reset someone else triggered is
+  noticed at once.
+- **The mailbox alone never opens a staff account.** Staff must still pass
+  two-factor after a reset (§6); a customer account has no second factor unless
+  its owner turned one on.
+- **Leaked passwords are refused** (Have I Been Pwned range check, §14), the
+  same as every other place a password is set, **when the check answers**: it
+  fails open after three seconds, so during an outage a reset is not
+  breach-checked.
+- **The request responds before looking anything up.** Only the rate limit is
+  counted in the request; the account lookup and the email run in `after()`,
+  so the response time does not reveal whether an account exists.
+- **A token is claimed atomically**: of two submissions of one link, only the
+  one whose delete removes the row may change the password.
+- **An earlier link survives a failed send.** A new link replaces older ones
+  only once its email has gone; expired links are cleared on every request.
+- **Rate limited** per network (10) and per address (3) per window, so the form
+  cannot flood a mailbox. If the database is unreachable the limiter falls back
+  to per-instance memory (§13), so during such an outage several server
+  instances could each allow their own three.
+- **Opening the link proves the mailbox**, so an unverified address is marked
+  verified when a reset completes.
+- The reset page sends no referrer, since its URL carries the token. After a
+  reset it sends the browser to `/login?ended=1&reset=1`, so the proxy shows
+  sign-in and clears the now-invalid cookie.
+- **Not kept across the reset:** the page someone was trying to open. The reset
+  happens through an emailed link, often on another device, so sign-in lands
+  on the account's home page.
