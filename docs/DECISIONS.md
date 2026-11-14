@@ -633,3 +633,41 @@ companies, email addresses and message text may not (§15).
 **Would change it:** paid media, which needs per-campaign cost to make the
 counts mean anything; and an internal link must never carry `utm_*`, because it
 would overwrite the real source.
+
+---
+
+## 17. Email history and the admin Inbox
+
+**What:** the admin Email page has three tabs. **Compose** is unchanged.
+**Sent** lists every email sent from it, including failures with the server's
+reason. **Inbox** shows mail received at the mailbox in `getServerImapConfig()`,
+which is admin@cyvrix.co.uk (founder decision, 14 November 2026). Both are
+stored in `EmailMessage` and kept for 24 months, then deleted by the daily
+`/api/cron/email-sync`.
+
+**Why it is built this way:**
+- **The audit log was not a history.** It records the recipient and subject of
+  each send but not the message, and it is not shown on the Email page.
+- **Plain text only.** A received message is reduced to text (`mailparser`) and
+  shown escaped in a `<pre>`; its HTML is never rendered, so a hostile email
+  cannot script the admin. Attachments are not copied, only their names.
+- **The mailbox defaults to the SMTP account.** One mailbox on one host usually
+  serves both; `IMAP_*` overrides any part if they ever differ.
+- **Sync on open, plus daily.** Vercel Hobby crons run once a day, so the page
+  checks the mailbox when the Inbox is opened (at most every two minutes,
+  waiting at most eight seconds). A first sync reaches back 60 days; a run
+  stores at most 100 messages, de-duplicated by Message-ID.
+- **Server only.** `EmailMessage` has row level security and no API grants.
+  Received mail holds other people's personal data, so it **never** reaches
+  the Paperclip integration (§15); `test:email-history` checks the snapshot,
+  feed and drafts code never reads it.
+- **Errors without secrets.** Mail-server errors are stored for the Sent list
+  with anything after AUTH, PASS or LOGIN removed.
+
+**Known gap:** the Email page sends *from* the identity in System Settings
+(support@cyvrix.co.uk), so replies to those emails arrive at support@, not at
+the admin@ Inbox, unless the sender identity is changed to admin@.
+
+**Privacy notice:** the default text discloses that emails are kept and for
+how long; the published CMS copy must be updated through Admin → Legal Pages
+(§3) after founder sign-off.
