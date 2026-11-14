@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { publicContactValue } from "@/lib/contact-settings";
 import { PageHeroImage } from "@/components/public/PageHeroImage";
+import { EnquirySourceFields } from "@/components/shared/enquiry-source-fields";
 
 interface Service {
   id: string;
@@ -211,13 +212,22 @@ export function ContactClient({ pageData, services = [], contactSettings, heroIm
     setSubmitting(true);
     setSubmitError("");
 
+    // The enquiry-source fields are uncontrolled; read them from the form.
+    const formElement = e.currentTarget as HTMLFormElement;
+    const fields = new FormData(formElement);
+    const enquirySource = {
+      heard_about: String(fields.get("heard_about") ?? ""),
+      heard_about_other: String(fields.get("heard_about_other") ?? ""),
+      attribution: String(fields.get("attribution") ?? ""),
+    };
+
     try {
       const response = await fetch("/api/submit-contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ ...formData, consent: consent ? "on" : "" }),
+        body: JSON.stringify({ ...formData, ...enquirySource, consent: consent ? "on" : "" }),
       });
 
       const result = await response.json();
@@ -514,6 +524,11 @@ export function ContactClient({ pageData, services = [], contactSettings, heroIm
                         <span>{formData.message.length} / 5000 characters</span>
                       </div>
                     </div>
+
+                    <EnquirySourceFields
+                      labelClassName="block text-sm font-medium text-slate-300"
+                      inputClassName="mt-2 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-white focus:border-[#2691F0]/50 focus:outline-none focus:ring-2 focus:ring-[#2691F0]/20 transition-all font-medium"
+                    />
 
                     <label className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm leading-relaxed text-slate-300">
                       <input

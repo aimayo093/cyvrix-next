@@ -25,6 +25,7 @@
     "test:mfa": "tsx scripts/test-mfa-storage.mts",
     "test:dashboard": "tsx scripts/test-dashboard.mts",
     "test:appsec": "tsx scripts/test-appsec-probes.mts",
+    "test:enquiry-source": "tsx scripts/test-enquiry-source.mts",
     "scan:deps": "tsx scripts/dependency-holds.mts"
   },
   "dependencies": {

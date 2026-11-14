@@ -625,6 +625,13 @@ exports.Prisma.LeadScalarFieldEnum = {
   followUpDate: 'followUpDate',
   conversionStatus: 'conversionStatus',
   payload: 'payload',
+  heardAbout: 'heardAbout',
+  heardAboutOther: 'heardAboutOther',
+  leadSource: 'leadSource',
+  leadMedium: 'leadMedium',
+  leadCampaign: 'leadCampaign',
+  sourceConfidence: 'sourceConfidence',
+  sourceDetail: 'sourceDetail',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

@@ -18,13 +18,15 @@ import type { PublicLegalDocument } from "@/lib/public-legal";
  */
 
 const LAST_REVIEWED = "21 August 2026";
+/** The privacy policy changed on this date: the "How you found us" disclosure. */
+const PRIVACY_LAST_REVIEWED = "14 November 2026";
 
 const REVIEW_NOTICE =
   "This document describes how the CYVRIX website and client portal currently operate. It is maintained by CYVRIX and has not been through external legal review. If you need a contractual position confirmed, please contact us before relying on this page.";
 
 export const defaultPrivacyPolicy: PublicLegalDocument = {
   title: "Privacy Policy",
-  lastReviewed: LAST_REVIEWED,
+  lastReviewed: PRIVACY_LAST_REVIEWED,
   reviewNotice: REVIEW_NOTICE,
   paragraphs: [],
   sections: [
@@ -49,6 +51,7 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
         "We collect only what we need to respond to you and to run the services you have asked for. What we collect depends on how you use the site.",
         "Enquiry and assessment forms: your name, business name, job title, email address, telephone number, and the details you choose to tell us about your organisation and its technology. Assessment forms also ask about matters such as user numbers, locations, cloud platforms and current security arrangements, so that we can respond usefully.",
         "Quote requests: the same contact details, together with the sector, services and requirements you describe.",
+        "How you found us: when you send an enquiry or request a quote, we also record how you reached the site (the website that referred you, any campaign tags in the link you followed, the page you first landed on and the page you sent it from) and, if you choose to tell us, how you heard about us. We keep this with your enquiry. It is held in your browser tab while you browse and sent to us only if you submit the form; no cookie or other storage on your device is used for it.",
         "Newsletter subscription: your email address, the page you subscribed from, and a record that you gave consent.",
         "Career applications: your name, contact details, the role you are applying for, and any CV or supporting document you choose to upload.",
         "Uploaded documents are scanned before they are accepted. A file is inspected for active content, macros, embedded objects and other unsafe constructs, and is only stored if it passes. A file that fails is rejected outright and is never stored or made available to our staff. We record the file name, size, type and a checksum alongside the scan result.",
@@ -61,6 +64,7 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
       heading: "Why we use it, and our lawful basis",
       paragraphs: [
         "Responding to enquiries, quotes and assessment requests: our legitimate interest in answering people who contact us about our services, and taking steps at your request before entering into a contract.",
+        "Understanding which channels bring us enquiries: our legitimate interest in running and improving our business.",
         "Delivering services to clients, including the portal: performance of the contract between us and your organisation.",
         "Newsletter and marketing email: your consent. You can withdraw it at any time using the unsubscribe link in any message, which does not affect anything sent before you withdrew it.",
         "Security, fraud prevention and service integrity, including sign-in monitoring and rate limiting: our legitimate interest in keeping the platform and our clients' information secure.",
@@ -117,7 +121,7 @@ export const defaultPrivacyPolicy: PublicLegalDocument = {
     {
       heading: "Changes to this policy",
       paragraphs: [
-        `This policy was last reviewed on ${LAST_REVIEWED}. If we change how we handle personal information we will update this page, and where the change is significant we will make that clear.`,
+        `This policy was last reviewed on ${PRIVACY_LAST_REVIEWED}. If we change how we handle personal information we will update this page, and where the change is significant we will make that clear.`,
       ],
     },
   ],

@@ -11,6 +11,7 @@ import { AutoSubmitSelect } from "@/components/admin/AutoSubmitSelect";
 import { ADMIN_PAGE_SIZE, AdminPager, lastPageFor, parsePage } from "@/components/admin/AdminPager";
 import { StickyNote } from "lucide-react";
 import { LeadStatus } from "@/generated/prisma";
+import { enquirySourceRows } from "@/lib/attribution-server";
 
 export const metadata = { title: "Leads CRM" };
 
@@ -213,6 +214,17 @@ async function LeadsCRMPageContent({
                     })}
                   </div>
                 )}
+
+                {/* Enquiry source: read-only, set from the enquiry itself */}
+                <div className="bg-slate-50 rounded-xl p-4 text-xs space-y-1">
+                  <p className="font-black text-slate-500 uppercase tracking-wider text-[10px] mb-2">Where they came from</p>
+                  {enquirySourceRows(viewing).map(([label, value]) => (
+                    <div key={label} className="flex gap-2">
+                      <span className="font-bold text-slate-500 shrink-0">{label}:</span>
+                      <span className={value === "Not captured" ? "text-slate-400" : "text-slate-700 break-all"}>{value}</span>
+                    </div>
+                  ))}
+                </div>
 
                 {/* Notes */}
                 <div>

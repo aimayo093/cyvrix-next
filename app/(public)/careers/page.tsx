@@ -36,7 +36,7 @@ export default async function CareersPage() {
   return (
     <div className="min-h-screen bg-[#020817]">
       {sections.length > 0 ? (
-        <SectionRenderer sections={sections} careerJobs={careerJobs} />
+        <SectionRenderer sections={sections} careerJobs={careerJobs} formPurpose="careers" />
       ) : (
         <CareersFallback jobs={careerJobs} />
       )}

@@ -764,6 +764,15 @@ model Lead {
   followUpDate     DateTime?
   conversionStatus String?
   payload          Json       @default("{}")
+  /// Enquiry source (DECISIONS §16). `source` above is which form; these are
+  /// how the visitor reached the site. Null on leads created before them.
+  heardAbout       String?
+  heardAboutOther  String?
+  leadSource       String?
+  leadMedium       String?
+  leadCampaign     String?
+  sourceConfidence String?
+  sourceDetail     Json?
   createdAt        DateTime   @default(now())
   updatedAt        DateTime
   LeadNote         LeadNote[]

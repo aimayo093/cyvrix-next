@@ -5,6 +5,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getEmailIdentity } from "@/lib/email-config";
 import { enforcePublicSubmissionRateLimit, RateLimitError } from "@/lib/rate-limit";
+import { enquirySourceColumns } from "@/lib/attribution-server";
 
 
 // ─── In-memory rate limiter (per IP / email) ──────────────────────────────────
@@ -98,6 +99,18 @@ export async function POST(req: Request) {
     const data = parsed.data;
     await enforcePublicSubmissionRateLimit("contact", data.email, req.headers, { ipLimit: 8, emailLimit: 3 });
 
+    // Outside the schema on purpose: a malformed source hint is discarded,
+    // never a reason to refuse the enquiry (lib/attribution-server.ts).
+    // A job application (it names a role) is never a marketing lead, so no
+    // source is stored even if the fields arrive.
+    const enquirySource = data.role
+      ? enquirySourceColumns({})
+      : enquirySourceColumns({
+          heardAbout: raw.heard_about,
+          heardAboutOther: raw.heard_about_other,
+          attribution: raw.attribution,
+        });
+
     await prisma.lead.create({
       data: {
         id: crypto.randomUUID(),
@@ -106,6 +119,7 @@ export async function POST(req: Request) {
         email: data.email,
         company: data.company || undefined,
         source: "contact_form_cms",
+        ...enquirySource,
         status: "NEW",
         payload: {
           message: data.message,
