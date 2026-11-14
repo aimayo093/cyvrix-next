@@ -25,41 +25,57 @@ export type DraftStatus = (typeof DRAFT_STATUSES)[number];
 export const SOCIAL_NETWORKS = ["linkedin", "facebook", "x", "instagram"] as const;
 
 /**
- * Remove markup an agent may have added. Script and style bodies go entirely.
+ * One pass over `value`: tags removed, <br> as a line break, </p> as a
+ * paragraph break, <script> and <style> blocks removed with their bodies (an
+ * unclosed one drops everything after it), and no "<" or ">" left at all.
  *
- * Repeated until nothing changes, because one pass can rebuild a tag from its
- * pieces ("<scr<script></script>ipt>"), then any angle bracket left over is
- * dropped. The output is text only, so a literal "<" in prose is lost; that is
- * the price of never emitting a tag (CodeQL js/incomplete-multi-character-sanitization).
+ * A character scanner rather than regular expressions, so no replacement can
+ * rebuild a tag from its pieces (CodeQL js/incomplete-multi-character-
+ * sanitization). The output is text only, so a literal "<" in prose is lost;
+ * that is the price of never emitting markup.
  */
-/**
- * Cuts every <script>…</script> and <style>…</style> block, body included, by
- * scanning rather than by regex. An unclosed block drops everything after it.
- * Over-eager on purpose: "<scripts" is treated as a script tag too.
- */
-function withoutBlocks(value: string, tag: "script" | "style"): string {
-  let text = value;
-  for (let start = text.toLowerCase().indexOf(`<${tag}`); start !== -1; start = text.toLowerCase().indexOf(`<${tag}`)) {
-    const lower = text.toLowerCase();
-    const close = lower.indexOf(`</${tag}`, start);
-    if (close === -1) return text.slice(0, start);
-    const end = lower.indexOf(">", close);
-    text = text.slice(0, start) + (end === -1 ? "" : text.slice(end + 1));
+function stripMarkupOnce(value: string): string {
+  const lower = value.toLowerCase();
+  let out = "";
+  let i = 0;
+  while (i < value.length) {
+    const ch = value[i];
+    if (ch === ">") {
+      i += 1; // a stray closing bracket is dropped
+      continue;
+    }
+    if (ch !== "<") {
+      out += ch;
+      i += 1;
+      continue;
+    }
+    const close = value.indexOf(">", i + 1);
+    if (close === -1) break; // an unclosed tag drops the rest
+    const isClosing = lower[i + 1] === "/";
+    const name = lower.slice(isClosing ? i + 2 : i + 1, close).trim().split(/[\s/]/)[0];
+    if (!isClosing && (name.startsWith("script") || name.startsWith("style"))) {
+      const tag = name.startsWith("script") ? "script" : "style";
+      const end = lower.indexOf(`</${tag}`, close + 1);
+      if (end === -1) break;
+      const endClose = value.indexOf(">", end);
+      i = endClose === -1 ? value.length : endClose + 1;
+      continue;
+    }
+    if (!isClosing && name === "br") out += "\n";
+    if (isClosing && name === "p") out += "\n\n";
+    i = close + 1;
   }
-  return text;
+  return out;
 }
 
+/** Remove markup an agent may have added, repeated until nothing changes. */
 export function plainText(value: string): string {
   let stripped = value;
   for (let previous = ""; stripped !== previous; ) {
     previous = stripped;
-    stripped = withoutBlocks(withoutBlocks(stripped, "script"), "style")
-      .replace(/<br\s*\/?>/gi, "\n")
-      .replace(/<\/p\s*>/gi, "\n\n")
-      .replace(/<[^>]*>/g, "");
+    stripped = stripMarkupOnce(stripped);
   }
   return stripped
-    .replace(/[<>]/g, "")
     .replace(/\r\n/g, "\n")
     .replace(/[ \t]+\n/g, "\n")
     .replace(/\n{3,}/g, "\n\n")
