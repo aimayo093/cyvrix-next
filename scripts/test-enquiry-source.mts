@@ -87,7 +87,8 @@ const site = "https://cyvrix.co.uk";
 
   const extra = sanitiseAttribution(JSON.stringify({ v: 1, lastTouch: { ...touch, email: "someone@example.com", source: "<b>x</b>" }, formPage: "/contact" }));
   const detail = JSON.stringify(extra.sourceDetail);
-  check("unknown keys dropped (no email smuggled in)", detail.includes("example.com"), false);
+  check("unknown keys dropped (no email smuggled in)", "email" in (JSON.parse(detail).lastTouch ?? {}), false);
+  check("the smuggled address is nowhere in the stored detail", detail.indexOf("someone@") === -1, true);
   check("markup stripped server-side", extra.leadSource, "bx/b");
   check("last touch falls back to first", sanitiseAttribution(JSON.stringify({ v: 1, firstTouch: touch })).leadSource, "linkedin");
 }
