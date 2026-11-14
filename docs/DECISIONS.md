@@ -599,7 +599,9 @@ enquiry source only (Paperclip CYV-31, CYV-32).
   be updated through Admin → Legal Pages before this ships (§3).
 - **Known limit, accepted (founder, 14 November 2026).** The public header
   and footer links force a full page load (`FORCE_FULL_PAGE_RELOAD`, so a page
-  never reappears with stale state), and a full load clears the tab's memory.
+  is rendered afresh rather than kept with earlier state), and a new document
+  starts with empty memory. (A page restored by the browser's back/forward
+  cache keeps its memory; that only ever restores what the same tab saw.)
   A visitor who lands from a campaign and then clicks Contact in the header is
   recorded by what the contact page can see, usually "direct". Considered and
   declined: keeping the source in session storage for visitors who accept
