@@ -26,7 +26,9 @@ async function ResetPasswordContent({ searchParams }: { searchParams: Promise<{ 
     "use server";
     const submitted = String(formData.get("token") ?? "");
     const result = await completePasswordReset(submitted, formData.get("password"), formData.get("confirm"));
-    if (result.ok) redirect("/login?reset=1");
+    // ended=1 makes the proxy show sign-in and clear the now-invalid cookie,
+    // rather than bounce a still-cookied browser away from the confirmation.
+    if (result.ok) redirect("/login?ended=1&reset=1");
     if (result.reason === "password") {
       redirect(`/reset-password?token=${encodeURIComponent(submitted)}&error=${encodeURIComponent(result.message)}`);
     }

@@ -662,9 +662,23 @@ themselves.
   two-factor after a reset (§6); a customer account has no second factor unless
   its owner turned one on.
 - **Leaked passwords are refused** (Have I Been Pwned range check, §14), the
-  same as every other place a password is set.
+  same as every other place a password is set, **when the check answers**: it
+  fails open after three seconds, so during an outage a reset is not
+  breach-checked.
+- **The request responds before looking anything up.** Only the rate limit is
+  counted in the request; the account lookup and the email run in `after()`,
+  so the response time does not reveal whether an account exists.
+- **A token is claimed atomically**: of two submissions of one link, only the
+  one whose delete removes the row may change the password.
+- **An earlier link survives a failed send.** A new link replaces older ones
+  only once its email has gone; expired links are cleared on every request.
 - **Rate limited** per network (10) and per address (3) per window, so the form
   cannot flood a mailbox.
 - **Opening the link proves the mailbox**, so an unverified address is marked
   verified when a reset completes.
-- The reset page sends no referrer, since its URL carries the token.
+- The reset page sends no referrer, since its URL carries the token. After a
+  reset it sends the browser to `/login?ended=1&reset=1`, so the proxy shows
+  sign-in and clears the now-invalid cookie.
+- **Not kept across the reset:** the page someone was trying to open. The reset
+  happens through an emailed link, often on another device, so sign-in lands
+  on the account's home page.

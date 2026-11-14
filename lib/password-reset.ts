@@ -58,20 +58,21 @@ export async function sendPasswordResetIfAccount(email: string, siteUrl: string)
   });
   if (!user) return;
 
+  // Expired links, anyone's, are cleared on every request, so the table never
+  // keeps hashes and addresses past their 30 minutes for long.
+  await prisma.passwordResetToken.deleteMany({ where: { expiresAt: { lt: new Date() } } }).catch(() => undefined);
+
   const token = newResetToken();
-  // A new request invalidates any earlier link: only the latest one works.
-  await prisma.$transaction([
-    prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
-    prisma.passwordResetToken.create({
-      data: {
-        id: crypto.randomUUID(),
-        userId: user.id,
-        tokenHash: hashResetToken(token),
-        email: user.email,
-        expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
-      },
-    }),
-  ]);
+  const tokenId = crypto.randomUUID();
+  await prisma.passwordResetToken.create({
+    data: {
+      id: tokenId,
+      userId: user.id,
+      tokenHash: hashResetToken(token),
+      email: user.email,
+      expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+    },
+  });
 
   const link = `${siteUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
   const result = await sendEmail({
@@ -89,6 +90,14 @@ export async function sendPasswordResetIfAccount(email: string, siteUrl: string)
       "CYVRIX",
     ].join("\n"),
   }).catch((error: unknown) => ({ sent: false as const, reason: "send_failed" as const, detail: error instanceof Error ? error.name : "error" }));
+
+  // Only a link that was actually sent replaces the earlier ones. If sending
+  // failed, the new token goes and any earlier link still works.
+  if (result.sent) {
+    await prisma.passwordResetToken.deleteMany({ where: { userId: user.id, id: { not: tokenId } } });
+  } else {
+    await prisma.passwordResetToken.deleteMany({ where: { id: tokenId } }).catch(() => undefined);
+  }
 
   await prisma.auditLog
     .create({
@@ -111,10 +120,14 @@ export async function checkResetToken(token: unknown): Promise<TokenCheck> {
   if (!isWellFormedToken(token)) return { ok: false, reason: "invalid" };
   const record = await prisma.passwordResetToken.findUnique({
     where: { tokenHash: hashResetToken(token) },
-    select: { expiresAt: true },
+    select: { expiresAt: true, email: true, user: { select: { email: true, active: true } } },
   });
   if (!record) return { ok: false, reason: "invalid" };
-  return isExpired(record.expiresAt) ? { ok: false, reason: "expired" } : { ok: true };
+  if (isExpired(record.expiresAt)) return { ok: false, reason: "expired" };
+  // The same account checks completion applies, so nobody types a new
+  // password into a form that was always going to refuse it.
+  if (!record.user.active || record.user.email.toLowerCase() !== record.email.toLowerCase()) return { ok: false, reason: "invalid" };
+  return { ok: true };
 }
 
 export type ResetResult = { ok: true } | { ok: false; reason: "invalid" | "expired" | "password"; message: string };
@@ -147,16 +160,16 @@ export async function completePasswordReset(token: unknown, password: unknown, c
   // Any other outstanding link for the account goes too.
   await prisma.passwordResetToken.deleteMany({ where: { userId: record.userId } });
 
-  const user = await prisma.user.findUnique({ where: { id: record.userId }, select: { email: true, active: true } });
+  const user = await prisma.user.findUnique({ where: { id: record.userId }, select: { email: true, active: true, emailVerified: true } });
   // The address changed since the link was sent, or the account was closed.
   if (!user || !user.active || user.email.toLowerCase() !== record.email.toLowerCase()) return invalid;
 
-  // The new password and the end of every session land together.
-  await changeAccountAndEndSessions(record.userId, { passwordHash: hashPassword(String(password)) });
-  // Opening the link proved the mailbox is theirs.
-  await prisma.user
-    .updateMany({ where: { id: record.userId, emailVerified: null }, data: { emailVerified: new Date() } })
-    .catch(() => undefined);
+  // The new password, the end of every session and (since opening the link
+  // proved the mailbox) the address's verification land in one transaction.
+  await changeAccountAndEndSessions(record.userId, {
+    passwordHash: hashPassword(String(password)),
+    ...(user.emailVerified ? {} : { emailVerified: new Date() }),
+  });
 
   await prisma.auditLog
     .create({
@@ -165,7 +178,8 @@ export async function completePasswordReset(token: unknown, password: unknown, c
     .catch(() => undefined);
 
   // A notice, so someone whose mailbox was used without them knows at once.
-  await sendEmail({
+  // A failed notice is recorded in the audit log rather than lost silently.
+  const notice = await sendEmail({
     to: user.email,
     subject: "Your CYVRIX password was changed",
     text: [
@@ -176,7 +190,14 @@ export async function completePasswordReset(token: unknown, password: unknown, c
       "",
       "CYVRIX",
     ].join("\n"),
-  }).catch(() => undefined);
+  }).catch(() => ({ sent: false as const }));
+  if (!notice.sent) {
+    await prisma.auditLog
+      .create({
+        data: { id: crypto.randomUUID(), userId: record.userId, action: "password_reset_notice_failed", entityType: "User", entityId: record.userId, metadata: {} },
+      })
+      .catch(() => undefined);
+  }
 
   return { ok: true };
 }

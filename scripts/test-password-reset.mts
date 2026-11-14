@@ -13,6 +13,7 @@ import {
   isWellFormedToken,
   newPasswordProblem,
   newResetToken,
+  resetRequestRedirect,
   normaliseEmail,
 } from "../lib/password-reset-core";
 
@@ -32,6 +33,8 @@ check("a fresh token is well formed", isWellFormedToken(a), true);
 check("the stored hash is not the token", hashResetToken(a) === a, false);
 check("hashing is stable", hashResetToken(a) === hashResetToken(a), true);
 check("hash is SHA-256 hex", /^[0-9a-f]{64}$/.test(hashResetToken(a)), true);
+// FIPS 180-2 test vector: a wrong digest, not just a wrong format, fails CI.
+check("hash is really SHA-256", hashResetToken("abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
 check("short token refused before lookup", isWellFormedToken("abc"), false);
 check("odd characters refused", isWellFormedToken(`${a.slice(0, 40)}'; drop`), false);
 check("non-string refused", isWellFormedToken(undefined), false);
@@ -57,6 +60,10 @@ check("good password accepted", newPasswordProblem("a sensible passphrase", "a s
 
 // ── The same reply for every address ──────────────────────────────────────
 check("reply never says whether an account exists", /no account|not found|does not exist|unknown/i.test(RESET_REQUESTED_MESSAGE), false);
+// The page's outcome depends on the rate limit alone; it never sees the account.
+check("not limited: the same outcome for any address", resetRequestRedirect({ limited: false }), "/forgot-password?sent=1");
+check("limited: refused, still without naming the account", resetRequestRedirect({ limited: true }), "/forgot-password?limited=1");
+check("the page's redirect comes only from that rule", /redirect\(resetRequestRedirect\(\{ limited \}\)\)/.test(fs.readFileSync(path.join(process.cwd(), "app/(auth)/forgot-password/page.tsx"), "utf8")), true);
 
 // ── Structural guards on the server code ──────────────────────────────────
 const server = fs.readFileSync(path.join(process.cwd(), "lib/password-reset.ts"), "utf8");

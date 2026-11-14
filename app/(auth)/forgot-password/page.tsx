@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AuthShell, authButtonClass, authInputClass, authLabelClass } from "@/components/auth/AuthShell";
 import { admitPasswordResetRequest, sendPasswordResetIfAccount } from "@/lib/password-reset";
-import { RESET_REQUESTED_MESSAGE } from "@/lib/password-reset-core";
+import { RESET_REQUESTED_MESSAGE, resetRequestRedirect } from "@/lib/password-reset-core";
 import { RateLimitError } from "@/lib/rate-limit";
 import { SITE_URL } from "@/lib/structured-data";
 
@@ -42,7 +42,7 @@ async function request(formData: FormData) {
       ),
     );
   }
-  redirect(limited ? "/forgot-password?limited=1" : "/forgot-password?sent=1");
+  redirect(resetRequestRedirect({ limited }));
 }
 
 async function ForgotPasswordContent({ searchParams }: { searchParams: Promise<{ sent?: string; limited?: string }> }) {

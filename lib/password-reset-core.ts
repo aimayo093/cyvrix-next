@@ -55,3 +55,12 @@ export function newPasswordProblem(password: unknown, confirm: unknown): string 
 export function isExpired(expiresAt: Date, now = new Date()): boolean {
   return expiresAt.getTime() <= now.getTime();
 }
+
+/**
+ * Where /forgot-password goes after a request. It depends on the rate limit
+ * alone: the action never knows whether an account exists, because the lookup
+ * runs after the response.
+ */
+export function resetRequestRedirect(outcome: { limited: boolean }): "/forgot-password?sent=1" | "/forgot-password?limited=1" {
+  return outcome.limited ? "/forgot-password?limited=1" : "/forgot-password?sent=1";
+}
