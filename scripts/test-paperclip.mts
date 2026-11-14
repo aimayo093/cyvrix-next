@@ -63,6 +63,8 @@ check(
 );
 check("a tag rebuilt from pieces does not survive", /<|script/i.test(plainText("<scr<script></script>ipt>alert(1)</script>")), false);
 check("a split tag leaves no angle bracket", /[<>]/.test(plainText("<<b>img src=x onerror=alert(1)>")), false);
+check("style bodies go too, any case", plainText("a<STYLE>body{x:1}</style>b"), "ab");
+check("an unclosed script drops the rest", plainText("keep<script>steal()"), "keep");
 check("plain prose is unchanged", plainText("Backups restore in hours, not days."), "Backups restore in hours, not days.");
 const parsedScript = blog("Intro<script>steal()</script>\n\nMore");
 check("script never reaches the stored body", parsedScript.success && !normaliseDraft(parsedScript.data).body.includes("steal"), true);

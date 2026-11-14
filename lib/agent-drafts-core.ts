@@ -32,12 +32,28 @@ export const SOCIAL_NETWORKS = ["linkedin", "facebook", "x", "instagram"] as con
  * dropped. The output is text only, so a literal "<" in prose is lost; that is
  * the price of never emitting a tag (CodeQL js/incomplete-multi-character-sanitization).
  */
+/**
+ * Cuts every <script>…</script> and <style>…</style> block, body included, by
+ * scanning rather than by regex. An unclosed block drops everything after it.
+ * Over-eager on purpose: "<scripts" is treated as a script tag too.
+ */
+function withoutBlocks(value: string, tag: "script" | "style"): string {
+  let text = value;
+  for (let start = text.toLowerCase().indexOf(`<${tag}`); start !== -1; start = text.toLowerCase().indexOf(`<${tag}`)) {
+    const lower = text.toLowerCase();
+    const close = lower.indexOf(`</${tag}`, start);
+    if (close === -1) return text.slice(0, start);
+    const end = lower.indexOf(">", close);
+    text = text.slice(0, start) + (end === -1 ? "" : text.slice(end + 1));
+  }
+  return text;
+}
+
 export function plainText(value: string): string {
   let stripped = value;
   for (let previous = ""; stripped !== previous; ) {
     previous = stripped;
-    stripped = stripped
-      .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, "")
+    stripped = withoutBlocks(withoutBlocks(stripped, "script"), "style")
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<\/p\s*>/gi, "\n\n")
       .replace(/<[^>]*>/g, "");
