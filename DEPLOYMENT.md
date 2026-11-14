@@ -242,3 +242,10 @@ ESLint stays on 9 until `eslint-config-next`'s bundled plugins
 ## Former Laravel Request
 
 The Laravel project was removed per earlier instruction. If CYVRIX later needs a Laravel backend/admin, host that separately on Laravel-friendly hosting and keep this Next.js app as either the frontend or a replacement full-stack platform.
+
+## Password reset (20261115090000)
+
+Apply `prisma/migrations/20261115090000_password_reset_tokens` to production
+**before** deploying: `/forgot-password` writes to the new table. Reset emails
+use the same transport as other site email (SMTP if set, otherwise Resend); if
+neither is configured, requests are accepted but no email can be sent.

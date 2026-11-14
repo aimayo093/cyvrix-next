@@ -1421,6 +1421,15 @@ exports.Prisma.AgentDraftScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  email: 'email',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1664,7 +1673,8 @@ exports.Prisma.ModelName = {
   SurveyRequest: 'SurveyRequest',
   SurveyResponse: 'SurveyResponse',
   WorkOrder: 'WorkOrder',
-  AgentDraft: 'AgentDraft'
+  AgentDraft: 'AgentDraft',
+  PasswordResetToken: 'PasswordResetToken'
 };
 
 /**

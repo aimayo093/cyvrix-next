@@ -1046,14 +1046,14 @@ model TicketMessage {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model User {
-  id                     String         @id
-  email                  String         @unique
+  id                     String               @id
+  email                  String               @unique
   name                   String?
   passwordHash           String
-  role                   UserRole       @default(CLIENT)
-  active                 Boolean        @default(true)
+  role                   UserRole             @default(CLIENT)
+  active                 Boolean              @default(true)
   emailVerified          DateTime?
-  twoFactorReady         Boolean        @default(false)
+  twoFactorReady         Boolean              @default(false)
   /// TOTP shared secret, sealed by lib/secret-box. Never plaintext.
   twoFactorSecret        String?
   twoFactorEnrolledAt    DateTime?
@@ -1063,12 +1063,13 @@ model User {
   twoFactorLastCounter   BigInt?
   /// Bumped to end every session at once: password change, two-factor change,
   /// or "sign out everywhere". A session carries the value it was issued with.
-  sessionVersion         Int            @default(0)
+  sessionVersion         Int                  @default(0)
   clientCompanyId        String?
-  createdAt              DateTime       @default(now())
+  createdAt              DateTime             @default(now())
   updatedAt              DateTime
-  ClientCompany          ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  ClientCompany          ClientCompany?       @relation(fields: [clientCompanyId], references: [id])
   sessions               UserSession[]
+  passwordResetTokens    PasswordResetToken[]
 
   @@schema("public")
 }
@@ -1975,5 +1976,22 @@ enum AgentDraftStatus {
   REJECTED
   PUBLISHED
 
+  @@schema("public")
+}
+
+/// A pending self-service password reset (DECISIONS §18). Only the token's
+/// SHA-256 hash is stored; a link works once, for 30 minutes.
+model PasswordResetToken {
+  id        String   @id
+  userId    String
+  tokenHash String   @unique
+  /// The address the link was sent to, so a changed email invalidates it.
+  email     String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
   @@schema("public")
 }

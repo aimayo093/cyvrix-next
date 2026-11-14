@@ -215,9 +215,11 @@ Decisions worth keeping:
 - **Secrets are sealed, never plaintext** (`lib/secret-box.ts`). AES-256-GCM
   under a key derived from `AUTH_SECRET` by HKDF with its own info label, so the
   encryption key and the session-signing key are different values from one root.
-- **Recovery codes exist because there is no password reset.** Enabling
-  two-factor on the only administrator account would otherwise be a lock-out
-  waiting to happen.
+- **Recovery codes are the way back from a lost authenticator.** They were
+  added when there was no password reset at all. A self-service reset now
+  exists (§18), but it only replaces the password: a staff account still needs
+  its authenticator code or a recovery code to sign in, so the codes still
+  matter.
 - **Staff accounts must have it (November 2026).** `getSession` reads a staff
   account without a second factor as signed out, so every page, action and API
   route refuses it without needing its own check — a rule each route had to
@@ -633,3 +635,36 @@ companies, email addresses and message text may not (§15).
 **Would change it:** paid media, which needs per-campaign cost to make the
 counts mean anything; and an internal link must never carry `utm_*`, because it
 would overwrite the real source.
+
+---
+
+## 18. Self-service password reset
+
+**What:** "Forgot password?" on the sign-in page leads to `/forgot-password`.
+Anyone with an active account can have a reset link emailed to them, and use
+it at `/reset-password` to choose a new password. Founder request, 15 November
+2026: customers who forget their password must be able to recover it
+themselves.
+
+**Why it is built this way:**
+- **The same reply for every address.** The form never says whether an account
+  exists, so it cannot be used to find out who is a customer.
+- **Only a hash is stored** (`PasswordResetToken.tokenHash`), as with email
+  verification, so a database copy yields no working links. A link works once,
+  for 30 minutes, and only while the account's email is still the address it
+  was sent to; a newer request invalidates older links.
+- **The link's address comes from configuration** (`SITE_URL`), never the
+  request's Host header, which an attacker could set to their own domain.
+- **A reset signs the account out everywhere** (`changeAccountAndEndSessions`)
+  and emails a notice to the account, so a reset someone else triggered is
+  noticed at once.
+- **The mailbox alone never opens a staff account.** Staff must still pass
+  two-factor after a reset (§6); a customer account has no second factor unless
+  its owner turned one on.
+- **Leaked passwords are refused** (Have I Been Pwned range check, §14), the
+  same as every other place a password is set.
+- **Rate limited** per network (10) and per address (3) per window, so the form
+  cannot flood a mailbox.
+- **Opening the link proves the mailbox**, so an unverified address is marked
+  verified when a reset completes.
+- The reset page sends no referrer, since its URL carries the token.
