@@ -18,6 +18,7 @@ import {
 } from "../lib/agent-drafts-core";
 import { CLAIM_RULES, claimFindings } from "../lib/claim-rules";
 import { authorise, integrationToken, paperclipTokenCheck } from "../lib/paperclip-auth";
+import { publicTopPages } from "../lib/paperclip-snapshot-core";
 
 let passed = 0;
 let failed = 0;
@@ -133,7 +134,29 @@ const feedSource = fs.readFileSync(path.join(process.cwd(), "lib/executive-os-fe
 check("ticket messages are limited to client-visible ones", /visibility:\s*"client"/.test(feedSource), true);
 check("no password, session or setting is ever selected", /passwordHash|userSession|siteSetting|twoFactor/i.test(feedSource), false);
 const snapshotSource = fs.readFileSync(path.join(process.cwd(), "lib/paperclip-snapshot.ts"), "utf8");
-check("the snapshot carries no contact details", /email|phone/i.test(snapshotSource.replace(/\/\*[\s\S]*?\*\//g, "")), false);
+const snapshotCode = snapshotSource.replace(/\/\*[\s\S]*?\*\//g, "");
+check("the snapshot carries no contact details", /email|phone/i.test(snapshotCode), false);
+check("snapshot queue items carry no name, company or subject", /item\.(title|detail)/.test(snapshotCode), false);
+
+// Top pages leave the site only as public paths and counts.
+{
+  const pages = publicTopPages([
+    { path: "/services?utm_source=x&ref=someone@example.test", pageviews: 5 },
+    { path: "/services", pageviews: 3 },
+    { path: "/survey/abc123token", pageviews: 9 },
+    { path: "/portal/tickets", pageviews: 9 },
+    { path: "/unsubscribe/tok", pageviews: 9 },
+    { path: "/contact#form", pageviews: 2 },
+    { path: "/administration-services", pageviews: 1 },
+  ]);
+  check("query strings are dropped and paths merged", pages[0], { path: "/services", pageviews: 8 });
+  check("token and signed-in routes are left out", pages.some((p) => /survey|portal|unsubscribe/.test(p.path)), false);
+  check("fragments are dropped", pages.some((p) => p.path === "/contact"), true);
+  check("a lookalike public path is kept", pages.some((p) => p.path === "/administration-services"), true);
+  check("no personal value survives", JSON.stringify(pages).includes("@"), false);
+  check("an overlong path is skipped, not truncated", publicTopPages([{ path: `/${"a".repeat(250)}`, pageviews: 1 }, { path: `/${"a".repeat(250)}b`, pageviews: 1 }]), []);
+  check("at most ten pages", publicTopPages(Array.from({ length: 20 }, (_, i) => ({ path: `/p${i}`, pageviews: i }))).length, 10);
+}
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

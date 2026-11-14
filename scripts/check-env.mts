@@ -143,6 +143,22 @@ for (const key of ["PAPERCLIP_READ_TOKEN", "PAPERCLIP_DRAFT_TOKEN", "EXECUTIVE_O
   );
 }
 
+// Optional: lets the Security Center's own scan past the firewall's bot challenge.
+console.log("\n  Security Center scan bypass (optional)");
+{
+  const entry = firstSet("SECURITY_SCAN_BYPASS_KEY");
+  const length = entry?.value.trim().length ?? 0;
+  // The key is only ever sent to a trusted HTTPS origin from these settings
+  // (lib/firewall-challenge.ts), so without one it is set but never used.
+  const site = firstSet("NEXT_PUBLIC_SITE_URL", "VERCEL_PROJECT_PRODUCTION_URL");
+  console.log(
+    `    SECURITY_SCAN_BYPASS_KEY: ${entry ? `set in ${entry.file} (value hidden${length < 32 ? ", but shorter than 32 characters, so ignored" : ""})` : "not set locally, so local scans send no bypass header (production reads the hosting project's environment variables)"}`
+  );
+  console.log(
+    `    Trusted site URL for the key: ${site ? `${site.key} set in ${site.file}` : "NEXT_PUBLIC_SITE_URL is not set locally, so the key would never be sent; set it (or rely on Vercel's VERCEL_PROJECT_PRODUCTION_URL in production)"}`
+  );
+}
+
 // Optional: the Security Center's Bot protection switch.
 console.log("\n  Bot protection switch (optional)");
 const firewallToken = firstSet("FIREWALL_API_TOKEN", "VERCEL_FIREWALL_TOKEN");

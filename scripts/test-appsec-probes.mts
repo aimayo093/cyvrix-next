@@ -13,6 +13,7 @@ import { staticAppSecChecks } from "../lib/appsec-checks";
 import { buildSecurityTxt, isPublishableMailbox } from "../lib/security-txt";
 import { breachCountFromRange, passwordHashParts } from "../lib/breached-passwords-core";
 import { auditChainCheck } from "../lib/audit-chain";
+import { bypassHeadersFor, firewallBlockedDetail, isFirewallChallenge, scanFetch, scanRequestHeaders, SCAN_BYPASS_HEADER, SCAN_BYPASS_MIN_LENGTH, trustedScanOrigins } from "../lib/firewall-challenge";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -234,6 +235,65 @@ check("client is not required to", needsSecondFactor("CLIENT", null), false);
   const empty = auditChainCheck({ checked: BigInt(0), firstBadSeq: null, problem: null, headSeq: null, headHash: null });
   check("empty log passes without a fingerprint", [empty.status, empty.detail.includes("fingerprint")], ["pass", false]);
   check("no answer is not assessed", auditChainCheck(null).assessed, false);
+}
+
+// Vercel's firewall challenge: never read as the site's own answer.
+{
+  const h = (o: Record<string, string>) => new Headers(o);
+  // The exact shape production returned to the scan on 13 November 2026.
+  check("challenge seen as firewall", isFirewallChallenge(429, h({ server: "Vercel", "x-vercel-mitigated": "challenge", "x-vercel-challenge-token": "2.x" })), true);
+  check("deny seen as firewall", isFirewallChallenge(403, h({ "x-vercel-mitigated": "deny" })), true);
+  check("429 with challenge token, no mitigated header", isFirewallChallenge(429, h({ "x-vercel-challenge-token": "2.x" })), true);
+  check("the site's own 429 is not the firewall", isFirewallChallenge(429, h({ "retry-after": "60" })), false);
+  check("a normal 200 is not the firewall", isFirewallChallenge(200, h({ "content-security-policy": "default-src 'self'" })), false);
+  check("a 404 is not the firewall", isFirewallChallenge(404, h({})), false);
+
+  const key = "a".repeat(SCAN_BYPASS_MIN_LENGTH);
+  check("bypass header sent when the key is set", scanRequestHeaders({ SECURITY_SCAN_BYPASS_KEY: key }), { [SCAN_BYPASS_HEADER]: key });
+  check("no header without a key", scanRequestHeaders({}), {});
+  check("a short key is not sent", scanRequestHeaders({ SECURITY_SCAN_BYPASS_KEY: "short" }), {});
+  check("whitespace around the key is trimmed", scanRequestHeaders({ SECURITY_SCAN_BYPASS_KEY: ` ${key}\n` }), { [SCAN_BYPASS_HEADER]: key });
+  check("blocked detail says not assessed", firewallBlockedDetail("x", false).startsWith("Not assessed."), true);
+  check("blocked detail points at the rule once the key is set", firewallBlockedDetail("x", true).includes("firewall rule"), true);
+  check("blocked detail reports the real status", firewallBlockedDetail("x", false, 403).includes("HTTP 403"), true);
+  check("blocked detail does not invent a status", /HTTP d/.test(firewallBlockedDetail("x", false)), false);
+
+  // The key goes only to this deployment's own configured origin.
+  const env = { SECURITY_SCAN_BYPASS_KEY: key, NEXT_PUBLIC_SITE_URL: "https://cyvrix.co.uk/" };
+  check("trusted origins are the site and its www twin", [...trustedScanOrigins(env)].sort(), ["https://cyvrix.co.uk", "https://www.cyvrix.co.uk"]);
+  check("key sent to the site", bypassHeadersFor("https://cyvrix.co.uk/api/health", env), { [SCAN_BYPASS_HEADER]: key });
+  check("key sent to the www twin", bypassHeadersFor("https://www.cyvrix.co.uk/", env), { [SCAN_BYPASS_HEADER]: key });
+  check("a configured port is kept", trustedScanOrigins({ NEXT_PUBLIC_SITE_URL: "https://cyvrix.co.uk:8443" }).has("https://cyvrix.co.uk:8443"), true);
+  check("the default port needs no port", trustedScanOrigins({ NEXT_PUBLIC_SITE_URL: "https://cyvrix.co.uk:443/" }).has("https://cyvrix.co.uk"), true);
+  check("key NOT sent to an admin-entered other site", bypassHeadersFor("https://attacker.example/", env), {});
+  check("key NOT sent to a lookalike host", bypassHeadersFor("https://cyvrix.co.uk.attacker.example/", env), {});
+  check("key NOT sent over plain http", bypassHeadersFor("http://cyvrix.co.uk/", env), {});
+  check("key NOT sent when no site URL is configured", bypassHeadersFor("https://cyvrix.co.uk/", { SECURITY_SCAN_BYPASS_KEY: key }), {});
+  check("Vercel production URL is trusted too", trustedScanOrigins({ VERCEL_PROJECT_PRODUCTION_URL: "cyvrix.co.uk" }).has("https://cyvrix.co.uk"), true);
+
+  // A redirect to another host never carries the key.
+  const seen: { url: string; key: string | null }[] = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) => {
+    const url = String(input);
+    seen.push({ url, key: new Headers(init?.headers).get(SCAN_BYPASS_HEADER) });
+    if (url === "https://cyvrix.co.uk/start") return new Response(null, { status: 302, headers: { location: "https://elsewhere.example/landing" } });
+    if (url === "https://cyvrix.co.uk/home") return new Response(null, { status: 301, headers: { location: "/home/" } });
+    return new Response("ok", { status: 200 });
+  }) as typeof fetch;
+  try {
+    await scanFetch("https://cyvrix.co.uk/start", { follow: true }, env);
+    check("key sent on the first, same-site hop", seen[0]?.key, key);
+    check("key dropped on the cross-site redirect", [seen[1]?.url, seen[1]?.key], ["https://elsewhere.example/landing", null]);
+    seen.length = 0;
+    await scanFetch("https://cyvrix.co.uk/home", { follow: true }, env);
+    check("a same-site redirect keeps the key", seen.map((s) => s.key), [key, key]);
+    seen.length = 0;
+    const first = await scanFetch("https://cyvrix.co.uk/start", { follow: false }, env);
+    check("follow: false returns the redirect itself", [first.status, seen.length], [302, 1]);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
 }
 
 if (failures) {

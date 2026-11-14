@@ -182,6 +182,37 @@ state the firewall reports.
 Without the token the card says "Not connected" and offers no switch. Every
 change, and every refused change, is written to the audit log.
 
+### Let the Security Center's scan through
+
+The scan checks the live site by requesting its own public URL, so bot
+protection challenges it like any other non-browser client (HTTP 429), and the
+site is never reached. A challenged check reports **Not assessed** rather than
+pass or fail. To let the scan through:
+
+1. Generate a value: `openssl rand -hex 32`.
+2. Add it to the project's environment variables as `SECURITY_SCAN_BYPASS_KEY`
+   (Production), then redeploy. `NEXT_PUBLIC_SITE_URL` (or Vercel's own
+   `VERCEL_PROJECT_PRODUCTION_URL`) must name this site: the scan sends the
+   key only to that origin and its www twin, never to a website URL typed into
+   Security Center settings, and never across a redirect to another host.
+3. Vercel → project → **Firewall → Configure → + New Rule**:
+   - **Name:** `Security Center scan`
+   - **If:** *Request Header* `x-cyvrix-scan-key` → *Equals* → the same value
+   - **Then:** **Bypass**
+   - **Save**, then **Review changes → Publish**
+4. In **Security Center → Settings**, leave the website base URL empty or set
+   it to this site (or its www twin). The key is never sent anywhere else, so
+   routes on any other host stay **Not assessed**.
+5. Run a scan. The headers, website routes and live app-security checks
+   should now report a result. `npm run check:env` shows whether the key and
+   a trusted site URL are both set.
+
+Keep the value secret. **A Bypass rule skips the whole firewall for a matching
+request**: bot protection and every later custom and managed rule, not only
+the challenge. The application's own controls still apply (sign-in, the
+site's rate limits, tokens). Values shorter than 32 characters are ignored. To
+rotate, change both places, then redeploy.
+
 ## Dependency updates
 
 Dependabot (`.github/dependabot.yml`) opens pull requests every Monday morning:
