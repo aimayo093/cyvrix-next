@@ -45,8 +45,10 @@ export function trustedScanOrigins(env: Env = process.env): Set<string> {
       const url = new URL(value.startsWith("http") ? value : `https://${value}`);
       if (url.protocol !== "https:") continue;
       const bare = url.hostname.replace(/^www\./, "");
-      origins.add(`https://${bare}`);
-      origins.add(`https://www.${bare}`);
+      // A non-default port is part of the origin (new URL drops :443 itself).
+      const port = url.port ? `:${url.port}` : "";
+      origins.add(`https://${bare}${port}`);
+      origins.add(`https://www.${bare}${port}`);
     } catch {
       // Not a URL: trust nothing from it.
     }

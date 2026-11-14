@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { loadNavCounts, loadQueue, loadSecuritySummary, loadTiles } from "@/lib/dashboard/loaders";
 import { getSiteTraffic } from "@/lib/site-traffic";
+import { publicTopPages } from "@/lib/paperclip-snapshot-core";
 
 /**
  * The company at a glance, for Paperclip's CEO agent.
@@ -56,7 +57,7 @@ export async function buildSnapshot(now = new Date()) {
         ? {
             visitors30d: traffic.traffic.visitors,
             pageviews30d: traffic.traffic.pageviews,
-            topPages: traffic.traffic.topPages?.slice(0, 10) ?? null,
+            topPages: traffic.traffic.topPages ? publicTopPages(traffic.traffic.topPages) : null,
           }
         : { state: traffic.state },
     drafts,

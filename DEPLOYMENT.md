@@ -200,8 +200,12 @@ pass or fail. To let the scan through:
    - **If:** *Request Header* `x-cyvrix-scan-key` → *Equals* → the same value
    - **Then:** **Bypass**
    - **Save**, then **Review changes → Publish**
-4. Run a scan. The headers, website routes and live app-security checks
-   should now report a result.
+4. In **Security Center → Settings**, leave the website base URL empty or set
+   it to this site (or its www twin). The key is never sent anywhere else, so
+   routes on any other host stay **Not assessed**.
+5. Run a scan. The headers, website routes and live app-security checks
+   should now report a result. `npm run check:env` shows whether the key and
+   a trusted site URL are both set.
 
 Keep the value secret. **A Bypass rule skips the whole firewall for a matching
 request**: bot protection and every later custom and managed rule, not only

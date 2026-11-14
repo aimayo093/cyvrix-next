@@ -281,9 +281,9 @@ async function checkWebsiteRoutes(checks: SecurityScanCheck[], baseUrl: string, 
   const failures: string[] = [];
   const challenged: string[] = [];
   let challengeStatus: number | undefined;
-  // True only if the key went with the request: it is never sent to an
-  // origin other than this deployment's (lib/firewall-challenge.ts).
-  const keySent = Object.keys(bypassHeadersFor(origin)).length > 0;
+  // Whether the key went with a challenged request itself. scanFetch scopes
+  // it per redirect hop, so this reads the final hop's URL, not the first.
+  let keySent = false;
 
   await Promise.all(
     routes.map(async (route) => {
@@ -298,6 +298,7 @@ async function checkWebsiteRoutes(checks: SecurityScanCheck[], baseUrl: string, 
         if (isFirewallChallenge(response.status, response.headers)) {
           challenged.push(normaliseRoute(route));
           challengeStatus = response.status;
+          keySent = keySent || Object.keys(bypassHeadersFor(response.url || url)).length > 0;
           await response.body?.cancel();
           return;
         }
@@ -368,7 +369,7 @@ async function checkSecurityHeaders(checks: SecurityScanCheck[], requestOrigin: 
         status: "warn",
         category: "security",
         assessed: false,
-        detail: firewallBlockedDetail("the security headers", Object.keys(bypassHeadersFor(healthUrl)).length > 0, response.status),
+        detail: firewallBlockedDetail("the security headers", Object.keys(bypassHeadersFor(response.url || healthUrl)).length > 0, response.status),
       });
       return;
     }
