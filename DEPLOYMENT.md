@@ -231,7 +231,7 @@ Every PR runs CI (`.github/workflows/ci.yml`): a production dependency audit,
 the type check, `check:claims`, the test suites and a production build.
 
 **Patch and minor updates merge themselves once CI passes**
-(`.github/workflows/dependabot-auto-merge.yml`, founder decision 15 November
+(`.github/workflows/dependabot-auto-merge.yml`, founder decision 14 November
 2026); the merge deploys to production like any other. **Major updates never
 do**: the workflow comments on the PR, and a person merges it after reading
 the changelog and checking the Vercel preview.
