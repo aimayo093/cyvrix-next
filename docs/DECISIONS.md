@@ -170,6 +170,28 @@ dependency with a moderate or worse advisory. That audit does not cover
 development-only packages, which is where both of today's held-back packages
 sit.
 
+**A firewall challenge is not the site's answer** (13 November 2026). The live
+checks request the site's own public URL, so Vercel's bot protection
+challenges them like any other non-browser client: HTTP 429, with
+`x-vercel-mitigated: challenge`, before the site is reached. The scan was
+reading that page as the site's, which gave false failures in both directions:
+"security headers missing" and "routes erroring (429)", while the probes for
+exposed `.env` and `.git` files *passed*, because a 429 is not a 200. A false
+pass on a security check is the worse of the two. Now every live request:
+- sends `x-cyvrix-scan-key` when `SECURITY_SCAN_BYPASS_KEY` is set (at least
+  32 characters), which a firewall rule bypasses (DEPLOYMENT.md, "Let the
+  Security Center's scan through");
+- reports a challenged response as **not assessed**, never pass or fail
+  (`lib/firewall-challenge.ts`).
+
+The key is sent only to this deployment's own configured origin, never to a
+website URL entered in settings and never across a redirect to another host
+(`scanFetch`). A Bypass rule skips every firewall rule for a matching
+request, not only bot protection, so the key is a secret on a par with a
+token. It is a header rather than a path rule,
+because the scan probes paths such as `/.env` that must stay challenged for
+everyone else. Do not "fix" a blocked scan by turning bot protection off.
+
 ---
 
 ## 6. Two-factor authentication
@@ -534,6 +556,17 @@ agents call the website, never the other way round. Setup is
   may pass them to an AI model provider. The privacy notice must say so before
   the read token is set; the proposed wording is in the pull request that
   added this, for sign-off, because it is a public statement.
+- **No personal data to a model outside the UK.** Cyvrix's agents run on
+  DeepSeek, which processes data in China, and there is no lawful transfer
+  basis for client personal data. So `/snapshot` carries counts, kinds and
+  ages only (no names, companies, subjects or ticket numbers), plus the
+  most-viewed public page paths with their counts (five, as the analytics
+  query returns them): query strings dropped, overlong paths skipped,
+  survey, unsubscribe, privacy-request and signed-in routes left out
+  (`lib/paperclip-snapshot-core.ts`). The read
+  token must not be given to any agent on such a provider while `/feed` holds
+  names and contact details. Revisit if an agent moves to a provider with a
+  UK or EU data-processing agreement.
 - **Firewall.** Bot protection challenges non-browser requests, so the
   integration needs a Vercel firewall bypass rule for `/api/integrations/`
   (docs/PAPERCLIP.md step 3). The routes are still token-protected and

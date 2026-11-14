@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import { loadNavCounts, loadQueue, loadSecuritySummary, loadTiles } from "@/lib/dashboard/loaders";
 import { getSiteTraffic } from "@/lib/site-traffic";
+import { publicTopPages } from "@/lib/paperclip-snapshot-core";
 
 /**
  * The company at a glance, for Paperclip's CEO agent.
@@ -11,8 +12,11 @@ import { getSiteTraffic } from "@/lib/site-traffic";
  * never 0 (DECISIONS section 11): an agent must not plan around a figure that
  * was really a failed query.
  *
- * Counts and titles only. No client contact details: those are in the feed,
- * behind the same read token, for agents that genuinely need them.
+ * No personal data: counts, kinds and ages only. Queue items carry no name,
+ * company, subject or ticket number, because agents may run on a model
+ * provider outside the UK (DeepSeek processes data in China) and there is no
+ * lawful basis to send personal data there. Names live only in the feed,
+ * which must not be given to such agents (DECISIONS section 15).
  */
 export async function buildSnapshot(now = new Date()) {
   const [counts, queue, tiles, security, traffic, drafts] = await Promise.all([
@@ -34,7 +38,7 @@ export async function buildSnapshot(now = new Date()) {
       ? { openEnquiries: counts.data.enquiries, openTickets: counts.data.tickets, overdueTickets: counts.data.overdueTickets }
       : null,
     queue: queue.ok
-      ? queue.data.map((item) => ({ kind: item.kind, title: item.title, detail: item.detail, since: item.since.toISOString() }))
+      ? queue.data.map((item) => ({ kind: item.kind, since: item.since.toISOString() }))
       : null,
     last30Days: tiles.ok
       ? {
@@ -53,7 +57,7 @@ export async function buildSnapshot(now = new Date()) {
         ? {
             visitors30d: traffic.traffic.visitors,
             pageviews30d: traffic.traffic.pageviews,
-            topPages: traffic.traffic.topPages?.slice(0, 10) ?? null,
+            topPages: traffic.traffic.topPages ? publicTopPages(traffic.traffic.topPages) : null,
           }
         : { state: traffic.state },
     drafts,

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { cleanVersion, heldBackBy, upgradeTarget, type DependencyHold } from "@/lib/dependency-freshness";
 import dependencyHolds from "@/lib/generated/dependency-holds.json";
 import { getEmailIdentity, normaliseEmailRecipients } from "@/lib/email-config";
+import { bypassHeadersFor, firewallBlockedDetail, isFirewallChallenge, scanFetch } from "@/lib/firewall-challenge";
 
 export type SecurityCheckStatus = "pass" | "warn" | "fail";
 export type SecurityCheckCategory =
@@ -278,17 +279,29 @@ async function checkWebsiteRoutes(checks: SecurityScanCheck[], baseUrl: string, 
 
   const origin = baseUrl.startsWith("http") ? baseUrl.replace(/\/+$/, "") : `https://${baseUrl.replace(/\/+$/, "")}`;
   const failures: string[] = [];
+  const challenged: string[] = [];
+  let challengeStatus: number | undefined;
+  // Whether the key went with a challenged request itself. scanFetch scopes
+  // it per redirect hop, so this reads the final hop's URL, not the first.
+  let keySent = false;
 
   await Promise.all(
     routes.map(async (route) => {
       const request = withTimeout(8000);
       const url = `${origin}${normaliseRoute(route)}`;
       try {
-        const response = await fetch(url, {
-          redirect: "follow",
+        const response = await scanFetch(url, {
+          follow: true,
           signal: request.controller.signal,
           headers: { "User-Agent": "CYVRIX-SecurityCenter/1.0" },
         });
+        if (isFirewallChallenge(response.status, response.headers)) {
+          challenged.push(normaliseRoute(route));
+          challengeStatus = response.status;
+          keySent = keySent || Object.keys(bypassHeadersFor(response.url || url)).length > 0;
+          await response.body?.cancel();
+          return;
+        }
         const body = await response.text();
         const hasErrorText =
           body.includes("Something went wrong!") ||
@@ -305,26 +318,61 @@ async function checkWebsiteRoutes(checks: SecurityScanCheck[], baseUrl: string, 
     }),
   );
 
+  // Any route challenged and none failing: the scan cannot vouch for every
+  // route, so it is not assessed rather than a pass with a challenged gap.
+  if (challenged.length > 0 && failures.length === 0) {
+    const what =
+      challenged.length === routes.length
+        ? `the ${routes.length} monitored routes`
+        : `${challenged.length} of ${routes.length} monitored routes (${challenged.slice(0, 8).join(", ")})`;
+    checks.push({
+      id: "website_routes",
+      label: "Website Error Monitoring",
+      status: "warn",
+      category: "website",
+      assessed: false,
+      detail: firewallBlockedDetail(what, keySent, challengeStatus),
+    });
+    return;
+  }
+
+  const notChecked = challenged.length
+    ? ` ${challenged.length} route${challenged.length === 1 ? " was" : "s were"} challenged by the hosting platform's firewall and not checked: ${challenged.slice(0, 8).join(", ")}.`
+    : "";
   checks.push({
     id: "website_routes",
     label: "Website Error Monitoring",
     status: failures.length ? "fail" : "pass",
     category: "website",
     detail: failures.length
-      ? `Errors detected on: ${failures.slice(0, 8).join(", ")}${failures.length > 8 ? ", ..." : ""}`
-      : `${routes.length} public route${routes.length === 1 ? "" : "s"} loaded without detected error pages.`,
+      ? `Errors detected on: ${failures.slice(0, 8).join(", ")}${failures.length > 8 ? ", ..." : ""}.${notChecked}`
+      : `${routes.length - challenged.length} public route${routes.length - challenged.length === 1 ? "" : "s"} loaded without detected error pages.${notChecked}`,
   });
 }
 
 async function checkSecurityHeaders(checks: SecurityScanCheck[], requestOrigin: string) {
   try {
     const request = withTimeout(5000);
-    const response = await fetch(`${requestOrigin}/api/health`, {
-      method: "GET",
+    const healthUrl = `${requestOrigin}/api/health`;
+    const response = await scanFetch(healthUrl, {
+      follow: true,
       signal: request.controller.signal,
       headers: { "X-Loopback": "true" },
     });
     request.done();
+    // A challenge page carries the firewall's headers, not ours: absent headers here
+    // mean nothing about the site.
+    if (isFirewallChallenge(response.status, response.headers)) {
+      checks.push({
+        id: "sec_headers",
+        label: "HTTP Security Headers",
+        status: "warn",
+        category: "security",
+        assessed: false,
+        detail: firewallBlockedDetail("the security headers", Object.keys(bypassHeadersFor(response.url || healthUrl)).length > 0, response.status),
+      });
+      return;
+    }
     const csp = response.headers.get("Content-Security-Policy");
     const hsts = response.headers.get("Strict-Transport-Security");
     const frameOptions = response.headers.get("X-Frame-Options");

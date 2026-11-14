@@ -149,6 +149,9 @@ for (const entry of WITHHELD) {
       .readFileSync(file, "utf8")
       .replace(/@vercel\/[\w/.-]+/g, "")
       .replace(/\bVERCEL_[A-Z0-9_]+/g, "")
+      // Response headers the firewall sets (x-vercel-mitigated and the like)
+      // are how the scan tells a challenge from the site's own answer.
+      .replace(/\bx-vercel-[a-z-]+/g, "")
       // The analytics API's host is an address the code must call, not prose.
       .replace(/https:\/\/api\.vercel\.com\b/g, "");
 
