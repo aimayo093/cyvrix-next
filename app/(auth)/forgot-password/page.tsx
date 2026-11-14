@@ -1,7 +1,9 @@
+import * as React from "react";
+import { after } from "next/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { AuthShell, authButtonClass, authInputClass, authLabelClass } from "@/components/auth/AuthShell";
-import { requestPasswordReset } from "@/lib/password-reset";
+import { admitPasswordResetRequest, sendPasswordResetIfAccount } from "@/lib/password-reset";
 import { RESET_REQUESTED_MESSAGE } from "@/lib/password-reset-core";
 import { RateLimitError } from "@/lib/rate-limit";
 import { SITE_URL } from "@/lib/structured-data";
@@ -10,25 +12,41 @@ export const metadata = { title: "Reset your password", robots: { index: false }
 
 /**
  * Step one of a self-service password reset (DECISIONS §18). Every request
- * gets the same reply, whether or not an account exists.
+ * gets the same reply, at the same speed, whether or not an account exists.
  */
-export default async function ForgotPasswordPage({ searchParams }: { searchParams: Promise<{ sent?: string; limited?: string }> }) {
-  const sp = await searchParams;
+export default function ForgotPasswordPage(props: { searchParams: Promise<{ sent?: string; limited?: string }> }) {
+  return (
+    <React.Suspense fallback={<AuthShell title="Reset your password">{null}</AuthShell>}>
+      <ForgotPasswordContent {...props} />
+    </React.Suspense>
+  );
+}
 
-  async function request(formData: FormData) {
-    "use server";
-    let limited = false;
-    try {
-      // The link is built from the configured site URL, never the request's
-      // Host header, so it cannot be pointed at another domain.
-      await requestPasswordReset(formData.get("email"), SITE_URL, await headers());
-    } catch (error) {
-      if (error instanceof RateLimitError) limited = true;
-      else console.error("[password-reset] request failed", error instanceof Error ? error.name : "error");
-    }
-    redirect(limited ? "/forgot-password?limited=1" : "/forgot-password?sent=1");
+async function request(formData: FormData) {
+  "use server";
+  let email = "";
+  let limited = false;
+  try {
+    email = await admitPasswordResetRequest(formData.get("email"), await headers());
+  } catch (error) {
+    if (error instanceof RateLimitError) limited = true;
+    else console.error("[password-reset] request failed", error instanceof Error ? error.name : "error");
   }
+  if (email && !limited) {
+    // The account lookup and the email happen after the response, so how long
+    // the reply takes never shows whether an account exists. The link is
+    // built from the configured site URL, never the request's Host header.
+    after(() =>
+      sendPasswordResetIfAccount(email, SITE_URL).catch((error) =>
+        console.error("[password-reset] send failed", error instanceof Error ? error.name : "error"),
+      ),
+    );
+  }
+  redirect(limited ? "/forgot-password?limited=1" : "/forgot-password?sent=1");
+}
 
+async function ForgotPasswordContent({ searchParams }: { searchParams: Promise<{ sent?: string; limited?: string }> }) {
+  const sp = await searchParams;
   return (
     <AuthShell
       title="Reset your password"

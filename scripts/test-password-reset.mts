@@ -69,6 +69,10 @@ check("requests are rate limited", /enforcePublicSubmissionRateLimit\(/.test(ser
 check("tokens are consumed", /passwordResetToken\.deleteMany\(/.test(server), true);
 const resetPage = fs.readFileSync(path.join(process.cwd(), "app/(auth)/reset-password/page.tsx"), "utf8");
 check("the reset page sends no referrer", /referrer: "no-referrer"/.test(resetPage), true);
+check("a token is claimed atomically before the password changes", server.includes("claimed.count !== 1") && server.indexOf("claimed.count") < server.indexOf("changeAccountAndEndSessions("), true);
+check("the account lookup runs after the response", /after\(\(\) =>\s*sendPasswordResetIfAccount/.test(page), true);
+check("the request step does no account lookup", !server.slice(server.indexOf("export async function admitPasswordResetRequest"), server.indexOf("export async function sendPasswordResetIfAccount")).includes("prisma.user"), true);
+check("both pages read the URL inside Suspense", [page, resetPage].every((src) => src.includes("React.Suspense")), true);
 
 if (failures) {
   console.error(`\n  ${failures} password-reset check(s) failed.`);

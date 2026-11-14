@@ -30,17 +30,28 @@ import {
  */
 
 /**
- * Sends a reset link if the address belongs to an active account. Never
- * reveals which. Throws RateLimitError when the address or network has asked
- * too often.
+ * Step one, inside the request: counts the attempt against the rate limits.
+ * Throws RateLimitError when the address or network has asked too often.
+ * Returns the normalised address, or "" if it is not one.
+ *
+ * It does no account lookup, so the response takes the same time whether or
+ * not an account exists; the lookup and email happen afterwards
+ * (sendPasswordResetIfAccount, run with next/server's after()).
  */
-export async function requestPasswordReset(rawEmail: unknown, siteUrl: string, headers: Headers): Promise<void> {
+export async function admitPasswordResetRequest(rawEmail: unknown, headers: Headers): Promise<string> {
   const email = normaliseEmail(rawEmail);
-  if (!isPlausibleEmail(email)) return;
-
+  if (!isPlausibleEmail(email)) return "";
   // Per network and per address, so neither can be used to flood a mailbox.
   await enforcePublicSubmissionRateLimit("password-reset", email, headers, { ipLimit: 10, emailLimit: 3 });
+  return email;
+}
 
+/**
+ * Step two, after the response: sends a reset link if the address belongs to
+ * an active account. Never reports which.
+ */
+export async function sendPasswordResetIfAccount(email: string, siteUrl: string): Promise<void> {
+  if (!email) return;
   const user = await prisma.user.findFirst({
     where: { email: { equals: email, mode: "insensitive" }, active: true },
     select: { id: true, email: true, name: true },
@@ -118,7 +129,7 @@ export async function completePasswordReset(token: unknown, password: unknown, c
 
   const record = await prisma.passwordResetToken.findUnique({
     where: { tokenHash: hashResetToken(token) },
-    select: { id: true, userId: true, email: true, expiresAt: true },
+    select: { id: true, userId: true, email: true, expiresAt: true, tokenHash: true },
   });
   if (!record) return invalid;
   if (isExpired(record.expiresAt)) {
@@ -129,9 +140,14 @@ export async function completePasswordReset(token: unknown, password: unknown, c
   const problem = newPasswordProblem(password, confirm) ?? (await breachedPasswordProblem(String(password)));
   if (problem) return { ok: false, reason: "password", message: problem };
 
-  const user = await prisma.user.findUnique({ where: { id: record.userId }, select: { email: true, active: true } });
-  // Consumed whatever happens next: a link is never replayed.
+  // Claimed atomically: of two submissions racing with the same link, only
+  // the one whose delete removes the row may go on to set a password.
+  const claimed = await prisma.passwordResetToken.deleteMany({ where: { id: record.id, tokenHash: record.tokenHash } });
+  if (claimed.count !== 1) return invalid;
+  // Any other outstanding link for the account goes too.
   await prisma.passwordResetToken.deleteMany({ where: { userId: record.userId } });
+
+  const user = await prisma.user.findUnique({ where: { id: record.userId }, select: { email: true, active: true } });
   // The address changed since the link was sent, or the account was closed.
   if (!user || !user.active || user.email.toLowerCase() !== record.email.toLowerCase()) return invalid;
 

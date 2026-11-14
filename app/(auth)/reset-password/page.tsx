@@ -1,3 +1,4 @@
+import * as React from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AuthShell, authButtonClass, authInputClass, authLabelClass } from "@/components/auth/AuthShell";
@@ -8,7 +9,15 @@ import { PASSWORD_MIN_LENGTH } from "@/lib/password-reset-core";
 export const metadata = { title: "Choose a new password", robots: { index: false }, referrer: "no-referrer" as const };
 
 /** Step two of a self-service password reset (DECISIONS §18). */
-export default async function ResetPasswordPage({ searchParams }: { searchParams: Promise<{ token?: string; error?: string }> }) {
+export default function ResetPasswordPage(props: { searchParams: Promise<{ token?: string; error?: string }> }) {
+  return (
+    <React.Suspense fallback={<AuthShell title="Choose a new password">{null}</AuthShell>}>
+      <ResetPasswordContent {...props} />
+    </React.Suspense>
+  );
+}
+
+async function ResetPasswordContent({ searchParams }: { searchParams: Promise<{ token?: string; error?: string }> }) {
   const sp = await searchParams;
   const token = sp.token ?? "";
   const check = await checkResetToken(token);
