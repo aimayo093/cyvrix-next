@@ -228,9 +228,23 @@ A new release waits three days before Dependabot proposes it, which keeps the
 site clear of most hijacked-package incidents.
 
 Every PR runs CI (`.github/workflows/ci.yml`): a production dependency audit,
-the type check, `check:claims`, the test suites and a production build. Merge a
-Dependabot PR when CI is green and the Vercel preview looks right. Nothing
-merges itself.
+the type check, `check:claims`, the test suites and a production build.
+
+**Patch and minor updates merge themselves once CI passes**
+(`.github/workflows/dependabot-auto-merge.yml`, founder decision 15 November
+2026); the merge deploys to production like any other. **Major updates never
+do**: the workflow comments on the PR, and a person merges it after reading
+the changelog and checking the Vercel preview.
+
+This needs two repository settings, once:
+
+1. **Settings → General → Pull Requests → Allow auto-merge**: on.
+2. **Settings → Branches** (or Rules) for `main`: `CI / verify` is a required
+   status check, so auto-merge waits for it. Without a required check,
+   auto-merge would merge immediately.
+
+If the AI code reviewer is required to resolve its comments before merging, a
+Dependabot PR it comments on waits for a person too.
 
 `@types/node` follows the Node.js runtime in `package.json` `engines`
 (currently 24.x), not the newest Node. To move to a new Node major, change
