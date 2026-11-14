@@ -1977,3 +1977,33 @@ enum AgentDraftStatus {
 
   @@schema("public")
 }
+
+/// Email sent from the admin Email page and received in the admin mailbox
+/// (DECISIONS §17). Server only: row level security on, no API grants.
+model EmailMessage {
+  id              String   @id
+  /// outbound | inbound
+  direction       String
+  /// The mailbox it belongs to: the sending identity, or the synced inbox.
+  mailbox         String
+  /// sent | failed | received
+  status          String
+  /// Inbound only: mailbox plus Message-ID (or IMAP UID), so a re-sync never duplicates.
+  externalId      String?  @unique
+  fromAddress     String
+  toAddress       String
+  subject         String
+  /// Plain text only, capped. HTML is reduced to text; attachments are not stored.
+  textBody        String
+  /// Names of attachments a received message carried, for reference only.
+  attachmentNames String[] @default([])
+  error           String?
+  /// The administrator who sent it (outbound).
+  sentById        String?
+  occurredAt      DateTime
+  createdAt       DateTime @default(now())
+
+  @@index([direction, occurredAt])
+  @@index([fromAddress])
+  @@schema("public")
+}
