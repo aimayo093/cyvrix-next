@@ -639,8 +639,10 @@ would overwrite the real source.
 ## 17. Email history and the admin Inbox
 
 **What:** the admin Email page has three tabs. **Compose** is unchanged.
-**Sent** lists the emails sent from that page, including failures with the
-server's reason. It is best effort: a history write that fails is logged and
+**Sent** lists the emails sent from that page that were handed to the mail
+server, including ones the server refused, with its reason. A send stopped
+earlier (a missing field, SMTP not configured, no sender identity) is shown
+on the page as an error and not recorded. It is best effort: a history write that fails is logged and
 never turns a sent email into a reported failure. Other site email
 (verification, password reset, privacy requests, alerts) is not listed.
 The audit log records successful sends only. **Inbox** shows mail received at the mailbox in `getServerImapConfig()`,

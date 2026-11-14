@@ -109,8 +109,9 @@ async function EmailBroadcastPageContent({
               : result.state === "slow"
                 ? "The mailbox is slow to answer. Refresh in a moment to see new messages."
                 : "Inbox checked.";
-    const failed = result.state === "error" || result.state === "not_configured";
-    redirect(`/admin/email?tab=inbox&status=${failed ? "error" : "success"}&message=${encodeURIComponent(note)}`);
+    // Busy or slow is neither done nor failed: shown as a neutral notice.
+    const outcome = result.state === "error" || result.state === "not_configured" ? "error" : result.state === "ok" ? "success" : "pending";
+    redirect(`/admin/email?tab=inbox&status=${outcome}&message=${encodeURIComponent(note)}`);
   }
 
   const viewing = sp.view && /^[0-9a-f-]{36}$/i.test(sp.view) ? await getEmailMessage(sp.view).catch(() => null) : null;
@@ -136,16 +137,20 @@ async function EmailBroadcastPageContent({
         <div className={`p-4 rounded-xl border flex items-start gap-3 ${
           sp.status === "success"
             ? "bg-emerald-50 border-emerald-250 text-emerald-800"
-            : "bg-rose-50 border-rose-250 text-rose-800"
+            : sp.status === "pending"
+              ? "bg-slate-50 border-slate-200 text-slate-700"
+              : "bg-rose-50 border-rose-250 text-rose-800"
         }`}>
           {sp.status === "success" ? (
             <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+          ) : sp.status === "pending" ? (
+            <RefreshCw className="h-5 w-5 text-slate-500 shrink-0 mt-0.5" />
           ) : (
             <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
           )}
           <div>
             <h4 className="font-outfit font-black text-sm uppercase tracking-wide">
-              {sp.status === "success" ? "Done" : "Problem"}
+              {sp.status === "success" ? "Done" : sp.status === "pending" ? "In progress" : "Problem"}
             </h4>
             <p className="text-xs font-semibold mt-0.5 leading-relaxed">{sp.message}</p>
           </div>
