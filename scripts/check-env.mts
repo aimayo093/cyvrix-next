@@ -149,7 +149,7 @@ console.log("\n  Security Center scan bypass (optional)");
   const entry = firstSet("SECURITY_SCAN_BYPASS_KEY");
   const length = entry?.value.trim().length ?? 0;
   console.log(
-    `    SECURITY_SCAN_BYPASS_KEY: ${entry ? `set in ${entry.file} (value hidden${length < 32 ? ", but shorter than 32 characters, so ignored" : ""})` : NOT_LOCAL}`
+    `    SECURITY_SCAN_BYPASS_KEY: ${entry ? `set in ${entry.file} (value hidden${length < 32 ? ", but shorter than 32 characters, so ignored" : ""})` : "not set locally, so local scans send no bypass header (production reads the hosting project's environment variables)"}`
   );
 }
 

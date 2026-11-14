@@ -18,7 +18,7 @@
 import manifest from "@/lib/generated/appsec-manifest.json";
 import type { SecurityScanCheck, SecurityCheckStatus } from "@/lib/security-scan";
 import { clientBundlePaths } from "@/lib/appsec-probe-parse";
-import { firewallBlockedDetail, isFirewallChallenge, scanRequestHeaders } from "@/lib/firewall-challenge";
+import { bypassHeadersFor, firewallBlockedDetail, isFirewallChallenge, scanFetch } from "@/lib/firewall-challenge";
 
 type ManifestFinding = {
   id: string;
@@ -80,7 +80,9 @@ export function staticAppSecChecks(): SecurityScanCheck[] {
 
 async function probe(url: string, signal: AbortSignal) {
   try {
-    const response = await fetch(url, { signal, redirect: "manual", headers: scanRequestHeaders() });
+    // Never follows redirects, and sends the bypass key only to this
+    // deployment's own origin (lib/firewall-challenge.ts).
+    const response = await scanFetch(url, { signal, follow: false });
     // A firewall challenge is the firewall's answer, not the site's: it must never
     // read as "not served" (a false pass) or as the site's own headers or body.
     if (isFirewallChallenge(response.status, response.headers)) {
@@ -93,14 +95,14 @@ async function probe(url: string, signal: AbortSignal) {
   }
 }
 
-function firewallBlocked(id: string, label: string, what: string): SecurityScanCheck {
+function firewallBlocked(id: string, label: string, what: string, url: string, status?: number): SecurityScanCheck {
   return {
     id,
     label,
     status: "warn",
     category: "security",
     assessed: false,
-    detail: firewallBlockedDetail(what, Object.keys(scanRequestHeaders()).length > 0),
+    detail: firewallBlockedDetail(what, Object.keys(bypassHeadersFor(url)).length > 0, status),
   };
 }
 
@@ -121,14 +123,21 @@ export async function liveAppSecChecks(origin: string, signal: AbortSignal): Pro
 
     let servedMaps = 0;
     let mapsBlocked = 0;
+    let blockedStatus: number | undefined = page.blocked ? page.status : undefined;
     for (const script of scriptUrls) {
       const map = await probe(`${origin}${script}.map`, signal);
-      if (map.blocked) mapsBlocked += 1;
+      if (map.blocked) {
+        mapsBlocked += 1;
+        blockedStatus = map.status;
+      }
       if (map.ok && map.status === 200 && map.body.includes('"sources"')) servedMaps += 1;
     }
 
-    if (page.blocked || (scriptUrls.length > 0 && mapsBlocked === scriptUrls.length)) {
-      checks.push(firewallBlocked("appsec_source_maps", "Exposed source maps", "source maps"));
+    // A readable map is proof of a failure on its own. Without one, any
+    // blocked probe leaves the answer unknown, never a pass.
+    if (servedMaps === 0 && (page.blocked || mapsBlocked > 0)) {
+      const what = page.blocked ? "source maps" : `${mapsBlocked} of ${scriptUrls.length} sampled source maps`;
+      checks.push(firewallBlocked("appsec_source_maps", "Exposed source maps", what, origin, blockedStatus));
     } else checks.push({
       id: "appsec_source_maps",
       label: "Exposed source maps",
@@ -157,7 +166,7 @@ export async function liveAppSecChecks(origin: string, signal: AbortSignal): Pro
 
     // "Not served" is only known for paths the site itself answered.
     if (blocked.length > 0 && exposed.length === 0) {
-      checks.push(firewallBlocked("appsec_exposed_files", "Exposed environment and repository files", `${blocked.length} of ${paths.length} sensitive paths`));
+      checks.push(firewallBlocked("appsec_exposed_files", "Exposed environment and repository files", `${blocked.length} of ${paths.length} sensitive paths`, origin));
     } else checks.push({
       id: "appsec_exposed_files",
       label: "Exposed environment and repository files",
@@ -179,7 +188,7 @@ export async function liveAppSecChecks(origin: string, signal: AbortSignal): Pro
     const worst = wideOpen && credentials === "true";
 
     if (response.blocked) {
-      checks.push(firewallBlocked("appsec_cors", "Cross-origin resource sharing", "CORS headers"));
+      checks.push(firewallBlocked("appsec_cors", "Cross-origin resource sharing", "CORS headers", origin, response.status));
     } else checks.push({
       id: "appsec_cors",
       label: "Cross-origin resource sharing",
@@ -199,7 +208,7 @@ export async function liveAppSecChecks(origin: string, signal: AbortSignal): Pro
     const leaks = /at\s+\w+\s+\(|\.tsx?:\d+:\d+|node_modules[\\/]|PrismaClient|stack/i.test(response.body);
 
     if (response.blocked) {
-      checks.push(firewallBlocked("appsec_error_detail", "Internal detail in error responses", "error responses"));
+      checks.push(firewallBlocked("appsec_error_detail", "Internal detail in error responses", "error responses", origin, response.status));
     } else checks.push({
       id: "appsec_error_detail",
       label: "Internal detail in error responses",

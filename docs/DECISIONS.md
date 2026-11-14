@@ -184,7 +184,11 @@ pass on a security check is the worse of the two. Now every live request:
 - reports a challenged response as **not assessed**, never pass or fail
   (`lib/firewall-challenge.ts`).
 
-The key bypasses bot protection only. It is a header rather than a path rule,
+The key is sent only to this deployment's own configured origin, never to a
+website URL entered in settings and never across a redirect to another host
+(`scanFetch`). A Bypass rule skips every firewall rule for a matching
+request, not only bot protection, so the key is a secret on a par with a
+token. It is a header rather than a path rule,
 because the scan probes paths such as `/.env` that must stay challenged for
 everyone else. Do not "fix" a blocked scan by turning bot protection off.
 

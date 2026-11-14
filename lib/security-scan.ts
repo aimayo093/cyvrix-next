@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { cleanVersion, heldBackBy, upgradeTarget, type DependencyHold } from "@/lib/dependency-freshness";
 import dependencyHolds from "@/lib/generated/dependency-holds.json";
 import { getEmailIdentity, normaliseEmailRecipients } from "@/lib/email-config";
-import { firewallBlockedDetail, isFirewallChallenge, scanRequestHeaders } from "@/lib/firewall-challenge";
+import { bypassHeadersFor, firewallBlockedDetail, isFirewallChallenge, scanFetch } from "@/lib/firewall-challenge";
 
 export type SecurityCheckStatus = "pass" | "warn" | "fail";
 export type SecurityCheckCategory =
@@ -280,20 +280,24 @@ async function checkWebsiteRoutes(checks: SecurityScanCheck[], baseUrl: string, 
   const origin = baseUrl.startsWith("http") ? baseUrl.replace(/\/+$/, "") : `https://${baseUrl.replace(/\/+$/, "")}`;
   const failures: string[] = [];
   const challenged: string[] = [];
-  const bypass = scanRequestHeaders();
+  let challengeStatus: number | undefined;
+  // True only if the key went with the request: it is never sent to an
+  // origin other than this deployment's (lib/firewall-challenge.ts).
+  const keySent = Object.keys(bypassHeadersFor(origin)).length > 0;
 
   await Promise.all(
     routes.map(async (route) => {
       const request = withTimeout(8000);
       const url = `${origin}${normaliseRoute(route)}`;
       try {
-        const response = await fetch(url, {
-          redirect: "follow",
+        const response = await scanFetch(url, {
+          follow: true,
           signal: request.controller.signal,
-          headers: { "User-Agent": "CYVRIX-SecurityCenter/1.0", ...bypass },
+          headers: { "User-Agent": "CYVRIX-SecurityCenter/1.0" },
         });
         if (isFirewallChallenge(response.status, response.headers)) {
           challenged.push(normaliseRoute(route));
+          challengeStatus = response.status;
           await response.body?.cancel();
           return;
         }
@@ -313,15 +317,20 @@ async function checkWebsiteRoutes(checks: SecurityScanCheck[], baseUrl: string, 
     }),
   );
 
-  // Every route challenged: the scan learned nothing about the site.
-  if (challenged.length === routes.length && failures.length === 0) {
+  // Any route challenged and none failing: the scan cannot vouch for every
+  // route, so it is not assessed rather than a pass with a challenged gap.
+  if (challenged.length > 0 && failures.length === 0) {
+    const what =
+      challenged.length === routes.length
+        ? `the ${routes.length} monitored routes`
+        : `${challenged.length} of ${routes.length} monitored routes (${challenged.slice(0, 8).join(", ")})`;
     checks.push({
       id: "website_routes",
       label: "Website Error Monitoring",
       status: "warn",
       category: "website",
       assessed: false,
-      detail: firewallBlockedDetail(`the ${routes.length} monitored routes`, Object.keys(bypass).length > 0),
+      detail: firewallBlockedDetail(what, keySent, challengeStatus),
     });
     return;
   }
@@ -343,11 +352,11 @@ async function checkWebsiteRoutes(checks: SecurityScanCheck[], baseUrl: string, 
 async function checkSecurityHeaders(checks: SecurityScanCheck[], requestOrigin: string) {
   try {
     const request = withTimeout(5000);
-    const bypass = scanRequestHeaders();
-    const response = await fetch(`${requestOrigin}/api/health`, {
-      method: "GET",
+    const healthUrl = `${requestOrigin}/api/health`;
+    const response = await scanFetch(healthUrl, {
+      follow: true,
       signal: request.controller.signal,
-      headers: { "X-Loopback": "true", ...bypass },
+      headers: { "X-Loopback": "true" },
     });
     request.done();
     // A challenge page carries the firewall's headers, not ours: absent headers here
@@ -359,7 +368,7 @@ async function checkSecurityHeaders(checks: SecurityScanCheck[], requestOrigin: 
         status: "warn",
         category: "security",
         assessed: false,
-        detail: firewallBlockedDetail("the security headers", Object.keys(bypass).length > 0),
+        detail: firewallBlockedDetail("the security headers", Object.keys(bypassHeadersFor(healthUrl)).length > 0, response.status),
       });
       return;
     }

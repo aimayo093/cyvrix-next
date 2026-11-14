@@ -191,7 +191,10 @@ pass or fail. To let the scan through:
 
 1. Generate a value: `openssl rand -hex 32`.
 2. Add it to the project's environment variables as `SECURITY_SCAN_BYPASS_KEY`
-   (Production), then redeploy.
+   (Production), then redeploy. `NEXT_PUBLIC_SITE_URL` (or Vercel's own
+   `VERCEL_PROJECT_PRODUCTION_URL`) must name this site: the scan sends the
+   key only to that origin and its www twin, never to a website URL typed into
+   Security Center settings, and never across a redirect to another host.
 3. Vercel → project → **Firewall → Configure → + New Rule**:
    - **Name:** `Security Center scan`
    - **If:** *Request Header* `x-cyvrix-scan-key` → *Equals* → the same value
@@ -200,9 +203,11 @@ pass or fail. To let the scan through:
 4. Run a scan. The headers, website routes and live app-security checks
    should now report a result.
 
-Keep the value secret: anyone holding it can skip bot protection (but nothing
-else; sign-in, rate limits and tokens still apply). Values shorter than 32
-characters are ignored. To rotate, change both places, then redeploy.
+Keep the value secret. **A Bypass rule skips the whole firewall for a matching
+request**: bot protection and every later custom and managed rule, not only
+the challenge. The application's own controls still apply (sign-in, the
+site's rate limits, tokens). Values shorter than 32 characters are ignored. To
+rotate, change both places, then redeploy.
 
 ## Dependency updates
 
