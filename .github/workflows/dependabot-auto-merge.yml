@@ -7,7 +7,13 @@ name: Dependabot auto-merge
 # This only switches on GitHub's auto-merge: the merge happens when every
 # required check on main passes, never before. If CI fails, nothing merges.
 
-on: pull_request
+# Once per PR: auto-merge, once switched on, stays on through rebases, and the
+# major-update comment should not repeat on every push. GitHub documents this
+# pattern (pull_request with explicit write permissions) for Dependabot;
+# pull_request_target is not needed and would widen what the token can reach.
+on:
+  pull_request:
+    types: [opened, reopened]
 
 permissions:
   contents: write
