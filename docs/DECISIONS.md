@@ -642,7 +642,7 @@ would overwrite the real source.
 
 **What:** "Forgot password?" on the sign-in page leads to `/forgot-password`.
 Anyone with an active account can have a reset link emailed to them, and use
-it at `/reset-password` to choose a new password. Founder request, 15 November
+it at `/reset-password` to choose a new password. Founder request, 14 November
 2026: customers who forget their password must be able to recover it
 themselves.
 
