@@ -215,9 +215,11 @@ Decisions worth keeping:
 - **Secrets are sealed, never plaintext** (`lib/secret-box.ts`). AES-256-GCM
   under a key derived from `AUTH_SECRET` by HKDF with its own info label, so the
   encryption key and the session-signing key are different values from one root.
-- **Recovery codes exist because there is no password reset.** Enabling
-  two-factor on the only administrator account would otherwise be a lock-out
-  waiting to happen.
+- **Recovery codes are the way back from a lost authenticator.** They were
+  added when there was no password reset at all. A self-service reset now
+  exists (§18), but it only replaces the password: a staff account still needs
+  its authenticator code or a recovery code to sign in, so the codes still
+  matter.
 - **Staff accounts must have it (November 2026).** `getSession` reads a staff
   account without a second factor as signed out, so every page, action and API
   route refuses it without needing its own check — a rule each route had to
@@ -636,14 +638,153 @@ would overwrite the real source.
 
 ---
 
-## 18. Procurement: the website holds approvals, people carry them out
+## 17. Email history and the admin Inbox
+
+**What:** the admin Email page has three tabs. **Compose** is unchanged.
+**Sent** lists the emails sent from that page that were handed to the mail
+server, including ones the server refused, with its reason. A send stopped
+earlier (a missing field, SMTP not configured, no sender identity) is shown
+on the page as an error and not recorded. It is best effort: a history write that fails is logged and
+never turns a sent email into a reported failure. Other site email
+(verification, password reset, privacy requests, alerts) is not listed.
+The audit log records successful sends only. **Inbox** shows mail received at the mailbox in `getServerImapConfig()`,
+which is admin@cyvrix.co.uk (founder decision, 14 November 2026). Both are
+stored in `EmailMessage` and kept for 24 months, then deleted by the daily
+`/api/cron/email-sync`.
+
+**Why it is built this way:**
+- **The audit log was not a history.** It records the recipient and subject of
+  each successful send but not the message, and it is not shown on the Email
+  page.
+- **Plain text only.** A received message is reduced to text (`mailparser`) and
+  shown escaped in a `<pre>`; its HTML is never rendered, so a hostile email
+  cannot script the admin. Attachments are not copied, only their names.
+- **The mailbox defaults to the SMTP account.** One mailbox on one host usually
+  serves both; `IMAP_*` overrides any part if they ever differ.
+- **Sync on open, plus daily.** Vercel Hobby crons run once a day, so the page
+  checks the mailbox when the Inbox is opened (at most every two minutes,
+  waiting at most eight seconds; "Check now" waits at most twenty). A first
+  sync reaches back 60 days; a run reads at most 100 messages, oldest first,
+  so a backlog drains over later runs. Messages are de-duplicated by a hash
+  of the Message-ID, or, without one, by server, UIDVALIDITY and UID. One run
+  at a time: a sync claims a 90-second lease in the settings row. A message
+  that cannot be parsed, or is over 5 MB, is stored from its envelope with a
+  note, so it never blocks later ones. Port 993 is implicit TLS; any other
+  port must upgrade with STARTTLS before logging in.
+- **Server only.** `EmailMessage` has row level security and no API grants.
+  Received mail holds other people's personal data, so it **never** reaches
+  the Paperclip integration (§15); `test:email-history` checks the snapshot,
+  feed and drafts code never reads it.
+- **Errors without secrets.** Mail-server errors are stored with the mail
+  passwords replaced wherever they appear, anything after AUTH, PASS or LOGIN
+  removed, and password fields and URL credentials redacted.
+- **Failures are loud.** The cron returns 500 when the sync or the retention
+  purge fails, so a skipped purge shows in Vercel rather than silently
+  breaking the 24-month promise.
+
+**Known gap:** the Email page sends *from* the identity in System Settings
+(support@cyvrix.co.uk), so replies to those emails arrive at support@, not at
+the admin@ Inbox, unless the sender identity is changed to admin@.
+
+**Privacy notice:** the default text discloses that emails to the admin@
+mailbox and from the admin system are kept there, and for how long; the published CMS copy must be updated through Admin → Legal Pages
+(§3) after founder sign-off.
+
+## 18. Self-service password reset
+
+**What:** "Forgot password?" on the sign-in page leads to `/forgot-password`.
+Anyone with an active account can have a reset link emailed to them, and use
+it at `/reset-password` to choose a new password. Founder request, 14 November
+2026: customers who forget their password must be able to recover it
+themselves.
+
+**Why it is built this way:**
+- **The same reply for every address.** The form never says whether an account
+  exists, so it cannot be used to find out who is a customer.
+- **Only a hash is stored** (`PasswordResetToken.tokenHash`), as with email
+  verification, so a database copy yields no working links. A link works once,
+  for 30 minutes, and only while the account's email is still the address it
+  was sent to; a newer request invalidates older links.
+- **The link always points at the production site** (`SITE_URL`, the fixed
+  canonical `https://cyvrix.co.uk` in `lib/structured-data.ts`), never the
+  request's Host header, which an attacker could set to their own domain. A
+  reset requested on a preview or staging deployment therefore links to
+  production.
+- **A reset signs the account out everywhere** (`changeAccountAndEndSessions`)
+  and emails a notice to the account, so a reset someone else triggered is
+  noticed at once.
+- **The mailbox alone never opens a staff account.** Staff must still pass
+  two-factor after a reset (§6); a customer account has no second factor unless
+  its owner turned one on.
+- **Leaked passwords are refused** (Have I Been Pwned range check, §14), the
+  same as every other place a password is set, **when the check answers**: it
+  fails open after three seconds, so during an outage a reset is not
+  breach-checked.
+- **The request responds before looking anything up.** Only the rate limit is
+  counted in the request; the account lookup and the email run in `after()`,
+  so the response time does not reveal whether an account exists.
+- **A token is claimed atomically**: of two submissions of one link, only the
+  one whose delete removes the row may change the password.
+- **An earlier link survives a failed send.** A new link replaces older ones
+  only once its email has gone; expired links are cleared on every request.
+- **Rate limited** per network (10) and per address (3) per window, so the form
+  cannot flood a mailbox. If the database is unreachable the limiter falls back
+  to per-instance memory (§13), so during such an outage several server
+  instances could each allow their own three.
+- **Opening the link proves the mailbox**, so an unverified address is marked
+  verified when a reset completes.
+- The reset page sends no referrer, since its URL carries the token. After a
+  reset it sends the browser to `/login?ended=1&reset=1`, so the proxy shows
+  sign-in and clears the now-invalid cookie.
+- **Not kept across the reset:** the page someone was trying to open. The reset
+  happens through an emailed link, often on another device, so sign-in lands
+  on the account's home page.
+
+## 19. Account holders are told when legal text changes
+
+**What:** publishing changed wording in a public legal document (Privacy
+Policy, Terms, Cookie Policy), from Admin → Legal pages or by restoring the
+reviewed wording, sends every active account holder (clients and staff) a
+notification in their account and an email. The email links to the document,
+gives the date the new version applies from, and carries the optional "What
+changed" note from the form. Founder decision, 15 November 2026.
+
+**Why it is built this way:**
+- **Only when visitors see different text.** The rule compares what the
+  public page shows before and after the save: a published record that passes
+  `toPublicLegalDocument`, otherwise the reviewed default wording. So saving a
+  draft, unpublishing, the same wording again, a whitespace-only edit, or a
+  restore over a stub the public page never showed sends nothing.
+- **One version, one notice.** The announced version's hash is claimed in one
+  conditional UPDATE on a `legalNotice:<slug>` settings row, so two saves of
+  the same text at the same moment cannot both send. A restore schedules its
+  notice only after its transaction commits.
+- **One email per person.** Each recipient gets their own message, so no
+  address is shown to another account holder.
+- **After the response.** Notices go out in `after()`, so publishing never
+  waits on the mail server. The in-app notifications and the emails are
+  attempted separately, so one failing never skips the other. Each email may
+  take at most 15 seconds before it counts as failed. The email's "applies
+  from" date is when the version was saved.
+- **Audited without addresses.** A `legal_change_notice_started` entry is
+  written before any email, and `legal_change_notice_sent` after, with counts
+  and up to five redacted failure reasons.
+- **A service message, not marketing.** It goes to account holders about
+  terms that apply to them, so it does not need marketing consent; newsletter
+  subscribers without an account are not emailed.
+
+**Known limit:** emails are sent one after another inside the request's
+`after()` window, which the platform can end. If it does, some account holders
+get no email, and the log shows a "started" entry with no "sent" entry. Read
+it that way, and resend by hand if needed. A queued job would remove the
+limit; it is worth doing before the number of accounts grows much.
+## 20. Procurement: the website holds approvals, people carry them out
 
 **What:** Admin → Procurement records tenders, commercial leads, partnership
 programmes and subcontract assignments as `Opportunity` rows, with
 evidence, company documents, verified company facts, packages and founder
 approvals. Design and reasoning: `docs/procurement/`. Phase 1 (15 November
 2026); founder decisions D5, D6, D7 and D11 in `docs/procurement/README.md`.
-Numbered 18 because §17 is taken by the email history work (PR 10).
 
 **Why it is built this way:**
 - **Status moves are data, checked on the server.** `lib/procurement/lifecycle.ts`

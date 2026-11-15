@@ -26,6 +26,9 @@
     "test:dashboard": "tsx scripts/test-dashboard.mts",
     "test:appsec": "tsx scripts/test-appsec-probes.mts",
     "test:enquiry-source": "tsx scripts/test-enquiry-source.mts",
+    "test:email-history": "tsx scripts/test-email-history.mts",
+    "test:legal-notices": "tsx scripts/test-legal-notices.mts",
+    "test:password-reset": "tsx scripts/test-password-reset.mts",
     "test:procurement": "tsx scripts/test-procurement.mts",
     "test:procurement-db": "node --conditions=react-server --import tsx scripts/test-procurement-db.mts",
     "scan:deps": "tsx scripts/dependency-holds.mts"
@@ -42,7 +45,9 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "framer-motion": "^14.14.0",
+    "imapflow": "^2.11.0",
     "lucide-react": "^1.72.0",
+    "mailparser": "^3.14.3",
     "next": "^16.4.6",
     "nodemailer": "^10.5.0",
     "pg": "^8.23.1",
@@ -57,6 +62,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.5",
+    "@types/mailparser": "^3.9.0",
     "@types/node": "^24.19.2",
     "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",

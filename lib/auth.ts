@@ -319,7 +319,7 @@ export async function endAllSessions(userId: string, { keepCurrent = false } = {
  */
 export async function changeAccountAndEndSessions(
   userId: string,
-  change: { passwordHash?: string; name?: string },
+  change: { passwordHash?: string; name?: string; emailVerified?: Date },
   { keepCurrent = false } = {},
 ) {
   const [, user] = await prisma.$transaction([

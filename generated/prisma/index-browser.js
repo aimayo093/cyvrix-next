@@ -1422,6 +1422,32 @@ exports.Prisma.AgentDraftScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  tokenHash: 'tokenHash',
+  email: 'email',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.EmailMessageScalarFieldEnum = {
+  id: 'id',
+  direction: 'direction',
+  mailbox: 'mailbox',
+  status: 'status',
+  externalId: 'externalId',
+  fromAddress: 'fromAddress',
+  toAddress: 'toAddress',
+  subject: 'subject',
+  textBody: 'textBody',
+  attachmentNames: 'attachmentNames',
+  error: 'error',
+  sentById: 'sentById',
+  occurredAt: 'occurredAt',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.OrganisationScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -1884,6 +1910,8 @@ exports.Prisma.ModelName = {
   SurveyResponse: 'SurveyResponse',
   WorkOrder: 'WorkOrder',
   AgentDraft: 'AgentDraft',
+  PasswordResetToken: 'PasswordResetToken',
+  EmailMessage: 'EmailMessage',
   Organisation: 'Organisation',
   OpportunitySource: 'OpportunitySource',
   IngestionRun: 'IngestionRun',

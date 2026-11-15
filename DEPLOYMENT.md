@@ -256,3 +256,23 @@ ESLint stays on 9 until `eslint-config-next`'s bundled plugins
 ## Former Laravel Request
 
 The Laravel project was removed per earlier instruction. If CYVRIX later needs a Laravel backend/admin, host that separately on Laravel-friendly hosting and keep this Next.js app as either the frontend or a replacement full-stack platform.
+
+## Email history and Inbox (20261114180000)
+
+1. Apply `prisma/migrations/20261114180000_email_messages` to production
+   **before** deploying: the send action records each message in the new
+   `EmailMessage` table.
+2. The Inbox reads the SMTP account over IMAP on port 993 by default
+   (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASSWORD`). Set `IMAP_HOST`, `IMAP_PORT`,
+   `IMAP_USER` or `IMAP_PASSWORD` only if the inbox differs. A port other than
+   993 must support STARTTLS; the sync refuses to log in without TLS.
+3. `vercel.json` adds a daily `/api/cron/email-sync` (06:30 UTC), which uses
+   the existing `CRON_SECRET`. It syncs the Inbox and deletes email history
+   older than 24 months, and returns 500 if either fails.
+
+## Password reset (20261115090000)
+
+Apply `prisma/migrations/20261115090000_password_reset_tokens` to production
+**before** merging (a merge deploys): `/forgot-password` writes to the new table. Reset emails
+use the same transport as other site email (SMTP if set, otherwise Resend); if
+neither is configured, requests are accepted but no email can be sent.

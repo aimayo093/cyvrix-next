@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-11-15T00:48:00.092Z",
-  "fileCount": 260,
-  "apiRouteCount": 19,
+  "generatedAt": "2026-11-15T02:39:01.963Z",
+  "fileCount": 271,
+  "apiRouteCount": 20,
   "mutatingRouteCount": 11,
   "findings": [
     {
@@ -56,11 +56,16 @@
     {
       "id": "appsec_password_reset",
       "label": "Password reset flow",
-      "status": "not_applicable",
+      "status": "pass",
       "method": "Looked for a self-service password reset and, if present, whether its tokens expire and are single use.",
-      "detail": "No self-service password reset exists. Nothing to attack, and nothing for a locked-out administrator either.",
+      "detail": "Reset flow found. Token expiry: present. Single use: present.",
       "limitation": "Cannot verify token entropy, or that the reset email goes only to a verified address.",
-      "evidence": []
+      "evidence": [
+        "app/(auth)/forgot-password/page.tsx",
+        "app/(auth)/reset-password/page.tsx",
+        "lib/password-reset-core.ts",
+        "lib/password-reset.ts"
+      ]
     },
     {
       "id": "appsec_session",

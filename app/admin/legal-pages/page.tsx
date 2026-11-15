@@ -127,6 +127,11 @@ export default async function LegalPagesPage({
               <textarea name="reviewNotice" rows={3} defaultValue={selectedRecord?.reviewNotice || defaultReviewNotice} className="mt-1.5 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-6 text-[#041635] outline-none focus:ring-2 focus:ring-[#2691F0]" />
             </label>
 
+            <label className="block text-xs font-bold text-slate-700">What changed, for account holders (optional)
+              <textarea name="changeSummary" rows={2} maxLength={600} placeholder="For example: we now explain how long we keep emails sent to our admin mailbox." className="mt-1.5 w-full resize-y rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm leading-6 text-[#041635] outline-none focus:ring-2 focus:ring-[#2691F0]" />
+              <span className="mt-1.5 block text-[11px] font-medium leading-5 text-slate-400">Publishing changed wording emails every active account holder and adds a notification to their account. Saving a draft, or the same text again, sends nothing.</span>
+            </label>
+
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <label className="block text-xs font-bold text-slate-700">Publication status
                 <select name="status" defaultValue={selectedRecord?.status === "PUBLISHED" ? "PUBLISHED" : "DRAFT"} className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-[#041635] outline-none focus:ring-2 focus:ring-[#2691F0]">

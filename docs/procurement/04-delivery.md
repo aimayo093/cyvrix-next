@@ -17,7 +17,7 @@ practice).
 | P1-4 | Seed the 52 organisations from §32 (names, categories, priority; no claims, no contacts) | 52 rows; founder can add, remove, re-prioritise |
 | P1-5 | Approval core: request, decision with step-up TOTP, manifest hashing, expiry, single use | Tests 17–20 below pass |
 | P1-6 | Admin: Opportunities list and detail, Organisations, Documents, Approval Centre (DESIGN.md components) | Founder can create, move and approve on fixtures |
-| P1-7 | `ADMIN_GUIDE.md`, `DECISIONS.md` §18 "Procurement", this folder updated to as-built | Docs match the code |
+| P1-7 | `ADMIN_GUIDE.md`, `DECISIONS.md` §20 "Procurement", this folder updated to as-built | Docs match the code |
 
 ### Phase 2: Lead integration
 

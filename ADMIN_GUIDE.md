@@ -64,7 +64,7 @@ The CYVRIX Admin dashboard is split into dedicated, secure modules designed to m
 - **Organisations**: the 52 research targets and any others. Research targets are not partners.
 - **Documents**: private storage, opened through short-lived links. Mark AI-written drafts as such; only independently issued certificates are "certified evidence".
 - **Company facts**: verified details used to fill forms (founder only). Leave "public" unticked for anything withheld from the website.
-- Design and reasons: `docs/procurement/` and `docs/DECISIONS.md` section 18.
+- Design and reasons: `docs/procurement/` and `docs/DECISIONS.md` section 20.
 
 ---
 
