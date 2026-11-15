@@ -2,8 +2,9 @@
 
 **Status (15 November 2026):** Phase 0 approved. Phase 1 is built on PR 14,
 with review fixes. Production has the two Phase 1 migrations
-(`procurement_foundation`, `procurement_target_organisations`). The hardening
-migration (`20261115130000`) is **not applied yet**: it waits for the
+(`procurement_foundation`, `procurement_target_organisations`) and the
+hardening migration (`procurement_hardening`, from `20261115130000`). Each was
+dry-run on production in a rolled-back transaction, then applied after the
 founder's go-ahead. The Phase 1 code is not merged or deployed. No external
 account, message or spend has been made.
 
