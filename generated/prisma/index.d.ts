@@ -127054,6 +127054,7 @@ export namespace Prisma {
     id: string | null
     kind: string | null
     status: string | null
+    statusChangedAt: Date | null
     title: string | null
     summary: string | null
     buyerOrganisationId: string | null
@@ -127077,6 +127078,7 @@ export namespace Prisma {
     id: string | null
     kind: string | null
     status: string | null
+    statusChangedAt: Date | null
     title: string | null
     summary: string | null
     buyerOrganisationId: string | null
@@ -127100,6 +127102,7 @@ export namespace Prisma {
     id: number
     kind: number
     status: number
+    statusChangedAt: number
     title: number
     summary: number
     buyerOrganisationId: number
@@ -127136,6 +127139,7 @@ export namespace Prisma {
     id?: true
     kind?: true
     status?: true
+    statusChangedAt?: true
     title?: true
     summary?: true
     buyerOrganisationId?: true
@@ -127159,6 +127163,7 @@ export namespace Prisma {
     id?: true
     kind?: true
     status?: true
+    statusChangedAt?: true
     title?: true
     summary?: true
     buyerOrganisationId?: true
@@ -127182,6 +127187,7 @@ export namespace Prisma {
     id?: true
     kind?: true
     status?: true
+    statusChangedAt?: true
     title?: true
     summary?: true
     buyerOrganisationId?: true
@@ -127293,6 +127299,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt: Date
     title: string
     summary: string | null
     buyerOrganisationId: string | null
@@ -127336,6 +127343,7 @@ export namespace Prisma {
     id?: boolean
     kind?: boolean
     status?: boolean
+    statusChangedAt?: boolean
     title?: boolean
     summary?: boolean
     buyerOrganisationId?: boolean
@@ -127369,6 +127377,7 @@ export namespace Prisma {
     id?: boolean
     kind?: boolean
     status?: boolean
+    statusChangedAt?: boolean
     title?: boolean
     summary?: boolean
     buyerOrganisationId?: boolean
@@ -127396,6 +127405,7 @@ export namespace Prisma {
     id?: boolean
     kind?: boolean
     status?: boolean
+    statusChangedAt?: boolean
     title?: boolean
     summary?: boolean
     buyerOrganisationId?: boolean
@@ -127423,6 +127433,7 @@ export namespace Prisma {
     id?: boolean
     kind?: boolean
     status?: boolean
+    statusChangedAt?: boolean
     title?: boolean
     summary?: boolean
     buyerOrganisationId?: boolean
@@ -127443,7 +127454,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type OpportunityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "kind" | "status" | "title" | "summary" | "buyerOrganisationId" | "origin" | "ocid" | "deadlineAt" | "clarificationDeadlineAt" | "valueMin" | "valueMax" | "currency" | "region" | "cpv" | "confirmedBuying" | "leadId" | "paperclipIssueId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["opportunity"]>
+  export type OpportunityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "kind" | "status" | "statusChangedAt" | "title" | "summary" | "buyerOrganisationId" | "origin" | "ocid" | "deadlineAt" | "clarificationDeadlineAt" | "valueMin" | "valueMax" | "currency" | "region" | "cpv" | "confirmedBuying" | "leadId" | "paperclipIssueId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["opportunity"]>
   export type OpportunityInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Buyer?: boolean | Opportunity$BuyerArgs<ExtArgs>
     Source?: boolean | OpportunitySourceDefaultArgs<ExtArgs>
@@ -127482,6 +127493,10 @@ export namespace Prisma {
       id: string
       kind: string
       status: string
+      /**
+       * When status last moved; scopes "this round" of a submission (migration 20261115130000).
+       */
+      statusChangedAt: Date
       title: string
       summary: string | null
       buyerOrganisationId: string | null
@@ -127937,6 +127952,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Opportunity", 'String'>
     readonly kind: FieldRef<"Opportunity", 'String'>
     readonly status: FieldRef<"Opportunity", 'String'>
+    readonly statusChangedAt: FieldRef<"Opportunity", 'DateTime'>
     readonly title: FieldRef<"Opportunity", 'String'>
     readonly summary: FieldRef<"Opportunity", 'String'>
     readonly buyerOrganisationId: FieldRef<"Opportunity", 'String'>
@@ -142923,6 +142939,7 @@ export namespace Prisma {
     id: 'id',
     kind: 'kind',
     status: 'status',
+    statusChangedAt: 'statusChangedAt',
     title: 'title',
     summary: 'summary',
     buyerOrganisationId: 'buyerOrganisationId',
@@ -152003,6 +152020,7 @@ export namespace Prisma {
     id?: StringFilter<"Opportunity"> | string
     kind?: StringFilter<"Opportunity"> | string
     status?: StringFilter<"Opportunity"> | string
+    statusChangedAt?: DateTimeFilter<"Opportunity"> | Date | string
     title?: StringFilter<"Opportunity"> | string
     summary?: StringNullableFilter<"Opportunity"> | string | null
     buyerOrganisationId?: StringNullableFilter<"Opportunity"> | string | null
@@ -152035,6 +152053,7 @@ export namespace Prisma {
     id?: SortOrder
     kind?: SortOrder
     status?: SortOrder
+    statusChangedAt?: SortOrder
     title?: SortOrder
     summary?: SortOrderInput | SortOrder
     buyerOrganisationId?: SortOrderInput | SortOrder
@@ -152070,6 +152089,7 @@ export namespace Prisma {
     NOT?: OpportunityWhereInput | OpportunityWhereInput[]
     kind?: StringFilter<"Opportunity"> | string
     status?: StringFilter<"Opportunity"> | string
+    statusChangedAt?: DateTimeFilter<"Opportunity"> | Date | string
     title?: StringFilter<"Opportunity"> | string
     summary?: StringNullableFilter<"Opportunity"> | string | null
     buyerOrganisationId?: StringNullableFilter<"Opportunity"> | string | null
@@ -152102,6 +152122,7 @@ export namespace Prisma {
     id?: SortOrder
     kind?: SortOrder
     status?: SortOrder
+    statusChangedAt?: SortOrder
     title?: SortOrder
     summary?: SortOrderInput | SortOrder
     buyerOrganisationId?: SortOrderInput | SortOrder
@@ -152134,6 +152155,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Opportunity"> | string
     kind?: StringWithAggregatesFilter<"Opportunity"> | string
     status?: StringWithAggregatesFilter<"Opportunity"> | string
+    statusChangedAt?: DateTimeWithAggregatesFilter<"Opportunity"> | Date | string
     title?: StringWithAggregatesFilter<"Opportunity"> | string
     summary?: StringNullableWithAggregatesFilter<"Opportunity"> | string | null
     buyerOrganisationId?: StringNullableWithAggregatesFilter<"Opportunity"> | string | null
@@ -162776,6 +162798,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -162805,6 +162828,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -162834,6 +162858,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162863,6 +162888,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162892,6 +162918,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -162916,6 +162943,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162937,6 +162965,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -169798,6 +169827,7 @@ export namespace Prisma {
     id?: SortOrder
     kind?: SortOrder
     status?: SortOrder
+    statusChangedAt?: SortOrder
     title?: SortOrder
     summary?: SortOrder
     buyerOrganisationId?: SortOrder
@@ -169827,6 +169857,7 @@ export namespace Prisma {
     id?: SortOrder
     kind?: SortOrder
     status?: SortOrder
+    statusChangedAt?: SortOrder
     title?: SortOrder
     summary?: SortOrder
     buyerOrganisationId?: SortOrder
@@ -169850,6 +169881,7 @@ export namespace Prisma {
     id?: SortOrder
     kind?: SortOrder
     status?: SortOrder
+    statusChangedAt?: SortOrder
     title?: SortOrder
     summary?: SortOrder
     buyerOrganisationId?: SortOrder
@@ -182276,6 +182308,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -182304,6 +182337,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -182387,6 +182421,7 @@ export namespace Prisma {
     id?: StringFilter<"Opportunity"> | string
     kind?: StringFilter<"Opportunity"> | string
     status?: StringFilter<"Opportunity"> | string
+    statusChangedAt?: DateTimeFilter<"Opportunity"> | Date | string
     title?: StringFilter<"Opportunity"> | string
     summary?: StringNullableFilter<"Opportunity"> | string | null
     buyerOrganisationId?: StringNullableFilter<"Opportunity"> | string | null
@@ -189702,6 +189737,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -189730,6 +189766,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     origin: string
@@ -189921,6 +189958,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -189949,6 +189987,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -190965,6 +191004,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -190993,6 +191033,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -191037,6 +191078,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -191065,6 +191107,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -191496,6 +191539,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -191524,6 +191568,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -191634,6 +191679,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -191662,6 +191708,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -191890,6 +191937,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -191918,6 +191966,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -192026,6 +192075,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -192054,6 +192104,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -192335,6 +192386,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -192363,6 +192415,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -192470,6 +192523,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -192498,6 +192552,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -192706,6 +192761,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     ocid?: string | null
@@ -192734,6 +192790,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -192778,6 +192835,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -192806,6 +192864,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -194976,6 +195035,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -195017,6 +195077,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -195045,6 +195106,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -195073,6 +195135,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -195979,6 +196042,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     origin: string
@@ -196032,6 +196096,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -196060,6 +196125,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     origin?: StringFieldUpdateOperationsInput | string
@@ -196088,6 +196154,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     origin?: StringFieldUpdateOperationsInput | string
@@ -196136,6 +196203,7 @@ export namespace Prisma {
     id: string
     kind: string
     status: string
+    statusChangedAt?: Date | string
     title: string
     summary?: string | null
     buyerOrganisationId?: string | null
@@ -196236,6 +196304,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     ocid?: NullableStringFieldUpdateOperationsInput | string | null
@@ -196264,6 +196333,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
@@ -196292,6 +196362,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     kind?: StringFieldUpdateOperationsInput | string
     status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     title?: StringFieldUpdateOperationsInput | string
     summary?: NullableStringFieldUpdateOperationsInput | string | null
     buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null

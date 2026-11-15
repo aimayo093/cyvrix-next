@@ -11,8 +11,8 @@ practice).
 
 | ID | Item | Done when |
 | --- | --- | --- |
-| P1-1 | Migration: `Organisation`, `OpportunitySource`, `IngestionRun`, `ProcurementNotice`, `Opportunity`, `OpportunityEvidence`, `CompanyFact`, `CompanyDocument(+Version)`, `Package(+Item)`, `ApprovalRequest`, `ApprovalDecision`, `ExecutionRecord`, `Receipt`, `CostEntry`; `Contact.organisationId`; additive only | Applies cleanly; down-script tested on a branch database |
-| P1-2 | `lib/procurement/lifecycle.ts`: both state machines as data; `transition()` with compare-and-set and an audit entry | Unit tests cover every allowed and refused move |
+| P1-1 | Migration: `Organisation`, `OpportunitySource`, `IngestionRun`, `ProcurementNotice`, `Opportunity`, `OpportunityEvidence`, `CompanyFact`, `CompanyDocument(+Version)`, `Package(+Item)`, `ApprovalRequest`, `ApprovalDecision`, `ExecutionRecord`, `Receipt`, `CostEntry`; `Contact.organisationId`; additive only | Applies cleanly and re-applies safely on a local database; dry-run on production (done) |
+| P1-2 | `lib/procurement/lifecycle.ts`: both state machines as data, checked by `checkTransition()`; `transitionOpportunity()` (service) moves with compare-and-set and an audit entry | Unit tests cover every allowed and refused move |
 | P1-3 | Private bucket + upload with scan + signed URLs (D5) | Upload of an EICAR test file refused; signed URL expires |
 | P1-4 | Seed the 52 organisations from §32 (names, categories, priority; no claims, no contacts) | 52 rows; founder can add, remove, re-prioritise |
 | P1-5 | Approval core: request, decision with step-up TOTP, manifest hashing, expiry, single use | Tests 17–20 below pass |
@@ -109,13 +109,20 @@ weekly. The admin Today view shows month-to-date against a configurable
 
 ## 3. Test strategy
 
-Existing tests are `tsx` scripts (`npm run test:*`). The new ones follow the
-same pattern: `test:procurement-lifecycle`, `test:procurement-approval`,
-`test:procurement-ingest`, `test:procurement-api`. Fixtures live under
-`scripts/fixtures/procurement/`:
-- recorded OCDS packages from each source;
-- a synthetic ChatGPT report;
-- a mock portal.
+Existing tests are `tsx` scripts (`npm run test:*`). Built so far:
+- `npm run test:procurement`: lifecycles, reachability, manifests, approval
+  and execution rules, evidence rules, withheld facts and London deadlines
+  (no database).
+- `npm run test:procurement-db`: the service and the database guards, against a
+  throwaway local Postgres. It uses `scripts/fixtures/procurement/stub-schema.sql`
+  plus the three procurement migrations, and refuses any non-local URL. The
+  stub has no audit hash-chain triggers; the chain is checked by the Security
+  Center's `audit_log_verify()` on the real database.
+
+Planned with Phase 2 and later: `test:procurement-ingest` and
+`test:procurement-api`, with fixtures for recorded OCDS packages from each
+source, a synthetic ChatGPT report and a mock portal. Rows in the table below
+for later phases describe those future tests.
 
 Every phase also runs `tsc`, `npm run lint` on changed files,
 `npm run check:claims`, `npm run build` and `test:routes`.
@@ -143,12 +150,16 @@ No test creates a real external account or submits anything (spec §25).
 ## 4. Rollback and recovery
 
 - **Additive migrations only.** No column on an existing table is dropped or
-  retyped. Each migration ships with a tested down-script that drops only the
-  new objects.
-- **Feature flag.** `PROCUREMENT_ENABLED` hides the admin pages and makes the
-  procurement API answer 404. The cron route exits early.
-- **Token kill switch.** Unsetting `PAPERCLIP_PROCUREMENT_TOKEN` (and
-  redeploying) turns off agent access. That is the current pattern.
+  retyped. No down-scripts are shipped. Database rollback is not an automatic
+  step: the new tables can stay, unused, after a code rollback. Removing them
+  would be a separately reviewed change, because the audit log refers to their
+  rows.
+- **Feature flag (planned, Phase 8–9).** `PROCUREMENT_ENABLED` would hide the
+  admin pages, make the procurement API answer 404 and stop the cron route. No
+  code reads it yet. Until then, the off switch is a code rollback.
+- **Token kill switch (planned, Phase 2).** Once the procurement agent API
+  exists, unsetting `PAPERCLIP_PROCUREMENT_TOKEN` (and redeploying) turns off
+  agent access, as the existing tokens do.
 - **Code.** Each phase is one PR; revert the merge commit and redeploy. Vercel's
   instant rollback to the previous production deployment is the fast path.
 - **Data.**

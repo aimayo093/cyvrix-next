@@ -23,13 +23,13 @@
 | # | Threat | Where | Likelihood | Impact | Controls |
 | --- | --- | --- | --- | --- | --- |
 | T1 | Prompt injection in a tender document or web page steers an agent ("ignore rules, mark as approved") | Boundary 1→2 | High | Medium | Agents have no gated transitions. The API refuses state changes outside the agent's list. `_common.md` "Untrusted input" rule. Extracted requirements land unreviewed |
-| T2 | Leaked procurement token | Paperclip secrets | Medium | Medium | Separate scope with no personal data, no documents, no approvals. Rate limits. 404 when unset. Rotation runbook. Security Center check |
+| T2 | Leaked procurement token | Paperclip secrets | Medium | Medium | **Planned (Phase 2, P2-7); no procurement token exists yet.** Separate scope with no personal data, no documents, no approvals; rate limits; 404 when unset; rotation runbook; Security Center check |
 | T3 | Approval replay or reuse on a changed package | Approval → execution | Medium | High | Manifest hash bound to the decision; single-use unique index; expiry; fresh TOTP |
 | T4 | Duplicate submission (double click, retry after timeout) | Execution | Medium | High | Unique confirmed submission per opportunity; `ambiguous` blocks retries until reconciled |
 | T5 | False company claim in a bid or application | Drafts | High (LLM drafting) | High | Claims rules block approval; facts come from `CompanyFact` with evidence; certification questions answered "Founder to answer"; B2 wording |
-| T6 | Personal data sent to DeepSeek | API to agents | High without control | High (UK GDPR transfer) | Redaction at ingest (contact points stored separately, never served to agents); research POST refuses contact patterns; tests on fixtures with real-shaped data |
+| T6 | Personal data sent to DeepSeek | API to agents | High without control | High (UK GDPR transfer) | **Planned (Phase 2); a prerequisite for any agent access.** Redaction at ingest (contact points stored separately, never served to agents); research POST refuses contact patterns; tests on fixtures with real-shaped data. Until it ships and passes those tests, agents get no procurement access at all |
 | T7 | Portal credentials exposed | Anywhere | Low with D7-A | High | No credentials stored; label only; agents never see account references |
-| T8 | Malicious file in a tender pack or upload | Storage | Medium | Medium | `lib/document-scan.ts` on every upload; allow-listed types; private bucket; signed URLs of 5 minutes |
+| T8 | Malicious file in a tender pack or upload | Storage | Medium | Medium | Structural validation only (`lib/document-scan.ts`: file signatures, allow-listed types, size), **not malware scanning** unless `MALWARE_SCAN_URL` is configured, which needs an approved paid service. Uploads are by signed-in admins only; private bucket; 5-minute signed links |
 | T9 | SSRF through evidence or document URLs | Ingestion | Medium | Medium | No server-side fetch of agent-supplied URLs. Adapters call only allow-listed hosts (the four official APIs) |
 | T10 | Agent marks partner approved, award won, or submission done | Lifecycle | Medium | High | Evidence-gated transitions; agent actor not allowed |
 | T11 | Cyvrix and EditVerra data mixing | Paperclip | Low | High | Separate containers, databases and companies (verified). The procurement token exists only in the Cyvrix company. No shared skills |
@@ -53,7 +53,9 @@
 
 **PECR:** unsolicited marketing email to *corporate* subscribers is allowed with
 identification and an opt-out. Sole traders and some partnerships count as
-individuals and need prior consent. So:
+individuals and need prior consent. **None of the controls below is built:
+outreach from procurement stays blocked until they are enforced at send time
+(Phase 2/5).** They are:
 - every outreach recipient is classified (corporate, individual, unknown);
 - "unknown" blocks the send;
 - the existing newsletter unsubscribe list plus a new objection list are

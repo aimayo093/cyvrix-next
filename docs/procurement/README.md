@@ -1,8 +1,11 @@
 # Procurement, tenders and partnerships: Phase 0 proposal
 
-**Status:** discovery only, for founder approval. No code, migration, account,
-message or spend has been made. Nothing in this folder is approved until the
-founder says so on the pull request.
+**Status (15 November 2026):** Phase 0 approved. Phase 1 is built on PR 14,
+with review fixes. Production has the two Phase 1 migrations
+(`procurement_foundation`, `procurement_target_organisations`). The hardening
+migration (`20261115130000`) is **not applied yet**: it waits for the
+founder's go-ahead. The Phase 1 code is not merged or deployed. No external
+account, message or spend has been made.
 
 **Source of truth for requirements:** the founder's specification (master
 sections 1–30 plus the Strategic Partnerships extension, sections 31–52), saved

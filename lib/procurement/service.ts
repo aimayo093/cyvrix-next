@@ -29,6 +29,19 @@ export type Outcome<T = undefined> = ({ ok: true } & (T extends undefined ? obje
 
 const fail = (reason: string) => ({ ok: false as const, reason });
 
+/**
+ * A unique index refusing a write aborts the whole transaction, so it is
+ * caught here, outside it, and reported as an ordinary refusal.
+ */
+async function refusingConflicts<T>(run: () => Promise<T>, reason: string): Promise<T | { ok: false; reason: string }> {
+  try {
+    return await run();
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return fail(reason);
+    throw error;
+  }
+}
+
 export async function audit(
   tx: Tx | typeof prisma,
   userId: string | null,
@@ -54,7 +67,7 @@ async function currentManifest(tx: Tx, packageId: string): Promise<string | null
   });
 }
 
-async function gatherFacts(tx: Tx, opportunityId: string, now: Date) {
+async function gatherFacts(tx: Tx, opportunityId: string, now: Date, roundStart: Date) {
   const decisions = await tx.approvalDecision.findMany({
     where: { decision: "approved", expiresAt: { gt: now }, Request: { opportunityId }, ExecutionRecord: null },
     include: { Request: { include: { Package: true } } },
@@ -67,8 +80,11 @@ async function gatherFacts(tx: Tx, opportunityId: string, now: Date) {
     currentApprovals.push(d.Request.actionType as ApprovalAction);
   }
 
+  // Only this round counts: an attempt started after the record reached its
+  // current status. A confirmation from an earlier round (before a rejection
+  // and remediation, say) must not open the gate again.
   const executions = await tx.executionRecord.findMany({
-    where: { opportunityId, outcome: "confirmed", Receipt: { some: {} } },
+    where: { opportunityId, outcome: "confirmed", Receipt: { some: {} }, startedAt: { gte: roundStart } },
     select: { actionType: true },
   });
   return { currentApprovals, confirmedExecutions: executions.map((e) => e.actionType as ApprovalAction) };
@@ -93,7 +109,7 @@ export async function transitionOpportunity(input: {
       if (!usable.ok) return usable;
     }
 
-    const facts = await gatherFacts(tx, opp.id, now);
+    const facts = await gatherFacts(tx, opp.id, now, opp.statusChangedAt);
     const verdict = checkTransition(opp.kind as OpportunityKind, opp.status, input.to, {
       actor: input.actor,
       ...facts,
@@ -104,7 +120,7 @@ export async function transitionOpportunity(input: {
     // Compare-and-set: if someone else moved it first, nothing changes.
     const moved = await tx.opportunity.updateMany({
       where: { id: opp.id, status: opp.status },
-      data: { status: input.to },
+      data: { status: input.to, statusChangedAt: now },
     });
     if (moved.count !== 1) return fail("The record changed while you were looking at it. Reload and try again.");
 
@@ -166,7 +182,7 @@ export async function requestApproval(input: {
 }): Promise<Outcome<string>> {
   if (!APPROVAL_ACTIONS.includes(input.actionType)) return fail("Unknown action.");
   const now = new Date();
-  return prisma.$transaction(async (tx) => {
+  return refusingConflicts(() => prisma.$transaction(async (tx): Promise<Outcome<string>> => {
     const pkg = await tx.package.findUnique({ where: { id: input.packageId }, include: { Opportunity: true } });
     if (!pkg) return fail("That package could not be found.");
     if (pkg.status !== "locked" || !pkg.manifestSha256) return fail("Lock the package before asking for approval.");
@@ -179,12 +195,10 @@ export async function requestApproval(input: {
       where: { packageId: pkg.id, status: "pending", expiresAt: { lte: now } },
       select: { id: true },
     });
-    if (lapsed.length) {
-      await tx.approvalRequest.updateMany({
-        where: { id: { in: lapsed.map((r) => r.id) }, status: "pending" },
-        data: { status: "expired" },
-      });
-      for (const r of lapsed) {
+    for (const r of lapsed) {
+      // Audited only when this call is the one that retired it.
+      const retired = await tx.approvalRequest.updateMany({ where: { id: r.id, status: "pending" }, data: { status: "expired" } });
+      if (retired.count === 1) {
         await audit(tx, input.userId, "approval.expired", "ApprovalRequest", r.id, { packageId: pkg.id });
       }
     }
@@ -213,7 +227,7 @@ export async function requestApproval(input: {
       expiresAt: expiresAt.toISOString(),
     });
     return { ok: true, value: id };
-  });
+  }), "This package is already waiting for a decision.");
 }
 
 export async function decideApproval(input: {
@@ -274,21 +288,32 @@ export async function startExecution(input: {
   userId: string;
 }): Promise<Outcome<string>> {
   const now = new Date();
-  return prisma.$transaction(async (tx) => {
+  return refusingConflicts(() => prisma.$transaction(async (tx): Promise<Outcome<string>> => {
     const decision = await tx.approvalDecision.findUnique({
       where: { id: input.decisionId },
       include: { Request: { include: { Package: true } }, ExecutionRecord: true },
     });
     if (!decision) return fail("That approval could not be found.");
     const request = decision.Request;
+    const opp = await tx.opportunity.findUnique({ where: { id: request.opportunityId }, select: { status: true, statusChangedAt: true } });
+    if (!opp) return fail("That opportunity could not be found.");
     // A submission's approval first opens ApprovedForSubmission, so it must not
     // be used up before the record reaches Submitting.
-    if (request.actionType === "submit_tender" || request.actionType === "send_quote") {
-      const opp = await tx.opportunity.findUnique({ where: { id: request.opportunityId }, select: { status: true } });
-      if (opp?.status !== "Submitting") return fail("Move the opportunity to Submitting before you start.");
+    if ((request.actionType === "submit_tender" || request.actionType === "send_quote") && opp.status !== "Submitting") {
+      return fail("Move the opportunity to Submitting before you start.");
     }
+    // Already done? A tender or quotation is submitted once per opportunity: its
+    // lifecycle has no resubmission loop. Partnership steps can legitimately
+    // repeat after a rejection and remediation, so for them only this round
+    // counts (since the record reached its current status).
+    const onceOnly = request.actionType === "submit_tender" || request.actionType === "send_quote";
     const confirmed = await tx.executionRecord.findFirst({
-      where: { opportunityId: request.opportunityId, actionType: request.actionType, outcome: "confirmed" },
+      where: {
+        opportunityId: request.opportunityId,
+        actionType: request.actionType,
+        outcome: "confirmed",
+        ...(onceOnly ? {} : { startedAt: { gte: opp.statusChangedAt } }),
+      },
     });
     const unresolved = await tx.executionRecord.findFirst({
       where: { opportunityId: request.opportunityId, actionType: request.actionType, outcome: { in: ["pending", "ambiguous"] } },
@@ -325,7 +350,7 @@ export async function startExecution(input: {
       manifestSha256: request.manifestSha256,
     });
     return { ok: true, value: id };
-  });
+  }), "An earlier attempt is still pending or unclear. Check the portal and record its outcome first.");
 }
 
 /**
@@ -354,21 +379,16 @@ export async function recordExecutionOutcome(input: {
       if (!usable.ok) return fail(usable.reason.replace("evidence", "a receipt"));
     }
 
-    try {
-      await tx.executionRecord.update({
-        where: { id: exec.id },
-        data: {
-          outcome: input.outcome,
-          portalReference: input.portalReference?.trim().slice(0, 200) || null,
-          finishedAt: input.outcome === "ambiguous" ? null : new Date(),
-        },
-      });
-    } catch (error) {
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
-        return fail("A confirmed submission already exists for this opportunity.");
-      }
-      throw error;
-    }
+    // Compare-and-set: two people recording an outcome at once cannot both win.
+    const recorded = await tx.executionRecord.updateMany({
+      where: { id: exec.id, outcome: exec.outcome },
+      data: {
+        outcome: input.outcome,
+        portalReference: input.portalReference?.trim().slice(0, 200) || null,
+        finishedAt: input.outcome === "ambiguous" ? null : new Date(),
+      },
+    });
+    if (recorded.count !== 1) return fail("The outcome was recorded by someone else just now. Reload to see it.");
     if (input.outcome === "confirmed") {
       await tx.receipt.create({
         data: {

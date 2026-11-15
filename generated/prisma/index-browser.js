@@ -1482,6 +1482,7 @@ exports.Prisma.OpportunityScalarFieldEnum = {
   id: 'id',
   kind: 'kind',
   status: 'status',
+  statusChangedAt: 'statusChangedAt',
   title: 'title',
   summary: 'summary',
   buyerOrganisationId: 'buyerOrganisationId',

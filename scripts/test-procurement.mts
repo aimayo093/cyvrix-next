@@ -9,10 +9,27 @@ import {
   canExecute,
   canonicalJson,
   evidenceVerdict,
+  isWithheldFactKey,
   manifestSha256,
   type ExecutionCheckInput,
 } from "../lib/procurement/approval-core";
-import { checkTransition, initialStatus, nextStates, statesFor, type TransitionFacts } from "../lib/procurement/lifecycle";
+import { checkTransition, initialStatus, nextStates, statesFor, type OpportunityKind, type TransitionFacts } from "../lib/procurement/lifecycle";
+import { londonWallTimeToUtc } from "../lib/procurement/london-time";
+
+/** States reachable by walking the machine from its starting status. */
+function reachable(kind: OpportunityKind): Set<string> {
+  const seen = new Set([initialStatus(kind)]);
+  const queue = [initialStatus(kind)];
+  while (queue.length) {
+    for (const { to } of nextStates(kind, queue.shift()!)) {
+      if (!seen.has(to)) {
+        seen.add(to);
+        queue.push(to);
+      }
+    }
+  }
+  return seen;
+}
 
 let passed = 0;
 let failed = 0;
@@ -70,10 +87,12 @@ check("system actor cannot move anything", okOf(checkTransition("tender", "Disco
 check("SubmissionFailed returns to final approval", okOf(checkTransition("tender", "SubmissionFailed", "AwaitingFinalApproval", as("person"))), true);
 check("OperationalHandover is final", nextStates("tender", "OperationalHandover"), []);
 check(
-  "every spec-14 state is reachable in the machine",
-  ["Discovered", "Validated", "Qualified", "EligibilityReview", "RegistrationRequired", "AwaitingBidDecision", "PreparingBid", "QualityReview", "AwaitingFinalApproval", "ApprovedForSubmission", "Submitting", "Submitted", "SubmissionFailed", "UnderEvaluation", "ClarificationRequired", "Awarded", "Unsuccessful", "ContractReview", "OperationalHandover", "NoBid", "Rejected", "Archived"].every((s) => statesFor("tender").includes(s)),
-  true
+  "every spec-14 state is reachable from Discovered",
+  ["Discovered", "Validated", "Qualified", "EligibilityReview", "RegistrationRequired", "AwaitingBidDecision", "PreparingBid", "QualityReview", "AwaitingFinalApproval", "ApprovedForSubmission", "Submitting", "Submitted", "SubmissionFailed", "UnderEvaluation", "ClarificationRequired", "Awarded", "Unsuccessful", "ContractReview", "OperationalHandover", "NoBid", "Rejected", "Archived"].filter((s) => !reachable("tender").has(s)),
+  []
 );
+check("every state in the tender machine is reachable", statesFor("tender").filter((s) => !reachable("tender").has(s)), []);
+check("every state in the partnership machine is reachable", statesFor("partnership").filter((s) => !reachable("partnership").has(s)), []);
 
 console.log("\n  Lifecycle: partnerships (spec section 43)");
 check("agent may research", okOf(checkTransition("partnership", "TargetIdentified", "Researching", as("agent"))), true);
@@ -150,6 +169,28 @@ check("certified evidence is evidence", okOf(evidenceVerdict({ status: "certifie
 check("an AI draft is never evidence", okOf(evidenceVerdict({ status: "ai_draft" })), false);
 check("a superseded version is not evidence", okOf(evidenceVerdict({ status: "superseded" })), false);
 check("a missing document is not evidence", okOf(evidenceVerdict(null)), false);
+
+console.log("\n  Withheld company facts");
+check("registered office is withheld", isWithheldFactKey("registered_office"), true);
+check("registered office postcode is withheld", isWithheldFactKey("registered_office_postcode"), true);
+check("founder name is withheld", isWithheldFactKey("founder_name"), true);
+check("director details are withheld", isWithheldFactKey("director_home_address"), true);
+check("company number may be public", isWithheldFactKey("company_number"), false);
+check("VAT number may be public", isWithheldFactKey("vat_number"), false);
+
+console.log("\n  London deadlines");
+const london = (s: string) => {
+  const r = londonWallTimeToUtc(s);
+  return r.ok ? r.date.toISOString() : "refused";
+};
+check("winter: London is UTC", london("2026-12-01T12:00"), "2026-12-01T12:00:00.000Z");
+check("summer: London is UTC+1", london("2026-07-01T12:00"), "2026-07-01T11:00:00.000Z");
+check("an impossible date is refused", london("2026-02-31T12:00"), "refused");
+check("a nonexistent hour (clocks forward, 29 Mar 2026) is refused", london("2026-03-29T01:30"), "refused");
+check("the hour after the change is fine", london("2026-03-29T02:00"), "2026-03-29T01:00:00.000Z");
+check("a repeated hour (clocks back, 25 Oct 2026) is refused", london("2026-10-25T01:30"), "refused");
+check("the hour after that change is fine", london("2026-10-25T02:00"), "2026-10-25T02:00:00.000Z");
+check("a malformed value is refused", london("2026-07-01 12:00"), "refused");
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

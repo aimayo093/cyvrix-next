@@ -653,8 +653,11 @@ Numbered 18 because §17 is taken by the email history work (PR 10).
   entry. `ApprovedForSubmission` needs a current approval; `Submitted`,
   `Contacted`, `AccountCreated` and `ApplicationSubmitted` need a confirmed
   execution with an uploaded receipt; `Awarded` and `ApprovedPartner` need an
-  uploaded document from the other side. Agents (Phase 2) may only validate,
-  qualify and record research.
+  uploaded document, and only the founder or an admin can make those moves.
+  The document must be verified, founder-approved or certified, never an AI
+  draft. Linking it to the buyer or organisation it came from is not enforced
+  yet; it rests on the person making the move. Agents (Phase 2) may only
+  validate, qualify and record research.
 - **An approval binds a fingerprint, not a record.** A package's manifest is
   the SHA-256 of its files' hashes, labels, destination, price and
   declarations (`lib/procurement/approval-core.ts`). Locking fixes it, and the
@@ -679,7 +682,9 @@ Numbered 18 because §17 is taken by the email history work (PR 10).
 - **No portal passwords anywhere (D7).** Phase 3's account registry will hold
   the name of a password-manager entry, never a secret.
 - **The registered office stays withheld.** `CompanyFact.publicAllowed` is
-  false by default, and fact values are not copied into the audit log.
+  false by default, cannot be set for withheld keys (registered office,
+  postcodes, founder or director details: `isWithheldFactKey`), and fact
+  values are not copied into the audit log.
 - **The 52 organisations are research targets**, seeded by name and category
   only (`20261115120100`). Nothing records or implies a relationship.
 
@@ -689,6 +694,22 @@ to describe the Getronics, Dell and Lenovo field work as company experience.
 that way in every document **until the evidence (contract or purchase
 orders) is uploaded and recorded as a company fact**. Then update `PRODUCT.md`
 in the same change.
+
+**Hardening after review (migration 20261115130000).** These guarantees are
+enforced by the database, not only by the app:
+- locked and superseded packages are frozen;
+- items cannot leave a locked package, and their hash must match the file;
+- a stored file's version is frozen except for its status;
+- `Opportunity.status` must be a known state;
+- at most one pending or unclear attempt per opportunity and action;
+- the documents bucket is forced private.
+
+The old "one confirmed per opportunity and action" index was replaced,
+because it made a rejected-then-remediated partnership impossible to
+resubmit. Tenders stay once-only in the service.
+
+Uploads are checked structurally, not for malware, unless a scanning service
+is configured.
 
 **Tests:** `npm run test:procurement` (rules, no database) and
 `npm run test:procurement-db` (a throwaway local Postgres only; it refuses any

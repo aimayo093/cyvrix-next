@@ -43,8 +43,13 @@ this plan and must not be written to.
   client claim without evidence. This applies to tender and application text as
   well as the website.
 - Withheld details (`DECISIONS.md` §4): the founder's name and the registered
-  office must not appear in source. Registration packs need both, so they come
-  from a server-only company-facts record at runtime, never from code.
+  office must not appear in source. Registration packs need both, so they will
+  come from the database-held `CompanyFact` rows at runtime. These are read only
+  on the server and never reach a page, a client bundle or the public site.
+  Never use `lib/company-facts.ts` for withheld values: client code may import
+  it. The office address in `lib/company-registered-office.ts` is a
+  `server-only` module for the same reason. Keys for the registered office or
+  personal details cannot be marked public (`isWithheldFactKey`).
 
 ## 2. Paperclip capability and permission assessment
 

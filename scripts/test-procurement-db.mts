@@ -5,8 +5,11 @@
  *
  * Runs ONLY against a throwaway local database, never Supabase:
  *   1. start Postgres locally (for example docker run … postgres:17-alpine)
- *   2. apply scripts/fixtures/procurement/stub-schema.sql, then both
- *      procurement migrations
+ *   2. apply scripts/fixtures/procurement/stub-schema.sql, then the three
+ *      procurement migrations in order (foundation, organisations, hardening)
+ *
+ * The stub has no audit hash-chain triggers: the chain itself is tested by the
+ * Security Center's audit_log_verify() on the real database, not here.
  *   3. PROCUREMENT_TEST_DATABASE_URL=postgresql://…@127.0.0.1:…/test npm run test:procurement-db
  */
 import crypto from "node:crypto";
@@ -19,7 +22,8 @@ const host = (() => {
     return "";
   }
 })();
-if (!["127.0.0.1", "localhost", "::1"].includes(host)) {
+// URL.hostname keeps the brackets on an IPv6 address.
+if (!["127.0.0.1", "localhost", "::1", "[::1]"].includes(host)) {
   console.error("Refusing to run: PROCUREMENT_TEST_DATABASE_URL must point at a local throwaway database.");
   process.exit(2);
 }
@@ -239,6 +243,97 @@ try {
   check("reconciled as rejected", (await service.recordExecutionOutcome({ executionId: execH1Id, outcome: "rejected", userId: founder })).ok, true);
   check("then a new attempt may start", (await service.startExecution({ decisionId: decH2, mode: "manual", userId: founder })).ok, true);
 
+  console.log("\n  Database hardening (migration 20261115130000)");
+  const oppJ = await newOpportunity("AwaitingFinalApproval");
+  const docJ = await newDoc("j-response");
+  const pkgJ = await lockedPackage(oppJ, [docJ]);
+  await rejects("a locked package's destination cannot change", () => prisma.package.update({ where: { id: pkgJ }, data: { destination: "https://elsewhere.example" } }), "content cannot change");
+  await rejects("a locked package's declarations cannot change", () => prisma.package.update({ where: { id: pkgJ }, data: { declarations: ["something else"] } }), "content cannot change");
+  await rejects("a locked package cannot go back to draft", () => prisma.package.update({ where: { id: pkgJ }, data: { status: "draft" } }), "cannot move from locked to draft");
+  await rejects("a locked package cannot be deleted", () => prisma.package.delete({ where: { id: pkgJ } }), "cannot be deleted");
+  const draftJ = uuid();
+  await prisma.package.create({ data: { id: draftJ, opportunityId: oppJ, version: 2, destination: "https://portal.example/t/1" } });
+  const itemJ = await prisma.packageItem.findFirstOrThrow({ where: { packageId: pkgJ } });
+  await rejects("an item cannot be moved out of a locked package", () => prisma.packageItem.update({ where: { id: itemJ.id }, data: { packageId: draftJ } }), "cannot change");
+  await rejects(
+    "an item's hash must match its document version",
+    () => prisma.packageItem.create({ data: { id: uuid(), packageId: draftJ, documentVersionId: docJ, label: "forged", sha256: sha("not the file") } }),
+    "must match its document version"
+  );
+  await rejects("a stored version's scan result cannot be rewritten", () => prisma.companyDocumentVersion.update({ where: { id: docJ }, data: { scan: { clean: true } } }), "cannot be replaced or edited");
+  check(
+    "a stored version's status can still change",
+    (await prisma.companyDocumentVersion.update({ where: { id: docJ }, data: { status: "founder_approved" } })).status,
+    "founder_approved"
+  );
+  await rejects("an unknown status is refused by the database", () => prisma.opportunity.update({ where: { id: oppJ }, data: { status: "Won" } }), "Opportunity_status_check");
+  check("a draft package can still be deleted", (await prisma.package.delete({ where: { id: draftJ } })).id, draftJ);
+
+  console.log("\n  Recording an outcome twice at once");
+  const oppK = await newOpportunity("Submitting");
+  const pkgK = await lockedPackage(oppK, [await newDoc("k-response")]);
+  const execK = await service.startExecution({ decisionId: await approve(pkgK), mode: "manual", userId: founder });
+  const execKId = execK.ok ? execK.value : "";
+  const receiptK = await newDoc("k-receipt");
+  const both = await Promise.all([
+    service.recordExecutionOutcome({ executionId: execKId, outcome: "confirmed", portalReference: "REF-K1", receiptVersionId: receiptK, userId: founder }),
+    service.recordExecutionOutcome({ executionId: execKId, outcome: "confirmed", portalReference: "REF-K2", receiptVersionId: receiptK, userId: founder }),
+  ]);
+  check("exactly one outcome is recorded", both.filter((r) => r.ok).length, 1);
+  check("and one receipt is stored", await prisma.receipt.count({ where: { executionId: execKId } }), 1);
+
+  console.log("\n  One unresolved attempt per action (database)");
+  const oppL = await newOpportunity("Submitting");
+  const pkgL = await lockedPackage(oppL, [await newDoc("l-response")]);
+  const decL = await approve(pkgL);
+  check("first attempt starts", (await service.startExecution({ decisionId: decL, mode: "manual", userId: founder })).ok, true);
+  const revL = await service.revisePackage(pkgL, founder);
+  const pkgL2 = revL.ok ? revL.value : "";
+  await service.lockPackage(pkgL2, founder);
+  const decL2 = await approve(pkgL2);
+  await rejects(
+    "the database refuses a second unresolved attempt even if the app check is skipped",
+    () =>
+      prisma.executionRecord.create({
+        data: { id: uuid(), approvalDecisionId: decL2, opportunityId: oppL, actionType: "submit_tender", mode: "manual", submittedManifestSha256: sha("x") },
+      }),
+    "Unique constraint"
+  );
+
+  console.log("\n  Partnership resubmission after remediation");
+  const oppM = uuid();
+  await prisma.opportunity.create({ data: { id: oppM, kind: "partnership", status: "AwaitingFinalApproval", title: "Partner M", origin: "manual" } });
+  const pkgM = await lockedPackage(oppM, [await newDoc("m-application")]);
+  const reqM = await service.requestApproval({ packageId: pkgM, actionType: "submit_application", userId: founder });
+  const reqMId = reqM.ok ? reqM.value : "";
+  await service.decideApproval({ requestId: reqMId, decision: "approved", userId: founder, stepUpAt: new Date() });
+  const decM = (await prisma.approvalDecision.findUniqueOrThrow({ where: { requestId: reqMId } })).id;
+  const execM = await service.startExecution({ decisionId: decM, mode: "manual", userId: founder });
+  await service.recordExecutionOutcome({ executionId: execM.ok ? execM.value : "", outcome: "confirmed", portalReference: "APP-1", receiptVersionId: await newDoc("m-receipt"), userId: founder });
+  check("first application submitted", (await service.transitionOpportunity({ opportunityId: oppM, to: "ApplicationSubmitted", actor: "founder", userId: founder })).ok, true);
+  for (const to of ["UnderReview", "Rejected", "RemediationReview"]) {
+    await service.transitionOpportunity({ opportunityId: oppM, to, actor: "founder", userId: founder });
+  }
+  // Fast-forward the remediation to a fresh final approval (a new round).
+  await new Promise((r) => setTimeout(r, 5));
+  await prisma.opportunity.update({ where: { id: oppM }, data: { status: "AwaitingFinalApproval", statusChangedAt: new Date() } });
+  check(
+    "the old confirmation does not reopen ApplicationSubmitted",
+    (await service.transitionOpportunity({ opportunityId: oppM, to: "ApplicationSubmitted", actor: "founder", userId: founder })).ok,
+    false
+  );
+  const revM = await service.revisePackage(pkgM, founder);
+  const pkgM2 = revM.ok ? revM.value : "";
+  await service.lockPackage(pkgM2, founder);
+  const reqM2 = await service.requestApproval({ packageId: pkgM2, actionType: "submit_application", userId: founder });
+  const reqM2Id = reqM2.ok ? reqM2.value : "";
+  await service.decideApproval({ requestId: reqM2Id, decision: "approved", userId: founder, stepUpAt: new Date() });
+  const decM2 = (await prisma.approvalDecision.findUniqueOrThrow({ where: { requestId: reqM2Id } })).id;
+  const execM2 = await service.startExecution({ decisionId: decM2, mode: "manual", userId: founder });
+  check("a remediated application can be submitted again", execM2.ok, true);
+  await service.recordExecutionOutcome({ executionId: execM2.ok ? execM2.value : "", outcome: "confirmed", portalReference: "APP-2", receiptVersionId: await newDoc("m-receipt-2"), userId: founder });
+  check("and moves to ApplicationSubmitted on its own receipt", (await service.transitionOpportunity({ opportunityId: oppM, to: "ApplicationSubmitted", actor: "founder", userId: founder })).ok, true);
+
   console.log("\n  Concurrency");
   // Two moves from the same status at once. Depending on timing both may be
   // legal one after the other (Discovered→Validated→Archived), so the check is
@@ -248,12 +343,19 @@ try {
     service.transitionOpportunity({ opportunityId: oppD, to: "Validated", actor: "person", userId: founder }),
     service.transitionOpportunity({ opportunityId: oppD, to: "Archived", actor: "person", userId: founder }),
   ]);
-  const trail = await prisma.auditLog.findMany({ where: { entityId: oppD, action: "opportunity.transition" }, orderBy: { createdAt: "asc" } });
+  // Walk the chain by from/to rather than by timestamp: rows written in the
+  // same millisecond have no reliable order.
+  const trail = await prisma.auditLog.findMany({ where: { entityId: oppD, action: "opportunity.transition" } });
   const steps = trail.map((t) => t.metadata as { from: string; to: string });
-  let chained = steps.length > 0 && steps[0].from === "Discovered";
-  for (let n = 1; n < steps.length; n++) chained &&= steps[n].from === steps[n - 1].to;
   const final = (await prisma.opportunity.findUniqueOrThrow({ where: { id: oppD } })).status;
-  check("racing moves leave one unbroken history", chained && steps[steps.length - 1].to === final, true);
+  let at = "Discovered";
+  const remaining = [...steps];
+  while (remaining.length) {
+    const next = remaining.findIndex((s) => s.from === at);
+    if (next < 0) break;
+    at = remaining.splice(next, 1)[0].to;
+  }
+  check("racing moves leave one unbroken history", remaining.length === 0 && at === final, true);
   // Same target from two writers: the compare-and-set must let exactly one through.
   const oppE = await newOpportunity("Discovered");
   const raced = await Promise.all(

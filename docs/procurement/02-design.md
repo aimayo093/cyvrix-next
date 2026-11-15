@@ -136,7 +136,7 @@ erDiagram
 
     OpportunitySource ||--o{ IngestionRun : runs
     OpportunitySource ||--o{ ProcurementNotice : provides
-    ProcurementNotice }o--|| Opportunity : evidences
+    ProcurementNotice }o..o| Opportunity : "evidences (link planned, Phase 2)"
     Opportunity ||--o{ OpportunityEvidence : "source citations"
     Opportunity |o--o| Lead : "promoted from (existing)"
     Opportunity ||--o{ TenderRequirement : extracted
@@ -153,7 +153,7 @@ erDiagram
     CompanyDocument ||--o{ CompanyDocumentVersion : versions
     Package ||--o{ PackageItem : files
     PackageItem }o--o| CompanyDocumentVersion : "includes"
-    PackageItem }o--o| AgentDraft : "drafted by (existing)"
+    PackageItem }o..o| AgentDraft : "drafted by (planned, Phase 5)"
 
     Package ||--o{ ApprovalRequest : "put for approval"
     ApprovalRequest ||--o| ApprovalDecision : decided
@@ -170,8 +170,8 @@ erDiagram
 | --- | --- | --- |
 | `Organisation` | Any counterparty: buyer, principal contractor, manufacturer, distributor, target | `name`, `companiesHouseNo?`, `website`, `categories[]` (A–D from §32), `priority`, `isResearchTarget`, `clientCompanyId?`, `sourceUrl`, `verifiedAt?` |
 | `OpportunitySource` | Source registry (§5) | `key` (fts, s2w, pcs, cf, chatgpt_task, openai_independent, paperclip, website, manual, supplier_portal), `enabled`, `cursor`, `lastSuccessAt`, `health`, `licence` |
-| `IngestionRun` | One pull or import | `sourceId`, `startedAt`, `finishedAt`, `status`, `fetched`, `created`, `updated`, `errorClass`, `errorDetail` |
-| `ProcurementNotice` | Raw OCDS release, immutable | `sourceId`, `ocid`, `releaseId`, `noticeId`, `stage`, `sha256`, `raw` (JSON, contact points removed), `fetchedAt` |
+| `IngestionRun` | One pull or import | `sourceKey`, `startedAt`, `finishedAt`, `status`, `fetched`, `created`, `updated`, `errorClass`, `errorDetail` |
+| `ProcurementNotice` | Raw OCDS release. OCDS release IDs are immutable, so a changed notice arrives as a new release; Phase 2 adds the opportunity link | `sourceKey`, `ocid`, `releaseId`, `noticeId`, `stage`, `sha256`, `raw` (JSON, contact points removed), `fetchedAt` |
 | `Opportunity` | The one pipeline record | `kind` (commercial, tender, partnership, assignment), `status` (state machine), `title`, `buyerOrganisationId`, `ocid?`, `deadlineAt?`, `clarificationDeadlineAt?`, `valueMin/Max?`, `currency`, `region`, `cpv[]`, `confirmedBuying` (vs inferred prospect), `origin` (source key), `paperclipIssueId?`, `leadId?` |
 | `OpportunityEvidence` | Why we believe it | `opportunityId`, `url`, `retrievedAt`, `quote` (short), `kind` (notice, web, report, email) |
 | `TenderRequirement` | §11 extraction | `opportunityId`, `category`, `text`, `mandatory`, `sourceRef` (document, page, section), `confidence`, `reviewedBy?` |
@@ -179,8 +179,8 @@ erDiagram
 | `PartnershipProgramme` | §35–36 | `organisationId`, `categories[]`, `url`, `verified`, `fees?`, `requirements` (JSON), `status` |
 | `PartnershipApplication` | §43 lifecycle | `programmeId`, `status`, `opportunityId?` |
 | `SupplierPortal` / `SupplierAccount` | §8 registry | portal: `name`, `url`, `automationPermitted` (default false), `termsUrl`; account: `status`, `accountRef`, `registeredAt`, `verificationStatus`, `contactAlias`, **`credentialLabel`** (a password-manager entry name, never a secret), `mfaRequired`, `termsVersion`, `approvalId`, `renewalAt` |
-| `CompanyDocument` / `CompanyDocumentVersion` | §9 knowledge base | `kind`, `classification`, `owner`, `status` (verified, ai_draft, founder_approved, certified_evidence, missing, expired), `effectiveAt`, `expiresAt?`, `storagePath`, `sha256`, `scanResult` |
-| `CompanyFact` | Verified facts for forms | `key`, `value`, `evidenceDocumentId?`, `verifiedAt`, `publicAllowed` (false for the registered office) |
+| `CompanyDocument` / `CompanyDocumentVersion` | §9 knowledge base | `kind`, `classification`, `owner`, `status` (verified, ai_draft, founder_approved, certified_evidence, superseded; "expired" is derived from `expiresAt`, "missing" is the absence of a document), `effectiveAt`, `expiresAt?`, `storagePath`, `sha256`, `scan` |
+| `CompanyFact` | Verified facts for forms | `key`, `value`, `evidenceVersionId?` (verified, founder-approved or certified only), `verifiedAt`, `publicAllowed` (never for withheld keys) |
 | `Package` / `PackageItem` | An exact set of files for one destination | `opportunityId` or `applicationId`, `version`, `destination`, `manifestSha256` (hash of the sorted item hashes plus price and declarations), `status` |
 | `ApprovalRequest` / `ApprovalDecision` | §15 binding | see §5 below |
 | `ExecutionRecord` / `Receipt` | §16 | `approvalDecisionId` **unique**, `mode` (manual, human_assisted, api, browser), `startedAt`, `outcome` (confirmed, rejected, ambiguous), `portalReference`, `receiptDocumentVersionId`, `submittedManifestSha256` |
@@ -190,14 +190,16 @@ erDiagram
 entry (`action = "opportunity.transition"`, `entityId`, `metadata.from/to/
 event`). That reuses the hash chain, so history cannot be rewritten quietly.
 
-**Extended, not new:** `Contact` gains `organisationId?` and `source`.
-`AgentDraft.kind` gains `outreach`, `tender_answer`, `document` and
-`registration_pack`, keeping the claims gate. `Notification` is used as is.
+**Extended, not new:** `Contact` gains `organisationId?` (Phase 1). Planned,
+not built: `Contact.source` (Phase 2), and new `AgentDraft.kind` values
+`outreach`, `tender_answer`, `document` and `registration_pack` (Phase 5).
+These need a migration that extends `AgentDraft_kind_check`; the claims gate
+stays. `Notification` will be used as is.
 
 ## 4. Lifecycles, enforced server-side
 
 `lib/procurement/lifecycle.ts` holds the two state machines from spec §14 and
-§43 as data: `{from, to, event, actor}` rows. One function, `transition()`,
+§43 as data: `{from, to, gate}` rows, checked by `checkTransition()`. One function, `transitionOpportunity()`,
 does the rest:
 
 1. Checks that the move is listed and the actor type (user, agent, system) is
@@ -223,21 +225,30 @@ user.
 send_email, send_quote, accept_contract, accept_assignment, spend),
 `destination` (portal URL, or recipient address for email), `packageId`,
 `manifestSha256`, `priceSnapshot`, `declarations` (verbatim text),
-`expiresAt` (default seven days, never after the deadline) and `scope`.
+`expiresAt` (default seven days, never after the deadline). The action type and destination are the scope: there is no separate scope field.
 
 **Deciding:** only a `SUPER_ADMIN` with two-factor enrolled, entering a fresh
-TOTP code on the decision (step-up). This reuses `lib/two-factor.ts` and its
-replay guard. The decision row copies the request's `manifestSha256`.
+TOTP code on the decision (step-up, `lib/procurement/step-up.ts`). It reuses
+the stored authenticator and its replay counter, and the counter update is tied
+to the authenticator that was checked. Recovery codes are not accepted. The
+decision row copies the request's `manifestSha256`.
 
 **Invalidation:** any change to a package item, the price or the declarations
 produces a new manifest hash. The gateway compares hashes at execution, so a
-stale approval fails closed. Expired approvals fail closed. A deadline moving
-earlier than the expiry shortens it.
+stale approval fails closed. Expired approvals fail closed. A request that
+lapses undecided is marked `expired` (audited) when a new one is made. Planned
+for Phase 4: a deadline that moves earlier shortens open approvals (expiry is
+set from the deadline when the request is made).
 
 **Replay and duplicates:** `ExecutionRecord.approvalDecisionId` is unique, so
-an approval is single-use. A partial unique index on `(opportunityId)` where
-outcome is `confirmed` stops a second confirmed submission. An `ambiguous`
-outcome blocks retries until a person reconciles it.
+an approval is single-use. A partial unique index allows at most one pending or
+unclear attempt per opportunity and action, so attempts are strictly one after
+another. A pending or `ambiguous` attempt blocks any new one until a person
+records its outcome (compare-and-set, so two people cannot both record it).
+A tender or quotation can be confirmed once per opportunity. Partnership steps
+(registration, outreach, application) may repeat after a rejection and
+remediation, so only the current round counts: attempts started since the
+record reached its current status (`statusChangedAt`).
 
 **Emails** (outreach, enquiries, quotations): the existing pattern stands. An
 agent drafts in `AgentDraft`, the claims rules run, the founder approves, and

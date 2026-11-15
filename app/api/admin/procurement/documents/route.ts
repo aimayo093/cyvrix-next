@@ -5,7 +5,8 @@ import { getSession } from "@/lib/auth";
 import { scanDocument } from "@/lib/document-scan";
 import { prisma } from "@/lib/prisma";
 import { audit } from "@/lib/procurement/service";
-import { storeDocument } from "@/lib/procurement/storage";
+import { Prisma } from "@/generated/prisma";
+import { removeDocument, storeDocument } from "@/lib/procurement/storage";
 import { isAdminRole } from "@/lib/roles";
 import { rejectCrossOrigin } from "@/lib/same-origin";
 
@@ -37,7 +38,15 @@ const form = z.object({
   kind: z.string().trim().min(2).max(60).optional(),
   classification: z.enum(["public", "internal", "confidential"]).default("internal"),
   status: z.enum(["verified", "ai_draft", "founder_approved", "certified_evidence"]),
-  expiresAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  expiresAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/)
+    // Reject dates that do not exist (2026-02-31) instead of letting them roll over.
+    .refine((d) => {
+      const t = new Date(`${d}T00:00:00Z`);
+      return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === d;
+    }, "That expiry date does not exist.")
+    .optional(),
   source: z.string().trim().max(300).optional(),
   returnTo: z.string().regex(/^\/admin\/procurement[\w\-/?=&%.]*$/).optional(),
 });
@@ -104,6 +113,10 @@ export async function POST(req: Request) {
   const stored = await storeDocument(storagePath, buffer, CONTENT_TYPES[verdict.kind]);
   if (!stored.ok) return back(req, returnTo, "error", stored.reason);
 
+  // A new version keeps the previous expiry unless a new one is given, so a
+  // compact re-upload cannot silently drop an insurance renewal date.
+  const expiresAt = input.expiresAt ? new Date(`${input.expiresAt}T23:59:59Z`) : (existing?.Version[0]?.expiresAt ?? null);
+
   try {
     await prisma.$transaction(async (tx) => {
       if (!existing) {
@@ -117,7 +130,7 @@ export async function POST(req: Request) {
           documentId,
           version,
           status: input.status,
-          expiresAt: input.expiresAt ? new Date(`${input.expiresAt}T23:59:59Z`) : null,
+          expiresAt,
           storagePath,
           filename,
           sha256: verdict.sha256,
@@ -136,9 +149,23 @@ export async function POST(req: Request) {
       });
     });
   } catch (error) {
-    // The file is in the private bucket with no record; it is unreachable and harmless, and logged for clean-up.
-    console.error("[procurement] document record failed after upload", { storagePath, error: error instanceof Error ? error.name : "error" });
-    return back(req, returnTo, "error", "The file was stored but its record could not be saved. Nothing will use it. Try again.");
+    // No record means nothing may keep the file: remove it rather than leave
+    // confidential data in the bucket with nothing pointing at it.
+    const removed = await removeDocument(storagePath);
+    console.error("[procurement] document record failed after upload", {
+      storagePath,
+      removed,
+      error: error instanceof Error ? error.name : "error",
+    });
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+      return back(req, returnTo, "error", "Another version of this document was uploaded at the same moment. Nothing was saved; try again.");
+    }
+    return back(
+      req,
+      returnTo,
+      "error",
+      removed ? "The record could not be saved, so the file was removed again. Try again." : "The record could not be saved. The file could not be removed and has been logged for clean-up."
+    );
   }
 
   return back(req, returnTo, "success", `Stored version ${version} (${verdict.sha256.slice(0, 12)}…).`);

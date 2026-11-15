@@ -19,6 +19,8 @@ import {
   startExecution,
   transitionOpportunity,
 } from "./service";
+import { evidenceVerdict, isWithheldFactKey } from "./approval-core";
+import { londonWallTimeToUtc } from "./london-time";
 import { verifyStepUp } from "./step-up";
 
 /**
@@ -80,12 +82,14 @@ export async function createOrganisation(fd: FormData) {
   if (!parsed.success) go(back, "error", parsed.error!.issues[0]?.message ?? "Check the form.");
   const id = crypto.randomUUID();
   try {
-    await prisma.organisation.create({ data: { id, ...parsed.data! } });
+    await prisma.$transaction(async (tx) => {
+      await tx.organisation.create({ data: { id, ...parsed.data! } });
+      await audit(tx, user.id, "organisation.created", "Organisation", id, { name: parsed.data!.name });
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") go(back, "error", "An organisation with that name already exists.");
     throw error;
   }
-  await audit(prisma, user.id, "organisation.created", "Organisation", id, { name: parsed.data!.name });
   revalidatePath(HOME);
   go(back, "success", "Organisation added.");
 }
@@ -97,8 +101,10 @@ export async function updateOrganisation(fd: FormData) {
   const priority = z.coerce.number().int().min(1).max(5).safeParse(text(fd, "priority"));
   if (!id.success || !priority.success) go(back, "error", "Check the form.");
   const isResearchTarget = fd.get("isResearchTarget") === "on";
-  await prisma.organisation.update({ where: { id: id.data! }, data: { priority: priority.data!, isResearchTarget } });
-  await audit(prisma, user.id, "organisation.updated", "Organisation", id.data!, { priority: priority.data, isResearchTarget });
+  await prisma.$transaction(async (tx) => {
+    await tx.organisation.update({ where: { id: id.data! }, data: { priority: priority.data!, isResearchTarget } });
+    await audit(tx, user.id, "organisation.updated", "Organisation", id.data!, { priority: priority.data, isResearchTarget });
+  });
   revalidatePath(HOME);
   go(back, "success", "Saved.");
 }
@@ -120,23 +126,6 @@ const oppSchema = z.object({
   evidenceUrl: httpUrl.optional(),
   evidenceQuote: z.string().max(1000).optional(),
 });
-
-/** London wall-clock time from a datetime-local field, stored as UTC. */
-function londonToUtc(local: string): Date {
-  const asUtc = new Date(`${local}:00Z`);
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London",
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).formatToParts(asUtc);
-  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
-  const londonOfUtc = Date.UTC(get("year"), get("month") - 1, get("day"), get("hour"), get("minute"));
-  return new Date(asUtc.getTime() - (londonOfUtc - asUtc.getTime()));
-}
 
 export async function createOpportunity(fd: FormData) {
   const user = await requireAdmin();
@@ -161,6 +150,8 @@ export async function createOpportunity(fd: FormData) {
   // Spec section 18: every opportunity carries evidence.
   if (!d.evidenceUrl && !d.evidenceQuote) go(back, "error", "Add a source link or a short quote as evidence.");
   if (d.valueMin !== undefined && d.valueMax !== undefined && d.valueMin > d.valueMax) go(back, "error", "The lower value is above the upper value.");
+  const deadline = d.deadlineAt ? londonWallTimeToUtc(d.deadlineAt) : null;
+  if (deadline && !deadline.ok) go(back, "error", deadline.reason);
 
   const id = crypto.randomUUID();
   try {
@@ -175,7 +166,7 @@ export async function createOpportunity(fd: FormData) {
           buyerOrganisationId: d.buyerOrganisationId ?? null,
           origin: d.origin,
           ocid: d.ocid ?? null,
-          deadlineAt: d.deadlineAt ? londonToUtc(d.deadlineAt) : null,
+          deadlineAt: deadline && deadline.ok ? deadline.date : null,
           valueMin: d.valueMin ?? null,
           valueMax: d.valueMax ?? null,
           region: d.region ?? null,
@@ -212,10 +203,12 @@ export async function addEvidence(fd: FormData) {
   if (url && !httpUrl.safeParse(url).success) go(oppPath(id.data!), "error", "Links must start with http:// or https://");
   if (!url && !quote) go(oppPath(id.data!), "error", "Add a link or a quote.");
   const evidenceId = crypto.randomUUID();
-  await prisma.opportunityEvidence.create({
-    data: { id: evidenceId, opportunityId: id.data!, kind: url ? "web" : "note", url: url ?? null, quote: quote ?? null, retrievedAt: new Date(), createdById: user.id },
+  await prisma.$transaction(async (tx) => {
+    await tx.opportunityEvidence.create({
+      data: { id: evidenceId, opportunityId: id.data!, kind: url ? "web" : "note", url: url ?? null, quote: quote ?? null, retrievedAt: new Date(), createdById: user.id },
+    });
+    await audit(tx, user.id, "opportunity.evidence_added", "Opportunity", id.data!, { evidenceId });
   });
-  await audit(prisma, user.id, "opportunity.evidence_added", "Opportunity", id.data!, { evidenceId });
   revalidatePath(oppPath(id.data!));
   go(oppPath(id.data!), "success", "Evidence added.");
 }
@@ -265,12 +258,19 @@ export async function createPackage(fd: FormData) {
   const findings = claimFindings(declarations.join("\n"));
   if (findings.length) go(back, "error", `A declaration breaks the claims rules: "${findings[0].excerpt}". ${findings[0].note}`);
 
-  const latest = await prisma.package.findFirst({ where: { opportunityId: id.data! }, orderBy: { version: "desc" } });
   const pkgId = crypto.randomUUID();
-  await prisma.package.create({
-    data: { id: pkgId, opportunityId: id.data!, version: (latest?.version ?? 0) + 1, destination: destination!, declarations, priceSnapshot, createdById: user.id },
-  });
-  await audit(prisma, user.id, "package.created", "Package", pkgId, { opportunityId: id.data, declarations: declarations.length, priced: Boolean(amount) });
+  try {
+    await prisma.$transaction(async (tx) => {
+      const latest = await tx.package.findFirst({ where: { opportunityId: id.data! }, orderBy: { version: "desc" } });
+      await tx.package.create({
+        data: { id: pkgId, opportunityId: id.data!, version: (latest?.version ?? 0) + 1, destination: destination!, declarations, priceSnapshot, createdById: user.id },
+      });
+      await audit(tx, user.id, "package.created", "Package", pkgId, { opportunityId: id.data, declarations: declarations.length, priced: Boolean(amount) });
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") go(back, "error", "Another package was created at the same moment. Reload and try again.");
+    throw error;
+  }
   revalidatePath(back);
   go(back, "success", "Package created. Add documents, then lock it.");
 }
@@ -290,12 +290,16 @@ export async function addPackageItem(fd: FormData) {
   if (version!.status === "superseded") go(back, "error", "That version has been superseded. Choose the current one.");
   const label = (text(fd, "label") ?? `${version!.Document.title} v${version!.version}`).slice(0, 200);
   try {
-    await prisma.packageItem.create({ data: { id: crypto.randomUUID(), packageId: pkg!.id, documentVersionId: version!.id, label, sha256: version!.sha256 } });
+    await prisma.$transaction(async (tx) => {
+      await tx.packageItem.create({ data: { id: crypto.randomUUID(), packageId: pkg!.id, documentVersionId: version!.id, label, sha256: version!.sha256 } });
+      await audit(tx, user.id, "package.item_added", "Package", pkg!.id, { documentVersionId: version!.id, sha256: version!.sha256 });
+    });
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") go(back, "error", "That document is already in the package.");
+    // The database refuses changes to a package locked in the meantime.
+    if (error instanceof Prisma.PrismaClientKnownRequestError && /cannot change/.test(error.message)) go(back, "error", "This package was locked just now. Revise it to change its documents.");
     throw error;
   }
-  await audit(prisma, user.id, "package.item_added", "Package", pkg!.id, { documentVersionId: version!.id, sha256: version!.sha256 });
   revalidatePath(back);
   go(back, "success", "Document added.");
 }
@@ -308,8 +312,15 @@ export async function removePackageItem(fd: FormData) {
   if (!item) go(HOME, "error", "That item could not be found.");
   const back = oppPath(item!.Package.opportunityId);
   if (item!.Package.status !== "draft") go(back, "error", "This package is locked.");
-  await prisma.packageItem.delete({ where: { id: item!.id } });
-  await audit(prisma, user.id, "package.item_removed", "Package", item!.packageId, { documentVersionId: item!.documentVersionId });
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.packageItem.delete({ where: { id: item!.id } });
+      await audit(tx, user.id, "package.item_removed", "Package", item!.packageId, { documentVersionId: item!.documentVersionId });
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && /cannot change/.test(error.message)) go(back, "error", "This package was locked just now.");
+    throw error;
+  }
   revalidatePath(back);
   go(back, "success", "Removed.");
 }
@@ -423,17 +434,27 @@ export async function saveCompanyFact(fd: FormData) {
   if (!FACT_KEY.test(key) || !label || !value) go(back, "error", "A fact needs a key (lower case, underscores), a label and a value.");
   const evidence = text(fd, "evidenceVersionId");
   if (evidence && !ID.safeParse(evidence).success) go(back, "error", "Choose an evidence document.");
+  if (evidence) {
+    // A verified fact rests on real evidence, never an AI draft (spec section 9).
+    const usable = evidenceVerdict(await prisma.companyDocumentVersion.findUnique({ where: { id: evidence } }));
+    if (!usable.ok) go(back, "error", usable.reason);
+  }
+  const wantsPublic = fd.get("publicAllowed") === "on";
+  // DECISIONS section 4: the registered office and the founder's name stay off the website.
+  if (wantsPublic && isWithheldFactKey(key)) go(back, "error", "This fact is withheld from the public website and cannot be marked public.");
   const data = {
     label: label!.slice(0, 120),
     value: value!.slice(0, 2000),
     evidenceVersionId: evidence ?? null,
     verifiedAt: new Date(),
     verifiedById: user.id,
-    publicAllowed: fd.get("publicAllowed") === "on",
+    publicAllowed: wantsPublic && !isWithheldFactKey(key),
   };
-  await prisma.companyFact.upsert({ where: { key }, create: { key, ...data }, update: data });
-  // The value is not copied into the audit log: some facts (the registered office) are withheld.
-  await audit(prisma, user.id, "company_fact.saved", "CompanyFact", key, { publicAllowed: data.publicAllowed, evidence: Boolean(evidence) });
+  await prisma.$transaction(async (tx) => {
+    await tx.companyFact.upsert({ where: { key }, create: { key, ...data }, update: data });
+    // The value is not copied into the audit log: some facts (the registered office) are withheld.
+    await audit(tx, user.id, "company_fact.saved", "CompanyFact", key, { publicAllowed: data.publicAllowed, evidence: Boolean(evidence) });
+  });
   revalidatePath(HOME);
   go(back, "success", "Saved.");
 }

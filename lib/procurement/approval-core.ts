@@ -59,6 +59,15 @@ export type Verdict = { ok: true } | { ok: false; reason: string };
  */
 export const EVIDENCE_STATUSES = ["verified", "founder_approved", "certified_evidence"] as const;
 
+/**
+ * Company facts that may never be marked public (DECISIONS section 4): the
+ * residential registered office, its postcode, and personal details of the
+ * founder or directors. Matched on the key, whatever the label says.
+ */
+export function isWithheldFactKey(key: string): boolean {
+  return /^(registered_office|registered_address|postcode|founder|director|home_|personal_)/.test(key) || /(_address|_postcode)$/.test(key);
+}
+
 export function evidenceVerdict(version: { status: string } | null): Verdict {
   if (!version) return { ok: false, reason: "The evidence document could not be found." };
   if (!(EVIDENCE_STATUSES as readonly string[]).includes(version.status)) {

@@ -39,10 +39,14 @@ export async function verifyStepUp(userId: string, submitted: string): Promise<S
   });
   if (!result.valid) return { ok: false, reason: "That code was not accepted. Enter the current code from your authenticator app." };
 
-  // Compare-and-set, so two decisions racing with the same code cannot both pass.
+  // Compare-and-set, so two decisions racing with the same code cannot both
+  // pass, and bound to the authenticator just checked: if two-factor was reset
+  // in the meantime, the old code no longer counts.
   const advanced = await prisma.user.updateMany({
     where: {
       id: userId,
+      twoFactorSecret: user.twoFactorSecret,
+      twoFactorEnrolledAt: user.twoFactorEnrolledAt,
       OR: [{ twoFactorLastCounter: null }, { twoFactorLastCounter: { lt: BigInt(result.counter) } }],
     },
     data: { twoFactorLastCounter: BigInt(result.counter) },

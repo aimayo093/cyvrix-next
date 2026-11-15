@@ -2069,6 +2069,8 @@ model Opportunity {
   id                      String                @id
   kind                    String
   status                  String
+  /// When status last moved; scopes "this round" of a submission (migration 20261115130000).
+  statusChangedAt         DateTime              @default(now())
   title                   String
   summary                 String?
   buyerOrganisationId     String?

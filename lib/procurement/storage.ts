@@ -30,6 +30,18 @@ export async function storeDocument(path: string, buffer: Buffer, contentType: s
   return { ok: true };
 }
 
+/** Removes a stored file whose record could not be saved. True when it is gone. */
+export async function removeDocument(path: string): Promise<boolean> {
+  const client = serviceClient();
+  if (!client) return false;
+  const { error } = await client.storage.from(COMPANY_DOCUMENTS_BUCKET).remove([path]);
+  if (error) {
+    console.error("[procurement] document clean-up failed", error.name);
+    return false;
+  }
+  return true;
+}
+
 export async function signedDocumentUrl(path: string, downloadName: string): Promise<string | null> {
   const client = serviceClient();
   if (!client) return null;
