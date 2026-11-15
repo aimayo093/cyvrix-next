@@ -27,6 +27,7 @@
     "test:appsec": "tsx scripts/test-appsec-probes.mts",
     "test:enquiry-source": "tsx scripts/test-enquiry-source.mts",
     "test:email-history": "tsx scripts/test-email-history.mts",
+    "test:legal-notices": "tsx scripts/test-legal-notices.mts",
     "test:password-reset": "tsx scripts/test-password-reset.mts",
     "scan:deps": "tsx scripts/dependency-holds.mts"
   },

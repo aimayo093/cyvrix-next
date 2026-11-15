@@ -739,3 +739,29 @@ themselves.
 - **Not kept across the reset:** the page someone was trying to open. The reset
   happens through an emailed link, often on another device, so sign-in lands
   on the account's home page.
+
+## 19. Account holders are told when legal text changes
+
+**What:** publishing changed wording in a public legal document (Privacy
+Policy, Terms, Cookie Policy), from Admin → Legal pages or by restoring the
+reviewed wording, sends every active account holder (clients and staff) a
+notification in their account and an email. The email links to the document,
+gives the date the new version applies from, and carries the optional "What
+changed" note from the form. Founder decision, 15 November 2026.
+
+**Why it is built this way:**
+- **Changed text only.** A first publish, a draft republished, or different
+  wording sends a notice. Saving a draft, unpublishing, or saving the same
+  text again (whitespace aside) does not, so a re-save never spams anyone.
+- **One email per person.** Each recipient gets their own message, so no
+  address is shown to another account holder.
+- **After the response.** Notices go out in `after()`, so publishing never
+  waits on the mail server. The audit log records counts only (recipients,
+  notified, emailed, failed), never addresses.
+- **A service message, not marketing.** It goes to account holders about
+  terms that apply to them, so it does not need marketing consent; newsletter
+  subscribers without an account are not emailed.
+
+**Known limit:** emails are sent one after another inside the request's
+`after()` window. That is fine at today's account numbers; at several hundred
+accounts it should move to a queued job.

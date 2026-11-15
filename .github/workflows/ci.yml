@@ -46,6 +46,7 @@ jobs:
           npm run test:appsec
           npm run test:enquiry-source
           npm run test:email-history
+          npm run test:legal-notices
           npm run test:password-reset
           npm run test:ticket-access
           npm run test:totp

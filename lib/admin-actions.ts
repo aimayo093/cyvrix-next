@@ -41,6 +41,9 @@ import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
 import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
 import { recordOutboundEmail } from "@/lib/email-history";
+import { notifyLegalChange } from "@/lib/legal-notices";
+import { cleanChangeSummary, legalChangeNeedsNotice } from "@/lib/legal-notices-core";
+import { after } from "next/server";
 import xss from "xss";
 import { z } from "zod";
 
@@ -232,7 +235,7 @@ export async function updateContactSettings(formData: FormData) {
 }
 
 export async function saveLegalPage(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const legalSlug = sanitize((formData.get("slug") as string) || "");
   const definition = findPublicLegalPageDefinition(legalSlug);
@@ -254,6 +257,9 @@ export async function saveLegalPage(formData: FormData) {
       return returnWithError("Published legal documents need a title and substantive reviewed content.", "/admin/legal-pages");
     }
   }
+
+  const before = await prisma.legalPage.findUnique({ where: { slug: definition.slug }, select: { status: true, title: true, body: true } });
+  const changeSummary = cleanChangeSummary(formData.get("changeSummary") as string | null);
 
   const saved = await prisma.legalPage.upsert({
     where: { slug: definition.slug },
@@ -284,6 +290,13 @@ export async function saveLegalPage(formData: FormData) {
       metadata: { slug: definition.slug, title: saved.title, status: saved.status },
     },
   });
+
+  // A change to public legal text is announced to every account holder
+  // (DECISIONS §19), after the response so publishing never waits on mail.
+  if (legalChangeNeedsNotice(before, saved)) {
+    const notice = { slug: definition.slug, title: saved.title, route: definition.route, summary: changeSummary, actorId: admin.id };
+    after(() => notifyLegalChange(notice));
+  }
 
   revalidatePath("/admin/legal-pages");
   revalidatePath(definition.route);
@@ -2216,6 +2229,12 @@ export async function restoreReviewedLegalPage(formData: FormData) {
         .map((section) => [section.heading, ...section.paragraphs].join(PARAGRAPH_BREAK))
         .join(PARAGRAPH_BREAK)
     : reviewed.paragraphs.join(PARAGRAPH_BREAK);
+
+  const route = findPublicLegalPageDefinition(slug)?.route;
+  if (route && legalChangeNeedsNotice(existing, { status: existing.status, title: reviewed.title, body })) {
+    const notice = { slug, title: reviewed.title, route, summary: "", actorId: admin.id };
+    after(() => notifyLegalChange(notice));
+  }
 
   await prisma.$transaction([
     prisma.auditLog.create({
