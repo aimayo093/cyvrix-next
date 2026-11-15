@@ -45,19 +45,20 @@ const restoredBody = (reviewed.sections?.length
   : reviewed.paragraphs
 ).join("\n\n");
 const stub = { status: "PUBLISHED", title: "Privacy Policy", body: "Placeholder." };
-check("restore over a stub visitors never saw does not", legalChangeNeedsNotice(slug, stub, { status: "PUBLISHED", title: reviewed.title, body: restoredBody }), false);
-check("restore over different live wording does", legalChangeNeedsNotice(slug, published, { status: "PUBLISHED", title: reviewed.title, body: restoredBody }), true);
+check("restore over a stub visitors never saw does not", legalChangeNeedsNotice(slug, stub, { status: "PUBLISHED", title: reviewed.title, body: restoredBody, reviewNotice: reviewed.reviewNotice }), false);
+check("restore over different live wording does", legalChangeNeedsNotice(slug, published, { status: "PUBLISHED", title: reviewed.title, body: restoredBody, reviewNotice: reviewed.reviewNotice }), true);
 
 // ── Versions ──────────────────────────────────────────────────────────────
 const v1 = legalVersionHash(visibleLegalText(slug, published));
 check("version hash is stable", v1 === legalVersionHash(visibleLegalText(slug, { ...published })), true);
 check("version hash ignores whitespace", v1 === legalVersionHash(visibleLegalText(slug, { ...published, body: body.replace(/\n\n/g, "\n\n\n") })), true);
 check("version hash follows the wording", v1 === legalVersionHash(visibleLegalText(slug, { ...published, title: "Other" })), false);
+check("a changed review notice notifies", legalChangeNeedsNotice(slug, { ...published, reviewNotice: "Reviewed in 2026." }, { ...published, reviewNotice: "Reviewed in 2027." }), true);
 
 // ── What it says ──────────────────────────────────────────────────────────
 check("summary on one line", cleanChangeSummary("  Added\n\nemail\tretention "), "Added email retention");
 check("summary bounded", cleanChangeSummary("x".repeat(2000)).length, LEGAL_NOTICE_SUMMARY_MAX);
-check("date is the saved date, London time", legalNoticeDate(new Date("2026-11-14T23:30:00Z")), "14 November 2026");
+check("date is the saved date, in London time", legalNoticeDate(new Date("2026-07-14T23:30:00Z")), "15 July 2026");
 const url = "https://cyvrix.co.uk/privacy-policy";
 const email = legalNoticeEmail({ title: "Privacy Policy", summary: "Email retention added.", url, name: "Sam", date: "15 November 2026" });
 const lines = email.text.split("\n");
@@ -80,14 +81,16 @@ for (const fn of ["saveLegalPage", "restoreReviewedLegalPage"]) {
   // The notify call must be the only one, and inside the block the gate opens.
   const gateBlockEnd = gate >= 0 ? source.indexOf("\n  }\n", gate) : -1;
   check(`${fn}: notify only inside the notice gate`, start >= 0 && gate >= 0 && notify > gate && notify < gateBlockEnd && source.split("notifyLegalChange(").length === 2, true);
-  const write = source.search(/prisma\.(legalPage\.upsert|\$transaction)\(/);
+  const write = source.search(/prisma\.\$transaction\(/);
   check(`${fn}: notice scheduled after the write`, write >= 0 && gate > write, true);
 }
 const server = fs.readFileSync(path.join(process.cwd(), "lib/legal-notices.ts"), "utf8");
 check("one email per recipient, never a shared To", /sendEmail\(\{ to: user\.email/.test(server), true);
 check("only active accounts", /where: \{ active: true \}/.test(server), true);
-check("each version claimed once before sending", server.indexOf("claimVersion(") < server.indexOf("sendEmail("), true);
-check("a start entry is written before any email", server.indexOf('"legal_change_notice_started"') < server.indexOf("sendEmail("), true);
+const at = (needle: string) => server.indexOf(needle);
+check("recipients are read before the version is claimed", at("prisma.user") >= 0 && at("claimVersion(input") > at("prisma.user"), true);
+check("each version claimed once before sending", at("claimVersion(input") >= 0 && at("claimVersion(input") < at("sendEmail("), true);
+check("a start entry is written before any email", at('"legal_change_notice_started"') >= 0 && at('"legal_change_notice_started"') < at("sendEmail("), true);
 
 if (failures) {
   console.error(`\n  ${failures} legal-notice check(s) failed.`);

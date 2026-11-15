@@ -30,10 +30,6 @@ export async function notifyLegalChange(input: {
   effectiveAt: Date;
   actorId?: string | null;
 }): Promise<void> {
-  // One version is announced once. Two saves of the same text at the same
-  // moment both reach here; only the one that moves the stored hash proceeds.
-  if (!(await claimVersion(input.slug, input.versionHash).catch(() => false))) return;
-
   const url = `${SITE_URL}${input.route}`;
   const date = legalNoticeDate(input.effectiveAt);
   const audit = (action: string, metadata: Record<string, unknown>) =>
@@ -55,9 +51,22 @@ export async function notifyLegalChange(input: {
     .findMany({ where: { active: true }, select: { id: true, email: true, name: true } })
     .catch(() => null);
   if (!users) {
+    // Nothing is claimed yet, so saving the same text again retries.
     await audit("legal_change_notice_failed", { error: "could not list account holders" });
     return;
   }
+
+  // One version is announced once. Two saves of the same text at the same
+  // moment both reach here; only the one that moves the stored hash proceeds.
+  // A database error is not a duplicate: it is logged, and nothing is claimed.
+  let claimed: boolean;
+  try {
+    claimed = await claimVersion(input.slug, input.versionHash);
+  } catch (cause) {
+    await audit("legal_change_notice_failed", { error: `could not record the version: ${safeMailError(cause)}` });
+    return;
+  }
+  if (!claimed) return;
   // Written before any send: if the platform ends this run part-way, the log
   // still shows a notice was started and for how many people.
   await audit("legal_change_notice_started", { recipients: users.length });

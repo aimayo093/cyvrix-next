@@ -258,10 +258,13 @@ export async function saveLegalPage(formData: FormData) {
     }
   }
 
-  const before = await prisma.legalPage.findUnique({ where: { slug: definition.slug }, select: { status: true, title: true, body: true } });
+  const before = await prisma.legalPage.findUnique({ where: { slug: definition.slug }, select: { status: true, title: true, body: true, reviewNotice: true } });
   const changeSummary = cleanChangeSummary(formData.get("changeSummary") as string | null);
 
-  const saved = await prisma.legalPage.upsert({
+  // The page and its audit entry commit together, so a notice is scheduled
+  // only for a change that is both live and recorded.
+  const saved = await prisma.$transaction(async (tx) => {
+  const page = await tx.legalPage.upsert({
     where: { slug: definition.slug },
     create: {
       id: crypto.randomUUID(),
@@ -281,14 +284,17 @@ export async function saveLegalPage(formData: FormData) {
     },
   });
 
-  await prisma.auditLog.create({
+  await tx.auditLog.create({
     data: {
       id: crypto.randomUUID(),
+      userId: admin.id,
       action: "legal_page_saved",
       entityType: "LegalPage",
-      entityId: saved.id,
-      metadata: { slug: definition.slug, title: saved.title, status: saved.status },
+      entityId: page.id,
+      metadata: { slug: definition.slug, title: page.title, status: page.status },
     },
+  });
+  return page;
   });
 
   // A change to public legal text is announced to every account holder
@@ -2252,7 +2258,9 @@ export async function restoreReviewedLegalPage(formData: FormData) {
     }),
     prisma.legalPage.update({
       where: { slug },
-      data: { title: reviewed.title, body, updatedAt: new Date() },
+      // The reviewed notice comes back with the reviewed wording, so the page
+      // shows exactly what the reviewed default would.
+      data: { title: reviewed.title, body, reviewNotice: reviewed.reviewNotice ?? undefined, updatedAt: new Date() },
     }),
   ]);
 

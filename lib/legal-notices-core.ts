@@ -13,7 +13,7 @@ export const LEGAL_NOTICE_SUMMARY_MAX = 600;
 /** One email may take this long before it is counted as failed and the next is tried. */
 export const LEGAL_NOTICE_SEND_TIMEOUT_MS = 15_000;
 
-export type LegalVersion = { status: string; title: string; body: string | null } | null;
+export type LegalVersion = { status: string; title: string; body: string | null; reviewNotice?: string | null } | null;
 
 /**
  * The wording visitors actually see for a legal route. It mirrors the public
@@ -22,13 +22,17 @@ export type LegalVersion = { status: string; title: string; body: string | null 
  * only a change of words counts (a textarea may send CRLF line endings).
  */
 export function visibleLegalText(slug: string, record: LegalVersion): string {
-  const fromRecord = record && record.status === "PUBLISHED" ? toPublicLegalDocument({ title: record.title, body: record.body }) : null;
+  const fromRecord =
+    record && record.status === "PUBLISHED"
+      ? toPublicLegalDocument({ title: record.title, body: record.body, reviewNotice: record.reviewNotice })
+      : null;
   const document = fromRecord ?? getDefaultLegalDocument(slug);
   if (!document) return "";
   const parts = document.sections?.length
     ? document.sections.flatMap((section) => [section.heading, ...section.paragraphs])
     : document.paragraphs;
-  return [document.title, ...parts].join(" ").replace(/\s+/g, " ").trim();
+  // The review notice is shown on the page too, so it counts as wording.
+  return [document.title, ...parts, document.reviewNotice ?? ""].join(" ").replace(/\s+/g, " ").trim();
 }
 
 /**
