@@ -41,6 +41,9 @@ import { findPublicLegalPageDefinition } from "@/lib/legal-page-definitions";
 import { toPublicLegalDocument } from "@/lib/public-legal";
 import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
 import { recordOutboundEmail } from "@/lib/email-history";
+import { notifyLegalChange } from "@/lib/legal-notices";
+import { cleanChangeSummary, legalChangeNeedsNotice, legalVersionHash, visibleLegalText } from "@/lib/legal-notices-core";
+import { after } from "next/server";
 import xss from "xss";
 import { z } from "zod";
 
@@ -232,7 +235,7 @@ export async function updateContactSettings(formData: FormData) {
 }
 
 export async function saveLegalPage(formData: FormData) {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const legalSlug = sanitize((formData.get("slug") as string) || "");
   const definition = findPublicLegalPageDefinition(legalSlug);
@@ -255,35 +258,59 @@ export async function saveLegalPage(formData: FormData) {
     }
   }
 
-  const saved = await prisma.legalPage.upsert({
-    where: { slug: definition.slug },
-    create: {
-      id: crypto.randomUUID(),
-      slug: definition.slug,
-      title: title || definition.title,
-      body: body || null,
-      reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
-      status,
-      updatedAt: new Date(),
-    },
-    update: {
-      title: title || definition.title,
-      body: body || null,
-      reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
-      status,
-      updatedAt: new Date(),
-    },
+  const before = await prisma.legalPage.findUnique({ where: { slug: definition.slug }, select: { status: true, title: true, body: true, reviewNotice: true } });
+  const changeSummary = cleanChangeSummary(formData.get("changeSummary") as string | null);
+
+  // The page and its audit entry commit together, so a notice is scheduled
+  // only for a change that is both live and recorded.
+  const saved = await prisma.$transaction(async (tx) => {
+    const page = await tx.legalPage.upsert({
+      where: { slug: definition.slug },
+      create: {
+        id: crypto.randomUUID(),
+        slug: definition.slug,
+        title: title || definition.title,
+        body: body || null,
+        reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
+        status,
+        updatedAt: new Date(),
+      },
+      update: {
+        title: title || definition.title,
+        body: body || null,
+        reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
+        status,
+        updatedAt: new Date(),
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        id: crypto.randomUUID(),
+        userId: admin.id,
+        action: "legal_page_saved",
+        entityType: "LegalPage",
+        entityId: page.id,
+        metadata: { slug: definition.slug, title: page.title, status: page.status },
+      },
+    });
+    return page;
   });
 
-  await prisma.auditLog.create({
-    data: {
-      id: crypto.randomUUID(),
-      action: "legal_page_saved",
-      entityType: "LegalPage",
-      entityId: saved.id,
-      metadata: { slug: definition.slug, title: saved.title, status: saved.status },
-    },
-  });
+  // A change to public legal text is announced to every account holder
+  // (DECISIONS §19), after the response so publishing never waits on mail.
+  if (legalChangeNeedsNotice(definition.slug, before, saved)) {
+    const notice = {
+      slug: definition.slug,
+      title: saved.title,
+      route: definition.route,
+      summary: changeSummary,
+      versionHash: legalVersionHash(visibleLegalText(definition.slug, saved)),
+      effectiveAt: saved.updatedAt,
+      actorId: admin.id,
+    };
+    after(() => notifyLegalChange(notice));
+  }
 
   revalidatePath("/admin/legal-pages");
   revalidatePath(definition.route);
@@ -2217,7 +2244,7 @@ export async function restoreReviewedLegalPage(formData: FormData) {
         .join(PARAGRAPH_BREAK)
     : reviewed.paragraphs.join(PARAGRAPH_BREAK);
 
-  await prisma.$transaction([
+  const [, restored] = await prisma.$transaction([
     prisma.auditLog.create({
       data: {
         id: crypto.randomUUID(),
@@ -2226,14 +2253,32 @@ export async function restoreReviewedLegalPage(formData: FormData) {
         entityType: "LegalPage",
         entityId: existing.id,
         // The previous wording, so this is reversible without a backup file.
-        metadata: { slug, previousTitle: existing.title, previousBody: existing.body ?? "" },
+        metadata: { slug, previousTitle: existing.title, previousBody: existing.body ?? "", previousReviewNotice: existing.reviewNotice },
       },
     }),
     prisma.legalPage.update({
       where: { slug },
-      data: { title: reviewed.title, body, updatedAt: new Date() },
+      // The reviewed notice comes back with the reviewed wording, so the page
+      // shows exactly what the reviewed default would.
+      data: { title: reviewed.title, body, reviewNotice: reviewed.reviewNotice ?? undefined, updatedAt: new Date() },
     }),
   ]);
+
+  // Scheduled only once the restore has committed: a failed restore must never
+  // announce a change. A restore over a stub visitors never saw sends nothing.
+  const route = findPublicLegalPageDefinition(slug)?.route;
+  if (route && legalChangeNeedsNotice(slug, existing, restored)) {
+    const notice = {
+      slug,
+      title: restored.title,
+      route,
+      summary: "",
+      versionHash: legalVersionHash(visibleLegalText(slug, restored)),
+      effectiveAt: restored.updatedAt,
+      actorId: admin.id,
+    };
+    after(() => notifyLegalChange(notice));
+  }
 
   updatePublicCacheTags(PUBLIC_CACHE_TAGS.legalPages, PUBLIC_CACHE_TAGS.seo);
   revalidatePath("/admin/legal-pages");
