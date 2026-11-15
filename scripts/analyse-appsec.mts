@@ -402,6 +402,14 @@ const add = (f: AppSecFinding) => findings.push(f);
     .filter(({ source }) => /\.(findUnique|findFirst|update|updateMany|delete|deleteMany)\(/.test(source))
     .filter(({ source }) => /(params|searchParams|formData|body)/.test(source))
     .filter(({ source }) => !/requireAdmin|requireUser|requireSuperAdmin|userId:|clientCompanyId:/.test(source))
+    // Route handlers answer 401/403 instead of redirecting: accepted only as the
+    // explicit guard pattern, a session read followed by a refusal unless the
+    // role is an admin role, not any mention of isAdminRole.
+    .filter(
+      ({ source }) =>
+        !(/const session = await getSession\(\)/.test(source) &&
+          /if \(!isAdminRole\(session\.user\.role\)\) return NextResponse\.json\([^)]*\{ status: 403 \}\)/.test(source))
+    )
     // A signed token verified before the lookup authorises that one record and
     // nothing else, which is precisely the control this check is looking for.
     // The unsubscribe route proves an HMAC over the address before it reads the

@@ -604,6 +604,7 @@ model ClientCompany {
   updatedAt       DateTime
   ClientDocument  ClientDocument[]
   Contact         Contact[]
+  Organisation    Organisation[]
   Proposal        Proposal[]
   Ticket          Ticket[]
   User            User[]
@@ -658,6 +659,9 @@ model Contact {
   role            String?
   createdAt       DateTime       @default(now())
   ClientCompany   ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  /// Procurement counterparty (migration 20261115120000).
+  organisationId  String?
+  Organisation    Organisation?  @relation(fields: [organisationId], references: [id])
 
   @@schema("public")
 }
@@ -754,16 +758,16 @@ model LandingPage {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model Lead {
-  id               String     @id
+  id               String        @id
   name             String?
   email            String?
   company          String?
   source           String?
-  status           LeadStatus @default(NEW)
+  status           LeadStatus    @default(NEW)
   assignedStaff    String?
   followUpDate     DateTime?
   conversionStatus String?
-  payload          Json       @default("{}")
+  payload          Json          @default("{}")
   /// Enquiry source (DECISIONS §16). `source` above is which form; these are
   /// how the visitor reached the site. Null on leads created before them.
   heardAbout       String?
@@ -773,9 +777,10 @@ model Lead {
   leadCampaign     String?
   sourceConfidence String?
   sourceDetail     Json?
-  createdAt        DateTime   @default(now())
+  createdAt        DateTime      @default(now())
   updatedAt        DateTime
   LeadNote         LeadNote[]
+  Opportunity      Opportunity[]
 
   @@schema("public")
 }
@@ -2024,5 +2029,318 @@ model EmailMessage {
   @@index([direction, occurredAt])
   @@index([fromAddress])
   @@index([occurredAt])
+  @@schema("public")
+}
+
+// ---------------------------------------------------------------------------
+// Procurement, tenders and partnerships (docs/procurement, migration
+// 20261115120000). Server-only tables: RLS on, no policies. Status fields are
+// plain text checked by the database and moved only by lib/procurement.
+// ---------------------------------------------------------------------------
+
+model Organisation {
+  id               String         @id
+  name             String
+  website          String?
+  categories       String[]       @default([])
+  priority         Int            @default(3)
+  isResearchTarget Boolean        @default(false)
+  clientCompanyId  String?
+  notes            String?
+  sourceUrl        String?
+  verifiedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
+  ClientCompany    ClientCompany? @relation(fields: [clientCompanyId], references: [id])
+  Contact          Contact[]
+  Opportunity      Opportunity[]
+
+  @@schema("public")
+}
+
+model OpportunitySource {
+  key               String              @id
+  name              String
+  kind              String
+  enabled           Boolean             @default(false)
+  cursor            String?
+  lastRunAt         DateTime?
+  lastSuccessAt     DateTime?
+  health            String              @default("unknown")
+  licence           String?
+  notes             String?
+  updatedAt         DateTime            @default(now()) @updatedAt
+  IngestionRun      IngestionRun[]
+  ProcurementNotice ProcurementNotice[]
+  Opportunity       Opportunity[]
+
+  @@schema("public")
+}
+
+model IngestionRun {
+  id                String              @id
+  sourceKey         String
+  startedAt         DateTime            @default(now())
+  finishedAt        DateTime?
+  status            String              @default("running")
+  fetched           Int                 @default(0)
+  created           Int                 @default(0)
+  updated           Int                 @default(0)
+  errorClass        String?
+  errorDetail       String?
+  startedById       String?
+  Source            OpportunitySource   @relation(fields: [sourceKey], references: [key])
+  ProcurementNotice ProcurementNotice[]
+
+  @@index([sourceKey, startedAt])
+  @@schema("public")
+}
+
+model ProcurementNotice {
+  id        String            @id
+  sourceKey String
+  ocid      String
+  releaseId String
+  noticeId  String?
+  stage     String?
+  sha256    String
+  raw       Json
+  runId     String?
+  fetchedAt DateTime          @default(now())
+  Source    OpportunitySource @relation(fields: [sourceKey], references: [key])
+  Run       IngestionRun?     @relation(fields: [runId], references: [id])
+
+  @@unique([sourceKey, ocid, releaseId], map: "ProcurementNotice_source_ocid_release_key")
+  @@schema("public")
+}
+
+model Opportunity {
+  id                      String                @id
+  kind                    String
+  status                  String
+  /// When status last moved; scopes "this round" of a submission (migration 20261115130000).
+  statusChangedAt         DateTime              @default(now())
+  title                   String
+  summary                 String?
+  buyerOrganisationId     String?
+  origin                  String
+  /// Unique where set (partial index in the migration, not declared here).
+  ocid                    String?
+  deadlineAt              DateTime?
+  clarificationDeadlineAt DateTime?
+  valueMin                Decimal?              @db.Decimal(14, 2)
+  valueMax                Decimal?              @db.Decimal(14, 2)
+  currency                String                @default("GBP")
+  region                  String?
+  cpv                     String[]              @default([])
+  confirmedBuying         Boolean               @default(false)
+  leadId                  String?
+  paperclipIssueId        String?
+  createdById             String?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @default(now()) @updatedAt
+  Buyer                   Organisation?         @relation(fields: [buyerOrganisationId], references: [id])
+  Source                  OpportunitySource     @relation(fields: [origin], references: [key])
+  Lead                    Lead?                 @relation(fields: [leadId], references: [id])
+  Evidence                OpportunityEvidence[]
+  Package                 Package[]
+  ApprovalRequest         ApprovalRequest[]
+  ExecutionRecord         ExecutionRecord[]
+  CostEntry               CostEntry[]
+
+  @@index([status, deadlineAt])
+  @@index([kind, updatedAt])
+  @@schema("public")
+}
+
+model OpportunityEvidence {
+  id            String      @id
+  opportunityId String
+  kind          String
+  url           String?
+  quote         String?
+  retrievedAt   DateTime?
+  createdById   String?
+  createdAt     DateTime    @default(now())
+  Opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@index([opportunityId])
+  @@schema("public")
+}
+
+model CompanyDocument {
+  id             String                   @id
+  title          String
+  kind           String
+  classification String                   @default("internal")
+  owner          String?
+  createdAt      DateTime                 @default(now())
+  updatedAt      DateTime                 @default(now()) @updatedAt
+  Version        CompanyDocumentVersion[]
+
+  @@schema("public")
+}
+
+/// A stored file. Its file, hash and path cannot change (database trigger).
+model CompanyDocumentVersion {
+  id           String          @id
+  documentId   String
+  version      Int
+  status       String
+  effectiveAt  DateTime?
+  expiresAt    DateTime?
+  storagePath  String
+  filename     String
+  sha256       String
+  sizeBytes    Int
+  scan         Json            @default("{}")
+  source       String?
+  uploadedById String?
+  createdAt    DateTime        @default(now())
+  Document     CompanyDocument @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  CompanyFact  CompanyFact[]
+  PackageItem  PackageItem[]
+  Receipt      Receipt[]
+
+  @@unique([documentId, version])
+  @@schema("public")
+}
+
+model CompanyFact {
+  key               String                  @id
+  label             String
+  value             String
+  evidenceVersionId String?
+  verifiedAt        DateTime?
+  verifiedById      String?
+  publicAllowed     Boolean                 @default(false)
+  updatedAt         DateTime                @default(now()) @updatedAt
+  Evidence          CompanyDocumentVersion? @relation(fields: [evidenceVersionId], references: [id])
+
+  @@schema("public")
+}
+
+model Package {
+  id              String            @id
+  opportunityId   String
+  version         Int
+  destination     String
+  status          String            @default("draft")
+  priceSnapshot   Json?
+  declarations    Json              @default("[]")
+  manifestSha256  String?
+  createdById     String?
+  createdAt       DateTime          @default(now())
+  lockedAt        DateTime?
+  Opportunity     Opportunity       @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+  Item            PackageItem[]
+  ApprovalRequest ApprovalRequest[]
+
+  @@unique([opportunityId, version])
+  @@schema("public")
+}
+
+/// Cannot be added, changed or removed once its package is locked (trigger).
+model PackageItem {
+  id                String                 @id
+  packageId         String
+  documentVersionId String
+  label             String
+  sha256            String
+  createdAt         DateTime               @default(now())
+  Package           Package                @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  DocumentVersion   CompanyDocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Restrict)
+
+  @@unique([packageId, documentVersionId])
+  @@schema("public")
+}
+
+model ApprovalRequest {
+  id             String            @id
+  opportunityId  String
+  packageId      String
+  actionType     String
+  destination    String
+  manifestSha256 String
+  priceSnapshot  Json?
+  declarations   Json              @default("[]")
+  status         String            @default("pending")
+  expiresAt      DateTime
+  requestedById  String?
+  createdAt      DateTime          @default(now())
+  Opportunity    Opportunity       @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+  Package        Package           @relation(fields: [packageId], references: [id], onDelete: Restrict)
+  Decision       ApprovalDecision?
+
+  @@index([status, createdAt])
+  @@schema("public")
+}
+
+/// Immutable (trigger). An approval is used at most once (ExecutionRecord).
+model ApprovalDecision {
+  id              String           @id
+  requestId       String           @unique
+  decision        String
+  manifestSha256  String
+  decidedById     String
+  note            String?
+  stepUpAt        DateTime
+  expiresAt       DateTime
+  createdAt       DateTime         @default(now())
+  Request         ApprovalRequest  @relation(fields: [requestId], references: [id], onDelete: Restrict)
+  ExecutionRecord ExecutionRecord?
+
+  @@schema("public")
+}
+
+model ExecutionRecord {
+  id                      String           @id
+  approvalDecisionId      String           @unique
+  opportunityId           String
+  actionType              String
+  mode                    String
+  outcome                 String           @default("pending")
+  portalReference         String?
+  submittedManifestSha256 String
+  recordedById            String?
+  startedAt               DateTime         @default(now())
+  finishedAt              DateTime?
+  Decision                ApprovalDecision @relation(fields: [approvalDecisionId], references: [id], onDelete: Restrict)
+  Opportunity             Opportunity      @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+  Receipt                 Receipt[]
+
+  @@schema("public")
+}
+
+/// Immutable (trigger).
+model Receipt {
+  id                String                 @id
+  executionId       String
+  documentVersionId String
+  note              String?
+  receivedAt        DateTime
+  createdById       String?
+  createdAt         DateTime               @default(now())
+  Execution         ExecutionRecord        @relation(fields: [executionId], references: [id], onDelete: Restrict)
+  DocumentVersion   CompanyDocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Restrict)
+
+  @@schema("public")
+}
+
+model CostEntry {
+  id            String       @id
+  date          DateTime     @db.Date
+  agent         String?
+  integration   String?
+  opportunityId String?
+  amountMinor   Int
+  currency      String       @default("GBP")
+  basis         String
+  note          String?
+  createdById   String?
+  createdAt     DateTime     @default(now())
+  Opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+
+  @@index([date])
   @@schema("public")
 }
