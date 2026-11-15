@@ -541,7 +541,8 @@ exports.Prisma.ContactScalarFieldEnum = {
   email: 'email',
   phone: 'phone',
   role: 'role',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  organisationId: 'organisationId'
 };
 
 exports.Prisma.ContentBlockScalarFieldEnum = {
@@ -1421,6 +1422,223 @@ exports.Prisma.AgentDraftScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.OrganisationScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  website: 'website',
+  categories: 'categories',
+  priority: 'priority',
+  isResearchTarget: 'isResearchTarget',
+  clientCompanyId: 'clientCompanyId',
+  notes: 'notes',
+  sourceUrl: 'sourceUrl',
+  verifiedAt: 'verifiedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OpportunitySourceScalarFieldEnum = {
+  key: 'key',
+  name: 'name',
+  kind: 'kind',
+  enabled: 'enabled',
+  cursor: 'cursor',
+  lastRunAt: 'lastRunAt',
+  lastSuccessAt: 'lastSuccessAt',
+  health: 'health',
+  licence: 'licence',
+  notes: 'notes',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.IngestionRunScalarFieldEnum = {
+  id: 'id',
+  sourceKey: 'sourceKey',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt',
+  status: 'status',
+  fetched: 'fetched',
+  created: 'created',
+  updated: 'updated',
+  errorClass: 'errorClass',
+  errorDetail: 'errorDetail',
+  startedById: 'startedById'
+};
+
+exports.Prisma.ProcurementNoticeScalarFieldEnum = {
+  id: 'id',
+  sourceKey: 'sourceKey',
+  ocid: 'ocid',
+  releaseId: 'releaseId',
+  noticeId: 'noticeId',
+  stage: 'stage',
+  sha256: 'sha256',
+  raw: 'raw',
+  runId: 'runId',
+  fetchedAt: 'fetchedAt'
+};
+
+exports.Prisma.OpportunityScalarFieldEnum = {
+  id: 'id',
+  kind: 'kind',
+  status: 'status',
+  title: 'title',
+  summary: 'summary',
+  buyerOrganisationId: 'buyerOrganisationId',
+  origin: 'origin',
+  ocid: 'ocid',
+  deadlineAt: 'deadlineAt',
+  clarificationDeadlineAt: 'clarificationDeadlineAt',
+  valueMin: 'valueMin',
+  valueMax: 'valueMax',
+  currency: 'currency',
+  region: 'region',
+  cpv: 'cpv',
+  confirmedBuying: 'confirmedBuying',
+  leadId: 'leadId',
+  paperclipIssueId: 'paperclipIssueId',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OpportunityEvidenceScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  kind: 'kind',
+  url: 'url',
+  quote: 'quote',
+  retrievedAt: 'retrievedAt',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.CompanyDocumentScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  kind: 'kind',
+  classification: 'classification',
+  owner: 'owner',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CompanyDocumentVersionScalarFieldEnum = {
+  id: 'id',
+  documentId: 'documentId',
+  version: 'version',
+  status: 'status',
+  effectiveAt: 'effectiveAt',
+  expiresAt: 'expiresAt',
+  storagePath: 'storagePath',
+  filename: 'filename',
+  sha256: 'sha256',
+  sizeBytes: 'sizeBytes',
+  scan: 'scan',
+  source: 'source',
+  uploadedById: 'uploadedById',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.CompanyFactScalarFieldEnum = {
+  key: 'key',
+  label: 'label',
+  value: 'value',
+  evidenceVersionId: 'evidenceVersionId',
+  verifiedAt: 'verifiedAt',
+  verifiedById: 'verifiedById',
+  publicAllowed: 'publicAllowed',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PackageScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  version: 'version',
+  destination: 'destination',
+  status: 'status',
+  priceSnapshot: 'priceSnapshot',
+  declarations: 'declarations',
+  manifestSha256: 'manifestSha256',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  lockedAt: 'lockedAt'
+};
+
+exports.Prisma.PackageItemScalarFieldEnum = {
+  id: 'id',
+  packageId: 'packageId',
+  documentVersionId: 'documentVersionId',
+  label: 'label',
+  sha256: 'sha256',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ApprovalRequestScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  packageId: 'packageId',
+  actionType: 'actionType',
+  destination: 'destination',
+  manifestSha256: 'manifestSha256',
+  priceSnapshot: 'priceSnapshot',
+  declarations: 'declarations',
+  status: 'status',
+  expiresAt: 'expiresAt',
+  requestedById: 'requestedById',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ApprovalDecisionScalarFieldEnum = {
+  id: 'id',
+  requestId: 'requestId',
+  decision: 'decision',
+  manifestSha256: 'manifestSha256',
+  decidedById: 'decidedById',
+  note: 'note',
+  stepUpAt: 'stepUpAt',
+  expiresAt: 'expiresAt',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ExecutionRecordScalarFieldEnum = {
+  id: 'id',
+  approvalDecisionId: 'approvalDecisionId',
+  opportunityId: 'opportunityId',
+  actionType: 'actionType',
+  mode: 'mode',
+  outcome: 'outcome',
+  portalReference: 'portalReference',
+  submittedManifestSha256: 'submittedManifestSha256',
+  recordedById: 'recordedById',
+  startedAt: 'startedAt',
+  finishedAt: 'finishedAt'
+};
+
+exports.Prisma.ReceiptScalarFieldEnum = {
+  id: 'id',
+  executionId: 'executionId',
+  documentVersionId: 'documentVersionId',
+  note: 'note',
+  receivedAt: 'receivedAt',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.CostEntryScalarFieldEnum = {
+  id: 'id',
+  date: 'date',
+  agent: 'agent',
+  integration: 'integration',
+  opportunityId: 'opportunityId',
+  amountMinor: 'amountMinor',
+  currency: 'currency',
+  basis: 'basis',
+  note: 'note',
+  createdById: 'createdById',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1664,7 +1882,23 @@ exports.Prisma.ModelName = {
   SurveyRequest: 'SurveyRequest',
   SurveyResponse: 'SurveyResponse',
   WorkOrder: 'WorkOrder',
-  AgentDraft: 'AgentDraft'
+  AgentDraft: 'AgentDraft',
+  Organisation: 'Organisation',
+  OpportunitySource: 'OpportunitySource',
+  IngestionRun: 'IngestionRun',
+  ProcurementNotice: 'ProcurementNotice',
+  Opportunity: 'Opportunity',
+  OpportunityEvidence: 'OpportunityEvidence',
+  CompanyDocument: 'CompanyDocument',
+  CompanyDocumentVersion: 'CompanyDocumentVersion',
+  CompanyFact: 'CompanyFact',
+  Package: 'Package',
+  PackageItem: 'PackageItem',
+  ApprovalRequest: 'ApprovalRequest',
+  ApprovalDecision: 'ApprovalDecision',
+  ExecutionRecord: 'ExecutionRecord',
+  Receipt: 'Receipt',
+  CostEntry: 'CostEntry'
 };
 
 /**

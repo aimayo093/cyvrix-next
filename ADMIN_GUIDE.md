@@ -56,6 +56,16 @@ The CYVRIX Admin dashboard is split into dedicated, secure modules designed to m
 - **Path**: `/admin/audit-logs`
 - View a permanent, chronological audit trail recording administrative actions (user log-ins, page modifications, proposal creation, and ticket status changes) to ensure complete data integrity.
 
+### H. Procurement (tenders, leads and partnerships)
+*Route: `/admin/procurement`*
+- **Opportunities**: tenders, commercial leads, partnership programmes and assignments. Each needs a source link or quote. Open one to move its status; moves that need the founder, an approval, a receipt or an evidence document say so and are refused without them.
+- **Packages**: the exact documents, price and declarations for one destination. Lock a package, then request approval. To change anything afterwards, revise it (a new version); the old approval stops working.
+- **Approval Centre**: the founder approves exactly what is shown, with a fresh authenticator code. Nothing is sent from the site: submit on the portal yourself, press "Start", then record the outcome with the portal's reference and the receipt uploaded under Documents.
+- **Organisations**: the 52 research targets and any others. Research targets are not partners.
+- **Documents**: private storage, opened through short-lived links. Mark AI-written drafts as such; only independently issued certificates are "certified evidence".
+- **Company facts**: verified details used to fill forms (founder only). Leave "public" unticked for anything withheld from the website.
+- Design and reasons: `docs/procurement/` and `docs/DECISIONS.md` section 18.
+
 ---
 
 ## 3. Creating a New Client Portal Account

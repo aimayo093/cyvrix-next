@@ -60,6 +60,7 @@ export const ADMIN_NAV: AdminNavGroup[] = [
       { name: "Enquiries", href: "/admin/leads-crm", icon: "inbox", badge: "enquiries" },
       { name: "Tickets", href: "/admin/ticket-management", icon: "ticket", badge: "tickets" },
       { name: "Clients", href: "/admin/client-management", icon: "building" },
+      { name: "Procurement", href: "/admin/procurement", icon: "compliance" },
       { name: "Surveys", href: "/admin/surveys", icon: "survey" },
       { name: "Email", href: "/admin/email", icon: "mail" },
     ],

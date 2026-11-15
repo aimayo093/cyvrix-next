@@ -401,7 +401,8 @@ const add = (f: AppSecFinding) => findings.push(f);
   const unscoped = [...apiRoutes, ...serverActionFiles]
     .filter(({ source }) => /\.(findUnique|findFirst|update|updateMany|delete|deleteMany)\(/.test(source))
     .filter(({ source }) => /(params|searchParams|formData|body)/.test(source))
-    .filter(({ source }) => !/requireAdmin|requireUser|requireSuperAdmin|userId:|clientCompanyId:/.test(source))
+    // isAdminRole( is the role check route handlers use where requireAdmin would redirect instead of answering 401/403.
+    .filter(({ source }) => !/requireAdmin|requireUser|requireSuperAdmin|isAdminRole\(|userId:|clientCompanyId:/.test(source))
     // A signed token verified before the lookup authorises that one record and
     // nothing else, which is precisely the control this check is looking for.
     // The unsubscribe route proves an HMAC over the address before it reads the

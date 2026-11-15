@@ -102,6 +102,15 @@ yours to take. Each has a recommendation.
 | B10 | Portal terms for automated access (Defence Sourcing Portal on Jaggaer, eTendersNI, local authority portals) were not found | Browser automation (§17) cannot be assumed permitted | No portal automation until each portal's terms are read and you approve it (D8) |
 | B11 | Sell2Wales API returned HTTP 500 on 14 Nov 2026 | The Welsh source is less reliable than the others | Use its OCDS monthly download; health-check the API |
 
+### Decisions recorded (15 November 2026)
+
+The founder answered in the Phase 0 follow-up:
+- **"Both, fault fix first."** D9: the adapter patch was already applied on 14 November and is verified in place. Per-agent AI connections stay optional.
+- **D5 private document store, D6 Organisation table, D7 no portal passwords, D11 no new spending**: approved as recommended.
+- **D2 "Company experience."** The past field work may be described as company experience **once the evidence (contract or purchase orders) is uploaded and recorded as a company fact**. Until then every document keeps the `PRODUCT.md` wording.
+
+Still open: D1, D3, D4, D8, D10, D12, D13, D14, and approval to apply the Phase 1 migrations to production.
+
 ### Decisions requested
 
 | # | Decision | Options | Recommendation |
