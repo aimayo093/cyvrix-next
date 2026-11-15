@@ -750,18 +750,31 @@ gives the date the new version applies from, and carries the optional "What
 changed" note from the form. Founder decision, 15 November 2026.
 
 **Why it is built this way:**
-- **Changed text only.** A first publish, a draft republished, or different
-  wording sends a notice. Saving a draft, unpublishing, or saving the same
-  text again (whitespace aside) does not, so a re-save never spams anyone.
+- **Only when visitors see different text.** The rule compares what the
+  public page shows before and after the save: a published record that passes
+  `toPublicLegalDocument`, otherwise the reviewed default wording. So saving a
+  draft, unpublishing, the same wording again, a whitespace-only edit, or a
+  restore over a stub the public page never showed sends nothing.
+- **One version, one notice.** The announced version's hash is claimed in one
+  conditional UPDATE on a `legalNotice:<slug>` settings row, so two saves of
+  the same text at the same moment cannot both send. A restore schedules its
+  notice only after its transaction commits.
 - **One email per person.** Each recipient gets their own message, so no
   address is shown to another account holder.
 - **After the response.** Notices go out in `after()`, so publishing never
-  waits on the mail server. The audit log records counts only (recipients,
-  notified, emailed, failed), never addresses.
+  waits on the mail server. The in-app notifications and the emails are
+  attempted separately, so one failing never skips the other. Each email may
+  take at most 15 seconds before it counts as failed. The email's "applies
+  from" date is when the version was saved.
+- **Audited without addresses.** A `legal_change_notice_started` entry is
+  written before any email, and `legal_change_notice_sent` after, with counts
+  and up to five redacted failure reasons.
 - **A service message, not marketing.** It goes to account holders about
   terms that apply to them, so it does not need marketing consent; newsletter
   subscribers without an account are not emailed.
 
 **Known limit:** emails are sent one after another inside the request's
-`after()` window. That is fine at today's account numbers; at several hundred
-accounts it should move to a queued job.
+`after()` window, which the platform can end. If it does, some account holders
+get no email, and the log shows a "started" entry with no "sent" entry. Read
+it that way, and resend by hand if needed. A queued job would remove the
+limit; it is worth doing before the number of accounts grows much.

@@ -1,32 +1,61 @@
 /**
  * Pure rules for telling account holders that a public legal document changed
  * (DECISIONS §19), so `npm run test:legal-notices` can cover them.
+ *
+ * No `server-only` (tests import it); it imports `node:crypto`, so a client
+ * component importing it fails the build anyway.
  */
+import { createHash } from "node:crypto";
+import { getDefaultLegalDocument } from "@/lib/legal-content";
+import { toPublicLegalDocument } from "@/lib/public-legal";
 
 export const LEGAL_NOTICE_SUMMARY_MAX = 600;
+/** One email may take this long before it is counted as failed and the next is tried. */
+export const LEGAL_NOTICE_SEND_TIMEOUT_MS = 15_000;
 
 export type LegalVersion = { status: string; title: string; body: string | null } | null;
 
-/** Whitespace-insensitive, so re-saving the same text never sends a notice. */
-function normalise(value: string | null | undefined): string {
-  return (value ?? "").replace(/\r\n?/g, "\n").replace(/[ \t]+/g, " ").replace(/\s*\n\s*/g, "\n").trim();
+/**
+ * The wording visitors actually see for a legal route. It mirrors the public
+ * pages: a published record that passes toPublicLegalDocument, otherwise the
+ * reviewed default wording. Whitespace and paragraph breaks are ignored, so
+ * only a change of words counts (a textarea may send CRLF line endings).
+ */
+export function visibleLegalText(slug: string, record: LegalVersion): string {
+  const fromRecord = record && record.status === "PUBLISHED" ? toPublicLegalDocument({ title: record.title, body: record.body }) : null;
+  const document = fromRecord ?? getDefaultLegalDocument(slug);
+  if (!document) return "";
+  const parts = document.sections?.length
+    ? document.sections.flatMap((section) => [section.heading, ...section.paragraphs])
+    : document.paragraphs;
+  return [document.title, ...parts].join(" ").replace(/\s+/g, " ").trim();
 }
 
 /**
- * A notice goes out when the public text changes: a document published for the
- * first time, republished after being a draft, or published with different
- * wording. Saving a draft, unpublishing, or re-saving identical text does not.
+ * A notice goes out only when a save makes visitors see different text. A
+ * draft, an unpublish, the same wording again, a whitespace-only edit, or a
+ * restore that replaces a stub visitors never saw (the public page already
+ * showed the reviewed wording) sends nothing.
  */
-export function legalChangeNeedsNotice(before: LegalVersion, after: LegalVersion): boolean {
+export function legalChangeNeedsNotice(slug: string, before: LegalVersion, after: LegalVersion): boolean {
   if (!after || after.status !== "PUBLISHED") return false;
-  if (!before || before.status !== "PUBLISHED") return true;
-  return normalise(before.title) !== normalise(after.title) || normalise(before.body) !== normalise(after.body);
+  return visibleLegalText(slug, before) !== visibleLegalText(slug, after);
+}
+
+/** Identifies the announced version, so one version is never announced twice. */
+export function legalVersionHash(text: string): string {
+  return createHash("sha256").update(text).digest("hex");
 }
 
 /** The optional "what changed" note, one paragraph, bounded. */
 export function cleanChangeSummary(value: string | null | undefined): string {
   const text = (value ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "").replace(/\s+/g, " ").trim();
   return text.length <= LEGAL_NOTICE_SUMMARY_MAX ? text : `${text.slice(0, LEGAL_NOTICE_SUMMARY_MAX - 1)}…`;
+}
+
+/** The date the new version applies from: when it was saved, not when the email goes out. */
+export function legalNoticeDate(effectiveAt: Date): string {
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Europe/London" }).format(effectiveAt);
 }
 
 export function legalNoticeNotification(input: { title: string; summary: string; url: string }) {
@@ -46,7 +75,8 @@ export function legalNoticeEmail(input: { title: string; summary: string; url: s
       `We have updated our ${input.title}. The new version applies from ${input.date}.`,
       ...(input.summary ? ["", `What changed: ${input.summary}`] : []),
       "",
-      `You can read it in full here: ${input.url}`,
+      "You can read it in full here:",
+      input.url,
       "",
       "You are receiving this because you have a CYVRIX account. It is a service message about the terms that apply to you, not marketing.",
       "",

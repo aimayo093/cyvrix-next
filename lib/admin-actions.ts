@@ -42,7 +42,7 @@ import { toPublicLegalDocument } from "@/lib/public-legal";
 import { getEmailIdentity, getServerSmtpConfig } from "@/lib/email-config";
 import { recordOutboundEmail } from "@/lib/email-history";
 import { notifyLegalChange } from "@/lib/legal-notices";
-import { cleanChangeSummary, legalChangeNeedsNotice } from "@/lib/legal-notices-core";
+import { cleanChangeSummary, legalChangeNeedsNotice, legalVersionHash, visibleLegalText } from "@/lib/legal-notices-core";
 import { after } from "next/server";
 import xss from "xss";
 import { z } from "zod";
@@ -293,8 +293,16 @@ export async function saveLegalPage(formData: FormData) {
 
   // A change to public legal text is announced to every account holder
   // (DECISIONS §19), after the response so publishing never waits on mail.
-  if (legalChangeNeedsNotice(before, saved)) {
-    const notice = { slug: definition.slug, title: saved.title, route: definition.route, summary: changeSummary, actorId: admin.id };
+  if (legalChangeNeedsNotice(definition.slug, before, saved)) {
+    const notice = {
+      slug: definition.slug,
+      title: saved.title,
+      route: definition.route,
+      summary: changeSummary,
+      versionHash: legalVersionHash(visibleLegalText(definition.slug, saved)),
+      effectiveAt: saved.updatedAt,
+      actorId: admin.id,
+    };
     after(() => notifyLegalChange(notice));
   }
 
@@ -2230,13 +2238,7 @@ export async function restoreReviewedLegalPage(formData: FormData) {
         .join(PARAGRAPH_BREAK)
     : reviewed.paragraphs.join(PARAGRAPH_BREAK);
 
-  const route = findPublicLegalPageDefinition(slug)?.route;
-  if (route && legalChangeNeedsNotice(existing, { status: existing.status, title: reviewed.title, body })) {
-    const notice = { slug, title: reviewed.title, route, summary: "", actorId: admin.id };
-    after(() => notifyLegalChange(notice));
-  }
-
-  await prisma.$transaction([
+  const [, restored] = await prisma.$transaction([
     prisma.auditLog.create({
       data: {
         id: crypto.randomUUID(),
@@ -2253,6 +2255,22 @@ export async function restoreReviewedLegalPage(formData: FormData) {
       data: { title: reviewed.title, body, updatedAt: new Date() },
     }),
   ]);
+
+  // Scheduled only once the restore has committed: a failed restore must never
+  // announce a change. A restore over a stub visitors never saw sends nothing.
+  const route = findPublicLegalPageDefinition(slug)?.route;
+  if (route && legalChangeNeedsNotice(slug, existing, restored)) {
+    const notice = {
+      slug,
+      title: restored.title,
+      route,
+      summary: "",
+      versionHash: legalVersionHash(visibleLegalText(slug, restored)),
+      effectiveAt: restored.updatedAt,
+      actorId: admin.id,
+    };
+    after(() => notifyLegalChange(notice));
+  }
 
   updatePublicCacheTags(PUBLIC_CACHE_TAGS.legalPages, PUBLIC_CACHE_TAGS.seo);
   revalidatePath("/admin/legal-pages");
