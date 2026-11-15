@@ -6,6 +6,7 @@ import {
   approvalExpiry,
   canDecide,
   canExecute,
+  evidenceVerdict,
   manifestSha256,
   type Verdict,
 } from "./approval-core";
@@ -88,7 +89,8 @@ export async function transitionOpportunity(input: {
 
     if (input.evidenceVersionId) {
       const evidence = await tx.companyDocumentVersion.findUnique({ where: { id: input.evidenceVersionId } });
-      if (!evidence) return fail("The evidence document could not be found.");
+      const usable = evidenceVerdict(evidence);
+      if (!usable.ok) return usable;
     }
 
     const facts = await gatherFacts(tx, opp.id, now);
@@ -171,6 +173,21 @@ export async function requestApproval(input: {
     if ((await currentManifest(tx, pkg.id)) !== pkg.manifestSha256) return fail("The package no longer matches its lock. Revise it.");
     const expiresAt = approvalExpiry(now, pkg.Opportunity.deadlineAt);
     if (!expiresAt) return fail("The deadline has passed.");
+    // A request that lapsed undecided is retired first, so a fresh one can be made
+    // (the database allows one pending request per package).
+    const lapsed = await tx.approvalRequest.findMany({
+      where: { packageId: pkg.id, status: "pending", expiresAt: { lte: now } },
+      select: { id: true },
+    });
+    if (lapsed.length) {
+      await tx.approvalRequest.updateMany({
+        where: { id: { in: lapsed.map((r) => r.id) }, status: "pending" },
+        data: { status: "expired" },
+      });
+      for (const r of lapsed) {
+        await audit(tx, input.userId, "approval.expired", "ApprovalRequest", r.id, { packageId: pkg.id });
+      }
+    }
     const open = await tx.approvalRequest.findFirst({ where: { packageId: pkg.id, status: "pending" } });
     if (open) return fail("This package is already waiting for a decision.");
 
@@ -273,6 +290,9 @@ export async function startExecution(input: {
     const confirmed = await tx.executionRecord.findFirst({
       where: { opportunityId: request.opportunityId, actionType: request.actionType, outcome: "confirmed" },
     });
+    const unresolved = await tx.executionRecord.findFirst({
+      where: { opportunityId: request.opportunityId, actionType: request.actionType, outcome: { in: ["pending", "ambiguous"] } },
+    });
     const verdict: Verdict = canExecute({
       now,
       action: request.actionType as ApprovalAction,
@@ -282,6 +302,7 @@ export async function startExecution(input: {
       recomputedManifest: (await currentManifest(tx, request.packageId)) ?? "",
       alreadyUsed: decision.ExecutionRecord !== null,
       hasConfirmedSameAction: confirmed !== null,
+      hasUnresolvedSameAction: unresolved !== null,
     });
     if (!verdict.ok) return verdict;
 
@@ -329,6 +350,8 @@ export async function recordExecutionOutcome(input: {
       if (!input.portalReference?.trim()) return fail("Enter the portal's reference for this submission.");
       const receipt = await tx.companyDocumentVersion.findUnique({ where: { id: input.receiptVersionId } });
       if (!receipt) return fail("The receipt document could not be found.");
+      const usable = evidenceVerdict(receipt);
+      if (!usable.ok) return fail(usable.reason.replace("evidence", "a receipt"));
     }
 
     try {

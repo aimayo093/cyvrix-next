@@ -30,6 +30,7 @@ import {
   revisePackageAction,
   startExecutionAction,
 } from "@/lib/procurement/actions";
+import { EVIDENCE_STATUSES } from "@/lib/procurement/approval-core";
 import { APPROVAL_ACTIONS, nextStates, type OpportunityKind } from "@/lib/procurement/lifecycle";
 
 export const metadata = { title: "Opportunity" };
@@ -85,6 +86,14 @@ async function OpportunityContent({ params, searchParams }: Props) {
       {v.Document.title} v{v.version} ({VERSION_STATUS_LABEL[v.status] ?? v.status})
     </option>
   ));
+  // Evidence and receipts: never an AI draft (checked again on the server).
+  const evidenceOptions = versions
+    .filter((v) => (EVIDENCE_STATUSES as readonly string[]).includes(v.status))
+    .map((v) => (
+      <option key={v.id} value={v.id}>
+        {v.Document.title} v{v.version} ({VERSION_STATUS_LABEL[v.status] ?? v.status})
+      </option>
+    ));
 
   return (
     <div className="space-y-6 pb-16">
@@ -119,7 +128,7 @@ async function OpportunityContent({ params, searchParams }: Props) {
                 {m.gate === "evidence" && (
                   <select name="evidenceVersionId" required defaultValue="" className={`${field} max-w-64`} aria-label={`Evidence for ${m.to}`}>
                     <option value="" disabled>Evidence document…</option>
-                    {docOptions}
+                    {evidenceOptions}
                   </select>
                 )}
                 <button className={m.gate === "person" ? secondaryButton : primaryButton} disabled={m.gate === "founder" && !isFounder}>
@@ -242,7 +251,7 @@ async function OpportunityContent({ params, searchParams }: Props) {
                             <input name="portalReference" maxLength={200} placeholder="Portal reference" className={field} aria-label="Portal reference" />
                             <select name="receiptVersionId" defaultValue="" className={field} aria-label="Receipt document">
                               <option value="">Receipt document (upload it first)…</option>
-                              {docOptions}
+                              {evidenceOptions}
                             </select>
                             <div className="flex flex-wrap gap-2">
                               <button name="outcome" value="confirmed" className={primaryButton}>Confirmed</button>

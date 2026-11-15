@@ -53,6 +53,26 @@ export function approvalExpiry(now: Date, deadlineAt: Date | null): Date | null 
 
 export type Verdict = { ok: true } | { ok: false; reason: string };
 
+/**
+ * Document statuses that can stand as evidence or as a receipt. An AI draft is
+ * never evidence (spec section 9), and a superseded version is not current.
+ */
+export const EVIDENCE_STATUSES = ["verified", "founder_approved", "certified_evidence"] as const;
+
+export function evidenceVerdict(version: { status: string } | null): Verdict {
+  if (!version) return { ok: false, reason: "The evidence document could not be found." };
+  if (!(EVIDENCE_STATUSES as readonly string[]).includes(version.status)) {
+    return {
+      ok: false,
+      reason:
+        version.status === "ai_draft"
+          ? "An AI draft is not evidence. Upload the document you received."
+          : "That version has been superseded. Use the current one.",
+    };
+  }
+  return { ok: true };
+}
+
 export function canDecide(request: { status: string; expiresAt: Date }, now: Date): Verdict {
   if (request.status !== "pending") return { ok: false, reason: "This request has already been decided." };
   if (request.expiresAt.getTime() <= now.getTime()) return { ok: false, reason: "This request has expired. Ask for a new one." };
@@ -70,6 +90,8 @@ export type ExecutionCheckInput = {
   recomputedManifest: string;
   alreadyUsed: boolean;
   hasConfirmedSameAction: boolean;
+  /** Another execution of the same action on this opportunity is pending or unclear. */
+  hasUnresolvedSameAction: boolean;
 };
 
 /**
@@ -93,5 +115,9 @@ export function canExecute(input: ExecutionCheckInput): Verdict {
     return { ok: false, reason: "The package has changed since it was approved. Ask for a new approval." };
   }
   if (input.hasConfirmedSameAction) return { ok: false, reason: "This has already been carried out for this opportunity." };
+  // An unclear or unfinished attempt may have gone through: retrying could submit twice.
+  if (input.hasUnresolvedSameAction) {
+    return { ok: false, reason: "An earlier attempt is still pending or unclear. Check the portal and record its outcome first." };
+  }
   return { ok: true };
 }

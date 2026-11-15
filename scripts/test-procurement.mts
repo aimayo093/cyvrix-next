@@ -8,6 +8,7 @@ import {
   canDecide,
   canExecute,
   canonicalJson,
+  evidenceVerdict,
   manifestSha256,
   type ExecutionCheckInput,
 } from "../lib/procurement/approval-core";
@@ -127,6 +128,7 @@ const good: ExecutionCheckInput = {
   recomputedManifest: m,
   alreadyUsed: false,
   hasConfirmedSameAction: false,
+  hasUnresolvedSameAction: false,
 };
 check("approved, current, unchanged: allowed", okOf(canExecute(good)), true);
 check("no decision: refused", okOf(canExecute({ ...good, decision: null })), false);
@@ -139,6 +141,15 @@ check("package unlocked: refused", okOf(canExecute({ ...good, pkg: { ...good.pkg
 check("file changed after approval: refused", okOf(canExecute({ ...good, recomputedManifest: "f".repeat(64) })), false);
 check("package from another opportunity: refused", okOf(canExecute({ ...good, pkg: { ...good.pkg, opportunityId: "o2" } })), false);
 check("duplicate submission: refused", okOf(canExecute({ ...good, hasConfirmedSameAction: true })), false);
+check("earlier attempt pending or unclear: refused", okOf(canExecute({ ...good, hasUnresolvedSameAction: true })), false);
+
+console.log("\n  Evidence and receipts");
+check("verified document is evidence", okOf(evidenceVerdict({ status: "verified" })), true);
+check("founder-approved document is evidence", okOf(evidenceVerdict({ status: "founder_approved" })), true);
+check("certified evidence is evidence", okOf(evidenceVerdict({ status: "certified_evidence" })), true);
+check("an AI draft is never evidence", okOf(evidenceVerdict({ status: "ai_draft" })), false);
+check("a superseded version is not evidence", okOf(evidenceVerdict({ status: "superseded" })), false);
+check("a missing document is not evidence", okOf(evidenceVerdict(null)), false);
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

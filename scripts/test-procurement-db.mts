@@ -49,12 +49,12 @@ const uuid = () => crypto.randomUUID();
 const sha = (s: string) => crypto.createHash("sha256").update(s).digest("hex");
 const founder = "founder-user";
 
-async function newDoc(title: string) {
+async function newDoc(title: string, status = "verified") {
   const documentId = uuid();
   const id = uuid();
   await prisma.companyDocument.create({ data: { id: documentId, title, kind: "test" } });
   await prisma.companyDocumentVersion.create({
-    data: { id, documentId, version: 1, status: "verified", storagePath: `${documentId}/${id}.pdf`, filename: `${title}.pdf`, sha256: sha(title), sizeBytes: 10 },
+    data: { id, documentId, version: 1, status, storagePath: `${documentId}/${id}.pdf`, filename: `${title}.pdf`, sha256: sha(title), sizeBytes: 10 },
   });
   return id;
 }
@@ -194,6 +194,50 @@ try {
   const pkgC = await lockedPackage(oppC, [await newDoc("c-response")]);
   const late = await service.requestApproval({ packageId: pkgC, actionType: "submit_tender", userId: founder });
   check("no approval request after the deadline", late.ok ? "allowed" : late.reason, "The deadline has passed.");
+
+  console.log("\n  Review fixes (PR 14)");
+  // AI drafts are not evidence or receipts.
+  const oppF = await newOpportunity("UnderEvaluation");
+  const draftDoc = await newDoc("f-draft-award-letter", "ai_draft");
+  const draftMove = await service.transitionOpportunity({ opportunityId: oppF, to: "Awarded", actor: "founder", userId: founder, evidenceVersionId: draftDoc });
+  check("an AI draft cannot evidence an award", draftMove.ok ? "allowed" : draftMove.reason, "An AI draft is not evidence. Upload the document you received.");
+  const realDoc = await newDoc("f-award-letter");
+  check("a verified document can", (await service.transitionOpportunity({ opportunityId: oppF, to: "Awarded", actor: "founder", userId: founder, evidenceVersionId: realDoc })).ok, true);
+
+  // An expired, undecided request is retired so a new one can be made.
+  const oppG = await newOpportunity("AwaitingFinalApproval");
+  const pkgG = await lockedPackage(oppG, [await newDoc("g-response")]);
+  const firstReq = await service.requestApproval({ packageId: pkgG, actionType: "submit_tender", userId: founder });
+  check("first request", firstReq.ok, true);
+  const firstId = firstReq.ok ? firstReq.value : "";
+  check("a second request while the first is live is refused", (await service.requestApproval({ packageId: pkgG, actionType: "submit_tender", userId: founder })).ok, false);
+  await prisma.approvalRequest.update({ where: { id: firstId }, data: { expiresAt: new Date(Date.now() - 1000) } });
+  check("after expiry a new request is accepted", (await service.requestApproval({ packageId: pkgG, actionType: "submit_tender", userId: founder })).ok, true);
+  check("the lapsed request is marked expired", (await prisma.approvalRequest.findUniqueOrThrow({ where: { id: firstId } })).status, "expired");
+  check("and that is audited", await prisma.auditLog.count({ where: { entityId: firstId, action: "approval.expired" } }), 1);
+
+  // No new attempt while an earlier one is unclear.
+  const oppH = await newOpportunity("Submitting");
+  const pkgH = await lockedPackage(oppH, [await newDoc("h-response")]);
+  const decH1 = await approve(pkgH);
+  const execH1 = await service.startExecution({ decisionId: decH1, mode: "manual", userId: founder });
+  check("first attempt starts", execH1.ok, true);
+  const execH1Id = execH1.ok ? execH1.value : "";
+  check("marked unclear", (await service.recordExecutionOutcome({ executionId: execH1Id, outcome: "ambiguous", userId: founder })).ok, true);
+  const revH = await service.revisePackage(pkgH, founder);
+  const pkgH2 = revH.ok ? revH.value : "";
+  await service.lockPackage(pkgH2, founder);
+  const decH2 = await approve(pkgH2);
+  const retry = await service.startExecution({ decisionId: decH2, mode: "manual", userId: founder });
+  check("a new approval cannot start while the first is unclear", retry.ok ? "allowed" : retry.reason, "An earlier attempt is still pending or unclear. Check the portal and record its outcome first.");
+  const draftReceipt = await newDoc("h-draft-receipt", "ai_draft");
+  check(
+    "an AI draft cannot be the receipt",
+    (await service.recordExecutionOutcome({ executionId: execH1Id, outcome: "confirmed", portalReference: "REF-H", receiptVersionId: draftReceipt, userId: founder })).ok,
+    false
+  );
+  check("reconciled as rejected", (await service.recordExecutionOutcome({ executionId: execH1Id, outcome: "rejected", userId: founder })).ok, true);
+  check("then a new attempt may start", (await service.startExecution({ decisionId: decH2, mode: "manual", userId: founder })).ok, true);
 
   console.log("\n  Concurrency");
   // Two moves from the same status at once. Depending on timing both may be
