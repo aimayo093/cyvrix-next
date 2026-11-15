@@ -824,7 +824,8 @@ approvals. Design and reasoning: `docs/procurement/`. Phase 1 (15 November
   the name of a password-manager entry, never a secret.
 - **The registered office stays withheld.** `CompanyFact.publicAllowed` is
   false by default, cannot be set for withheld keys (registered office,
-  postcodes, founder or director details: `isWithheldFactKey`), and fact
+  postcodes, personal details) because only an allow-list of keys may ever be
+  public (`PUBLIC_FACT_KEYS`), and fact
   values are not copied into the audit log.
 - **The 52 organisations are research targets**, seeded by name and category
   only (`20261115120100`). Nothing records or implies a relationship.

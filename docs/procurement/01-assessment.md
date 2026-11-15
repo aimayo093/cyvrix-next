@@ -49,7 +49,8 @@ this plan and must not be written to.
   Never use `lib/company-facts.ts` for withheld values: client code may import
   it. The office address in `lib/company-registered-office.ts` is a
   `server-only` module for the same reason. Keys for the registered office or
-  personal details cannot be marked public (`isWithheldFactKey`).
+  personal details can never be marked public: only the keys in
+  `PUBLIC_FACT_KEYS` may be.
 
 ## 2. Paperclip capability and permission assessment
 

@@ -86,9 +86,10 @@ async function OpportunityContent({ params, searchParams }: Props) {
       {v.Document.title} v{v.version} ({VERSION_STATUS_LABEL[v.status] ?? v.status})
     </option>
   ));
-  // Evidence and receipts: never an AI draft (checked again on the server).
+  // Evidence and receipts: never an AI draft or an expired file (checked again on the server).
+  const now = new Date();
   const evidenceOptions = versions
-    .filter((v) => (EVIDENCE_STATUSES as readonly string[]).includes(v.status))
+    .filter((v) => (EVIDENCE_STATUSES as readonly string[]).includes(v.status) && (!v.expiresAt || v.expiresAt > now))
     .map((v) => (
       <option key={v.id} value={v.id}>
         {v.Document.title} v{v.version} ({VERSION_STATUS_LABEL[v.status] ?? v.status})

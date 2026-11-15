@@ -282,6 +282,28 @@ try {
   check("exactly one outcome is recorded", both.filter((r) => r.ok).length, 1);
   check("and one receipt is stored", await prisma.receipt.count({ where: { executionId: execKId } }), 1);
 
+  console.log("\n  Confirming and starting at the same moment");
+  // While the first attempt is being confirmed, a second approval tries to
+  // start. The opportunity lock makes one wait for the other, so the start
+  // sees the confirmation and is refused: never two confirmed submissions.
+  const oppN = await newOpportunity("Submitting");
+  const pkgN = await lockedPackage(oppN, [await newDoc("n-response")]);
+  const execN = await service.startExecution({ decisionId: await approve(pkgN), mode: "manual", userId: founder });
+  const execNId = execN.ok ? execN.value : "";
+  const revN = await service.revisePackage(pkgN, founder);
+  const pkgN2 = revN.ok ? revN.value : "";
+  await service.lockPackage(pkgN2, founder);
+  const decN2 = await approve(pkgN2);
+  const receiptN = await newDoc("n-receipt");
+  const [confirmN, startN] = await Promise.all([
+    service.recordExecutionOutcome({ executionId: execNId, outcome: "confirmed", portalReference: "REF-N", receiptVersionId: receiptN, userId: founder }),
+    service.startExecution({ decisionId: decN2, mode: "manual", userId: founder }),
+  ]);
+  check("the confirmation is recorded", confirmN.ok, true);
+  check("the racing second start is refused", startN.ok, false);
+  check("one confirmed submission in total", await prisma.executionRecord.count({ where: { opportunityId: oppN, outcome: "confirmed" } }), 1);
+  check("and no second attempt left behind", await prisma.executionRecord.count({ where: { opportunityId: oppN } }), 1);
+
   console.log("\n  One unresolved attempt per action (database)");
   const oppL = await newOpportunity("Submitting");
   const pkgL = await lockedPackage(oppL, [await newDoc("l-response")]);
@@ -355,7 +377,8 @@ try {
     if (next < 0) break;
     at = remaining.splice(next, 1)[0].to;
   }
-  check("racing moves leave one unbroken history", remaining.length === 0 && at === final, true);
+  // At least one move must have happened, or a fully failed path would pass.
+  check("racing moves leave one unbroken history", steps.length >= 1 && remaining.length === 0 && at === final, true);
   // Same target from two writers: the compare-and-set must let exactly one through.
   const oppE = await newOpportunity("Discovered");
   const raced = await Promise.all(

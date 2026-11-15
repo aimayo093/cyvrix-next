@@ -542,7 +542,7 @@ function UploadForm({ documentId, isFounder, compact }: { documentId?: string; i
 async function Facts({ isFounder }: { isFounder: boolean }) {
   const [facts, versions] = await Promise.all([
     prisma.companyFact.findMany({ orderBy: { key: "asc" }, include: { Evidence: { include: { Document: true } } } }),
-    isFounder ? prisma.companyDocumentVersion.findMany({ where: { status: { in: [...EVIDENCE_STATUSES] } }, orderBy: { createdAt: "desc" }, take: 100, include: { Document: true } }) : Promise.resolve([]),
+    isFounder ? prisma.companyDocumentVersion.findMany({ where: { status: { in: [...EVIDENCE_STATUSES] }, OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] }, orderBy: { createdAt: "desc" }, take: 100, include: { Document: true } }) : Promise.resolve([]),
   ]);
   return (
     <div className="space-y-6">

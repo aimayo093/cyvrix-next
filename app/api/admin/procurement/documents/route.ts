@@ -149,6 +149,23 @@ export async function POST(req: Request) {
       });
     });
   } catch (error) {
+    // The commit may have succeeded even though the reply was lost. Look before
+    // deleting: a file whose record exists must never be removed.
+    const saved = await prisma.companyDocumentVersion
+      .findUnique({ where: { id: versionId }, select: { id: true } })
+      .then((row) => (row ? "yes" : "no"))
+      .catch(() => "unknown" as const);
+    if (saved !== "no") {
+      console.error("[procurement] document upload outcome unclear; file kept", { storagePath, saved });
+      return back(
+        req,
+        returnTo,
+        saved === "yes" ? "success" : "error",
+        saved === "yes"
+          ? `Stored version ${version} (${verdict.sha256.slice(0, 12)}…).`
+          : "The upload's outcome is unclear. Reload the Documents tab before trying again."
+      );
+    }
     // No record means nothing may keep the file: remove it rather than leave
     // confidential data in the bucket with nothing pointing at it.
     const removed = await removeDocument(storagePath);

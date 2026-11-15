@@ -9,7 +9,7 @@ import {
   canExecute,
   canonicalJson,
   evidenceVerdict,
-  isWithheldFactKey,
+  mayBePublicFact,
   manifestSha256,
   type ExecutionCheckInput,
 } from "../lib/procurement/approval-core";
@@ -169,14 +169,16 @@ check("certified evidence is evidence", okOf(evidenceVerdict({ status: "certifie
 check("an AI draft is never evidence", okOf(evidenceVerdict({ status: "ai_draft" })), false);
 check("a superseded version is not evidence", okOf(evidenceVerdict({ status: "superseded" })), false);
 check("a missing document is not evidence", okOf(evidenceVerdict(null)), false);
+check("an expired document is not evidence", okOf(evidenceVerdict({ status: "verified", expiresAt: new Date("2026-01-01T00:00:00Z") }, new Date("2026-11-15T00:00:00Z"))), false);
+check("an unexpired document is evidence", okOf(evidenceVerdict({ status: "verified", expiresAt: new Date("2027-01-01T00:00:00Z") }, new Date("2026-11-15T00:00:00Z"))), true);
 
 console.log("\n  Withheld company facts");
-check("registered office is withheld", isWithheldFactKey("registered_office"), true);
-check("registered office postcode is withheld", isWithheldFactKey("registered_office_postcode"), true);
-check("founder name is withheld", isWithheldFactKey("founder_name"), true);
-check("director details are withheld", isWithheldFactKey("director_home_address"), true);
-check("company number may be public", isWithheldFactKey("company_number"), false);
-check("VAT number may be public", isWithheldFactKey("vat_number"), false);
+check("registered office is never public", mayBePublicFact("registered_office"), false);
+check("a renamed address is never public", mayBePublicFact("address_line_1"), false);
+check("founder name is never public", mayBePublicFact("founder_name"), false);
+check("an alias for a person is never public", mayBePublicFact("owner_name"), false);
+check("company number may be public", mayBePublicFact("company_number"), true);
+check("trading location may be public", mayBePublicFact("trading_location"), true);
 
 console.log("\n  London deadlines");
 const london = (s: string) => {
@@ -191,6 +193,7 @@ check("the hour after the change is fine", london("2026-03-29T02:00"), "2026-03-
 check("a repeated hour (clocks back, 25 Oct 2026) is refused", london("2026-10-25T01:30"), "refused");
 check("the hour after that change is fine", london("2026-10-25T02:00"), "2026-10-25T02:00:00.000Z");
 check("a malformed value is refused", london("2026-07-01 12:00"), "refused");
+check("a two-digit-era year is refused, not misread", london("0099-06-01T12:00"), "refused");
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

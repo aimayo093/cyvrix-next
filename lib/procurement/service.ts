@@ -55,6 +55,15 @@ export async function audit(
   });
 }
 
+/**
+ * Row lock on one opportunity until the transaction ends. Serialises starting
+ * an attempt and recording an outcome for that opportunity, so a confirmation
+ * cannot land between a duplicate check and the next attempt's insert.
+ */
+async function lockOpportunity(tx: Tx, opportunityId: string) {
+  await tx.$queryRaw`SELECT 1 FROM "public"."Opportunity" WHERE "id" = ${opportunityId} FOR UPDATE`;
+}
+
 /** The package's manifest as it stands now, from its items. */
 async function currentManifest(tx: Tx, packageId: string): Promise<string | null> {
   const pkg = await tx.package.findUnique({ where: { id: packageId }, include: { Item: true } });
@@ -295,6 +304,9 @@ export async function startExecution(input: {
     });
     if (!decision) return fail("That approval could not be found.");
     const request = decision.Request;
+    // Starting an attempt and recording an outcome both lock the opportunity
+    // first, so neither can slip between the other's checks and its write.
+    await lockOpportunity(tx, request.opportunityId);
     const opp = await tx.opportunity.findUnique({ where: { id: request.opportunityId }, select: { status: true, statusChangedAt: true } });
     if (!opp) return fail("That opportunity could not be found.");
     // A submission's approval first opens ApprovedForSubmission, so it must not
@@ -367,6 +379,10 @@ export async function recordExecutionOutcome(input: {
   userId: string;
 }): Promise<Outcome> {
   return prisma.$transaction(async (tx) => {
+    const found = await tx.executionRecord.findUnique({ where: { id: input.executionId }, select: { opportunityId: true } });
+    if (!found) return fail("That record could not be found.");
+    await lockOpportunity(tx, found.opportunityId);
+    // Read again under the lock.
     const exec = await tx.executionRecord.findUnique({ where: { id: input.executionId } });
     if (!exec) return fail("That record could not be found.");
     if (exec.outcome !== "pending" && exec.outcome !== "ambiguous") return fail("This outcome has already been recorded.");

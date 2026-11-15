@@ -12,7 +12,7 @@ practice).
 | ID | Item | Done when |
 | --- | --- | --- |
 | P1-1 | Migration: `Organisation`, `OpportunitySource`, `IngestionRun`, `ProcurementNotice`, `Opportunity`, `OpportunityEvidence`, `CompanyFact`, `CompanyDocument(+Version)`, `Package(+Item)`, `ApprovalRequest`, `ApprovalDecision`, `ExecutionRecord`, `Receipt`, `CostEntry`; `Contact.organisationId`; additive only | Applies cleanly and re-applies safely on a local database; dry-run on production (done) |
-| P1-2 | `lib/procurement/lifecycle.ts`: both state machines as data, checked by `checkTransition()`; `transitionOpportunity()` (service) moves with compare-and-set and an audit entry | Unit tests cover every allowed and refused move |
+| P1-2 | `lib/procurement/lifecycle.ts`: both state machines as data, checked by `checkTransition()`; `transitionOpportunity()` (service) moves with compare-and-set and an audit entry | Unit tests cover each gate type (person, founder, approval, executed, evidence) and agent limits on both machines, refuse skipped and cross-machine moves, and check every state is reachable. A table-driven test of every single edge is a Phase 2 item |
 | P1-3 | Private bucket + upload with scan + signed URLs (D5) | Upload of an EICAR test file refused; signed URL expires |
 | P1-4 | Seed the 52 organisations from §32 (names, categories, priority; no claims, no contacts) | 52 rows; founder can add, remove, re-prioritise |
 | P1-5 | Approval core: request, decision with step-up TOTP, manifest hashing, expiry, single use | Tests 17–20 below pass |
@@ -20,6 +20,10 @@ practice).
 | P1-7 | `ADMIN_GUIDE.md`, `DECISIONS.md` §20 "Procurement", this folder updated to as-built | Docs match the code |
 
 ### Phase 2: Lead integration
+
+Carried over from the PR 14 review (not blocking Phase 1):
+- a database trigger that sets `Opportunity.statusChangedAt` whenever `status` changes, so a direct database write cannot leave a stale submission round (needs a migration);
+- table-driven tests over every lifecycle edge, allowed and refused.
 
 | ID | Item |
 | --- | --- |

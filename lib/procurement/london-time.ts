@@ -31,6 +31,9 @@ export function londonWallTimeToUtc(local: string): LondonTime {
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(local);
   if (!m) return { ok: false, reason: "Enter the date and time as shown by the date picker." };
   const [year, month, day, hour, minute] = m.slice(1).map(Number);
+  // Procurement deadlines are current or future dates. A fixed range also keeps
+  // clear of Date.UTC treating years 0–99 as 1900–1999.
+  if (year < 2000 || year > 2100) return { ok: false, reason: "Enter a year between 2000 and 2100." };
   const naive = new Date(Date.UTC(year, month - 1, day, hour, minute));
   if (
     naive.getUTCFullYear() !== year ||

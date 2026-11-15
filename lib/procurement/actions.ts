@@ -19,7 +19,7 @@ import {
   startExecution,
   transitionOpportunity,
 } from "./service";
-import { evidenceVerdict, isWithheldFactKey } from "./approval-core";
+import { evidenceVerdict, mayBePublicFact, PUBLIC_FACT_KEYS } from "./approval-core";
 import { londonWallTimeToUtc } from "./london-time";
 import { verifyStepUp } from "./step-up";
 
@@ -441,14 +441,16 @@ export async function saveCompanyFact(fd: FormData) {
   }
   const wantsPublic = fd.get("publicAllowed") === "on";
   // DECISIONS section 4: the registered office and the founder's name stay off the website.
-  if (wantsPublic && isWithheldFactKey(key)) go(back, "error", "This fact is withheld from the public website and cannot be marked public.");
+  if (wantsPublic && !mayBePublicFact(key)) {
+    go(back, "error", `Only these facts may be public: ${PUBLIC_FACT_KEYS.join(", ")}. The registered office and personal details never are.`);
+  }
   const data = {
     label: label!.slice(0, 120),
     value: value!.slice(0, 2000),
     evidenceVersionId: evidence ?? null,
     verifiedAt: new Date(),
     verifiedById: user.id,
-    publicAllowed: wantsPublic && !isWithheldFactKey(key),
+    publicAllowed: wantsPublic && mayBePublicFact(key),
   };
   await prisma.$transaction(async (tx) => {
     await tx.companyFact.upsert({ where: { key }, create: { key, ...data }, update: data });

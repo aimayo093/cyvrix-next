@@ -60,15 +60,31 @@ export type Verdict = { ok: true } | { ok: false; reason: string };
 export const EVIDENCE_STATUSES = ["verified", "founder_approved", "certified_evidence"] as const;
 
 /**
- * Company facts that may never be marked public (DECISIONS section 4): the
- * residential registered office, its postcode, and personal details of the
- * founder or directors. Matched on the key, whatever the label says.
+ * The only company facts that may ever be marked public. An allow-list, not a
+ * block-list: a key is free text, so withheld data saved under any other name
+ * (`address_line_1`, `owner_name`) still stays off the website (DECISIONS §4).
+ * The registered office, postcodes and personal details are never on it.
  */
-export function isWithheldFactKey(key: string): boolean {
-  return /^(registered_office|registered_address|postcode|founder|director|home_|personal_)/.test(key) || /(_address|_postcode)$/.test(key);
+export const PUBLIC_FACT_KEYS = [
+  "company_name",
+  "trading_name",
+  "company_number",
+  "incorporation_date",
+  "vat_number",
+  "ico_registration",
+  "website",
+  "trading_location",
+  "service_area",
+  "business_email",
+  "business_phone",
+] as const;
+
+export function mayBePublicFact(key: string): boolean {
+  return (PUBLIC_FACT_KEYS as readonly string[]).includes(key);
 }
 
-export function evidenceVerdict(version: { status: string } | null): Verdict {
+/** Whether a stored version can stand as evidence or a receipt now. */
+export function evidenceVerdict(version: { status: string; expiresAt?: Date | null } | null, now: Date = new Date()): Verdict {
   if (!version) return { ok: false, reason: "The evidence document could not be found." };
   if (!(EVIDENCE_STATUSES as readonly string[]).includes(version.status)) {
     return {
@@ -78,6 +94,9 @@ export function evidenceVerdict(version: { status: string } | null): Verdict {
           ? "An AI draft is not evidence. Upload the document you received."
           : "That version has been superseded. Use the current one.",
     };
+  }
+  if (version.expiresAt && version.expiresAt.getTime() <= now.getTime()) {
+    return { ok: false, reason: "That document has expired. Upload the current one." };
   }
   return { ok: true };
 }
