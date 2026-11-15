@@ -109,7 +109,9 @@ The founder answered in the Phase 0 follow-up:
 - **D5 private document store, D6 Organisation table, D7 no portal passwords, D11 no new spending**: approved as recommended.
 - **D2 "Company experience."** The past field work may be described as company experience **once the evidence (contract or purchase orders) is uploaded and recorded as a company fact**. Until then every document keeps the `PRODUCT.md` wording.
 
-Still open: D1, D3, D4, D8, D10, D12, D13, D14, and approval to apply the Phase 1 migrations to production.
+- **"Dry-run, then apply"** (Phase 1 migrations). Dry-run on production in a rolled-back transaction succeeded, then `procurement_foundation` and `procurement_target_organisations` were applied on 15 November 2026. Verified: 52 organisations (6 at priority 1), 10 sources all off, private bucket `company-documents` with no storage policies, RLS on all 16 new tables with no API-role grants, 4 guard triggers. The Supabase security advisor reports only the expected "RLS enabled, no policy" notes (server-only tables, as `AgentDraft`). The Phase 1 **code is not merged or deployed**.
+
+Still open: D1, D3, D4, D8, D10, D12, D13, D14, and merging and deploying the Phase 1 code.
 
 ### Decisions requested
 
