@@ -264,37 +264,37 @@ export async function saveLegalPage(formData: FormData) {
   // The page and its audit entry commit together, so a notice is scheduled
   // only for a change that is both live and recorded.
   const saved = await prisma.$transaction(async (tx) => {
-  const page = await tx.legalPage.upsert({
-    where: { slug: definition.slug },
-    create: {
-      id: crypto.randomUUID(),
-      slug: definition.slug,
-      title: title || definition.title,
-      body: body || null,
-      reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
-      status,
-      updatedAt: new Date(),
-    },
-    update: {
-      title: title || definition.title,
-      body: body || null,
-      reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
-      status,
-      updatedAt: new Date(),
-    },
-  });
+    const page = await tx.legalPage.upsert({
+      where: { slug: definition.slug },
+      create: {
+        id: crypto.randomUUID(),
+        slug: definition.slug,
+        title: title || definition.title,
+        body: body || null,
+        reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
+        status,
+        updatedAt: new Date(),
+      },
+      update: {
+        title: title || definition.title,
+        body: body || null,
+        reviewNotice: reviewNotice || "Final legal documents should be reviewed by a qualified legal professional.",
+        status,
+        updatedAt: new Date(),
+      },
+    });
 
-  await tx.auditLog.create({
-    data: {
-      id: crypto.randomUUID(),
-      userId: admin.id,
-      action: "legal_page_saved",
-      entityType: "LegalPage",
-      entityId: page.id,
-      metadata: { slug: definition.slug, title: page.title, status: page.status },
-    },
-  });
-  return page;
+    await tx.auditLog.create({
+      data: {
+        id: crypto.randomUUID(),
+        userId: admin.id,
+        action: "legal_page_saved",
+        entityType: "LegalPage",
+        entityId: page.id,
+        metadata: { slug: definition.slug, title: page.title, status: page.status },
+      },
+    });
+    return page;
   });
 
   // A change to public legal text is announced to every account holder
@@ -2253,7 +2253,7 @@ export async function restoreReviewedLegalPage(formData: FormData) {
         entityType: "LegalPage",
         entityId: existing.id,
         // The previous wording, so this is reversible without a backup file.
-        metadata: { slug, previousTitle: existing.title, previousBody: existing.body ?? "" },
+        metadata: { slug, previousTitle: existing.title, previousBody: existing.body ?? "", previousReviewNotice: existing.reviewNotice },
       },
     }),
     prisma.legalPage.update({
