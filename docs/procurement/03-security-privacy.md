@@ -36,7 +36,7 @@
 | T12 | Audit tampering | DB | Low | High | Existing chain and triggers; latest fingerprint noted outside the database (`DECISIONS.md` §14) |
 | T13 | Background job starves the database pool | Supabase | Medium | Medium | One connection, one job at a time, advisory lock per source, 10 s acquire timeout |
 | T14 | Source outage or schema change silently drops notices | Ingestion | Medium | Medium | Each run records counts; zero-result runs for two days raise an alert; raw stored before parsing; parse failures go to a dead-letter status, never dropped |
-| T15 | False "login required" switches off all agents | Paperclip | High once 13 is active | Medium | D9 patch and per-agent connections before activation |
+| T15 | False "login required" switches off all agents | Paperclip | Low (patched 14 Nov) | Medium | Adapter patch applied and verified; re-apply after upgrades; per-agent connections optional |
 | T16 | Deadline pressure leads to approval being skipped | Process | Medium | High | No code path skips approval; reminders escalate only |
 | T17 | Outreach breaches PECR or a contractual non-solicitation term | Email | Medium | High | §3 below; §34 contractual check recorded on the opportunity before an approach |
 

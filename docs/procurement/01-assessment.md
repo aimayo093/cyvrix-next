@@ -91,8 +91,8 @@ decisions go through `FOUNDER DECISION:` tasks, listed by
 the existing 24-role plan. Creating 13, 14 and 12 is a board decision (D10).
 
 **Open faults that affect this programme:**
-- The false "login required" detection (B6). It will trigger on tender portal
-  pages.
+- The false "login required" detection (B6): patched on 14 November and
+  verified in place on 15 November. Re-apply after any Paperclip upgrade.
 - Board retries bind a task to a one-off workspace (workaround documented).
 - A blocked agent cannot ask for an input outside its boundary. Consider a
   `FOUNDER INPUT NEEDED` convention alongside `FOUNDER DECISION`.
