@@ -27,14 +27,21 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
--- Used only by the check; the API roles never call it.
+-- Used only by the check; the API roles never call it. A new function is
+-- executable by PUBLIC by default, so that grant is revoked too. The owner
+-- (the server's role) keeps it; service_role is granted it explicitly in case
+-- a server path writes assessments as that role.
 DO $$
 DECLARE
   role_name TEXT;
 BEGIN
+  REVOKE ALL ON FUNCTION "public"."procurement_assessment_keys_ok"(TEXT, JSONB) FROM PUBLIC;
   FOREACH role_name IN ARRAY ARRAY['anon', 'authenticated'] LOOP
     IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = role_name) THEN
       EXECUTE format('REVOKE ALL ON FUNCTION "public"."procurement_assessment_keys_ok"(TEXT, JSONB) FROM %I', role_name);
     END IF;
   END LOOP;
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'service_role') THEN
+    GRANT EXECUTE ON FUNCTION "public"."procurement_assessment_keys_ok"(TEXT, JSONB) TO service_role;
+  END IF;
 END $$;
