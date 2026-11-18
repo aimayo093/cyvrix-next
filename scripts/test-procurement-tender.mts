@@ -136,6 +136,17 @@ const pdf = new TextEncoder().encode("%PDF-1.4 test");
   const r = await fetchPublicDocument("https://in-tendhost.co.uk/x", fakeFetch({}).impl);
   check("a link off the list is never requested", r.ok, false);
 }
+{
+  // Headers arrive, then the connection drops mid-download.
+  const broken = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(new TextEncoder().encode("%PDF-1.4 partial"));
+      controller.error(new Error("socket hang up"));
+    },
+  });
+  const r = await fetchPublicDocument(ALLOWED, async () => new Response(broken, { status: 200 }));
+  check("a download cut off mid-stream is a refusal, not a crash", r.ok ? "fetched" : r.reason.includes("cut off"), true);
+}
 
 console.log("\n  Requirements");
 check("a mandatory requirement is met only with evidence", requirementProblem({ kind: "mandatory", status: "met", evidenceVersionId: null, text: "ISO 27001 certificate" }) !== null, true);

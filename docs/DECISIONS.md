@@ -958,10 +958,14 @@ that relies on them is deployed.
   file can never be chosen as CYVRIX evidence. A stored copy never changes.
 - The requirements checklist is entered by a person. Agent extraction is not
   built: tender documents often name buyer staff, and agents run on DeepSeek
-  (D4, section 15). A mandatory requirement is met only with current evidence
-  (also a database check). Final approval (QualityReview or SubmissionFailed
-  to AwaitingFinalApproval) is refused while any mandatory requirement is
-  open or unmet, and for a tender before any are recorded.
+  (D4, section 15). A mandatory requirement is marked met only with an
+  evidence document: the database requires one to be attached; the code
+  checks it is current (not an AI draft, not superseded, not expired) when the
+  requirement is saved, and again at every move to final approval, so a
+  document that lapses later reopens the requirement. Final approval
+  (QualityReview or SubmissionFailed to AwaitingFinalApproval) is refused
+  while any mandatory requirement is open, unmet or resting on lapsed
+  evidence, and for a tender before any are recorded.
 
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).

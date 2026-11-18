@@ -27,7 +27,7 @@ import { pursueProgrammeRecord, recordAssessment, saveAccount, savePortalRecord,
 import { ACCOUNT_STATUSES, PARTNERSHIP_CATEGORIES, parseList, WEIGHTS, type AccountStatus, type ScoringModel } from "./partnerships";
 import { MAX_REPORT_CHARS, parseReportWithCount } from "./report-import";
 import { verifyStepUp } from "./step-up";
-import { REQUIREMENT_KINDS, REQUIREMENT_STATUSES } from "./requirements";
+import { MAX_DISQUALIFIERS, REQUIREMENT_KINDS, REQUIREMENT_STATUSES } from "./requirements";
 import { fetchTenderDocument, refreshNoticeDocuments, saveRequirement, setDeadlines } from "./tender-service";
 
 /**
@@ -781,7 +781,7 @@ export async function recordAssessmentAction(fd: FormData) {
     const raw = text(fd, `score_${category}`);
     scores[category] = raw === undefined ? NaN : Number(raw);
   }
-  const disqualifiers = (text(fd, "disqualifiers") ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 20);
+  const disqualifiers = (text(fd, "disqualifiers") ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, MAX_DISQUALIFIERS);
   const result = await recordAssessment({ opportunityId: id.data!, model: model!, scores, disqualifiers, assumptions: text(fd, "assumptions"), authorId: user.id });
   revalidatePath(oppPath(id.data!));
   if (!result.ok) go(oppPath(id.data!), "error", result.reason);

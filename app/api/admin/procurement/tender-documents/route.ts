@@ -53,14 +53,19 @@ export async function POST(req: Request) {
   if (!parsed.success) return back("error", parsed.error.issues[0]?.message ?? "Check the form and try again.");
 
   const input = parsed.data;
-  const result = await uploadTenderDocument({
-    opportunityId: input.opportunityId,
-    title: input.title,
-    documentType: input.documentType ?? null,
-    sourceUrl: input.sourceUrl ?? null,
-    buffer: Buffer.from(await input.file.arrayBuffer()),
-    filename: input.file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 120) || "tender-document",
-    userId: session.user.id,
-  });
-  return result.ok ? back("success", "Scanned and stored.") : back("error", result.reason);
+  try {
+    const result = await uploadTenderDocument({
+      opportunityId: input.opportunityId,
+      title: input.title,
+      documentType: input.documentType ?? null,
+      sourceUrl: input.sourceUrl ?? null,
+      buffer: Buffer.from(await input.file.arrayBuffer()),
+      filename: input.file.name.replace(/[^\w.\- ]+/g, "_").slice(0, 120) || "tender-document",
+      userId: session.user.id,
+    });
+    return result.ok ? back("success", "Scanned and stored.") : back("error", result.reason);
+  } catch (error) {
+    console.error("[procurement] tender document upload failed", error instanceof Error ? error.name : "error");
+    return back("error", "The upload could not be saved. Reload the page to see whether it was stored before trying again.");
+  }
 }

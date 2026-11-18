@@ -147,6 +147,9 @@ export function TenderDocumentsSection({ opp, docs }: { opp: { id: string; ocid:
                     <button className={secondaryButton}>Fetch a copy</button>
                   </form>
                 )}
+                {d.status === "listed" && refusal && (
+                  <p className="w-full text-xs text-amber-800">Not fetched by the site: {refusal}</p>
+                )}
               </li>
             );
           })}

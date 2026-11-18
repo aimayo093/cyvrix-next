@@ -811,8 +811,21 @@ try {
   const scBlocked = await toFinal();
   check("an unmet mandatory requirement blocks final approval", scBlocked.ok ? "moved" : scBlocked.reason.includes("not met"), true);
   await tender.saveRequirement({ id: sc.ok ? sc.value : "", opportunityId: bid, ref: "SQ 4.2", text: "SC clearance for all engineers", kind: "mandatory", status: "not_applicable", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: "Lot 2 only; we bid for Lot 1", userId: founder });
+  // Evidence that lapses after the requirement was marked met reopens it.
+  const shortLivedDoc = uuid();
+  const shortLived = uuid();
+  await prisma.companyDocument.create({ data: { id: shortLivedDoc, title: "insurance certificate", kind: "test" } });
+  await prisma.companyDocumentVersion.create({
+    data: { id: shortLived, documentId: shortLivedDoc, version: 1, status: "verified", expiresAt: new Date(Date.now() + 2000), storagePath: `${shortLivedDoc}/${shortLived}.pdf`, filename: "insurance.pdf", sha256: sha("insurance"), sizeBytes: 10 },
+  });
+  const insurance = await tender.saveRequirement({ opportunityId: bid, ref: "SQ 4.3", text: "Hold public liability insurance", kind: "mandatory", status: "met", sourceDocumentId: null, location: null, evidenceVersionId: shortLived, notes: null, userId: founder });
+  check("a requirement is met on evidence current when saved", insurance.ok, true);
+  await new Promise((r) => setTimeout(r, 2500));
+  const lapsed = await toFinal();
+  check("evidence that has since expired blocks final approval", lapsed.ok ? "moved" : lapsed.reason.includes("expired or been replaced"), true);
+  await tender.saveRequirement({ id: insurance.ok ? insurance.value : "", opportunityId: bid, ref: "SQ 4.3", text: "Hold public liability insurance", kind: "mandatory", status: "met", sourceDocumentId: null, location: null, evidenceVersionId: certificate, notes: "Renewed certificate", userId: founder });
   check("with every mandatory requirement met or not applicable, it moves", (await toFinal()).ok, true);
-  check("requirement changes are audited on the opportunity", await prisma.auditLog.count({ where: { entityId: bid, action: { in: ["requirement.added", "requirement.updated"] } } }), 4);
+  check("requirement changes are audited on the opportunity", await prisma.auditLog.count({ where: { entityId: bid, action: { in: ["requirement.added", "requirement.updated"] } } }), 6);
   check(
     "a requirement cannot be edited through another opportunity",
     (await tender.saveRequirement({ id: reqId, opportunityId: opp, ref: null, text: "Changed", kind: "information", status: "unknown", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: null, userId: founder })).ok,

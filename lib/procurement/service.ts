@@ -101,9 +101,16 @@ async function gatherFacts(tx: Tx, opportunityId: string, now: Date, roundStart:
   // The requirements checklist (Phase 4), counted under the same transaction.
   const reqs = await tx.tenderRequirement.groupBy({ by: ["kind", "status"], where: { opportunityId }, _count: { _all: true } });
   const count = (match: (r: { kind: string; status: string }) => boolean) => reqs.filter(match).reduce((n, r) => n + r._count._all, 0);
+  // A mandatory requirement marked met counts only while its evidence is still
+  // current: a document that has since expired or been superseded reopens it.
+  const metMandatory = await tx.tenderRequirement.findMany({
+    where: { opportunityId, kind: "mandatory", status: "met" },
+    select: { Evidence: { select: { status: true, expiresAt: true } } },
+  });
+  const staleEvidence = metMandatory.filter((r) => !evidenceVerdict(r.Evidence, now).ok).length;
   const requirements = {
     recorded: count(() => true),
-    mandatoryOpen: count((r) => r.kind === "mandatory" && (r.status === "unknown" || r.status === "partly_met")),
+    mandatoryOpen: count((r) => r.kind === "mandatory" && (r.status === "unknown" || r.status === "partly_met")) + staleEvidence,
     mandatoryNotMet: count((r) => r.kind === "mandatory" && r.status === "not_met"),
   };
   return { currentApprovals, confirmedExecutions: executions.map((e) => e.actionType as ApprovalAction), requirements };

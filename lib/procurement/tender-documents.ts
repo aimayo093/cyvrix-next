@@ -139,15 +139,21 @@ export async function fetchPublicDocument(url: string, fetchImpl: FetchLike = fe
     const reader = res.body.getReader();
     const chunks: Uint8Array[] = [];
     let total = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      total += value.byteLength;
-      if (total > MAX_FETCH_BYTES) {
-        await reader.cancel().catch(() => undefined);
-        return { ok: false, reason: "The file is larger than 5 MB. Download it yourself and upload the parts you need." };
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        total += value.byteLength;
+        if (total > MAX_FETCH_BYTES) {
+          await reader.cancel().catch(() => undefined);
+          return { ok: false, reason: "The file is larger than 5 MB. Download it yourself and upload the parts you need." };
+        }
+        chunks.push(value);
       }
-      chunks.push(value);
+    } catch {
+      // The site dropped the connection or the timeout fired mid-download.
+      await reader.cancel().catch(() => undefined);
+      return { ok: false, reason: "The download was cut off before it finished. Try again later or download it yourself." };
     }
     if (total === 0) return { ok: false, reason: "The site sent an empty file." };
     return { ok: true, buffer: Buffer.concat(chunks), finalUrl: current, filename: safeFilename(res.headers.get("content-disposition"), current) };

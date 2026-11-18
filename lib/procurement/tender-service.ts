@@ -134,27 +134,51 @@ export async function fetchTenderDocument(documentId: string, userId: string, fe
   return saveStoredCopy(doc.id, doc.opportunityId, stored.value, userId, { finalUrl: fetched.finalUrl });
 }
 
+/**
+ * After a failed or unclear save: removes the stored file only when the
+ * database clearly holds no record pointing at it. If the record exists, or
+ * the lookup itself fails (the commit may have gone through), the file is
+ * kept and logged: a record must never point at a deleted file.
+ */
+async function removeIfUnrecorded(documentId: string, storagePath: string): Promise<void> {
+  let recordedPath: string | null | undefined;
+  try {
+    recordedPath = (await prisma.tenderDocument.findUnique({ where: { id: documentId }, select: { storagePath: true } }))?.storagePath;
+  } catch {
+    console.error("[procurement] tender document outcome unclear; file kept", { storagePath });
+    return;
+  }
+  if (recordedPath === storagePath) return;
+  await removeDocument(storagePath);
+}
+
 /** Records the stored copy, or removes the file if another request stored one first. */
-async function saveStoredCopy(documentId: string, opportunityId: string, s: Stored, userId: string, meta: Record<string, unknown>): Promise<Result> {
+async function saveStoredCopy(
+  documentId: string,
+  opportunityId: string,
+  s: Stored,
+  userId: string,
+  meta: Record<string, unknown>,
+  origin?: "upload"
+): Promise<Result> {
   try {
     const saved = await prisma.$transaction(async (tx) => {
       const r = await tx.tenderDocument.updateMany({
         where: { id: documentId, status: { not: "stored" } },
-        data: { status: "stored", refusal: null, storedAt: new Date(), ...s },
+        // A listed notice document filled by a person's upload is recorded as an upload.
+        data: { status: "stored", refusal: null, storedAt: new Date(), ...s, ...(origin ? { origin } : {}) },
       });
       if (r.count !== 1) return false;
       await audit(tx, userId, "tender_document.stored", "TenderDocument", documentId, { opportunityId, sha256: s.sha256, sizeBytes: s.sizeBytes, ...meta });
       return true;
     });
     if (!saved) {
-      await removeDocument(s.storagePath);
+      await removeIfUnrecorded(documentId, s.storagePath);
       return fail("A copy was stored by someone else just now.");
     }
     return { ok: true };
   } catch (error) {
-    // Look before removing: a file whose record exists must never be deleted.
-    const row = await prisma.tenderDocument.findUnique({ where: { id: documentId }, select: { storagePath: true } }).catch(() => null);
-    if (row?.storagePath !== s.storagePath) await removeDocument(s.storagePath);
+    await removeIfUnrecorded(documentId, s.storagePath);
     throw error;
   }
 }
@@ -199,13 +223,14 @@ export async function uploadTenderDocument(input: {
         await audit(tx, input.userId, "tender_document.stored", "TenderDocument", id, { opportunityId: input.opportunityId, sha256: stored.value.sha256, sizeBytes: stored.value.sizeBytes, origin: "upload" });
       });
     } catch (error) {
-      await removeDocument(stored.value.storagePath);
+      // The commit may have gone through even though the reply was lost: look before removing.
+      await removeIfUnrecorded(id, stored.value.storagePath);
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") return fail("That link is already listed for this opportunity.");
       throw error;
     }
     return { ok: true };
   }
-  return saveStoredCopy(id, input.opportunityId, stored.value, input.userId, { origin: "upload" });
+  return saveStoredCopy(id, input.opportunityId, stored.value, input.userId, { origin: "upload" }, "upload");
 }
 
 // ---------------------------------------------------------------- requirements

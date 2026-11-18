@@ -34,7 +34,7 @@ import {
 import { EVIDENCE_STATUSES } from "@/lib/procurement/approval-core";
 import { APPROVAL_ACTIONS, nextStates, type OpportunityKind } from "@/lib/procurement/lifecycle";
 import { CATEGORY_LABEL, WEIGHTS } from "@/lib/procurement/partnerships";
-import { summarise } from "@/lib/procurement/requirements";
+import { MAX_DISQUALIFIERS, summarise } from "@/lib/procurement/requirements";
 import { DatesSection, RequirementsSection, TenderDocumentsSection } from "@/components/admin/procurement/TenderSections";
 
 export const metadata = { title: "Opportunity" };
@@ -208,7 +208,7 @@ async function OpportunityContent({ params, searchParams }: Props) {
               </select>
             </label>
           ))}
-          <label className="space-y-1 md:col-span-2"><span className={label}>Disqualifiers, one per line (leave empty if none)</span><textarea name="disqualifiers" rows={2} defaultValue={requirementSummary.disqualifiers.join("\n")} className={field} /></label>
+          <label className="space-y-1 md:col-span-2"><span className={label}>Disqualifiers, one per line (leave empty if none)</span><textarea name="disqualifiers" rows={2} defaultValue={requirementSummary.disqualifiers.slice(0, MAX_DISQUALIFIERS).join("\n")} className={field} /></label>
           <label className="space-y-1 md:col-span-2"><span className={label}>Assumptions and sources</span><textarea name="assumptions" rows={2} maxLength={4000} className={field} /></label>
           <div className="md:col-span-2"><button className={secondaryButton}>Record assessment</button></div>
         </form>

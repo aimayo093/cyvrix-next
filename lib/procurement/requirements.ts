@@ -74,6 +74,11 @@ export function summarise(rows: { kind: string; status: string; ref: string | nu
 export function requirementsGate(kind: string, s: Pick<RequirementsSummary, "recorded" | "mandatoryOpen" | "mandatoryNotMet">): { ok: true } | { ok: false; reason: string } {
   if (kind === "tender" && s.recorded === 0) return { ok: false, reason: "Record the tender's requirements before final approval." };
   if (s.mandatoryNotMet > 0) return { ok: false, reason: `${s.mandatoryNotMet} mandatory requirement(s) are not met. This is a no-bid unless that changes.` };
-  if (s.mandatoryOpen > 0) return { ok: false, reason: `${s.mandatoryOpen} mandatory requirement(s) are still unchecked or only partly met.` };
+  if (s.mandatoryOpen > 0) {
+    return { ok: false, reason: `${s.mandatoryOpen} mandatory requirement(s) are still unchecked, only partly met, or marked met on evidence that has since expired or been replaced.` };
+  }
   return { ok: true };
 }
+
+/** Disqualifiers kept per assessment; the form's prefill uses the same limit, so none is dropped unseen. */
+export const MAX_DISQUALIFIERS = 20;
