@@ -15,6 +15,7 @@ import {
 import { crossSourceKey, isRelevant, normalise, withoutContactPoints, type NormalisedNotice, type OcdsRelease } from "./ocds";
 import { valuesAgree } from "./ingest-rules";
 import { initialStatus } from "./lifecycle";
+import { recordDateChanges } from "./deadlines";
 import { audit } from "./service";
 
 /**
@@ -117,9 +118,10 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
 
     // The opportunity this notice belongs to: by OCID, or (for a copy already
     // matched to another portal's record) by the copy's stable notice link.
-    let existing = await tx.opportunity.findFirst({ where: { ocid: notice.ocid }, select: { id: true, status: true } });
+    const DATES = { id: true, status: true, deadlineAt: true, clarificationDeadlineAt: true } as const;
+    let existing = await tx.opportunity.findFirst({ where: { ocid: notice.ocid }, select: DATES });
     if (!existing && notice.noticeUrl && notice.noticeUrl.includes(notice.ocid)) {
-      const linked = await tx.opportunityEvidence.findFirst({ where: { url: notice.noticeUrl }, select: { Opportunity: { select: { id: true, status: true } } } });
+      const linked = await tx.opportunityEvidence.findFirst({ where: { url: notice.noticeUrl }, select: { Opportunity: { select: DATES } } });
       existing = linked?.Opportunity ?? null;
     }
     if (existing) {
@@ -140,7 +142,20 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
           },
         });
       } else {
-        await tx.opportunity.update({ where: { id: existing.id }, data: { updatedAt: new Date() } });
+        // Work has started, so the record's facts stay as the team left them,
+        // except the buyer's dates: an extended or earlier deadline must
+        // reach the people preparing the bid (Phase 4).
+        await tx.opportunity.update({
+          where: { id: existing.id },
+          data: {
+            updatedAt: new Date(),
+            ...(notice.deadlineAt !== null ? { deadlineAt: notice.deadlineAt } : {}),
+            ...(notice.clarificationDeadlineAt !== null ? { clarificationDeadlineAt: notice.clarificationDeadlineAt } : {}),
+          },
+        });
+      }
+      for (const c of recordDateChanges(existing, notice)) {
+        await audit(tx, null, "opportunity.deadline_changed", "Opportunity", existing.id, { ...c, by: "notice", source: sourceKey, releaseId: notice.releaseId });
       }
       await tx.opportunityEvidence.create({ data: { ...evidence, opportunityId: existing.id } });
       await audit(tx, null, "opportunity.notice_updated", "Opportunity", existing.id, { source: sourceKey, releaseId: notice.releaseId });

@@ -36,6 +36,7 @@ const ingest = await import("../lib/procurement/ingest");
 const fx = await import("./fixtures/procurement/ocds");
 const agentApi = await import("../lib/procurement/agent-api");
 const partnerships = await import("../lib/procurement/partnership-service");
+const tender = await import("../lib/procurement/tender-service");
 
 let passed = 0;
 let failed = 0;
@@ -103,6 +104,8 @@ try {
   const opp = await newOpportunity("Discovered");
   check("agent validates", (await service.transitionOpportunity({ opportunityId: opp, to: "Validated", actor: "agent", userId: null })).ok, true);
   check("agent cannot archive", (await service.transitionOpportunity({ opportunityId: opp, to: "Archived", actor: "agent", userId: null })).ok, false);
+  // Phase 4: final approval needs the tender's requirements recorded.
+  await prisma.tenderRequirement.create({ data: { id: uuid(), opportunityId: opp, text: "Submit through the buyer's portal", kind: "information" } });
   for (const to of ["Qualified", "EligibilityReview", "AwaitingBidDecision", "PreparingBid", "QualityReview", "AwaitingFinalApproval"]) {
     const r = await service.transitionOpportunity({ opportunityId: opp, to, actor: "founder", userId: founder });
     if (!r.ok) throw new Error(`${to}: ${r.reason}`);
@@ -635,6 +638,105 @@ try {
   const firstAssessment = assessed.ok ? assessed.value.id : "";
   await rejects("an assessment cannot be edited", () => prisma.bidAssessment.update({ where: { id: firstAssessment }, data: { assumptions: "changed" } }), "cannot be changed");
   await rejects("an assessment cannot be deleted", () => prisma.bidAssessment.delete({ where: { id: firstAssessment } }), "cannot be changed");
+
+  // ------------------------------------------------------------ Phase 4
+  console.log("\n  Requirements gate");
+  const bid = await newOpportunity("Discovered");
+  for (const to of ["Validated", "Qualified", "EligibilityReview", "AwaitingBidDecision", "PreparingBid", "QualityReview"]) {
+    const r = await service.transitionOpportunity({ opportunityId: bid, to, actor: "founder", userId: founder });
+    if (!r.ok) throw new Error(`${to}: ${r.reason}`);
+  }
+  const toFinal = () => service.transitionOpportunity({ opportunityId: bid, to: "AwaitingFinalApproval", actor: "founder", userId: founder });
+  const noReqs = await toFinal();
+  check("final approval refused before any requirement is recorded", noReqs.ok ? "moved" : noReqs.reason.includes("Record the tender's requirements"), true);
+  const iso = await tender.saveRequirement({ opportunityId: bid, ref: "SQ 4.1", text: "Hold Cyber Essentials", kind: "mandatory", status: "unknown", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: null, userId: founder });
+  check("a mandatory requirement is added", iso.ok, true);
+  check("an unchecked mandatory requirement blocks final approval", (await toFinal()).ok, false);
+  const reqId = iso.ok ? iso.value : "";
+  const ceDraft = await newDoc("cyber essentials draft", "ai_draft");
+  const withDraft = await tender.saveRequirement({ id: reqId, opportunityId: bid, ref: "SQ 4.1", text: "Hold Cyber Essentials", kind: "mandatory", status: "met", sourceDocumentId: null, location: null, evidenceVersionId: ceDraft, notes: null, userId: founder });
+  check("an AI draft is not evidence that it is met", withDraft.ok, false);
+  const noEvidence = await tender.saveRequirement({ id: reqId, opportunityId: bid, ref: "SQ 4.1", text: "Hold Cyber Essentials", kind: "mandatory", status: "met", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: null, userId: founder });
+  check("met without evidence is refused", noEvidence.ok, false);
+  await rejects(
+    "the database refuses a mandatory requirement met without evidence",
+    () => prisma.tenderRequirement.update({ where: { id: reqId }, data: { status: "met" } }),
+    "TenderRequirement_met_needs_evidence"
+  );
+  const certificate = await newDoc("cyber essentials certificate", "certified_evidence");
+  check(
+    "met with the certificate",
+    (await tender.saveRequirement({ id: reqId, opportunityId: bid, ref: "SQ 4.1", text: "Hold Cyber Essentials", kind: "mandatory", status: "met", sourceDocumentId: null, location: "p.12", evidenceVersionId: certificate, notes: null, userId: founder })).ok,
+    true
+  );
+  const sc = await tender.saveRequirement({ opportunityId: bid, ref: "SQ 4.2", text: "SC clearance for all engineers", kind: "mandatory", status: "not_met", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: null, userId: founder });
+  const scBlocked = await toFinal();
+  check("an unmet mandatory requirement blocks final approval", scBlocked.ok ? "moved" : scBlocked.reason.includes("not met"), true);
+  await tender.saveRequirement({ id: sc.ok ? sc.value : "", opportunityId: bid, ref: "SQ 4.2", text: "SC clearance for all engineers", kind: "mandatory", status: "not_applicable", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: "Lot 2 only; we bid for Lot 1", userId: founder });
+  check("with every mandatory requirement met or not applicable, it moves", (await toFinal()).ok, true);
+  check("requirement changes are audited on the opportunity", await prisma.auditLog.count({ where: { entityId: bid, action: { in: ["requirement.added", "requirement.updated"] } } }), 4);
+  check(
+    "a requirement cannot be edited through another opportunity",
+    (await tender.saveRequirement({ id: reqId, opportunityId: opp, ref: null, text: "Changed", kind: "information", status: "unknown", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: null, userId: founder })).ok,
+    false
+  );
+
+  console.log("\n  Deadlines");
+  const dated = await newOpportunity("PreparingBid");
+  const due = new Date("2026-12-01T12:00:00.000Z");
+  check(
+    "a question deadline after the submission deadline is refused",
+    (await tender.setDeadlines({ opportunityId: dated, deadlineAt: due, clarificationDeadlineAt: new Date("2026-12-02T12:00:00Z"), userId: founder })).ok,
+    false
+  );
+  check("dates set by a person", (await tender.setDeadlines({ opportunityId: dated, deadlineAt: due, clarificationDeadlineAt: new Date("2026-11-25T12:00:00Z"), userId: founder })).ok, true);
+  check("both changes audited", await prisma.auditLog.count({ where: { entityId: dated, action: "opportunity.deadline_changed" } }), 2);
+  check("saving the same dates again is refused as no change", (await tender.setDeadlines({ opportunityId: dated, deadlineAt: due, clarificationDeadlineAt: null, userId: founder })).ok, false);
+
+  // A newer notice moves the deadline of a bid already being prepared.
+  const docsRelease = fx.release({ ocid: "ocds-h6vhtk-0ddd01", id: "200001-2026", title: "Network refresh and IT support", cpv: "72253000", deadline: "2026-12-10T12:00:00Z" }) as Record<string, unknown> & { tender: Record<string, unknown> };
+  docsRelease.tender.documents = [
+    { url: "https://www.find-tender.service.gov.uk/Notice/Attachment/777", title: "Specification", documentType: "technicalSpecifications" },
+    { url: "https://in-tendhost.co.uk/examplecouncil/aspx/Tenders", title: "Tender pack" },
+  ];
+  const once = async (releases: unknown[]) =>
+    ingest.runSource("fts", { trigger: "manual", fetchJson: async (url: string) => ({ status: 200, retryAfter: null, body: { releases: url.startsWith(FTS) ? releases : [] } }), now: morning });
+  await prisma.opportunitySource.update({ where: { key: "fts" }, data: { enabled: true } });
+  await once([docsRelease]);
+  const docsOpp = await prisma.opportunity.findFirstOrThrow({ where: { ocid: "ocds-h6vhtk-0ddd01" } });
+  await prisma.opportunity.update({ where: { id: docsOpp.id }, data: { status: "PreparingBid" } });
+  const extended = fx.release({ ocid: "ocds-h6vhtk-0ddd01", id: "200002-2026", title: "Network refresh and IT support (amended)", cpv: "72253000", deadline: "2026-12-17T12:00:00Z" });
+  await once([extended]);
+  const afterExtension = await prisma.opportunity.findUniqueOrThrow({ where: { id: docsOpp.id } });
+  check("an extension reaches a bid in preparation", afterExtension.deadlineAt?.toISOString(), "2026-12-17T12:00:00.000Z");
+  check("but its other facts are left as the team had them", afterExtension.title, "Network refresh and IT support");
+  const changeLog = await prisma.auditLog.findFirst({ where: { entityId: docsOpp.id, action: "opportunity.deadline_changed" }, orderBy: { createdAt: "desc" } });
+  check("the extension is audited with both dates", [(changeLog?.metadata as Record<string, unknown>)?.change, (changeLog?.metadata as Record<string, unknown>)?.by], ["extended", "notice"]);
+
+  console.log("\n  Tender documents");
+  const listedDocs = await tender.refreshNoticeDocuments(docsOpp.id, founder);
+  check("the notice's documents are listed", listedDocs.ok ? listedDocs.value : listedDocs.reason, 2);
+  check("listing again adds nothing", (await tender.refreshNoticeDocuments(docsOpp.id, founder)).ok ? (await prisma.tenderDocument.count({ where: { opportunityId: docsOpp.id } })) : -1, 2);
+  check("a record with no notice cannot list documents", (await tender.refreshNoticeDocuments(dated, founder)).ok, false);
+  const portalDoc = await prisma.tenderDocument.findFirstOrThrow({ where: { opportunityId: docsOpp.id, sourceUrl: { contains: "in-tendhost" } } });
+  let networkCalls = 0;
+  const noNetwork = async () => {
+    networkCalls += 1;
+    throw new Error("no network in tests");
+  };
+  const portalFetch = await tender.fetchTenderDocument(portalDoc.id, founder, noNetwork);
+  check("a buyer portal link is refused without any request", [portalFetch.ok, networkCalls], [false, 0]);
+  const refusedRow = await prisma.tenderDocument.findUniqueOrThrow({ where: { id: portalDoc.id } });
+  check("the refusal and its reason are kept", [refusedRow.status, refusedRow.refusal?.includes("not an official notice service")], ["refused", true]);
+  const specDoc = await prisma.tenderDocument.findFirstOrThrow({ where: { opportunityId: docsOpp.id, sourceUrl: { contains: "find-tender" } } });
+  const notAPdf = async () => new Response(new TextEncoder().encode("<html>sign in</html>"), { status: 200 });
+  const htmlFetch = await tender.fetchTenderDocument(specDoc.id, founder, notAPdf);
+  check("a page that is not a document is not stored", [htmlFetch.ok, (await prisma.tenderDocument.findUniqueOrThrow({ where: { id: specDoc.id } })).status], [false, "refused"]);
+  // A stored copy is the record of what the buyer published.
+  await prisma.$executeRaw`UPDATE "public"."TenderDocument" SET "status" = 'stored', "storagePath" = 'tenders/x/y.pdf', "sha256" = ${sha("spec")}, "sizeBytes" = 10 WHERE "id" = ${specDoc.id}`;
+  await rejects("a stored copy's hash cannot be changed", () => prisma.tenderDocument.update({ where: { id: specDoc.id }, data: { sha256: sha("other") } }), "cannot be changed");
+  await rejects("a stored copy cannot be deleted", () => prisma.tenderDocument.delete({ where: { id: specDoc.id } }), "cannot be deleted");
+  check("a stored copy is not fetched again", (await tender.fetchTenderDocument(specDoc.id, founder, noNetwork)).ok, false);
 
 } finally {
   await prisma.$disconnect();

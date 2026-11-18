@@ -97,7 +97,15 @@ async function gatherFacts(tx: Tx, opportunityId: string, now: Date, roundStart:
     where: { opportunityId, outcome: "confirmed", Receipt: { some: {} }, startedAt: { gte: roundStart } },
     select: { actionType: true },
   });
-  return { currentApprovals, confirmedExecutions: executions.map((e) => e.actionType as ApprovalAction) };
+  // The requirements checklist (Phase 4), counted under the same transaction.
+  const reqs = await tx.tenderRequirement.groupBy({ by: ["kind", "status"], where: { opportunityId }, _count: { _all: true } });
+  const count = (match: (r: { kind: string; status: string }) => boolean) => reqs.filter(match).reduce((n, r) => n + r._count._all, 0);
+  const requirements = {
+    recorded: count(() => true),
+    mandatoryOpen: count((r) => r.kind === "mandatory" && (r.status === "unknown" || r.status === "partly_met")),
+    mandatoryNotMet: count((r) => r.kind === "mandatory" && r.status === "not_met"),
+  };
+  return { currentApprovals, confirmedExecutions: executions.map((e) => e.actionType as ApprovalAction), requirements };
 }
 
 export async function transitionOpportunity(input: {

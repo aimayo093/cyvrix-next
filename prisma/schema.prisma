@@ -2153,6 +2153,8 @@ model Opportunity {
   ApprovalRequest         ApprovalRequest[]
   ExecutionRecord         ExecutionRecord[]
   CostEntry               CostEntry[]
+  TenderDocument          TenderDocument[]
+  TenderRequirement       TenderRequirement[]
 
   @@index([status, deadlineAt])
   @@index([kind, updatedAt])
@@ -2207,6 +2209,7 @@ model CompanyDocumentVersion {
   CompanyFact  CompanyFact[]
   PackageItem  PackageItem[]
   Receipt      Receipt[]
+  TenderRequirement TenderRequirement[]
 
   @@unique([documentId, version])
   @@schema("public")
@@ -2450,5 +2453,57 @@ model BidAssessment {
   Opportunity    Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
 
   @@index([opportunityId, createdAt])
+  @@schema("public")
+}
+
+/// A document published with a tender (migration 20261119120000). The buyer's
+/// document, never CYVRIX evidence. A stored copy never changes (trigger).
+model TenderDocument {
+  id            String              @id
+  opportunityId String
+  title         String
+  documentType  String?
+  /// Unique per opportunity where set (partial index in the migration).
+  sourceUrl     String?
+  origin        String
+  status        String              @default("listed")
+  refusal       String?
+  storagePath   String?
+  filename      String?
+  sha256        String?
+  sizeBytes     Int?
+  scan          Json                @default("{}")
+  storedAt      DateTime?
+  createdById   String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @default(now()) @updatedAt
+  Opportunity   Opportunity         @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+  Requirement   TenderRequirement[]
+
+  @@index([opportunityId])
+  @@schema("public")
+}
+
+/// One requirement from a tender and whether CYVRIX meets it (migration 20261119120000).
+model TenderRequirement {
+  id                String                  @id
+  opportunityId     String
+  ref               String?
+  text              String
+  kind              String
+  status            String                  @default("unknown")
+  sourceDocumentId  String?
+  location          String?
+  evidenceVersionId String?
+  notes             String?
+  createdById       String?
+  updatedById       String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @default(now()) @updatedAt
+  Opportunity       Opportunity             @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+  SourceDocument    TenderDocument?         @relation(fields: [sourceDocumentId], references: [id])
+  Evidence          CompanyDocumentVersion? @relation(fields: [evidenceVersionId], references: [id], onDelete: Restrict)
+
+  @@index([opportunityId])
   @@schema("public")
 }

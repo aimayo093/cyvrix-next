@@ -630,6 +630,17 @@ export type PartnershipProgramme = $Result.DefaultSelection<Prisma.$PartnershipP
  * Immutable (trigger): a new assessment is added, never an old one edited.
  */
 export type BidAssessment = $Result.DefaultSelection<Prisma.$BidAssessmentPayload>
+/**
+ * Model TenderDocument
+ * A document published with a tender (migration 20261119120000). The buyer's
+ * document, never CYVRIX evidence. A stored copy never changes (trigger).
+ */
+export type TenderDocument = $Result.DefaultSelection<Prisma.$TenderDocumentPayload>
+/**
+ * Model TenderRequirement
+ * One requirement from a tender and whether CYVRIX meets it (migration 20261119120000).
+ */
+export type TenderRequirement = $Result.DefaultSelection<Prisma.$TenderRequirementPayload>
 
 /**
  * Enums
@@ -2157,6 +2168,26 @@ export class PrismaClient<
     * ```
     */
   get bidAssessment(): Prisma.BidAssessmentDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.tenderDocument`: Exposes CRUD operations for the **TenderDocument** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TenderDocuments
+    * const tenderDocuments = await prisma.tenderDocument.findMany()
+    * ```
+    */
+  get tenderDocument(): Prisma.TenderDocumentDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.tenderRequirement`: Exposes CRUD operations for the **TenderRequirement** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TenderRequirements
+    * const tenderRequirements = await prisma.tenderRequirement.findMany()
+    * ```
+    */
+  get tenderRequirement(): Prisma.TenderRequirementDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2720,7 +2751,9 @@ export namespace Prisma {
     SupplierPortal: 'SupplierPortal',
     SupplierAccount: 'SupplierAccount',
     PartnershipProgramme: 'PartnershipProgramme',
-    BidAssessment: 'BidAssessment'
+    BidAssessment: 'BidAssessment',
+    TenderDocument: 'TenderDocument',
+    TenderRequirement: 'TenderRequirement'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2736,7 +2769,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "auditLog" | "blogPost" | "careerJob" | "caseStudy" | "clientCompany" | "clientDocument" | "cmsPage" | "contact" | "contentBlock" | "fAQ" | "industry" | "jobApplication" | "knowledgeBaseArticle" | "landingPage" | "lead" | "leadNote" | "legalPage" | "mediaAsset" | "navigationItem" | "newsletterSubscriber" | "notification" | "proposal" | "proposalItem" | "quoteRequest" | "service" | "servicePackage" | "siteSetting" | "testimonial" | "ticket" | "ticketAttachment" | "ticketMessage" | "user" | "userSession" | "rateLimitBucket" | "verificationToken" | "websiteSection" | "audit_logs" | "blog_categories" | "blog_posts" | "career_applications" | "career_jobs" | "case_studies" | "client_companies" | "client_company_users" | "client_documents" | "leads" | "media_assets" | "navigation_items" | "notifications" | "pages" | "profiles" | "quote_requests" | "service_faqs" | "services" | "site_settings" | "support_tickets" | "ticket_messages" | "brandAsset" | "menu" | "menuItem" | "footerSection" | "footerLink" | "pageSection" | "partnerLogo" | "trustedBusinessLogo" | "complianceCard" | "socialLink" | "surveySetting" | "surveyRequest" | "surveyResponse" | "workOrder" | "agentDraft" | "passwordResetToken" | "emailMessage" | "organisation" | "opportunitySource" | "ingestionRun" | "procurementNotice" | "opportunity" | "opportunityEvidence" | "companyDocument" | "companyDocumentVersion" | "companyFact" | "package" | "packageItem" | "approvalRequest" | "approvalDecision" | "executionRecord" | "receipt" | "costEntry" | "supplierPortal" | "supplierAccount" | "partnershipProgramme" | "bidAssessment"
+      modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "auditLog" | "blogPost" | "careerJob" | "caseStudy" | "clientCompany" | "clientDocument" | "cmsPage" | "contact" | "contentBlock" | "fAQ" | "industry" | "jobApplication" | "knowledgeBaseArticle" | "landingPage" | "lead" | "leadNote" | "legalPage" | "mediaAsset" | "navigationItem" | "newsletterSubscriber" | "notification" | "proposal" | "proposalItem" | "quoteRequest" | "service" | "servicePackage" | "siteSetting" | "testimonial" | "ticket" | "ticketAttachment" | "ticketMessage" | "user" | "userSession" | "rateLimitBucket" | "verificationToken" | "websiteSection" | "audit_logs" | "blog_categories" | "blog_posts" | "career_applications" | "career_jobs" | "case_studies" | "client_companies" | "client_company_users" | "client_documents" | "leads" | "media_assets" | "navigation_items" | "notifications" | "pages" | "profiles" | "quote_requests" | "service_faqs" | "services" | "site_settings" | "support_tickets" | "ticket_messages" | "brandAsset" | "menu" | "menuItem" | "footerSection" | "footerLink" | "pageSection" | "partnerLogo" | "trustedBusinessLogo" | "complianceCard" | "socialLink" | "surveySetting" | "surveyRequest" | "surveyResponse" | "workOrder" | "agentDraft" | "passwordResetToken" | "emailMessage" | "organisation" | "opportunitySource" | "ingestionRun" | "procurementNotice" | "opportunity" | "opportunityEvidence" | "companyDocument" | "companyDocumentVersion" | "companyFact" | "package" | "packageItem" | "approvalRequest" | "approvalDecision" | "executionRecord" | "receipt" | "costEntry" | "supplierPortal" | "supplierAccount" | "partnershipProgramme" | "bidAssessment" | "tenderDocument" | "tenderRequirement"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -11398,6 +11431,154 @@ export namespace Prisma {
           }
         }
       }
+      TenderDocument: {
+        payload: Prisma.$TenderDocumentPayload<ExtArgs>
+        fields: Prisma.TenderDocumentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TenderDocumentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TenderDocumentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>
+          }
+          findFirst: {
+            args: Prisma.TenderDocumentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TenderDocumentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>
+          }
+          findMany: {
+            args: Prisma.TenderDocumentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>[]
+          }
+          create: {
+            args: Prisma.TenderDocumentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>
+          }
+          createMany: {
+            args: Prisma.TenderDocumentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TenderDocumentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>[]
+          }
+          delete: {
+            args: Prisma.TenderDocumentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>
+          }
+          update: {
+            args: Prisma.TenderDocumentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>
+          }
+          deleteMany: {
+            args: Prisma.TenderDocumentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TenderDocumentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TenderDocumentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>[]
+          }
+          upsert: {
+            args: Prisma.TenderDocumentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderDocumentPayload>
+          }
+          aggregate: {
+            args: Prisma.TenderDocumentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTenderDocument>
+          }
+          groupBy: {
+            args: Prisma.TenderDocumentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TenderDocumentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TenderDocumentCountArgs<ExtArgs>
+            result: $Utils.Optional<TenderDocumentCountAggregateOutputType> | number
+          }
+        }
+      }
+      TenderRequirement: {
+        payload: Prisma.$TenderRequirementPayload<ExtArgs>
+        fields: Prisma.TenderRequirementFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TenderRequirementFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TenderRequirementFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+          }
+          findFirst: {
+            args: Prisma.TenderRequirementFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TenderRequirementFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+          }
+          findMany: {
+            args: Prisma.TenderRequirementFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>[]
+          }
+          create: {
+            args: Prisma.TenderRequirementCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+          }
+          createMany: {
+            args: Prisma.TenderRequirementCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TenderRequirementCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>[]
+          }
+          delete: {
+            args: Prisma.TenderRequirementDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+          }
+          update: {
+            args: Prisma.TenderRequirementUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+          }
+          deleteMany: {
+            args: Prisma.TenderRequirementDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TenderRequirementUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TenderRequirementUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>[]
+          }
+          upsert: {
+            args: Prisma.TenderRequirementUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenderRequirementPayload>
+          }
+          aggregate: {
+            args: Prisma.TenderRequirementAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTenderRequirement>
+          }
+          groupBy: {
+            args: Prisma.TenderRequirementGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TenderRequirementGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TenderRequirementCountArgs<ExtArgs>
+            result: $Utils.Optional<TenderRequirementCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -11638,6 +11819,8 @@ export namespace Prisma {
     supplierAccount?: SupplierAccountOmit
     partnershipProgramme?: PartnershipProgrammeOmit
     bidAssessment?: BidAssessmentOmit
+    tenderDocument?: TenderDocumentOmit
+    tenderRequirement?: TenderRequirementOmit
   }
 
   /* Types for Logging */
@@ -12997,6 +13180,8 @@ export namespace Prisma {
     ApprovalRequest: number
     ExecutionRecord: number
     CostEntry: number
+    TenderDocument: number
+    TenderRequirement: number
   }
 
   export type OpportunityCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13006,6 +13191,8 @@ export namespace Prisma {
     ApprovalRequest?: boolean | OpportunityCountOutputTypeCountApprovalRequestArgs
     ExecutionRecord?: boolean | OpportunityCountOutputTypeCountExecutionRecordArgs
     CostEntry?: boolean | OpportunityCountOutputTypeCountCostEntryArgs
+    TenderDocument?: boolean | OpportunityCountOutputTypeCountTenderDocumentArgs
+    TenderRequirement?: boolean | OpportunityCountOutputTypeCountTenderRequirementArgs
   }
 
   // Custom InputTypes
@@ -13061,6 +13248,20 @@ export namespace Prisma {
     where?: CostEntryWhereInput
   }
 
+  /**
+   * OpportunityCountOutputType without action
+   */
+  export type OpportunityCountOutputTypeCountTenderDocumentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenderDocumentWhereInput
+  }
+
+  /**
+   * OpportunityCountOutputType without action
+   */
+  export type OpportunityCountOutputTypeCountTenderRequirementArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenderRequirementWhereInput
+  }
+
 
   /**
    * Count Type CompanyDocumentCountOutputType
@@ -13101,12 +13302,14 @@ export namespace Prisma {
     CompanyFact: number
     PackageItem: number
     Receipt: number
+    TenderRequirement: number
   }
 
   export type CompanyDocumentVersionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     CompanyFact?: boolean | CompanyDocumentVersionCountOutputTypeCountCompanyFactArgs
     PackageItem?: boolean | CompanyDocumentVersionCountOutputTypeCountPackageItemArgs
     Receipt?: boolean | CompanyDocumentVersionCountOutputTypeCountReceiptArgs
+    TenderRequirement?: boolean | CompanyDocumentVersionCountOutputTypeCountTenderRequirementArgs
   }
 
   // Custom InputTypes
@@ -13139,6 +13342,13 @@ export namespace Prisma {
    */
   export type CompanyDocumentVersionCountOutputTypeCountReceiptArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ReceiptWhereInput
+  }
+
+  /**
+   * CompanyDocumentVersionCountOutputType without action
+   */
+  export type CompanyDocumentVersionCountOutputTypeCountTenderRequirementArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenderRequirementWhereInput
   }
 
 
@@ -13312,6 +13522,37 @@ export namespace Prisma {
    */
   export type PartnershipProgrammeCountOutputTypeCountOpportunityArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OpportunityWhereInput
+  }
+
+
+  /**
+   * Count Type TenderDocumentCountOutputType
+   */
+
+  export type TenderDocumentCountOutputType = {
+    Requirement: number
+  }
+
+  export type TenderDocumentCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Requirement?: boolean | TenderDocumentCountOutputTypeCountRequirementArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * TenderDocumentCountOutputType without action
+   */
+  export type TenderDocumentCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocumentCountOutputType
+     */
+    select?: TenderDocumentCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TenderDocumentCountOutputType without action
+   */
+  export type TenderDocumentCountOutputTypeCountRequirementArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenderRequirementWhereInput
   }
 
 
@@ -130364,6 +130605,8 @@ export namespace Prisma {
     ApprovalRequest?: boolean | Opportunity$ApprovalRequestArgs<ExtArgs>
     ExecutionRecord?: boolean | Opportunity$ExecutionRecordArgs<ExtArgs>
     CostEntry?: boolean | Opportunity$CostEntryArgs<ExtArgs>
+    TenderDocument?: boolean | Opportunity$TenderDocumentArgs<ExtArgs>
+    TenderRequirement?: boolean | Opportunity$TenderRequirementArgs<ExtArgs>
     _count?: boolean | OpportunityCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["opportunity"]>
 
@@ -130465,6 +130708,8 @@ export namespace Prisma {
     ApprovalRequest?: boolean | Opportunity$ApprovalRequestArgs<ExtArgs>
     ExecutionRecord?: boolean | Opportunity$ExecutionRecordArgs<ExtArgs>
     CostEntry?: boolean | Opportunity$CostEntryArgs<ExtArgs>
+    TenderDocument?: boolean | Opportunity$TenderDocumentArgs<ExtArgs>
+    TenderRequirement?: boolean | Opportunity$TenderRequirementArgs<ExtArgs>
     _count?: boolean | OpportunityCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OpportunityIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -130493,6 +130738,8 @@ export namespace Prisma {
       ApprovalRequest: Prisma.$ApprovalRequestPayload<ExtArgs>[]
       ExecutionRecord: Prisma.$ExecutionRecordPayload<ExtArgs>[]
       CostEntry: Prisma.$CostEntryPayload<ExtArgs>[]
+      TenderDocument: Prisma.$TenderDocumentPayload<ExtArgs>[]
+      TenderRequirement: Prisma.$TenderRequirementPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -130931,6 +131178,8 @@ export namespace Prisma {
     ApprovalRequest<T extends Opportunity$ApprovalRequestArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$ApprovalRequestArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ApprovalRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ExecutionRecord<T extends Opportunity$ExecutionRecordArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$ExecutionRecordArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ExecutionRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     CostEntry<T extends Opportunity$CostEntryArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$CostEntryArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CostEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    TenderDocument<T extends Opportunity$TenderDocumentArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$TenderDocumentArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    TenderRequirement<T extends Opportunity$TenderRequirementArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$TenderRequirementArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -131582,6 +131831,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: CostEntryScalarFieldEnum | CostEntryScalarFieldEnum[]
+  }
+
+  /**
+   * Opportunity.TenderDocument
+   */
+  export type Opportunity$TenderDocumentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    where?: TenderDocumentWhereInput
+    orderBy?: TenderDocumentOrderByWithRelationInput | TenderDocumentOrderByWithRelationInput[]
+    cursor?: TenderDocumentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TenderDocumentScalarFieldEnum | TenderDocumentScalarFieldEnum[]
+  }
+
+  /**
+   * Opportunity.TenderRequirement
+   */
+  export type Opportunity$TenderRequirementArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    where?: TenderRequirementWhereInput
+    orderBy?: TenderRequirementOrderByWithRelationInput | TenderRequirementOrderByWithRelationInput[]
+    cursor?: TenderRequirementWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TenderRequirementScalarFieldEnum | TenderRequirementScalarFieldEnum[]
   }
 
   /**
@@ -134080,6 +134377,7 @@ export namespace Prisma {
     CompanyFact?: boolean | CompanyDocumentVersion$CompanyFactArgs<ExtArgs>
     PackageItem?: boolean | CompanyDocumentVersion$PackageItemArgs<ExtArgs>
     Receipt?: boolean | CompanyDocumentVersion$ReceiptArgs<ExtArgs>
+    TenderRequirement?: boolean | CompanyDocumentVersion$TenderRequirementArgs<ExtArgs>
     _count?: boolean | CompanyDocumentVersionCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["companyDocumentVersion"]>
 
@@ -134142,6 +134440,7 @@ export namespace Prisma {
     CompanyFact?: boolean | CompanyDocumentVersion$CompanyFactArgs<ExtArgs>
     PackageItem?: boolean | CompanyDocumentVersion$PackageItemArgs<ExtArgs>
     Receipt?: boolean | CompanyDocumentVersion$ReceiptArgs<ExtArgs>
+    TenderRequirement?: boolean | CompanyDocumentVersion$TenderRequirementArgs<ExtArgs>
     _count?: boolean | CompanyDocumentVersionCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CompanyDocumentVersionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -134158,6 +134457,7 @@ export namespace Prisma {
       CompanyFact: Prisma.$CompanyFactPayload<ExtArgs>[]
       PackageItem: Prisma.$PackageItemPayload<ExtArgs>[]
       Receipt: Prisma.$ReceiptPayload<ExtArgs>[]
+      TenderRequirement: Prisma.$TenderRequirementPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -134572,6 +134872,7 @@ export namespace Prisma {
     CompanyFact<T extends CompanyDocumentVersion$CompanyFactArgs<ExtArgs> = {}>(args?: Subset<T, CompanyDocumentVersion$CompanyFactArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompanyFactPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     PackageItem<T extends CompanyDocumentVersion$PackageItemArgs<ExtArgs> = {}>(args?: Subset<T, CompanyDocumentVersion$PackageItemArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PackageItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     Receipt<T extends CompanyDocumentVersion$ReceiptArgs<ExtArgs> = {}>(args?: Subset<T, CompanyDocumentVersion$ReceiptArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReceiptPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    TenderRequirement<T extends CompanyDocumentVersion$TenderRequirementArgs<ExtArgs> = {}>(args?: Subset<T, CompanyDocumentVersion$TenderRequirementArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -135085,6 +135386,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ReceiptScalarFieldEnum | ReceiptScalarFieldEnum[]
+  }
+
+  /**
+   * CompanyDocumentVersion.TenderRequirement
+   */
+  export type CompanyDocumentVersion$TenderRequirementArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    where?: TenderRequirementWhereInput
+    orderBy?: TenderRequirementOrderByWithRelationInput | TenderRequirementOrderByWithRelationInput[]
+    cursor?: TenderRequirementWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TenderRequirementScalarFieldEnum | TenderRequirementScalarFieldEnum[]
   }
 
   /**
@@ -149321,6 +149646,2522 @@ export namespace Prisma {
 
 
   /**
+   * Model TenderDocument
+   */
+
+  export type AggregateTenderDocument = {
+    _count: TenderDocumentCountAggregateOutputType | null
+    _avg: TenderDocumentAvgAggregateOutputType | null
+    _sum: TenderDocumentSumAggregateOutputType | null
+    _min: TenderDocumentMinAggregateOutputType | null
+    _max: TenderDocumentMaxAggregateOutputType | null
+  }
+
+  export type TenderDocumentAvgAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type TenderDocumentSumAggregateOutputType = {
+    sizeBytes: number | null
+  }
+
+  export type TenderDocumentMinAggregateOutputType = {
+    id: string | null
+    opportunityId: string | null
+    title: string | null
+    documentType: string | null
+    sourceUrl: string | null
+    origin: string | null
+    status: string | null
+    refusal: string | null
+    storagePath: string | null
+    filename: string | null
+    sha256: string | null
+    sizeBytes: number | null
+    storedAt: Date | null
+    createdById: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenderDocumentMaxAggregateOutputType = {
+    id: string | null
+    opportunityId: string | null
+    title: string | null
+    documentType: string | null
+    sourceUrl: string | null
+    origin: string | null
+    status: string | null
+    refusal: string | null
+    storagePath: string | null
+    filename: string | null
+    sha256: string | null
+    sizeBytes: number | null
+    storedAt: Date | null
+    createdById: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenderDocumentCountAggregateOutputType = {
+    id: number
+    opportunityId: number
+    title: number
+    documentType: number
+    sourceUrl: number
+    origin: number
+    status: number
+    refusal: number
+    storagePath: number
+    filename: number
+    sha256: number
+    sizeBytes: number
+    scan: number
+    storedAt: number
+    createdById: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TenderDocumentAvgAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type TenderDocumentSumAggregateInputType = {
+    sizeBytes?: true
+  }
+
+  export type TenderDocumentMinAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    title?: true
+    documentType?: true
+    sourceUrl?: true
+    origin?: true
+    status?: true
+    refusal?: true
+    storagePath?: true
+    filename?: true
+    sha256?: true
+    sizeBytes?: true
+    storedAt?: true
+    createdById?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenderDocumentMaxAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    title?: true
+    documentType?: true
+    sourceUrl?: true
+    origin?: true
+    status?: true
+    refusal?: true
+    storagePath?: true
+    filename?: true
+    sha256?: true
+    sizeBytes?: true
+    storedAt?: true
+    createdById?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenderDocumentCountAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    title?: true
+    documentType?: true
+    sourceUrl?: true
+    origin?: true
+    status?: true
+    refusal?: true
+    storagePath?: true
+    filename?: true
+    sha256?: true
+    sizeBytes?: true
+    scan?: true
+    storedAt?: true
+    createdById?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TenderDocumentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenderDocument to aggregate.
+     */
+    where?: TenderDocumentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenderDocuments to fetch.
+     */
+    orderBy?: TenderDocumentOrderByWithRelationInput | TenderDocumentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TenderDocumentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenderDocuments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenderDocuments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TenderDocuments
+    **/
+    _count?: true | TenderDocumentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: TenderDocumentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TenderDocumentSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TenderDocumentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TenderDocumentMaxAggregateInputType
+  }
+
+  export type GetTenderDocumentAggregateType<T extends TenderDocumentAggregateArgs> = {
+        [P in keyof T & keyof AggregateTenderDocument]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTenderDocument[P]>
+      : GetScalarType<T[P], AggregateTenderDocument[P]>
+  }
+
+
+
+
+  export type TenderDocumentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenderDocumentWhereInput
+    orderBy?: TenderDocumentOrderByWithAggregationInput | TenderDocumentOrderByWithAggregationInput[]
+    by: TenderDocumentScalarFieldEnum[] | TenderDocumentScalarFieldEnum
+    having?: TenderDocumentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TenderDocumentCountAggregateInputType | true
+    _avg?: TenderDocumentAvgAggregateInputType
+    _sum?: TenderDocumentSumAggregateInputType
+    _min?: TenderDocumentMinAggregateInputType
+    _max?: TenderDocumentMaxAggregateInputType
+  }
+
+  export type TenderDocumentGroupByOutputType = {
+    id: string
+    opportunityId: string
+    title: string
+    documentType: string | null
+    sourceUrl: string | null
+    origin: string
+    status: string
+    refusal: string | null
+    storagePath: string | null
+    filename: string | null
+    sha256: string | null
+    sizeBytes: number | null
+    scan: JsonValue
+    storedAt: Date | null
+    createdById: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: TenderDocumentCountAggregateOutputType | null
+    _avg: TenderDocumentAvgAggregateOutputType | null
+    _sum: TenderDocumentSumAggregateOutputType | null
+    _min: TenderDocumentMinAggregateOutputType | null
+    _max: TenderDocumentMaxAggregateOutputType | null
+  }
+
+  type GetTenderDocumentGroupByPayload<T extends TenderDocumentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TenderDocumentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TenderDocumentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TenderDocumentGroupByOutputType[P]>
+            : GetScalarType<T[P], TenderDocumentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TenderDocumentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    title?: boolean
+    documentType?: boolean
+    sourceUrl?: boolean
+    origin?: boolean
+    status?: boolean
+    refusal?: boolean
+    storagePath?: boolean
+    filename?: boolean
+    sha256?: boolean
+    sizeBytes?: boolean
+    scan?: boolean
+    storedAt?: boolean
+    createdById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+    Requirement?: boolean | TenderDocument$RequirementArgs<ExtArgs>
+    _count?: boolean | TenderDocumentCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["tenderDocument"]>
+
+  export type TenderDocumentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    title?: boolean
+    documentType?: boolean
+    sourceUrl?: boolean
+    origin?: boolean
+    status?: boolean
+    refusal?: boolean
+    storagePath?: boolean
+    filename?: boolean
+    sha256?: boolean
+    sizeBytes?: boolean
+    scan?: boolean
+    storedAt?: boolean
+    createdById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["tenderDocument"]>
+
+  export type TenderDocumentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    title?: boolean
+    documentType?: boolean
+    sourceUrl?: boolean
+    origin?: boolean
+    status?: boolean
+    refusal?: boolean
+    storagePath?: boolean
+    filename?: boolean
+    sha256?: boolean
+    sizeBytes?: boolean
+    scan?: boolean
+    storedAt?: boolean
+    createdById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["tenderDocument"]>
+
+  export type TenderDocumentSelectScalar = {
+    id?: boolean
+    opportunityId?: boolean
+    title?: boolean
+    documentType?: boolean
+    sourceUrl?: boolean
+    origin?: boolean
+    status?: boolean
+    refusal?: boolean
+    storagePath?: boolean
+    filename?: boolean
+    sha256?: boolean
+    sizeBytes?: boolean
+    scan?: boolean
+    storedAt?: boolean
+    createdById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TenderDocumentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "opportunityId" | "title" | "documentType" | "sourceUrl" | "origin" | "status" | "refusal" | "storagePath" | "filename" | "sha256" | "sizeBytes" | "scan" | "storedAt" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["tenderDocument"]>
+  export type TenderDocumentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+    Requirement?: boolean | TenderDocument$RequirementArgs<ExtArgs>
+    _count?: boolean | TenderDocumentCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type TenderDocumentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }
+  export type TenderDocumentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }
+
+  export type $TenderDocumentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TenderDocument"
+    objects: {
+      Opportunity: Prisma.$OpportunityPayload<ExtArgs>
+      Requirement: Prisma.$TenderRequirementPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      opportunityId: string
+      title: string
+      documentType: string | null
+      /**
+       * Unique per opportunity where set (partial index in the migration).
+       */
+      sourceUrl: string | null
+      origin: string
+      status: string
+      refusal: string | null
+      storagePath: string | null
+      filename: string | null
+      sha256: string | null
+      sizeBytes: number | null
+      scan: Prisma.JsonValue
+      storedAt: Date | null
+      createdById: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tenderDocument"]>
+    composites: {}
+  }
+
+  type TenderDocumentGetPayload<S extends boolean | null | undefined | TenderDocumentDefaultArgs> = $Result.GetResult<Prisma.$TenderDocumentPayload, S>
+
+  type TenderDocumentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TenderDocumentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TenderDocumentCountAggregateInputType | true
+    }
+
+  export interface TenderDocumentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TenderDocument'], meta: { name: 'TenderDocument' } }
+    /**
+     * Find zero or one TenderDocument that matches the filter.
+     * @param {TenderDocumentFindUniqueArgs} args - Arguments to find a TenderDocument
+     * @example
+     * // Get one TenderDocument
+     * const tenderDocument = await prisma.tenderDocument.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TenderDocumentFindUniqueArgs>(args: SelectSubset<T, TenderDocumentFindUniqueArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TenderDocument that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TenderDocumentFindUniqueOrThrowArgs} args - Arguments to find a TenderDocument
+     * @example
+     * // Get one TenderDocument
+     * const tenderDocument = await prisma.tenderDocument.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TenderDocumentFindUniqueOrThrowArgs>(args: SelectSubset<T, TenderDocumentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenderDocument that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderDocumentFindFirstArgs} args - Arguments to find a TenderDocument
+     * @example
+     * // Get one TenderDocument
+     * const tenderDocument = await prisma.tenderDocument.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TenderDocumentFindFirstArgs>(args?: SelectSubset<T, TenderDocumentFindFirstArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenderDocument that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderDocumentFindFirstOrThrowArgs} args - Arguments to find a TenderDocument
+     * @example
+     * // Get one TenderDocument
+     * const tenderDocument = await prisma.tenderDocument.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TenderDocumentFindFirstOrThrowArgs>(args?: SelectSubset<T, TenderDocumentFindFirstOrThrowArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TenderDocuments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderDocumentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TenderDocuments
+     * const tenderDocuments = await prisma.tenderDocument.findMany()
+     * 
+     * // Get first 10 TenderDocuments
+     * const tenderDocuments = await prisma.tenderDocument.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tenderDocumentWithIdOnly = await prisma.tenderDocument.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TenderDocumentFindManyArgs>(args?: SelectSubset<T, TenderDocumentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TenderDocument.
+     * @param {TenderDocumentCreateArgs} args - Arguments to create a TenderDocument.
+     * @example
+     * // Create one TenderDocument
+     * const TenderDocument = await prisma.tenderDocument.create({
+     *   data: {
+     *     // ... data to create a TenderDocument
+     *   }
+     * })
+     * 
+     */
+    create<T extends TenderDocumentCreateArgs>(args: SelectSubset<T, TenderDocumentCreateArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TenderDocuments.
+     * @param {TenderDocumentCreateManyArgs} args - Arguments to create many TenderDocuments.
+     * @example
+     * // Create many TenderDocuments
+     * const tenderDocument = await prisma.tenderDocument.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TenderDocumentCreateManyArgs>(args?: SelectSubset<T, TenderDocumentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TenderDocuments and returns the data saved in the database.
+     * @param {TenderDocumentCreateManyAndReturnArgs} args - Arguments to create many TenderDocuments.
+     * @example
+     * // Create many TenderDocuments
+     * const tenderDocument = await prisma.tenderDocument.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TenderDocuments and only return the `id`
+     * const tenderDocumentWithIdOnly = await prisma.tenderDocument.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TenderDocumentCreateManyAndReturnArgs>(args?: SelectSubset<T, TenderDocumentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TenderDocument.
+     * @param {TenderDocumentDeleteArgs} args - Arguments to delete one TenderDocument.
+     * @example
+     * // Delete one TenderDocument
+     * const TenderDocument = await prisma.tenderDocument.delete({
+     *   where: {
+     *     // ... filter to delete one TenderDocument
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TenderDocumentDeleteArgs>(args: SelectSubset<T, TenderDocumentDeleteArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TenderDocument.
+     * @param {TenderDocumentUpdateArgs} args - Arguments to update one TenderDocument.
+     * @example
+     * // Update one TenderDocument
+     * const tenderDocument = await prisma.tenderDocument.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TenderDocumentUpdateArgs>(args: SelectSubset<T, TenderDocumentUpdateArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TenderDocuments.
+     * @param {TenderDocumentDeleteManyArgs} args - Arguments to filter TenderDocuments to delete.
+     * @example
+     * // Delete a few TenderDocuments
+     * const { count } = await prisma.tenderDocument.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TenderDocumentDeleteManyArgs>(args?: SelectSubset<T, TenderDocumentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenderDocuments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderDocumentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TenderDocuments
+     * const tenderDocument = await prisma.tenderDocument.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TenderDocumentUpdateManyArgs>(args: SelectSubset<T, TenderDocumentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenderDocuments and returns the data updated in the database.
+     * @param {TenderDocumentUpdateManyAndReturnArgs} args - Arguments to update many TenderDocuments.
+     * @example
+     * // Update many TenderDocuments
+     * const tenderDocument = await prisma.tenderDocument.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TenderDocuments and only return the `id`
+     * const tenderDocumentWithIdOnly = await prisma.tenderDocument.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TenderDocumentUpdateManyAndReturnArgs>(args: SelectSubset<T, TenderDocumentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TenderDocument.
+     * @param {TenderDocumentUpsertArgs} args - Arguments to update or create a TenderDocument.
+     * @example
+     * // Update or create a TenderDocument
+     * const tenderDocument = await prisma.tenderDocument.upsert({
+     *   create: {
+     *     // ... data to create a TenderDocument
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TenderDocument we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TenderDocumentUpsertArgs>(args: SelectSubset<T, TenderDocumentUpsertArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TenderDocuments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderDocumentCountArgs} args - Arguments to filter TenderDocuments to count.
+     * @example
+     * // Count the number of TenderDocuments
+     * const count = await prisma.tenderDocument.count({
+     *   where: {
+     *     // ... the filter for the TenderDocuments we want to count
+     *   }
+     * })
+    **/
+    count<T extends TenderDocumentCountArgs>(
+      args?: Subset<T, TenderDocumentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TenderDocumentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TenderDocument.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderDocumentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TenderDocumentAggregateArgs>(args: Subset<T, TenderDocumentAggregateArgs>): Prisma.PrismaPromise<GetTenderDocumentAggregateType<T>>
+
+    /**
+     * Group by TenderDocument.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderDocumentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TenderDocumentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TenderDocumentGroupByArgs['orderBy'] }
+        : { orderBy?: TenderDocumentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TenderDocumentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTenderDocumentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TenderDocument model
+   */
+  readonly fields: TenderDocumentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TenderDocument.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TenderDocumentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    Opportunity<T extends OpportunityDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OpportunityDefaultArgs<ExtArgs>>): Prisma__OpportunityClient<$Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    Requirement<T extends TenderDocument$RequirementArgs<ExtArgs> = {}>(args?: Subset<T, TenderDocument$RequirementArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TenderDocument model
+   */
+  interface TenderDocumentFieldRefs {
+    readonly id: FieldRef<"TenderDocument", 'String'>
+    readonly opportunityId: FieldRef<"TenderDocument", 'String'>
+    readonly title: FieldRef<"TenderDocument", 'String'>
+    readonly documentType: FieldRef<"TenderDocument", 'String'>
+    readonly sourceUrl: FieldRef<"TenderDocument", 'String'>
+    readonly origin: FieldRef<"TenderDocument", 'String'>
+    readonly status: FieldRef<"TenderDocument", 'String'>
+    readonly refusal: FieldRef<"TenderDocument", 'String'>
+    readonly storagePath: FieldRef<"TenderDocument", 'String'>
+    readonly filename: FieldRef<"TenderDocument", 'String'>
+    readonly sha256: FieldRef<"TenderDocument", 'String'>
+    readonly sizeBytes: FieldRef<"TenderDocument", 'Int'>
+    readonly scan: FieldRef<"TenderDocument", 'Json'>
+    readonly storedAt: FieldRef<"TenderDocument", 'DateTime'>
+    readonly createdById: FieldRef<"TenderDocument", 'String'>
+    readonly createdAt: FieldRef<"TenderDocument", 'DateTime'>
+    readonly updatedAt: FieldRef<"TenderDocument", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TenderDocument findUnique
+   */
+  export type TenderDocumentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderDocument to fetch.
+     */
+    where: TenderDocumentWhereUniqueInput
+  }
+
+  /**
+   * TenderDocument findUniqueOrThrow
+   */
+  export type TenderDocumentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderDocument to fetch.
+     */
+    where: TenderDocumentWhereUniqueInput
+  }
+
+  /**
+   * TenderDocument findFirst
+   */
+  export type TenderDocumentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderDocument to fetch.
+     */
+    where?: TenderDocumentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenderDocuments to fetch.
+     */
+    orderBy?: TenderDocumentOrderByWithRelationInput | TenderDocumentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenderDocuments.
+     */
+    cursor?: TenderDocumentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenderDocuments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenderDocuments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenderDocuments.
+     */
+    distinct?: TenderDocumentScalarFieldEnum | TenderDocumentScalarFieldEnum[]
+  }
+
+  /**
+   * TenderDocument findFirstOrThrow
+   */
+  export type TenderDocumentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderDocument to fetch.
+     */
+    where?: TenderDocumentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenderDocuments to fetch.
+     */
+    orderBy?: TenderDocumentOrderByWithRelationInput | TenderDocumentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenderDocuments.
+     */
+    cursor?: TenderDocumentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenderDocuments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenderDocuments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenderDocuments.
+     */
+    distinct?: TenderDocumentScalarFieldEnum | TenderDocumentScalarFieldEnum[]
+  }
+
+  /**
+   * TenderDocument findMany
+   */
+  export type TenderDocumentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderDocuments to fetch.
+     */
+    where?: TenderDocumentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenderDocuments to fetch.
+     */
+    orderBy?: TenderDocumentOrderByWithRelationInput | TenderDocumentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TenderDocuments.
+     */
+    cursor?: TenderDocumentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenderDocuments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenderDocuments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenderDocuments.
+     */
+    distinct?: TenderDocumentScalarFieldEnum | TenderDocumentScalarFieldEnum[]
+  }
+
+  /**
+   * TenderDocument create
+   */
+  export type TenderDocumentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TenderDocument.
+     */
+    data: XOR<TenderDocumentCreateInput, TenderDocumentUncheckedCreateInput>
+  }
+
+  /**
+   * TenderDocument createMany
+   */
+  export type TenderDocumentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TenderDocuments.
+     */
+    data: TenderDocumentCreateManyInput | TenderDocumentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenderDocument createManyAndReturn
+   */
+  export type TenderDocumentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * The data used to create many TenderDocuments.
+     */
+    data: TenderDocumentCreateManyInput | TenderDocumentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TenderDocument update
+   */
+  export type TenderDocumentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TenderDocument.
+     */
+    data: XOR<TenderDocumentUpdateInput, TenderDocumentUncheckedUpdateInput>
+    /**
+     * Choose, which TenderDocument to update.
+     */
+    where: TenderDocumentWhereUniqueInput
+  }
+
+  /**
+   * TenderDocument updateMany
+   */
+  export type TenderDocumentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TenderDocuments.
+     */
+    data: XOR<TenderDocumentUpdateManyMutationInput, TenderDocumentUncheckedUpdateManyInput>
+    /**
+     * Filter which TenderDocuments to update
+     */
+    where?: TenderDocumentWhereInput
+    /**
+     * Limit how many TenderDocuments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenderDocument updateManyAndReturn
+   */
+  export type TenderDocumentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * The data used to update TenderDocuments.
+     */
+    data: XOR<TenderDocumentUpdateManyMutationInput, TenderDocumentUncheckedUpdateManyInput>
+    /**
+     * Filter which TenderDocuments to update
+     */
+    where?: TenderDocumentWhereInput
+    /**
+     * Limit how many TenderDocuments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TenderDocument upsert
+   */
+  export type TenderDocumentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TenderDocument to update in case it exists.
+     */
+    where: TenderDocumentWhereUniqueInput
+    /**
+     * In case the TenderDocument found by the `where` argument doesn't exist, create a new TenderDocument with this data.
+     */
+    create: XOR<TenderDocumentCreateInput, TenderDocumentUncheckedCreateInput>
+    /**
+     * In case the TenderDocument was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TenderDocumentUpdateInput, TenderDocumentUncheckedUpdateInput>
+  }
+
+  /**
+   * TenderDocument delete
+   */
+  export type TenderDocumentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    /**
+     * Filter which TenderDocument to delete.
+     */
+    where: TenderDocumentWhereUniqueInput
+  }
+
+  /**
+   * TenderDocument deleteMany
+   */
+  export type TenderDocumentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenderDocuments to delete
+     */
+    where?: TenderDocumentWhereInput
+    /**
+     * Limit how many TenderDocuments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenderDocument.Requirement
+   */
+  export type TenderDocument$RequirementArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    where?: TenderRequirementWhereInput
+    orderBy?: TenderRequirementOrderByWithRelationInput | TenderRequirementOrderByWithRelationInput[]
+    cursor?: TenderRequirementWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TenderRequirementScalarFieldEnum | TenderRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * TenderDocument without action
+   */
+  export type TenderDocumentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TenderRequirement
+   */
+
+  export type AggregateTenderRequirement = {
+    _count: TenderRequirementCountAggregateOutputType | null
+    _min: TenderRequirementMinAggregateOutputType | null
+    _max: TenderRequirementMaxAggregateOutputType | null
+  }
+
+  export type TenderRequirementMinAggregateOutputType = {
+    id: string | null
+    opportunityId: string | null
+    ref: string | null
+    text: string | null
+    kind: string | null
+    status: string | null
+    sourceDocumentId: string | null
+    location: string | null
+    evidenceVersionId: string | null
+    notes: string | null
+    createdById: string | null
+    updatedById: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenderRequirementMaxAggregateOutputType = {
+    id: string | null
+    opportunityId: string | null
+    ref: string | null
+    text: string | null
+    kind: string | null
+    status: string | null
+    sourceDocumentId: string | null
+    location: string | null
+    evidenceVersionId: string | null
+    notes: string | null
+    createdById: string | null
+    updatedById: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenderRequirementCountAggregateOutputType = {
+    id: number
+    opportunityId: number
+    ref: number
+    text: number
+    kind: number
+    status: number
+    sourceDocumentId: number
+    location: number
+    evidenceVersionId: number
+    notes: number
+    createdById: number
+    updatedById: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TenderRequirementMinAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    ref?: true
+    text?: true
+    kind?: true
+    status?: true
+    sourceDocumentId?: true
+    location?: true
+    evidenceVersionId?: true
+    notes?: true
+    createdById?: true
+    updatedById?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenderRequirementMaxAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    ref?: true
+    text?: true
+    kind?: true
+    status?: true
+    sourceDocumentId?: true
+    location?: true
+    evidenceVersionId?: true
+    notes?: true
+    createdById?: true
+    updatedById?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenderRequirementCountAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    ref?: true
+    text?: true
+    kind?: true
+    status?: true
+    sourceDocumentId?: true
+    location?: true
+    evidenceVersionId?: true
+    notes?: true
+    createdById?: true
+    updatedById?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TenderRequirementAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenderRequirement to aggregate.
+     */
+    where?: TenderRequirementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenderRequirements to fetch.
+     */
+    orderBy?: TenderRequirementOrderByWithRelationInput | TenderRequirementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TenderRequirementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenderRequirements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenderRequirements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TenderRequirements
+    **/
+    _count?: true | TenderRequirementCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TenderRequirementMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TenderRequirementMaxAggregateInputType
+  }
+
+  export type GetTenderRequirementAggregateType<T extends TenderRequirementAggregateArgs> = {
+        [P in keyof T & keyof AggregateTenderRequirement]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTenderRequirement[P]>
+      : GetScalarType<T[P], AggregateTenderRequirement[P]>
+  }
+
+
+
+
+  export type TenderRequirementGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenderRequirementWhereInput
+    orderBy?: TenderRequirementOrderByWithAggregationInput | TenderRequirementOrderByWithAggregationInput[]
+    by: TenderRequirementScalarFieldEnum[] | TenderRequirementScalarFieldEnum
+    having?: TenderRequirementScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TenderRequirementCountAggregateInputType | true
+    _min?: TenderRequirementMinAggregateInputType
+    _max?: TenderRequirementMaxAggregateInputType
+  }
+
+  export type TenderRequirementGroupByOutputType = {
+    id: string
+    opportunityId: string
+    ref: string | null
+    text: string
+    kind: string
+    status: string
+    sourceDocumentId: string | null
+    location: string | null
+    evidenceVersionId: string | null
+    notes: string | null
+    createdById: string | null
+    updatedById: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: TenderRequirementCountAggregateOutputType | null
+    _min: TenderRequirementMinAggregateOutputType | null
+    _max: TenderRequirementMaxAggregateOutputType | null
+  }
+
+  type GetTenderRequirementGroupByPayload<T extends TenderRequirementGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TenderRequirementGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TenderRequirementGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TenderRequirementGroupByOutputType[P]>
+            : GetScalarType<T[P], TenderRequirementGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TenderRequirementSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    ref?: boolean
+    text?: boolean
+    kind?: boolean
+    status?: boolean
+    sourceDocumentId?: boolean
+    location?: boolean
+    evidenceVersionId?: boolean
+    notes?: boolean
+    createdById?: boolean
+    updatedById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+    SourceDocument?: boolean | TenderRequirement$SourceDocumentArgs<ExtArgs>
+    Evidence?: boolean | TenderRequirement$EvidenceArgs<ExtArgs>
+  }, ExtArgs["result"]["tenderRequirement"]>
+
+  export type TenderRequirementSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    ref?: boolean
+    text?: boolean
+    kind?: boolean
+    status?: boolean
+    sourceDocumentId?: boolean
+    location?: boolean
+    evidenceVersionId?: boolean
+    notes?: boolean
+    createdById?: boolean
+    updatedById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+    SourceDocument?: boolean | TenderRequirement$SourceDocumentArgs<ExtArgs>
+    Evidence?: boolean | TenderRequirement$EvidenceArgs<ExtArgs>
+  }, ExtArgs["result"]["tenderRequirement"]>
+
+  export type TenderRequirementSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    ref?: boolean
+    text?: boolean
+    kind?: boolean
+    status?: boolean
+    sourceDocumentId?: boolean
+    location?: boolean
+    evidenceVersionId?: boolean
+    notes?: boolean
+    createdById?: boolean
+    updatedById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+    SourceDocument?: boolean | TenderRequirement$SourceDocumentArgs<ExtArgs>
+    Evidence?: boolean | TenderRequirement$EvidenceArgs<ExtArgs>
+  }, ExtArgs["result"]["tenderRequirement"]>
+
+  export type TenderRequirementSelectScalar = {
+    id?: boolean
+    opportunityId?: boolean
+    ref?: boolean
+    text?: boolean
+    kind?: boolean
+    status?: boolean
+    sourceDocumentId?: boolean
+    location?: boolean
+    evidenceVersionId?: boolean
+    notes?: boolean
+    createdById?: boolean
+    updatedById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TenderRequirementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "opportunityId" | "ref" | "text" | "kind" | "status" | "sourceDocumentId" | "location" | "evidenceVersionId" | "notes" | "createdById" | "updatedById" | "createdAt" | "updatedAt", ExtArgs["result"]["tenderRequirement"]>
+  export type TenderRequirementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+    SourceDocument?: boolean | TenderRequirement$SourceDocumentArgs<ExtArgs>
+    Evidence?: boolean | TenderRequirement$EvidenceArgs<ExtArgs>
+  }
+  export type TenderRequirementIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+    SourceDocument?: boolean | TenderRequirement$SourceDocumentArgs<ExtArgs>
+    Evidence?: boolean | TenderRequirement$EvidenceArgs<ExtArgs>
+  }
+  export type TenderRequirementIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+    SourceDocument?: boolean | TenderRequirement$SourceDocumentArgs<ExtArgs>
+    Evidence?: boolean | TenderRequirement$EvidenceArgs<ExtArgs>
+  }
+
+  export type $TenderRequirementPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TenderRequirement"
+    objects: {
+      Opportunity: Prisma.$OpportunityPayload<ExtArgs>
+      SourceDocument: Prisma.$TenderDocumentPayload<ExtArgs> | null
+      Evidence: Prisma.$CompanyDocumentVersionPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      opportunityId: string
+      ref: string | null
+      text: string
+      kind: string
+      status: string
+      sourceDocumentId: string | null
+      location: string | null
+      evidenceVersionId: string | null
+      notes: string | null
+      createdById: string | null
+      updatedById: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tenderRequirement"]>
+    composites: {}
+  }
+
+  type TenderRequirementGetPayload<S extends boolean | null | undefined | TenderRequirementDefaultArgs> = $Result.GetResult<Prisma.$TenderRequirementPayload, S>
+
+  type TenderRequirementCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TenderRequirementFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TenderRequirementCountAggregateInputType | true
+    }
+
+  export interface TenderRequirementDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TenderRequirement'], meta: { name: 'TenderRequirement' } }
+    /**
+     * Find zero or one TenderRequirement that matches the filter.
+     * @param {TenderRequirementFindUniqueArgs} args - Arguments to find a TenderRequirement
+     * @example
+     * // Get one TenderRequirement
+     * const tenderRequirement = await prisma.tenderRequirement.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TenderRequirementFindUniqueArgs>(args: SelectSubset<T, TenderRequirementFindUniqueArgs<ExtArgs>>): Prisma__TenderRequirementClient<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TenderRequirement that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TenderRequirementFindUniqueOrThrowArgs} args - Arguments to find a TenderRequirement
+     * @example
+     * // Get one TenderRequirement
+     * const tenderRequirement = await prisma.tenderRequirement.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TenderRequirementFindUniqueOrThrowArgs>(args: SelectSubset<T, TenderRequirementFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TenderRequirementClient<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenderRequirement that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderRequirementFindFirstArgs} args - Arguments to find a TenderRequirement
+     * @example
+     * // Get one TenderRequirement
+     * const tenderRequirement = await prisma.tenderRequirement.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TenderRequirementFindFirstArgs>(args?: SelectSubset<T, TenderRequirementFindFirstArgs<ExtArgs>>): Prisma__TenderRequirementClient<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TenderRequirement that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderRequirementFindFirstOrThrowArgs} args - Arguments to find a TenderRequirement
+     * @example
+     * // Get one TenderRequirement
+     * const tenderRequirement = await prisma.tenderRequirement.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TenderRequirementFindFirstOrThrowArgs>(args?: SelectSubset<T, TenderRequirementFindFirstOrThrowArgs<ExtArgs>>): Prisma__TenderRequirementClient<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TenderRequirements that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderRequirementFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TenderRequirements
+     * const tenderRequirements = await prisma.tenderRequirement.findMany()
+     * 
+     * // Get first 10 TenderRequirements
+     * const tenderRequirements = await prisma.tenderRequirement.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tenderRequirementWithIdOnly = await prisma.tenderRequirement.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TenderRequirementFindManyArgs>(args?: SelectSubset<T, TenderRequirementFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TenderRequirement.
+     * @param {TenderRequirementCreateArgs} args - Arguments to create a TenderRequirement.
+     * @example
+     * // Create one TenderRequirement
+     * const TenderRequirement = await prisma.tenderRequirement.create({
+     *   data: {
+     *     // ... data to create a TenderRequirement
+     *   }
+     * })
+     * 
+     */
+    create<T extends TenderRequirementCreateArgs>(args: SelectSubset<T, TenderRequirementCreateArgs<ExtArgs>>): Prisma__TenderRequirementClient<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TenderRequirements.
+     * @param {TenderRequirementCreateManyArgs} args - Arguments to create many TenderRequirements.
+     * @example
+     * // Create many TenderRequirements
+     * const tenderRequirement = await prisma.tenderRequirement.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TenderRequirementCreateManyArgs>(args?: SelectSubset<T, TenderRequirementCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TenderRequirements and returns the data saved in the database.
+     * @param {TenderRequirementCreateManyAndReturnArgs} args - Arguments to create many TenderRequirements.
+     * @example
+     * // Create many TenderRequirements
+     * const tenderRequirement = await prisma.tenderRequirement.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TenderRequirements and only return the `id`
+     * const tenderRequirementWithIdOnly = await prisma.tenderRequirement.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TenderRequirementCreateManyAndReturnArgs>(args?: SelectSubset<T, TenderRequirementCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TenderRequirement.
+     * @param {TenderRequirementDeleteArgs} args - Arguments to delete one TenderRequirement.
+     * @example
+     * // Delete one TenderRequirement
+     * const TenderRequirement = await prisma.tenderRequirement.delete({
+     *   where: {
+     *     // ... filter to delete one TenderRequirement
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TenderRequirementDeleteArgs>(args: SelectSubset<T, TenderRequirementDeleteArgs<ExtArgs>>): Prisma__TenderRequirementClient<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TenderRequirement.
+     * @param {TenderRequirementUpdateArgs} args - Arguments to update one TenderRequirement.
+     * @example
+     * // Update one TenderRequirement
+     * const tenderRequirement = await prisma.tenderRequirement.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TenderRequirementUpdateArgs>(args: SelectSubset<T, TenderRequirementUpdateArgs<ExtArgs>>): Prisma__TenderRequirementClient<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TenderRequirements.
+     * @param {TenderRequirementDeleteManyArgs} args - Arguments to filter TenderRequirements to delete.
+     * @example
+     * // Delete a few TenderRequirements
+     * const { count } = await prisma.tenderRequirement.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TenderRequirementDeleteManyArgs>(args?: SelectSubset<T, TenderRequirementDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenderRequirements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderRequirementUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TenderRequirements
+     * const tenderRequirement = await prisma.tenderRequirement.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TenderRequirementUpdateManyArgs>(args: SelectSubset<T, TenderRequirementUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TenderRequirements and returns the data updated in the database.
+     * @param {TenderRequirementUpdateManyAndReturnArgs} args - Arguments to update many TenderRequirements.
+     * @example
+     * // Update many TenderRequirements
+     * const tenderRequirement = await prisma.tenderRequirement.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TenderRequirements and only return the `id`
+     * const tenderRequirementWithIdOnly = await prisma.tenderRequirement.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TenderRequirementUpdateManyAndReturnArgs>(args: SelectSubset<T, TenderRequirementUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TenderRequirement.
+     * @param {TenderRequirementUpsertArgs} args - Arguments to update or create a TenderRequirement.
+     * @example
+     * // Update or create a TenderRequirement
+     * const tenderRequirement = await prisma.tenderRequirement.upsert({
+     *   create: {
+     *     // ... data to create a TenderRequirement
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TenderRequirement we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TenderRequirementUpsertArgs>(args: SelectSubset<T, TenderRequirementUpsertArgs<ExtArgs>>): Prisma__TenderRequirementClient<$Result.GetResult<Prisma.$TenderRequirementPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TenderRequirements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderRequirementCountArgs} args - Arguments to filter TenderRequirements to count.
+     * @example
+     * // Count the number of TenderRequirements
+     * const count = await prisma.tenderRequirement.count({
+     *   where: {
+     *     // ... the filter for the TenderRequirements we want to count
+     *   }
+     * })
+    **/
+    count<T extends TenderRequirementCountArgs>(
+      args?: Subset<T, TenderRequirementCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TenderRequirementCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TenderRequirement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderRequirementAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TenderRequirementAggregateArgs>(args: Subset<T, TenderRequirementAggregateArgs>): Prisma.PrismaPromise<GetTenderRequirementAggregateType<T>>
+
+    /**
+     * Group by TenderRequirement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenderRequirementGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TenderRequirementGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TenderRequirementGroupByArgs['orderBy'] }
+        : { orderBy?: TenderRequirementGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TenderRequirementGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTenderRequirementGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TenderRequirement model
+   */
+  readonly fields: TenderRequirementFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TenderRequirement.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TenderRequirementClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    Opportunity<T extends OpportunityDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OpportunityDefaultArgs<ExtArgs>>): Prisma__OpportunityClient<$Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    SourceDocument<T extends TenderRequirement$SourceDocumentArgs<ExtArgs> = {}>(args?: Subset<T, TenderRequirement$SourceDocumentArgs<ExtArgs>>): Prisma__TenderDocumentClient<$Result.GetResult<Prisma.$TenderDocumentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    Evidence<T extends TenderRequirement$EvidenceArgs<ExtArgs> = {}>(args?: Subset<T, TenderRequirement$EvidenceArgs<ExtArgs>>): Prisma__CompanyDocumentVersionClient<$Result.GetResult<Prisma.$CompanyDocumentVersionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TenderRequirement model
+   */
+  interface TenderRequirementFieldRefs {
+    readonly id: FieldRef<"TenderRequirement", 'String'>
+    readonly opportunityId: FieldRef<"TenderRequirement", 'String'>
+    readonly ref: FieldRef<"TenderRequirement", 'String'>
+    readonly text: FieldRef<"TenderRequirement", 'String'>
+    readonly kind: FieldRef<"TenderRequirement", 'String'>
+    readonly status: FieldRef<"TenderRequirement", 'String'>
+    readonly sourceDocumentId: FieldRef<"TenderRequirement", 'String'>
+    readonly location: FieldRef<"TenderRequirement", 'String'>
+    readonly evidenceVersionId: FieldRef<"TenderRequirement", 'String'>
+    readonly notes: FieldRef<"TenderRequirement", 'String'>
+    readonly createdById: FieldRef<"TenderRequirement", 'String'>
+    readonly updatedById: FieldRef<"TenderRequirement", 'String'>
+    readonly createdAt: FieldRef<"TenderRequirement", 'DateTime'>
+    readonly updatedAt: FieldRef<"TenderRequirement", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TenderRequirement findUnique
+   */
+  export type TenderRequirementFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderRequirement to fetch.
+     */
+    where: TenderRequirementWhereUniqueInput
+  }
+
+  /**
+   * TenderRequirement findUniqueOrThrow
+   */
+  export type TenderRequirementFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderRequirement to fetch.
+     */
+    where: TenderRequirementWhereUniqueInput
+  }
+
+  /**
+   * TenderRequirement findFirst
+   */
+  export type TenderRequirementFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderRequirement to fetch.
+     */
+    where?: TenderRequirementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenderRequirements to fetch.
+     */
+    orderBy?: TenderRequirementOrderByWithRelationInput | TenderRequirementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenderRequirements.
+     */
+    cursor?: TenderRequirementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenderRequirements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenderRequirements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenderRequirements.
+     */
+    distinct?: TenderRequirementScalarFieldEnum | TenderRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * TenderRequirement findFirstOrThrow
+   */
+  export type TenderRequirementFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderRequirement to fetch.
+     */
+    where?: TenderRequirementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenderRequirements to fetch.
+     */
+    orderBy?: TenderRequirementOrderByWithRelationInput | TenderRequirementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TenderRequirements.
+     */
+    cursor?: TenderRequirementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenderRequirements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenderRequirements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenderRequirements.
+     */
+    distinct?: TenderRequirementScalarFieldEnum | TenderRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * TenderRequirement findMany
+   */
+  export type TenderRequirementFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * Filter, which TenderRequirements to fetch.
+     */
+    where?: TenderRequirementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TenderRequirements to fetch.
+     */
+    orderBy?: TenderRequirementOrderByWithRelationInput | TenderRequirementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TenderRequirements.
+     */
+    cursor?: TenderRequirementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TenderRequirements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TenderRequirements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TenderRequirements.
+     */
+    distinct?: TenderRequirementScalarFieldEnum | TenderRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * TenderRequirement create
+   */
+  export type TenderRequirementCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TenderRequirement.
+     */
+    data: XOR<TenderRequirementCreateInput, TenderRequirementUncheckedCreateInput>
+  }
+
+  /**
+   * TenderRequirement createMany
+   */
+  export type TenderRequirementCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TenderRequirements.
+     */
+    data: TenderRequirementCreateManyInput | TenderRequirementCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TenderRequirement createManyAndReturn
+   */
+  export type TenderRequirementCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * The data used to create many TenderRequirements.
+     */
+    data: TenderRequirementCreateManyInput | TenderRequirementCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TenderRequirement update
+   */
+  export type TenderRequirementUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TenderRequirement.
+     */
+    data: XOR<TenderRequirementUpdateInput, TenderRequirementUncheckedUpdateInput>
+    /**
+     * Choose, which TenderRequirement to update.
+     */
+    where: TenderRequirementWhereUniqueInput
+  }
+
+  /**
+   * TenderRequirement updateMany
+   */
+  export type TenderRequirementUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TenderRequirements.
+     */
+    data: XOR<TenderRequirementUpdateManyMutationInput, TenderRequirementUncheckedUpdateManyInput>
+    /**
+     * Filter which TenderRequirements to update
+     */
+    where?: TenderRequirementWhereInput
+    /**
+     * Limit how many TenderRequirements to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenderRequirement updateManyAndReturn
+   */
+  export type TenderRequirementUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * The data used to update TenderRequirements.
+     */
+    data: XOR<TenderRequirementUpdateManyMutationInput, TenderRequirementUncheckedUpdateManyInput>
+    /**
+     * Filter which TenderRequirements to update
+     */
+    where?: TenderRequirementWhereInput
+    /**
+     * Limit how many TenderRequirements to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TenderRequirement upsert
+   */
+  export type TenderRequirementUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TenderRequirement to update in case it exists.
+     */
+    where: TenderRequirementWhereUniqueInput
+    /**
+     * In case the TenderRequirement found by the `where` argument doesn't exist, create a new TenderRequirement with this data.
+     */
+    create: XOR<TenderRequirementCreateInput, TenderRequirementUncheckedCreateInput>
+    /**
+     * In case the TenderRequirement was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TenderRequirementUpdateInput, TenderRequirementUncheckedUpdateInput>
+  }
+
+  /**
+   * TenderRequirement delete
+   */
+  export type TenderRequirementDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+    /**
+     * Filter which TenderRequirement to delete.
+     */
+    where: TenderRequirementWhereUniqueInput
+  }
+
+  /**
+   * TenderRequirement deleteMany
+   */
+  export type TenderRequirementDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TenderRequirements to delete
+     */
+    where?: TenderRequirementWhereInput
+    /**
+     * Limit how many TenderRequirements to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TenderRequirement.SourceDocument
+   */
+  export type TenderRequirement$SourceDocumentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderDocument
+     */
+    select?: TenderDocumentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderDocument
+     */
+    omit?: TenderDocumentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderDocumentInclude<ExtArgs> | null
+    where?: TenderDocumentWhereInput
+  }
+
+  /**
+   * TenderRequirement.Evidence
+   */
+  export type TenderRequirement$EvidenceArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompanyDocumentVersion
+     */
+    select?: CompanyDocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompanyDocumentVersion
+     */
+    omit?: CompanyDocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompanyDocumentVersionInclude<ExtArgs> | null
+    where?: CompanyDocumentVersionWhereInput
+  }
+
+  /**
+   * TenderRequirement without action
+   */
+  export type TenderRequirementDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenderRequirement
+     */
+    select?: TenderRequirementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TenderRequirement
+     */
+    omit?: TenderRequirementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenderRequirementInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -151304,6 +154145,49 @@ export namespace Prisma {
   };
 
   export type BidAssessmentScalarFieldEnum = (typeof BidAssessmentScalarFieldEnum)[keyof typeof BidAssessmentScalarFieldEnum]
+
+
+  export const TenderDocumentScalarFieldEnum: {
+    id: 'id',
+    opportunityId: 'opportunityId',
+    title: 'title',
+    documentType: 'documentType',
+    sourceUrl: 'sourceUrl',
+    origin: 'origin',
+    status: 'status',
+    refusal: 'refusal',
+    storagePath: 'storagePath',
+    filename: 'filename',
+    sha256: 'sha256',
+    sizeBytes: 'sizeBytes',
+    scan: 'scan',
+    storedAt: 'storedAt',
+    createdById: 'createdById',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TenderDocumentScalarFieldEnum = (typeof TenderDocumentScalarFieldEnum)[keyof typeof TenderDocumentScalarFieldEnum]
+
+
+  export const TenderRequirementScalarFieldEnum: {
+    id: 'id',
+    opportunityId: 'opportunityId',
+    ref: 'ref',
+    text: 'text',
+    kind: 'kind',
+    status: 'status',
+    sourceDocumentId: 'sourceDocumentId',
+    location: 'location',
+    evidenceVersionId: 'evidenceVersionId',
+    notes: 'notes',
+    createdById: 'createdById',
+    updatedById: 'updatedById',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TenderRequirementScalarFieldEnum = (typeof TenderRequirementScalarFieldEnum)[keyof typeof TenderRequirementScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -160389,6 +163273,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestListRelationFilter
     ExecutionRecord?: ExecutionRecordListRelationFilter
     CostEntry?: CostEntryListRelationFilter
+    TenderDocument?: TenderDocumentListRelationFilter
+    TenderRequirement?: TenderRequirementListRelationFilter
   }
 
   export type OpportunityOrderByWithRelationInput = {
@@ -160425,6 +163311,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestOrderByRelationAggregateInput
     ExecutionRecord?: ExecutionRecordOrderByRelationAggregateInput
     CostEntry?: CostEntryOrderByRelationAggregateInput
+    TenderDocument?: TenderDocumentOrderByRelationAggregateInput
+    TenderRequirement?: TenderRequirementOrderByRelationAggregateInput
   }
 
   export type OpportunityWhereUniqueInput = Prisma.AtLeast<{
@@ -160464,6 +163352,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestListRelationFilter
     ExecutionRecord?: ExecutionRecordListRelationFilter
     CostEntry?: CostEntryListRelationFilter
+    TenderDocument?: TenderDocumentListRelationFilter
+    TenderRequirement?: TenderRequirementListRelationFilter
   }, "id">
 
   export type OpportunityOrderByWithAggregationInput = {
@@ -160683,6 +163573,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactListRelationFilter
     PackageItem?: PackageItemListRelationFilter
     Receipt?: ReceiptListRelationFilter
+    TenderRequirement?: TenderRequirementListRelationFilter
   }
 
   export type CompanyDocumentVersionOrderByWithRelationInput = {
@@ -160704,6 +163595,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactOrderByRelationAggregateInput
     PackageItem?: PackageItemOrderByRelationAggregateInput
     Receipt?: ReceiptOrderByRelationAggregateInput
+    TenderRequirement?: TenderRequirementOrderByRelationAggregateInput
   }
 
   export type CompanyDocumentVersionWhereUniqueInput = Prisma.AtLeast<{
@@ -160729,6 +163621,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactListRelationFilter
     PackageItem?: PackageItemListRelationFilter
     Receipt?: ReceiptListRelationFilter
+    TenderRequirement?: TenderRequirementListRelationFilter
   }, "id" | "documentId_version">
 
   export type CompanyDocumentVersionOrderByWithAggregationInput = {
@@ -161869,6 +164762,232 @@ export namespace Prisma {
     recommendation?: StringWithAggregatesFilter<"BidAssessment"> | string
     authorId?: StringNullableWithAggregatesFilter<"BidAssessment"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"BidAssessment"> | Date | string
+  }
+
+  export type TenderDocumentWhereInput = {
+    AND?: TenderDocumentWhereInput | TenderDocumentWhereInput[]
+    OR?: TenderDocumentWhereInput[]
+    NOT?: TenderDocumentWhereInput | TenderDocumentWhereInput[]
+    id?: StringFilter<"TenderDocument"> | string
+    opportunityId?: StringFilter<"TenderDocument"> | string
+    title?: StringFilter<"TenderDocument"> | string
+    documentType?: StringNullableFilter<"TenderDocument"> | string | null
+    sourceUrl?: StringNullableFilter<"TenderDocument"> | string | null
+    origin?: StringFilter<"TenderDocument"> | string
+    status?: StringFilter<"TenderDocument"> | string
+    refusal?: StringNullableFilter<"TenderDocument"> | string | null
+    storagePath?: StringNullableFilter<"TenderDocument"> | string | null
+    filename?: StringNullableFilter<"TenderDocument"> | string | null
+    sha256?: StringNullableFilter<"TenderDocument"> | string | null
+    sizeBytes?: IntNullableFilter<"TenderDocument"> | number | null
+    scan?: JsonFilter<"TenderDocument">
+    storedAt?: DateTimeNullableFilter<"TenderDocument"> | Date | string | null
+    createdById?: StringNullableFilter<"TenderDocument"> | string | null
+    createdAt?: DateTimeFilter<"TenderDocument"> | Date | string
+    updatedAt?: DateTimeFilter<"TenderDocument"> | Date | string
+    Opportunity?: XOR<OpportunityScalarRelationFilter, OpportunityWhereInput>
+    Requirement?: TenderRequirementListRelationFilter
+  }
+
+  export type TenderDocumentOrderByWithRelationInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    title?: SortOrder
+    documentType?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    origin?: SortOrder
+    status?: SortOrder
+    refusal?: SortOrderInput | SortOrder
+    storagePath?: SortOrderInput | SortOrder
+    filename?: SortOrderInput | SortOrder
+    sha256?: SortOrderInput | SortOrder
+    sizeBytes?: SortOrderInput | SortOrder
+    scan?: SortOrder
+    storedAt?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    Opportunity?: OpportunityOrderByWithRelationInput
+    Requirement?: TenderRequirementOrderByRelationAggregateInput
+  }
+
+  export type TenderDocumentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TenderDocumentWhereInput | TenderDocumentWhereInput[]
+    OR?: TenderDocumentWhereInput[]
+    NOT?: TenderDocumentWhereInput | TenderDocumentWhereInput[]
+    opportunityId?: StringFilter<"TenderDocument"> | string
+    title?: StringFilter<"TenderDocument"> | string
+    documentType?: StringNullableFilter<"TenderDocument"> | string | null
+    sourceUrl?: StringNullableFilter<"TenderDocument"> | string | null
+    origin?: StringFilter<"TenderDocument"> | string
+    status?: StringFilter<"TenderDocument"> | string
+    refusal?: StringNullableFilter<"TenderDocument"> | string | null
+    storagePath?: StringNullableFilter<"TenderDocument"> | string | null
+    filename?: StringNullableFilter<"TenderDocument"> | string | null
+    sha256?: StringNullableFilter<"TenderDocument"> | string | null
+    sizeBytes?: IntNullableFilter<"TenderDocument"> | number | null
+    scan?: JsonFilter<"TenderDocument">
+    storedAt?: DateTimeNullableFilter<"TenderDocument"> | Date | string | null
+    createdById?: StringNullableFilter<"TenderDocument"> | string | null
+    createdAt?: DateTimeFilter<"TenderDocument"> | Date | string
+    updatedAt?: DateTimeFilter<"TenderDocument"> | Date | string
+    Opportunity?: XOR<OpportunityScalarRelationFilter, OpportunityWhereInput>
+    Requirement?: TenderRequirementListRelationFilter
+  }, "id">
+
+  export type TenderDocumentOrderByWithAggregationInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    title?: SortOrder
+    documentType?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    origin?: SortOrder
+    status?: SortOrder
+    refusal?: SortOrderInput | SortOrder
+    storagePath?: SortOrderInput | SortOrder
+    filename?: SortOrderInput | SortOrder
+    sha256?: SortOrderInput | SortOrder
+    sizeBytes?: SortOrderInput | SortOrder
+    scan?: SortOrder
+    storedAt?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TenderDocumentCountOrderByAggregateInput
+    _avg?: TenderDocumentAvgOrderByAggregateInput
+    _max?: TenderDocumentMaxOrderByAggregateInput
+    _min?: TenderDocumentMinOrderByAggregateInput
+    _sum?: TenderDocumentSumOrderByAggregateInput
+  }
+
+  export type TenderDocumentScalarWhereWithAggregatesInput = {
+    AND?: TenderDocumentScalarWhereWithAggregatesInput | TenderDocumentScalarWhereWithAggregatesInput[]
+    OR?: TenderDocumentScalarWhereWithAggregatesInput[]
+    NOT?: TenderDocumentScalarWhereWithAggregatesInput | TenderDocumentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TenderDocument"> | string
+    opportunityId?: StringWithAggregatesFilter<"TenderDocument"> | string
+    title?: StringWithAggregatesFilter<"TenderDocument"> | string
+    documentType?: StringNullableWithAggregatesFilter<"TenderDocument"> | string | null
+    sourceUrl?: StringNullableWithAggregatesFilter<"TenderDocument"> | string | null
+    origin?: StringWithAggregatesFilter<"TenderDocument"> | string
+    status?: StringWithAggregatesFilter<"TenderDocument"> | string
+    refusal?: StringNullableWithAggregatesFilter<"TenderDocument"> | string | null
+    storagePath?: StringNullableWithAggregatesFilter<"TenderDocument"> | string | null
+    filename?: StringNullableWithAggregatesFilter<"TenderDocument"> | string | null
+    sha256?: StringNullableWithAggregatesFilter<"TenderDocument"> | string | null
+    sizeBytes?: IntNullableWithAggregatesFilter<"TenderDocument"> | number | null
+    scan?: JsonWithAggregatesFilter<"TenderDocument">
+    storedAt?: DateTimeNullableWithAggregatesFilter<"TenderDocument"> | Date | string | null
+    createdById?: StringNullableWithAggregatesFilter<"TenderDocument"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"TenderDocument"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TenderDocument"> | Date | string
+  }
+
+  export type TenderRequirementWhereInput = {
+    AND?: TenderRequirementWhereInput | TenderRequirementWhereInput[]
+    OR?: TenderRequirementWhereInput[]
+    NOT?: TenderRequirementWhereInput | TenderRequirementWhereInput[]
+    id?: StringFilter<"TenderRequirement"> | string
+    opportunityId?: StringFilter<"TenderRequirement"> | string
+    ref?: StringNullableFilter<"TenderRequirement"> | string | null
+    text?: StringFilter<"TenderRequirement"> | string
+    kind?: StringFilter<"TenderRequirement"> | string
+    status?: StringFilter<"TenderRequirement"> | string
+    sourceDocumentId?: StringNullableFilter<"TenderRequirement"> | string | null
+    location?: StringNullableFilter<"TenderRequirement"> | string | null
+    evidenceVersionId?: StringNullableFilter<"TenderRequirement"> | string | null
+    notes?: StringNullableFilter<"TenderRequirement"> | string | null
+    createdById?: StringNullableFilter<"TenderRequirement"> | string | null
+    updatedById?: StringNullableFilter<"TenderRequirement"> | string | null
+    createdAt?: DateTimeFilter<"TenderRequirement"> | Date | string
+    updatedAt?: DateTimeFilter<"TenderRequirement"> | Date | string
+    Opportunity?: XOR<OpportunityScalarRelationFilter, OpportunityWhereInput>
+    SourceDocument?: XOR<TenderDocumentNullableScalarRelationFilter, TenderDocumentWhereInput> | null
+    Evidence?: XOR<CompanyDocumentVersionNullableScalarRelationFilter, CompanyDocumentVersionWhereInput> | null
+  }
+
+  export type TenderRequirementOrderByWithRelationInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    ref?: SortOrderInput | SortOrder
+    text?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    sourceDocumentId?: SortOrderInput | SortOrder
+    location?: SortOrderInput | SortOrder
+    evidenceVersionId?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
+    updatedById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    Opportunity?: OpportunityOrderByWithRelationInput
+    SourceDocument?: TenderDocumentOrderByWithRelationInput
+    Evidence?: CompanyDocumentVersionOrderByWithRelationInput
+  }
+
+  export type TenderRequirementWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: TenderRequirementWhereInput | TenderRequirementWhereInput[]
+    OR?: TenderRequirementWhereInput[]
+    NOT?: TenderRequirementWhereInput | TenderRequirementWhereInput[]
+    opportunityId?: StringFilter<"TenderRequirement"> | string
+    ref?: StringNullableFilter<"TenderRequirement"> | string | null
+    text?: StringFilter<"TenderRequirement"> | string
+    kind?: StringFilter<"TenderRequirement"> | string
+    status?: StringFilter<"TenderRequirement"> | string
+    sourceDocumentId?: StringNullableFilter<"TenderRequirement"> | string | null
+    location?: StringNullableFilter<"TenderRequirement"> | string | null
+    evidenceVersionId?: StringNullableFilter<"TenderRequirement"> | string | null
+    notes?: StringNullableFilter<"TenderRequirement"> | string | null
+    createdById?: StringNullableFilter<"TenderRequirement"> | string | null
+    updatedById?: StringNullableFilter<"TenderRequirement"> | string | null
+    createdAt?: DateTimeFilter<"TenderRequirement"> | Date | string
+    updatedAt?: DateTimeFilter<"TenderRequirement"> | Date | string
+    Opportunity?: XOR<OpportunityScalarRelationFilter, OpportunityWhereInput>
+    SourceDocument?: XOR<TenderDocumentNullableScalarRelationFilter, TenderDocumentWhereInput> | null
+    Evidence?: XOR<CompanyDocumentVersionNullableScalarRelationFilter, CompanyDocumentVersionWhereInput> | null
+  }, "id">
+
+  export type TenderRequirementOrderByWithAggregationInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    ref?: SortOrderInput | SortOrder
+    text?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    sourceDocumentId?: SortOrderInput | SortOrder
+    location?: SortOrderInput | SortOrder
+    evidenceVersionId?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
+    updatedById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TenderRequirementCountOrderByAggregateInput
+    _max?: TenderRequirementMaxOrderByAggregateInput
+    _min?: TenderRequirementMinOrderByAggregateInput
+  }
+
+  export type TenderRequirementScalarWhereWithAggregatesInput = {
+    AND?: TenderRequirementScalarWhereWithAggregatesInput | TenderRequirementScalarWhereWithAggregatesInput[]
+    OR?: TenderRequirementScalarWhereWithAggregatesInput[]
+    NOT?: TenderRequirementScalarWhereWithAggregatesInput | TenderRequirementScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"TenderRequirement"> | string
+    opportunityId?: StringWithAggregatesFilter<"TenderRequirement"> | string
+    ref?: StringNullableWithAggregatesFilter<"TenderRequirement"> | string | null
+    text?: StringWithAggregatesFilter<"TenderRequirement"> | string
+    kind?: StringWithAggregatesFilter<"TenderRequirement"> | string
+    status?: StringWithAggregatesFilter<"TenderRequirement"> | string
+    sourceDocumentId?: StringNullableWithAggregatesFilter<"TenderRequirement"> | string | null
+    location?: StringNullableWithAggregatesFilter<"TenderRequirement"> | string | null
+    evidenceVersionId?: StringNullableWithAggregatesFilter<"TenderRequirement"> | string | null
+    notes?: StringNullableWithAggregatesFilter<"TenderRequirement"> | string | null
+    createdById?: StringNullableWithAggregatesFilter<"TenderRequirement"> | string | null
+    updatedById?: StringNullableWithAggregatesFilter<"TenderRequirement"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"TenderRequirement"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TenderRequirement"> | Date | string
   }
 
   export type audit_log_entriesCreateInput = {
@@ -171817,6 +174936,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateInput = {
@@ -171849,6 +174970,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUpdateInput = {
@@ -171881,6 +175004,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateInput = {
@@ -171913,6 +175038,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityCreateManyInput = {
@@ -172157,6 +175284,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactCreateNestedManyWithoutEvidenceInput
     PackageItem?: PackageItemCreateNestedManyWithoutDocumentVersionInput
     Receipt?: ReceiptCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionUncheckedCreateInput = {
@@ -172177,6 +175305,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactUncheckedCreateNestedManyWithoutEvidenceInput
     PackageItem?: PackageItemUncheckedCreateNestedManyWithoutDocumentVersionInput
     Receipt?: ReceiptUncheckedCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionUpdateInput = {
@@ -172197,6 +175326,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactUpdateManyWithoutEvidenceNestedInput
     PackageItem?: PackageItemUpdateManyWithoutDocumentVersionNestedInput
     Receipt?: ReceiptUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutEvidenceNestedInput
   }
 
   export type CompanyDocumentVersionUncheckedUpdateInput = {
@@ -172217,6 +175347,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactUncheckedUpdateManyWithoutEvidenceNestedInput
     PackageItem?: PackageItemUncheckedUpdateManyWithoutDocumentVersionNestedInput
     Receipt?: ReceiptUncheckedUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutEvidenceNestedInput
   }
 
   export type CompanyDocumentVersionCreateManyInput = {
@@ -173496,6 +176627,265 @@ export namespace Prisma {
     recommendation?: StringFieldUpdateOperationsInput | string
     authorId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderDocumentCreateInput = {
+    id: string
+    title: string
+    documentType?: string | null
+    sourceUrl?: string | null
+    origin: string
+    status?: string
+    refusal?: string | null
+    storagePath?: string | null
+    filename?: string | null
+    sha256?: string | null
+    sizeBytes?: number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: Date | string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Opportunity: OpportunityCreateNestedOneWithoutTenderDocumentInput
+    Requirement?: TenderRequirementCreateNestedManyWithoutSourceDocumentInput
+  }
+
+  export type TenderDocumentUncheckedCreateInput = {
+    id: string
+    opportunityId: string
+    title: string
+    documentType?: string | null
+    sourceUrl?: string | null
+    origin: string
+    status?: string
+    refusal?: string | null
+    storagePath?: string | null
+    filename?: string | null
+    sha256?: string | null
+    sizeBytes?: number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: Date | string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Requirement?: TenderRequirementUncheckedCreateNestedManyWithoutSourceDocumentInput
+  }
+
+  export type TenderDocumentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUpdateOneRequiredWithoutTenderDocumentNestedInput
+    Requirement?: TenderRequirementUpdateManyWithoutSourceDocumentNestedInput
+  }
+
+  export type TenderDocumentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Requirement?: TenderRequirementUncheckedUpdateManyWithoutSourceDocumentNestedInput
+  }
+
+  export type TenderDocumentCreateManyInput = {
+    id: string
+    opportunityId: string
+    title: string
+    documentType?: string | null
+    sourceUrl?: string | null
+    origin: string
+    status?: string
+    refusal?: string | null
+    storagePath?: string | null
+    filename?: string | null
+    sha256?: string | null
+    sizeBytes?: number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: Date | string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderDocumentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderDocumentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementCreateInput = {
+    id: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    location?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Opportunity: OpportunityCreateNestedOneWithoutTenderRequirementInput
+    SourceDocument?: TenderDocumentCreateNestedOneWithoutRequirementInput
+    Evidence?: CompanyDocumentVersionCreateNestedOneWithoutTenderRequirementInput
+  }
+
+  export type TenderRequirementUncheckedCreateInput = {
+    id: string
+    opportunityId: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    sourceDocumentId?: string | null
+    location?: string | null
+    evidenceVersionId?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderRequirementUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUpdateOneRequiredWithoutTenderRequirementNestedInput
+    SourceDocument?: TenderDocumentUpdateOneWithoutRequirementNestedInput
+    Evidence?: CompanyDocumentVersionUpdateOneWithoutTenderRequirementNestedInput
+  }
+
+  export type TenderRequirementUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    sourceDocumentId?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceVersionId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementCreateManyInput = {
+    id: string
+    opportunityId: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    sourceDocumentId?: string | null
+    location?: string | null
+    evidenceVersionId?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderRequirementUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    sourceDocumentId?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceVersionId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type UuidNullableFilter<$PrismaModel = never> = {
@@ -179451,6 +182841,18 @@ export namespace Prisma {
     none?: CostEntryWhereInput
   }
 
+  export type TenderDocumentListRelationFilter = {
+    every?: TenderDocumentWhereInput
+    some?: TenderDocumentWhereInput
+    none?: TenderDocumentWhereInput
+  }
+
+  export type TenderRequirementListRelationFilter = {
+    every?: TenderRequirementWhereInput
+    some?: TenderRequirementWhereInput
+    none?: TenderRequirementWhereInput
+  }
+
   export type BidAssessmentOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -179472,6 +182874,14 @@ export namespace Prisma {
   }
 
   export type CostEntryOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TenderDocumentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TenderRequirementOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -180339,6 +183749,128 @@ export namespace Prisma {
 
   export type BidAssessmentSumOrderByAggregateInput = {
     total?: SortOrder
+  }
+
+  export type TenderDocumentCountOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    title?: SortOrder
+    documentType?: SortOrder
+    sourceUrl?: SortOrder
+    origin?: SortOrder
+    status?: SortOrder
+    refusal?: SortOrder
+    storagePath?: SortOrder
+    filename?: SortOrder
+    sha256?: SortOrder
+    sizeBytes?: SortOrder
+    scan?: SortOrder
+    storedAt?: SortOrder
+    createdById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenderDocumentAvgOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type TenderDocumentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    title?: SortOrder
+    documentType?: SortOrder
+    sourceUrl?: SortOrder
+    origin?: SortOrder
+    status?: SortOrder
+    refusal?: SortOrder
+    storagePath?: SortOrder
+    filename?: SortOrder
+    sha256?: SortOrder
+    sizeBytes?: SortOrder
+    storedAt?: SortOrder
+    createdById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenderDocumentMinOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    title?: SortOrder
+    documentType?: SortOrder
+    sourceUrl?: SortOrder
+    origin?: SortOrder
+    status?: SortOrder
+    refusal?: SortOrder
+    storagePath?: SortOrder
+    filename?: SortOrder
+    sha256?: SortOrder
+    sizeBytes?: SortOrder
+    storedAt?: SortOrder
+    createdById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenderDocumentSumOrderByAggregateInput = {
+    sizeBytes?: SortOrder
+  }
+
+  export type TenderDocumentNullableScalarRelationFilter = {
+    is?: TenderDocumentWhereInput | null
+    isNot?: TenderDocumentWhereInput | null
+  }
+
+  export type TenderRequirementCountOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    ref?: SortOrder
+    text?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    sourceDocumentId?: SortOrder
+    location?: SortOrder
+    evidenceVersionId?: SortOrder
+    notes?: SortOrder
+    createdById?: SortOrder
+    updatedById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenderRequirementMaxOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    ref?: SortOrder
+    text?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    sourceDocumentId?: SortOrder
+    location?: SortOrder
+    evidenceVersionId?: SortOrder
+    notes?: SortOrder
+    createdById?: SortOrder
+    updatedById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenderRequirementMinOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    ref?: SortOrder
+    text?: SortOrder
+    kind?: SortOrder
+    status?: SortOrder
+    sourceDocumentId?: SortOrder
+    location?: SortOrder
+    evidenceVersionId?: SortOrder
+    notes?: SortOrder
+    createdById?: SortOrder
+    updatedById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type NullableStringFieldUpdateOperationsInput = {
@@ -184765,6 +188297,20 @@ export namespace Prisma {
     connect?: CostEntryWhereUniqueInput | CostEntryWhereUniqueInput[]
   }
 
+  export type TenderDocumentCreateNestedManyWithoutOpportunityInput = {
+    create?: XOR<TenderDocumentCreateWithoutOpportunityInput, TenderDocumentUncheckedCreateWithoutOpportunityInput> | TenderDocumentCreateWithoutOpportunityInput[] | TenderDocumentUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: TenderDocumentCreateOrConnectWithoutOpportunityInput | TenderDocumentCreateOrConnectWithoutOpportunityInput[]
+    createMany?: TenderDocumentCreateManyOpportunityInputEnvelope
+    connect?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+  }
+
+  export type TenderRequirementCreateNestedManyWithoutOpportunityInput = {
+    create?: XOR<TenderRequirementCreateWithoutOpportunityInput, TenderRequirementUncheckedCreateWithoutOpportunityInput> | TenderRequirementCreateWithoutOpportunityInput[] | TenderRequirementUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutOpportunityInput | TenderRequirementCreateOrConnectWithoutOpportunityInput[]
+    createMany?: TenderRequirementCreateManyOpportunityInputEnvelope
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+  }
+
   export type BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput = {
     create?: XOR<BidAssessmentCreateWithoutOpportunityInput, BidAssessmentUncheckedCreateWithoutOpportunityInput> | BidAssessmentCreateWithoutOpportunityInput[] | BidAssessmentUncheckedCreateWithoutOpportunityInput[]
     connectOrCreate?: BidAssessmentCreateOrConnectWithoutOpportunityInput | BidAssessmentCreateOrConnectWithoutOpportunityInput[]
@@ -184805,6 +188351,20 @@ export namespace Prisma {
     connectOrCreate?: CostEntryCreateOrConnectWithoutOpportunityInput | CostEntryCreateOrConnectWithoutOpportunityInput[]
     createMany?: CostEntryCreateManyOpportunityInputEnvelope
     connect?: CostEntryWhereUniqueInput | CostEntryWhereUniqueInput[]
+  }
+
+  export type TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput = {
+    create?: XOR<TenderDocumentCreateWithoutOpportunityInput, TenderDocumentUncheckedCreateWithoutOpportunityInput> | TenderDocumentCreateWithoutOpportunityInput[] | TenderDocumentUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: TenderDocumentCreateOrConnectWithoutOpportunityInput | TenderDocumentCreateOrConnectWithoutOpportunityInput[]
+    createMany?: TenderDocumentCreateManyOpportunityInputEnvelope
+    connect?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+  }
+
+  export type TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput = {
+    create?: XOR<TenderRequirementCreateWithoutOpportunityInput, TenderRequirementUncheckedCreateWithoutOpportunityInput> | TenderRequirementCreateWithoutOpportunityInput[] | TenderRequirementUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutOpportunityInput | TenderRequirementCreateOrConnectWithoutOpportunityInput[]
+    createMany?: TenderRequirementCreateManyOpportunityInputEnvelope
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
   }
 
   export type OpportunityUpdatecpvInput = {
@@ -184934,6 +188494,34 @@ export namespace Prisma {
     deleteMany?: CostEntryScalarWhereInput | CostEntryScalarWhereInput[]
   }
 
+  export type TenderDocumentUpdateManyWithoutOpportunityNestedInput = {
+    create?: XOR<TenderDocumentCreateWithoutOpportunityInput, TenderDocumentUncheckedCreateWithoutOpportunityInput> | TenderDocumentCreateWithoutOpportunityInput[] | TenderDocumentUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: TenderDocumentCreateOrConnectWithoutOpportunityInput | TenderDocumentCreateOrConnectWithoutOpportunityInput[]
+    upsert?: TenderDocumentUpsertWithWhereUniqueWithoutOpportunityInput | TenderDocumentUpsertWithWhereUniqueWithoutOpportunityInput[]
+    createMany?: TenderDocumentCreateManyOpportunityInputEnvelope
+    set?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+    disconnect?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+    delete?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+    connect?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+    update?: TenderDocumentUpdateWithWhereUniqueWithoutOpportunityInput | TenderDocumentUpdateWithWhereUniqueWithoutOpportunityInput[]
+    updateMany?: TenderDocumentUpdateManyWithWhereWithoutOpportunityInput | TenderDocumentUpdateManyWithWhereWithoutOpportunityInput[]
+    deleteMany?: TenderDocumentScalarWhereInput | TenderDocumentScalarWhereInput[]
+  }
+
+  export type TenderRequirementUpdateManyWithoutOpportunityNestedInput = {
+    create?: XOR<TenderRequirementCreateWithoutOpportunityInput, TenderRequirementUncheckedCreateWithoutOpportunityInput> | TenderRequirementCreateWithoutOpportunityInput[] | TenderRequirementUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutOpportunityInput | TenderRequirementCreateOrConnectWithoutOpportunityInput[]
+    upsert?: TenderRequirementUpsertWithWhereUniqueWithoutOpportunityInput | TenderRequirementUpsertWithWhereUniqueWithoutOpportunityInput[]
+    createMany?: TenderRequirementCreateManyOpportunityInputEnvelope
+    set?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    disconnect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    delete?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    update?: TenderRequirementUpdateWithWhereUniqueWithoutOpportunityInput | TenderRequirementUpdateWithWhereUniqueWithoutOpportunityInput[]
+    updateMany?: TenderRequirementUpdateManyWithWhereWithoutOpportunityInput | TenderRequirementUpdateManyWithWhereWithoutOpportunityInput[]
+    deleteMany?: TenderRequirementScalarWhereInput | TenderRequirementScalarWhereInput[]
+  }
+
   export type BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput = {
     create?: XOR<BidAssessmentCreateWithoutOpportunityInput, BidAssessmentUncheckedCreateWithoutOpportunityInput> | BidAssessmentCreateWithoutOpportunityInput[] | BidAssessmentUncheckedCreateWithoutOpportunityInput[]
     connectOrCreate?: BidAssessmentCreateOrConnectWithoutOpportunityInput | BidAssessmentCreateOrConnectWithoutOpportunityInput[]
@@ -185016,6 +188604,34 @@ export namespace Prisma {
     update?: CostEntryUpdateWithWhereUniqueWithoutOpportunityInput | CostEntryUpdateWithWhereUniqueWithoutOpportunityInput[]
     updateMany?: CostEntryUpdateManyWithWhereWithoutOpportunityInput | CostEntryUpdateManyWithWhereWithoutOpportunityInput[]
     deleteMany?: CostEntryScalarWhereInput | CostEntryScalarWhereInput[]
+  }
+
+  export type TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput = {
+    create?: XOR<TenderDocumentCreateWithoutOpportunityInput, TenderDocumentUncheckedCreateWithoutOpportunityInput> | TenderDocumentCreateWithoutOpportunityInput[] | TenderDocumentUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: TenderDocumentCreateOrConnectWithoutOpportunityInput | TenderDocumentCreateOrConnectWithoutOpportunityInput[]
+    upsert?: TenderDocumentUpsertWithWhereUniqueWithoutOpportunityInput | TenderDocumentUpsertWithWhereUniqueWithoutOpportunityInput[]
+    createMany?: TenderDocumentCreateManyOpportunityInputEnvelope
+    set?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+    disconnect?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+    delete?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+    connect?: TenderDocumentWhereUniqueInput | TenderDocumentWhereUniqueInput[]
+    update?: TenderDocumentUpdateWithWhereUniqueWithoutOpportunityInput | TenderDocumentUpdateWithWhereUniqueWithoutOpportunityInput[]
+    updateMany?: TenderDocumentUpdateManyWithWhereWithoutOpportunityInput | TenderDocumentUpdateManyWithWhereWithoutOpportunityInput[]
+    deleteMany?: TenderDocumentScalarWhereInput | TenderDocumentScalarWhereInput[]
+  }
+
+  export type TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput = {
+    create?: XOR<TenderRequirementCreateWithoutOpportunityInput, TenderRequirementUncheckedCreateWithoutOpportunityInput> | TenderRequirementCreateWithoutOpportunityInput[] | TenderRequirementUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutOpportunityInput | TenderRequirementCreateOrConnectWithoutOpportunityInput[]
+    upsert?: TenderRequirementUpsertWithWhereUniqueWithoutOpportunityInput | TenderRequirementUpsertWithWhereUniqueWithoutOpportunityInput[]
+    createMany?: TenderRequirementCreateManyOpportunityInputEnvelope
+    set?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    disconnect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    delete?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    update?: TenderRequirementUpdateWithWhereUniqueWithoutOpportunityInput | TenderRequirementUpdateWithWhereUniqueWithoutOpportunityInput[]
+    updateMany?: TenderRequirementUpdateManyWithWhereWithoutOpportunityInput | TenderRequirementUpdateManyWithWhereWithoutOpportunityInput[]
+    deleteMany?: TenderRequirementScalarWhereInput | TenderRequirementScalarWhereInput[]
   }
 
   export type OpportunityCreateNestedOneWithoutEvidenceInput = {
@@ -185101,6 +188717,13 @@ export namespace Prisma {
     connect?: ReceiptWhereUniqueInput | ReceiptWhereUniqueInput[]
   }
 
+  export type TenderRequirementCreateNestedManyWithoutEvidenceInput = {
+    create?: XOR<TenderRequirementCreateWithoutEvidenceInput, TenderRequirementUncheckedCreateWithoutEvidenceInput> | TenderRequirementCreateWithoutEvidenceInput[] | TenderRequirementUncheckedCreateWithoutEvidenceInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutEvidenceInput | TenderRequirementCreateOrConnectWithoutEvidenceInput[]
+    createMany?: TenderRequirementCreateManyEvidenceInputEnvelope
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+  }
+
   export type CompanyFactUncheckedCreateNestedManyWithoutEvidenceInput = {
     create?: XOR<CompanyFactCreateWithoutEvidenceInput, CompanyFactUncheckedCreateWithoutEvidenceInput> | CompanyFactCreateWithoutEvidenceInput[] | CompanyFactUncheckedCreateWithoutEvidenceInput[]
     connectOrCreate?: CompanyFactCreateOrConnectWithoutEvidenceInput | CompanyFactCreateOrConnectWithoutEvidenceInput[]
@@ -185120,6 +188743,13 @@ export namespace Prisma {
     connectOrCreate?: ReceiptCreateOrConnectWithoutDocumentVersionInput | ReceiptCreateOrConnectWithoutDocumentVersionInput[]
     createMany?: ReceiptCreateManyDocumentVersionInputEnvelope
     connect?: ReceiptWhereUniqueInput | ReceiptWhereUniqueInput[]
+  }
+
+  export type TenderRequirementUncheckedCreateNestedManyWithoutEvidenceInput = {
+    create?: XOR<TenderRequirementCreateWithoutEvidenceInput, TenderRequirementUncheckedCreateWithoutEvidenceInput> | TenderRequirementCreateWithoutEvidenceInput[] | TenderRequirementUncheckedCreateWithoutEvidenceInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutEvidenceInput | TenderRequirementCreateOrConnectWithoutEvidenceInput[]
+    createMany?: TenderRequirementCreateManyEvidenceInputEnvelope
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
   }
 
   export type CompanyDocumentUpdateOneRequiredWithoutVersionNestedInput = {
@@ -185172,6 +188802,20 @@ export namespace Prisma {
     deleteMany?: ReceiptScalarWhereInput | ReceiptScalarWhereInput[]
   }
 
+  export type TenderRequirementUpdateManyWithoutEvidenceNestedInput = {
+    create?: XOR<TenderRequirementCreateWithoutEvidenceInput, TenderRequirementUncheckedCreateWithoutEvidenceInput> | TenderRequirementCreateWithoutEvidenceInput[] | TenderRequirementUncheckedCreateWithoutEvidenceInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutEvidenceInput | TenderRequirementCreateOrConnectWithoutEvidenceInput[]
+    upsert?: TenderRequirementUpsertWithWhereUniqueWithoutEvidenceInput | TenderRequirementUpsertWithWhereUniqueWithoutEvidenceInput[]
+    createMany?: TenderRequirementCreateManyEvidenceInputEnvelope
+    set?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    disconnect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    delete?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    update?: TenderRequirementUpdateWithWhereUniqueWithoutEvidenceInput | TenderRequirementUpdateWithWhereUniqueWithoutEvidenceInput[]
+    updateMany?: TenderRequirementUpdateManyWithWhereWithoutEvidenceInput | TenderRequirementUpdateManyWithWhereWithoutEvidenceInput[]
+    deleteMany?: TenderRequirementScalarWhereInput | TenderRequirementScalarWhereInput[]
+  }
+
   export type CompanyFactUncheckedUpdateManyWithoutEvidenceNestedInput = {
     create?: XOR<CompanyFactCreateWithoutEvidenceInput, CompanyFactUncheckedCreateWithoutEvidenceInput> | CompanyFactCreateWithoutEvidenceInput[] | CompanyFactUncheckedCreateWithoutEvidenceInput[]
     connectOrCreate?: CompanyFactCreateOrConnectWithoutEvidenceInput | CompanyFactCreateOrConnectWithoutEvidenceInput[]
@@ -185212,6 +188856,20 @@ export namespace Prisma {
     update?: ReceiptUpdateWithWhereUniqueWithoutDocumentVersionInput | ReceiptUpdateWithWhereUniqueWithoutDocumentVersionInput[]
     updateMany?: ReceiptUpdateManyWithWhereWithoutDocumentVersionInput | ReceiptUpdateManyWithWhereWithoutDocumentVersionInput[]
     deleteMany?: ReceiptScalarWhereInput | ReceiptScalarWhereInput[]
+  }
+
+  export type TenderRequirementUncheckedUpdateManyWithoutEvidenceNestedInput = {
+    create?: XOR<TenderRequirementCreateWithoutEvidenceInput, TenderRequirementUncheckedCreateWithoutEvidenceInput> | TenderRequirementCreateWithoutEvidenceInput[] | TenderRequirementUncheckedCreateWithoutEvidenceInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutEvidenceInput | TenderRequirementCreateOrConnectWithoutEvidenceInput[]
+    upsert?: TenderRequirementUpsertWithWhereUniqueWithoutEvidenceInput | TenderRequirementUpsertWithWhereUniqueWithoutEvidenceInput[]
+    createMany?: TenderRequirementCreateManyEvidenceInputEnvelope
+    set?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    disconnect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    delete?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    update?: TenderRequirementUpdateWithWhereUniqueWithoutEvidenceInput | TenderRequirementUpdateWithWhereUniqueWithoutEvidenceInput[]
+    updateMany?: TenderRequirementUpdateManyWithWhereWithoutEvidenceInput | TenderRequirementUpdateManyWithWhereWithoutEvidenceInput[]
+    deleteMany?: TenderRequirementScalarWhereInput | TenderRequirementScalarWhereInput[]
   }
 
   export type CompanyDocumentVersionCreateNestedOneWithoutCompanyFactInput = {
@@ -185868,6 +189526,108 @@ export namespace Prisma {
     upsert?: OpportunityUpsertWithoutAssessmentInput
     connect?: OpportunityWhereUniqueInput
     update?: XOR<XOR<OpportunityUpdateToOneWithWhereWithoutAssessmentInput, OpportunityUpdateWithoutAssessmentInput>, OpportunityUncheckedUpdateWithoutAssessmentInput>
+  }
+
+  export type OpportunityCreateNestedOneWithoutTenderDocumentInput = {
+    create?: XOR<OpportunityCreateWithoutTenderDocumentInput, OpportunityUncheckedCreateWithoutTenderDocumentInput>
+    connectOrCreate?: OpportunityCreateOrConnectWithoutTenderDocumentInput
+    connect?: OpportunityWhereUniqueInput
+  }
+
+  export type TenderRequirementCreateNestedManyWithoutSourceDocumentInput = {
+    create?: XOR<TenderRequirementCreateWithoutSourceDocumentInput, TenderRequirementUncheckedCreateWithoutSourceDocumentInput> | TenderRequirementCreateWithoutSourceDocumentInput[] | TenderRequirementUncheckedCreateWithoutSourceDocumentInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutSourceDocumentInput | TenderRequirementCreateOrConnectWithoutSourceDocumentInput[]
+    createMany?: TenderRequirementCreateManySourceDocumentInputEnvelope
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+  }
+
+  export type TenderRequirementUncheckedCreateNestedManyWithoutSourceDocumentInput = {
+    create?: XOR<TenderRequirementCreateWithoutSourceDocumentInput, TenderRequirementUncheckedCreateWithoutSourceDocumentInput> | TenderRequirementCreateWithoutSourceDocumentInput[] | TenderRequirementUncheckedCreateWithoutSourceDocumentInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutSourceDocumentInput | TenderRequirementCreateOrConnectWithoutSourceDocumentInput[]
+    createMany?: TenderRequirementCreateManySourceDocumentInputEnvelope
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+  }
+
+  export type OpportunityUpdateOneRequiredWithoutTenderDocumentNestedInput = {
+    create?: XOR<OpportunityCreateWithoutTenderDocumentInput, OpportunityUncheckedCreateWithoutTenderDocumentInput>
+    connectOrCreate?: OpportunityCreateOrConnectWithoutTenderDocumentInput
+    upsert?: OpportunityUpsertWithoutTenderDocumentInput
+    connect?: OpportunityWhereUniqueInput
+    update?: XOR<XOR<OpportunityUpdateToOneWithWhereWithoutTenderDocumentInput, OpportunityUpdateWithoutTenderDocumentInput>, OpportunityUncheckedUpdateWithoutTenderDocumentInput>
+  }
+
+  export type TenderRequirementUpdateManyWithoutSourceDocumentNestedInput = {
+    create?: XOR<TenderRequirementCreateWithoutSourceDocumentInput, TenderRequirementUncheckedCreateWithoutSourceDocumentInput> | TenderRequirementCreateWithoutSourceDocumentInput[] | TenderRequirementUncheckedCreateWithoutSourceDocumentInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutSourceDocumentInput | TenderRequirementCreateOrConnectWithoutSourceDocumentInput[]
+    upsert?: TenderRequirementUpsertWithWhereUniqueWithoutSourceDocumentInput | TenderRequirementUpsertWithWhereUniqueWithoutSourceDocumentInput[]
+    createMany?: TenderRequirementCreateManySourceDocumentInputEnvelope
+    set?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    disconnect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    delete?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    update?: TenderRequirementUpdateWithWhereUniqueWithoutSourceDocumentInput | TenderRequirementUpdateWithWhereUniqueWithoutSourceDocumentInput[]
+    updateMany?: TenderRequirementUpdateManyWithWhereWithoutSourceDocumentInput | TenderRequirementUpdateManyWithWhereWithoutSourceDocumentInput[]
+    deleteMany?: TenderRequirementScalarWhereInput | TenderRequirementScalarWhereInput[]
+  }
+
+  export type TenderRequirementUncheckedUpdateManyWithoutSourceDocumentNestedInput = {
+    create?: XOR<TenderRequirementCreateWithoutSourceDocumentInput, TenderRequirementUncheckedCreateWithoutSourceDocumentInput> | TenderRequirementCreateWithoutSourceDocumentInput[] | TenderRequirementUncheckedCreateWithoutSourceDocumentInput[]
+    connectOrCreate?: TenderRequirementCreateOrConnectWithoutSourceDocumentInput | TenderRequirementCreateOrConnectWithoutSourceDocumentInput[]
+    upsert?: TenderRequirementUpsertWithWhereUniqueWithoutSourceDocumentInput | TenderRequirementUpsertWithWhereUniqueWithoutSourceDocumentInput[]
+    createMany?: TenderRequirementCreateManySourceDocumentInputEnvelope
+    set?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    disconnect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    delete?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    connect?: TenderRequirementWhereUniqueInput | TenderRequirementWhereUniqueInput[]
+    update?: TenderRequirementUpdateWithWhereUniqueWithoutSourceDocumentInput | TenderRequirementUpdateWithWhereUniqueWithoutSourceDocumentInput[]
+    updateMany?: TenderRequirementUpdateManyWithWhereWithoutSourceDocumentInput | TenderRequirementUpdateManyWithWhereWithoutSourceDocumentInput[]
+    deleteMany?: TenderRequirementScalarWhereInput | TenderRequirementScalarWhereInput[]
+  }
+
+  export type OpportunityCreateNestedOneWithoutTenderRequirementInput = {
+    create?: XOR<OpportunityCreateWithoutTenderRequirementInput, OpportunityUncheckedCreateWithoutTenderRequirementInput>
+    connectOrCreate?: OpportunityCreateOrConnectWithoutTenderRequirementInput
+    connect?: OpportunityWhereUniqueInput
+  }
+
+  export type TenderDocumentCreateNestedOneWithoutRequirementInput = {
+    create?: XOR<TenderDocumentCreateWithoutRequirementInput, TenderDocumentUncheckedCreateWithoutRequirementInput>
+    connectOrCreate?: TenderDocumentCreateOrConnectWithoutRequirementInput
+    connect?: TenderDocumentWhereUniqueInput
+  }
+
+  export type CompanyDocumentVersionCreateNestedOneWithoutTenderRequirementInput = {
+    create?: XOR<CompanyDocumentVersionCreateWithoutTenderRequirementInput, CompanyDocumentVersionUncheckedCreateWithoutTenderRequirementInput>
+    connectOrCreate?: CompanyDocumentVersionCreateOrConnectWithoutTenderRequirementInput
+    connect?: CompanyDocumentVersionWhereUniqueInput
+  }
+
+  export type OpportunityUpdateOneRequiredWithoutTenderRequirementNestedInput = {
+    create?: XOR<OpportunityCreateWithoutTenderRequirementInput, OpportunityUncheckedCreateWithoutTenderRequirementInput>
+    connectOrCreate?: OpportunityCreateOrConnectWithoutTenderRequirementInput
+    upsert?: OpportunityUpsertWithoutTenderRequirementInput
+    connect?: OpportunityWhereUniqueInput
+    update?: XOR<XOR<OpportunityUpdateToOneWithWhereWithoutTenderRequirementInput, OpportunityUpdateWithoutTenderRequirementInput>, OpportunityUncheckedUpdateWithoutTenderRequirementInput>
+  }
+
+  export type TenderDocumentUpdateOneWithoutRequirementNestedInput = {
+    create?: XOR<TenderDocumentCreateWithoutRequirementInput, TenderDocumentUncheckedCreateWithoutRequirementInput>
+    connectOrCreate?: TenderDocumentCreateOrConnectWithoutRequirementInput
+    upsert?: TenderDocumentUpsertWithoutRequirementInput
+    disconnect?: TenderDocumentWhereInput | boolean
+    delete?: TenderDocumentWhereInput | boolean
+    connect?: TenderDocumentWhereUniqueInput
+    update?: XOR<XOR<TenderDocumentUpdateToOneWithWhereWithoutRequirementInput, TenderDocumentUpdateWithoutRequirementInput>, TenderDocumentUncheckedUpdateWithoutRequirementInput>
+  }
+
+  export type CompanyDocumentVersionUpdateOneWithoutTenderRequirementNestedInput = {
+    create?: XOR<CompanyDocumentVersionCreateWithoutTenderRequirementInput, CompanyDocumentVersionUncheckedCreateWithoutTenderRequirementInput>
+    connectOrCreate?: CompanyDocumentVersionCreateOrConnectWithoutTenderRequirementInput
+    upsert?: CompanyDocumentVersionUpsertWithoutTenderRequirementInput
+    disconnect?: CompanyDocumentVersionWhereInput | boolean
+    delete?: CompanyDocumentVersionWhereInput | boolean
+    connect?: CompanyDocumentVersionWhereUniqueInput
+    update?: XOR<XOR<CompanyDocumentVersionUpdateToOneWithWhereWithoutTenderRequirementInput, CompanyDocumentVersionUpdateWithoutTenderRequirementInput>, CompanyDocumentVersionUncheckedUpdateWithoutTenderRequirementInput>
   }
 
   export type NestedUuidNullableFilter<$PrismaModel = never> = {
@@ -192746,6 +196506,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutLeadInput = {
@@ -192777,6 +196539,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutLeadInput = {
@@ -200334,6 +204098,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutBuyerInput = {
@@ -200365,6 +204131,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutBuyerInput = {
@@ -200736,6 +204504,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutSourceInput = {
@@ -200767,6 +204537,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutSourceInput = {
@@ -201532,6 +205304,98 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type TenderDocumentCreateWithoutOpportunityInput = {
+    id: string
+    title: string
+    documentType?: string | null
+    sourceUrl?: string | null
+    origin: string
+    status?: string
+    refusal?: string | null
+    storagePath?: string | null
+    filename?: string | null
+    sha256?: string | null
+    sizeBytes?: number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: Date | string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Requirement?: TenderRequirementCreateNestedManyWithoutSourceDocumentInput
+  }
+
+  export type TenderDocumentUncheckedCreateWithoutOpportunityInput = {
+    id: string
+    title: string
+    documentType?: string | null
+    sourceUrl?: string | null
+    origin: string
+    status?: string
+    refusal?: string | null
+    storagePath?: string | null
+    filename?: string | null
+    sha256?: string | null
+    sizeBytes?: number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: Date | string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Requirement?: TenderRequirementUncheckedCreateNestedManyWithoutSourceDocumentInput
+  }
+
+  export type TenderDocumentCreateOrConnectWithoutOpportunityInput = {
+    where: TenderDocumentWhereUniqueInput
+    create: XOR<TenderDocumentCreateWithoutOpportunityInput, TenderDocumentUncheckedCreateWithoutOpportunityInput>
+  }
+
+  export type TenderDocumentCreateManyOpportunityInputEnvelope = {
+    data: TenderDocumentCreateManyOpportunityInput | TenderDocumentCreateManyOpportunityInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TenderRequirementCreateWithoutOpportunityInput = {
+    id: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    location?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    SourceDocument?: TenderDocumentCreateNestedOneWithoutRequirementInput
+    Evidence?: CompanyDocumentVersionCreateNestedOneWithoutTenderRequirementInput
+  }
+
+  export type TenderRequirementUncheckedCreateWithoutOpportunityInput = {
+    id: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    sourceDocumentId?: string | null
+    location?: string | null
+    evidenceVersionId?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderRequirementCreateOrConnectWithoutOpportunityInput = {
+    where: TenderRequirementWhereUniqueInput
+    create: XOR<TenderRequirementCreateWithoutOpportunityInput, TenderRequirementUncheckedCreateWithoutOpportunityInput>
+  }
+
+  export type TenderRequirementCreateManyOpportunityInputEnvelope = {
+    data: TenderRequirementCreateManyOpportunityInput | TenderRequirementCreateManyOpportunityInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OrganisationUpsertWithoutOpportunityInput = {
     update: XOR<OrganisationUpdateWithoutOpportunityInput, OrganisationUncheckedUpdateWithoutOpportunityInput>
     create: XOR<OrganisationCreateWithoutOpportunityInput, OrganisationUncheckedCreateWithoutOpportunityInput>
@@ -201922,6 +205786,81 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"CostEntry"> | Date | string
   }
 
+  export type TenderDocumentUpsertWithWhereUniqueWithoutOpportunityInput = {
+    where: TenderDocumentWhereUniqueInput
+    update: XOR<TenderDocumentUpdateWithoutOpportunityInput, TenderDocumentUncheckedUpdateWithoutOpportunityInput>
+    create: XOR<TenderDocumentCreateWithoutOpportunityInput, TenderDocumentUncheckedCreateWithoutOpportunityInput>
+  }
+
+  export type TenderDocumentUpdateWithWhereUniqueWithoutOpportunityInput = {
+    where: TenderDocumentWhereUniqueInput
+    data: XOR<TenderDocumentUpdateWithoutOpportunityInput, TenderDocumentUncheckedUpdateWithoutOpportunityInput>
+  }
+
+  export type TenderDocumentUpdateManyWithWhereWithoutOpportunityInput = {
+    where: TenderDocumentScalarWhereInput
+    data: XOR<TenderDocumentUpdateManyMutationInput, TenderDocumentUncheckedUpdateManyWithoutOpportunityInput>
+  }
+
+  export type TenderDocumentScalarWhereInput = {
+    AND?: TenderDocumentScalarWhereInput | TenderDocumentScalarWhereInput[]
+    OR?: TenderDocumentScalarWhereInput[]
+    NOT?: TenderDocumentScalarWhereInput | TenderDocumentScalarWhereInput[]
+    id?: StringFilter<"TenderDocument"> | string
+    opportunityId?: StringFilter<"TenderDocument"> | string
+    title?: StringFilter<"TenderDocument"> | string
+    documentType?: StringNullableFilter<"TenderDocument"> | string | null
+    sourceUrl?: StringNullableFilter<"TenderDocument"> | string | null
+    origin?: StringFilter<"TenderDocument"> | string
+    status?: StringFilter<"TenderDocument"> | string
+    refusal?: StringNullableFilter<"TenderDocument"> | string | null
+    storagePath?: StringNullableFilter<"TenderDocument"> | string | null
+    filename?: StringNullableFilter<"TenderDocument"> | string | null
+    sha256?: StringNullableFilter<"TenderDocument"> | string | null
+    sizeBytes?: IntNullableFilter<"TenderDocument"> | number | null
+    scan?: JsonFilter<"TenderDocument">
+    storedAt?: DateTimeNullableFilter<"TenderDocument"> | Date | string | null
+    createdById?: StringNullableFilter<"TenderDocument"> | string | null
+    createdAt?: DateTimeFilter<"TenderDocument"> | Date | string
+    updatedAt?: DateTimeFilter<"TenderDocument"> | Date | string
+  }
+
+  export type TenderRequirementUpsertWithWhereUniqueWithoutOpportunityInput = {
+    where: TenderRequirementWhereUniqueInput
+    update: XOR<TenderRequirementUpdateWithoutOpportunityInput, TenderRequirementUncheckedUpdateWithoutOpportunityInput>
+    create: XOR<TenderRequirementCreateWithoutOpportunityInput, TenderRequirementUncheckedCreateWithoutOpportunityInput>
+  }
+
+  export type TenderRequirementUpdateWithWhereUniqueWithoutOpportunityInput = {
+    where: TenderRequirementWhereUniqueInput
+    data: XOR<TenderRequirementUpdateWithoutOpportunityInput, TenderRequirementUncheckedUpdateWithoutOpportunityInput>
+  }
+
+  export type TenderRequirementUpdateManyWithWhereWithoutOpportunityInput = {
+    where: TenderRequirementScalarWhereInput
+    data: XOR<TenderRequirementUpdateManyMutationInput, TenderRequirementUncheckedUpdateManyWithoutOpportunityInput>
+  }
+
+  export type TenderRequirementScalarWhereInput = {
+    AND?: TenderRequirementScalarWhereInput | TenderRequirementScalarWhereInput[]
+    OR?: TenderRequirementScalarWhereInput[]
+    NOT?: TenderRequirementScalarWhereInput | TenderRequirementScalarWhereInput[]
+    id?: StringFilter<"TenderRequirement"> | string
+    opportunityId?: StringFilter<"TenderRequirement"> | string
+    ref?: StringNullableFilter<"TenderRequirement"> | string | null
+    text?: StringFilter<"TenderRequirement"> | string
+    kind?: StringFilter<"TenderRequirement"> | string
+    status?: StringFilter<"TenderRequirement"> | string
+    sourceDocumentId?: StringNullableFilter<"TenderRequirement"> | string | null
+    location?: StringNullableFilter<"TenderRequirement"> | string | null
+    evidenceVersionId?: StringNullableFilter<"TenderRequirement"> | string | null
+    notes?: StringNullableFilter<"TenderRequirement"> | string | null
+    createdById?: StringNullableFilter<"TenderRequirement"> | string | null
+    updatedById?: StringNullableFilter<"TenderRequirement"> | string | null
+    createdAt?: DateTimeFilter<"TenderRequirement"> | Date | string
+    updatedAt?: DateTimeFilter<"TenderRequirement"> | Date | string
+  }
+
   export type OpportunityCreateWithoutEvidenceInput = {
     id: string
     kind: string
@@ -201951,6 +205890,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutEvidenceInput = {
@@ -201982,6 +205923,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutEvidenceInput = {
@@ -202029,6 +205972,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutEvidenceInput = {
@@ -202060,6 +206005,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type CompanyDocumentVersionCreateWithoutDocumentInput = {
@@ -202079,6 +206026,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactCreateNestedManyWithoutEvidenceInput
     PackageItem?: PackageItemCreateNestedManyWithoutDocumentVersionInput
     Receipt?: ReceiptCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionUncheckedCreateWithoutDocumentInput = {
@@ -202098,6 +206046,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactUncheckedCreateNestedManyWithoutEvidenceInput
     PackageItem?: PackageItemUncheckedCreateNestedManyWithoutDocumentVersionInput
     Receipt?: ReceiptUncheckedCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionCreateOrConnectWithoutDocumentInput = {
@@ -202255,6 +206204,48 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type TenderRequirementCreateWithoutEvidenceInput = {
+    id: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    location?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Opportunity: OpportunityCreateNestedOneWithoutTenderRequirementInput
+    SourceDocument?: TenderDocumentCreateNestedOneWithoutRequirementInput
+  }
+
+  export type TenderRequirementUncheckedCreateWithoutEvidenceInput = {
+    id: string
+    opportunityId: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    sourceDocumentId?: string | null
+    location?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderRequirementCreateOrConnectWithoutEvidenceInput = {
+    where: TenderRequirementWhereUniqueInput
+    create: XOR<TenderRequirementCreateWithoutEvidenceInput, TenderRequirementUncheckedCreateWithoutEvidenceInput>
+  }
+
+  export type TenderRequirementCreateManyEvidenceInputEnvelope = {
+    data: TenderRequirementCreateManyEvidenceInput | TenderRequirementCreateManyEvidenceInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CompanyDocumentUpsertWithoutVersionInput = {
     update: XOR<CompanyDocumentUpdateWithoutVersionInput, CompanyDocumentUncheckedUpdateWithoutVersionInput>
     create: XOR<CompanyDocumentCreateWithoutVersionInput, CompanyDocumentUncheckedCreateWithoutVersionInput>
@@ -202373,6 +206364,22 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"Receipt"> | Date | string
   }
 
+  export type TenderRequirementUpsertWithWhereUniqueWithoutEvidenceInput = {
+    where: TenderRequirementWhereUniqueInput
+    update: XOR<TenderRequirementUpdateWithoutEvidenceInput, TenderRequirementUncheckedUpdateWithoutEvidenceInput>
+    create: XOR<TenderRequirementCreateWithoutEvidenceInput, TenderRequirementUncheckedCreateWithoutEvidenceInput>
+  }
+
+  export type TenderRequirementUpdateWithWhereUniqueWithoutEvidenceInput = {
+    where: TenderRequirementWhereUniqueInput
+    data: XOR<TenderRequirementUpdateWithoutEvidenceInput, TenderRequirementUncheckedUpdateWithoutEvidenceInput>
+  }
+
+  export type TenderRequirementUpdateManyWithWhereWithoutEvidenceInput = {
+    where: TenderRequirementScalarWhereInput
+    data: XOR<TenderRequirementUpdateManyMutationInput, TenderRequirementUncheckedUpdateManyWithoutEvidenceInput>
+  }
+
   export type CompanyDocumentVersionCreateWithoutCompanyFactInput = {
     id: string
     version: number
@@ -202390,6 +206397,7 @@ export namespace Prisma {
     Document: CompanyDocumentCreateNestedOneWithoutVersionInput
     PackageItem?: PackageItemCreateNestedManyWithoutDocumentVersionInput
     Receipt?: ReceiptCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionUncheckedCreateWithoutCompanyFactInput = {
@@ -202409,6 +206417,7 @@ export namespace Prisma {
     createdAt?: Date | string
     PackageItem?: PackageItemUncheckedCreateNestedManyWithoutDocumentVersionInput
     Receipt?: ReceiptUncheckedCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionCreateOrConnectWithoutCompanyFactInput = {
@@ -202444,6 +206453,7 @@ export namespace Prisma {
     Document?: CompanyDocumentUpdateOneRequiredWithoutVersionNestedInput
     PackageItem?: PackageItemUpdateManyWithoutDocumentVersionNestedInput
     Receipt?: ReceiptUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutEvidenceNestedInput
   }
 
   export type CompanyDocumentVersionUncheckedUpdateWithoutCompanyFactInput = {
@@ -202463,6 +206473,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     PackageItem?: PackageItemUncheckedUpdateManyWithoutDocumentVersionNestedInput
     Receipt?: ReceiptUncheckedUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutEvidenceNestedInput
   }
 
   export type OpportunityCreateWithoutPackageInput = {
@@ -202494,6 +206505,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutPackageInput = {
@@ -202525,6 +206538,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutPackageInput = {
@@ -202638,6 +206653,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutPackageInput = {
@@ -202669,6 +206686,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type PackageItemUpsertWithWhereUniqueWithoutPackageInput = {
@@ -202755,6 +206774,7 @@ export namespace Prisma {
     Document: CompanyDocumentCreateNestedOneWithoutVersionInput
     CompanyFact?: CompanyFactCreateNestedManyWithoutEvidenceInput
     Receipt?: ReceiptCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionUncheckedCreateWithoutPackageItemInput = {
@@ -202774,6 +206794,7 @@ export namespace Prisma {
     createdAt?: Date | string
     CompanyFact?: CompanyFactUncheckedCreateNestedManyWithoutEvidenceInput
     Receipt?: ReceiptUncheckedCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionCreateOrConnectWithoutPackageItemInput = {
@@ -202850,6 +206871,7 @@ export namespace Prisma {
     Document?: CompanyDocumentUpdateOneRequiredWithoutVersionNestedInput
     CompanyFact?: CompanyFactUpdateManyWithoutEvidenceNestedInput
     Receipt?: ReceiptUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutEvidenceNestedInput
   }
 
   export type CompanyDocumentVersionUncheckedUpdateWithoutPackageItemInput = {
@@ -202869,6 +206891,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     CompanyFact?: CompanyFactUncheckedUpdateManyWithoutEvidenceNestedInput
     Receipt?: ReceiptUncheckedUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutEvidenceNestedInput
   }
 
   export type OpportunityCreateWithoutApprovalRequestInput = {
@@ -202900,6 +206923,8 @@ export namespace Prisma {
     Package?: PackageCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutApprovalRequestInput = {
@@ -202931,6 +206956,8 @@ export namespace Prisma {
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutApprovalRequestInput = {
@@ -203044,6 +207071,8 @@ export namespace Prisma {
     Package?: PackageUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutApprovalRequestInput = {
@@ -203075,6 +207104,8 @@ export namespace Prisma {
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type PackageUpsertWithoutApprovalRequestInput = {
@@ -203453,6 +207484,8 @@ export namespace Prisma {
     Package?: PackageCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutExecutionRecordInput = {
@@ -203484,6 +207517,8 @@ export namespace Prisma {
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutExecutionRecordInput = {
@@ -203596,6 +207631,8 @@ export namespace Prisma {
     Package?: PackageUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutExecutionRecordInput = {
@@ -203627,6 +207664,8 @@ export namespace Prisma {
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type ReceiptUpsertWithWhereUniqueWithoutExecutionInput = {
@@ -203695,6 +207734,7 @@ export namespace Prisma {
     Document: CompanyDocumentCreateNestedOneWithoutVersionInput
     CompanyFact?: CompanyFactCreateNestedManyWithoutEvidenceInput
     PackageItem?: PackageItemCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionUncheckedCreateWithoutReceiptInput = {
@@ -203714,6 +207754,7 @@ export namespace Prisma {
     createdAt?: Date | string
     CompanyFact?: CompanyFactUncheckedCreateNestedManyWithoutEvidenceInput
     PackageItem?: PackageItemUncheckedCreateNestedManyWithoutDocumentVersionInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutEvidenceInput
   }
 
   export type CompanyDocumentVersionCreateOrConnectWithoutReceiptInput = {
@@ -203788,6 +207829,7 @@ export namespace Prisma {
     Document?: CompanyDocumentUpdateOneRequiredWithoutVersionNestedInput
     CompanyFact?: CompanyFactUpdateManyWithoutEvidenceNestedInput
     PackageItem?: PackageItemUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutEvidenceNestedInput
   }
 
   export type CompanyDocumentVersionUncheckedUpdateWithoutReceiptInput = {
@@ -203807,6 +207849,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     CompanyFact?: CompanyFactUncheckedUpdateManyWithoutEvidenceNestedInput
     PackageItem?: PackageItemUncheckedUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutEvidenceNestedInput
   }
 
   export type OpportunityCreateWithoutCostEntryInput = {
@@ -203838,6 +207881,8 @@ export namespace Prisma {
     Package?: PackageCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutCostEntryInput = {
@@ -203869,6 +207914,8 @@ export namespace Prisma {
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutCostEntryInput = {
@@ -203916,6 +207963,8 @@ export namespace Prisma {
     Package?: PackageUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutCostEntryInput = {
@@ -203947,6 +207996,8 @@ export namespace Prisma {
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OrganisationCreateWithoutSupplierPortalInput = {
@@ -204456,6 +208507,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutProgrammeInput = {
@@ -204487,6 +208540,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutProgrammeInput = {
@@ -204646,6 +208701,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityUncheckedCreateWithoutAssessmentInput = {
@@ -204677,6 +208734,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
     CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
   }
 
   export type OpportunityCreateOrConnectWithoutAssessmentInput = {
@@ -204724,6 +208783,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutAssessmentInput = {
@@ -204755,6 +208816,554 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type OpportunityCreateWithoutTenderDocumentInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    paperclipIssueId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
+    Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
+    Lead?: LeadCreateNestedOneWithoutOpportunityInput
+    Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
+    Package?: PackageCreateNestedManyWithoutOpportunityInput
+    ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
+    ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
+    CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementCreateNestedManyWithoutOpportunityInput
+  }
+
+  export type OpportunityUncheckedCreateWithoutTenderDocumentInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    buyerOrganisationId?: string | null
+    origin: string
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    leadId?: string | null
+    paperclipIssueId?: string | null
+    programmeId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
+    Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
+    Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
+    ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
+    ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
+    CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderRequirement?: TenderRequirementUncheckedCreateNestedManyWithoutOpportunityInput
+  }
+
+  export type OpportunityCreateOrConnectWithoutTenderDocumentInput = {
+    where: OpportunityWhereUniqueInput
+    create: XOR<OpportunityCreateWithoutTenderDocumentInput, OpportunityUncheckedCreateWithoutTenderDocumentInput>
+  }
+
+  export type TenderRequirementCreateWithoutSourceDocumentInput = {
+    id: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    location?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Opportunity: OpportunityCreateNestedOneWithoutTenderRequirementInput
+    Evidence?: CompanyDocumentVersionCreateNestedOneWithoutTenderRequirementInput
+  }
+
+  export type TenderRequirementUncheckedCreateWithoutSourceDocumentInput = {
+    id: string
+    opportunityId: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    location?: string | null
+    evidenceVersionId?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderRequirementCreateOrConnectWithoutSourceDocumentInput = {
+    where: TenderRequirementWhereUniqueInput
+    create: XOR<TenderRequirementCreateWithoutSourceDocumentInput, TenderRequirementUncheckedCreateWithoutSourceDocumentInput>
+  }
+
+  export type TenderRequirementCreateManySourceDocumentInputEnvelope = {
+    data: TenderRequirementCreateManySourceDocumentInput | TenderRequirementCreateManySourceDocumentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OpportunityUpsertWithoutTenderDocumentInput = {
+    update: XOR<OpportunityUpdateWithoutTenderDocumentInput, OpportunityUncheckedUpdateWithoutTenderDocumentInput>
+    create: XOR<OpportunityCreateWithoutTenderDocumentInput, OpportunityUncheckedCreateWithoutTenderDocumentInput>
+    where?: OpportunityWhereInput
+  }
+
+  export type OpportunityUpdateToOneWithWhereWithoutTenderDocumentInput = {
+    where?: OpportunityWhereInput
+    data: XOR<OpportunityUpdateWithoutTenderDocumentInput, OpportunityUncheckedUpdateWithoutTenderDocumentInput>
+  }
+
+  export type OpportunityUpdateWithoutTenderDocumentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
+    Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
+    Lead?: LeadUpdateOneWithoutOpportunityNestedInput
+    Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
+    Package?: PackageUpdateManyWithoutOpportunityNestedInput
+    ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
+    ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
+    CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type OpportunityUncheckedUpdateWithoutTenderDocumentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    leadId?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
+    Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
+    Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
+    ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
+    ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
+    CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type TenderRequirementUpsertWithWhereUniqueWithoutSourceDocumentInput = {
+    where: TenderRequirementWhereUniqueInput
+    update: XOR<TenderRequirementUpdateWithoutSourceDocumentInput, TenderRequirementUncheckedUpdateWithoutSourceDocumentInput>
+    create: XOR<TenderRequirementCreateWithoutSourceDocumentInput, TenderRequirementUncheckedCreateWithoutSourceDocumentInput>
+  }
+
+  export type TenderRequirementUpdateWithWhereUniqueWithoutSourceDocumentInput = {
+    where: TenderRequirementWhereUniqueInput
+    data: XOR<TenderRequirementUpdateWithoutSourceDocumentInput, TenderRequirementUncheckedUpdateWithoutSourceDocumentInput>
+  }
+
+  export type TenderRequirementUpdateManyWithWhereWithoutSourceDocumentInput = {
+    where: TenderRequirementScalarWhereInput
+    data: XOR<TenderRequirementUpdateManyMutationInput, TenderRequirementUncheckedUpdateManyWithoutSourceDocumentInput>
+  }
+
+  export type OpportunityCreateWithoutTenderRequirementInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    paperclipIssueId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
+    Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
+    Lead?: LeadCreateNestedOneWithoutOpportunityInput
+    Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
+    Package?: PackageCreateNestedManyWithoutOpportunityInput
+    ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
+    ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
+    CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentCreateNestedManyWithoutOpportunityInput
+  }
+
+  export type OpportunityUncheckedCreateWithoutTenderRequirementInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    buyerOrganisationId?: string | null
+    origin: string
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    leadId?: string | null
+    paperclipIssueId?: string | null
+    programmeId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
+    Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
+    Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
+    ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
+    ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
+    CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+    TenderDocument?: TenderDocumentUncheckedCreateNestedManyWithoutOpportunityInput
+  }
+
+  export type OpportunityCreateOrConnectWithoutTenderRequirementInput = {
+    where: OpportunityWhereUniqueInput
+    create: XOR<OpportunityCreateWithoutTenderRequirementInput, OpportunityUncheckedCreateWithoutTenderRequirementInput>
+  }
+
+  export type TenderDocumentCreateWithoutRequirementInput = {
+    id: string
+    title: string
+    documentType?: string | null
+    sourceUrl?: string | null
+    origin: string
+    status?: string
+    refusal?: string | null
+    storagePath?: string | null
+    filename?: string | null
+    sha256?: string | null
+    sizeBytes?: number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: Date | string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Opportunity: OpportunityCreateNestedOneWithoutTenderDocumentInput
+  }
+
+  export type TenderDocumentUncheckedCreateWithoutRequirementInput = {
+    id: string
+    opportunityId: string
+    title: string
+    documentType?: string | null
+    sourceUrl?: string | null
+    origin: string
+    status?: string
+    refusal?: string | null
+    storagePath?: string | null
+    filename?: string | null
+    sha256?: string | null
+    sizeBytes?: number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: Date | string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderDocumentCreateOrConnectWithoutRequirementInput = {
+    where: TenderDocumentWhereUniqueInput
+    create: XOR<TenderDocumentCreateWithoutRequirementInput, TenderDocumentUncheckedCreateWithoutRequirementInput>
+  }
+
+  export type CompanyDocumentVersionCreateWithoutTenderRequirementInput = {
+    id: string
+    version: number
+    status: string
+    effectiveAt?: Date | string | null
+    expiresAt?: Date | string | null
+    storagePath: string
+    filename: string
+    sha256: string
+    sizeBytes: number
+    scan?: JsonNullValueInput | InputJsonValue
+    source?: string | null
+    uploadedById?: string | null
+    createdAt?: Date | string
+    Document: CompanyDocumentCreateNestedOneWithoutVersionInput
+    CompanyFact?: CompanyFactCreateNestedManyWithoutEvidenceInput
+    PackageItem?: PackageItemCreateNestedManyWithoutDocumentVersionInput
+    Receipt?: ReceiptCreateNestedManyWithoutDocumentVersionInput
+  }
+
+  export type CompanyDocumentVersionUncheckedCreateWithoutTenderRequirementInput = {
+    id: string
+    documentId: string
+    version: number
+    status: string
+    effectiveAt?: Date | string | null
+    expiresAt?: Date | string | null
+    storagePath: string
+    filename: string
+    sha256: string
+    sizeBytes: number
+    scan?: JsonNullValueInput | InputJsonValue
+    source?: string | null
+    uploadedById?: string | null
+    createdAt?: Date | string
+    CompanyFact?: CompanyFactUncheckedCreateNestedManyWithoutEvidenceInput
+    PackageItem?: PackageItemUncheckedCreateNestedManyWithoutDocumentVersionInput
+    Receipt?: ReceiptUncheckedCreateNestedManyWithoutDocumentVersionInput
+  }
+
+  export type CompanyDocumentVersionCreateOrConnectWithoutTenderRequirementInput = {
+    where: CompanyDocumentVersionWhereUniqueInput
+    create: XOR<CompanyDocumentVersionCreateWithoutTenderRequirementInput, CompanyDocumentVersionUncheckedCreateWithoutTenderRequirementInput>
+  }
+
+  export type OpportunityUpsertWithoutTenderRequirementInput = {
+    update: XOR<OpportunityUpdateWithoutTenderRequirementInput, OpportunityUncheckedUpdateWithoutTenderRequirementInput>
+    create: XOR<OpportunityCreateWithoutTenderRequirementInput, OpportunityUncheckedCreateWithoutTenderRequirementInput>
+    where?: OpportunityWhereInput
+  }
+
+  export type OpportunityUpdateToOneWithWhereWithoutTenderRequirementInput = {
+    where?: OpportunityWhereInput
+    data: XOR<OpportunityUpdateWithoutTenderRequirementInput, OpportunityUncheckedUpdateWithoutTenderRequirementInput>
+  }
+
+  export type OpportunityUpdateWithoutTenderRequirementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
+    Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
+    Lead?: LeadUpdateOneWithoutOpportunityNestedInput
+    Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
+    Package?: PackageUpdateManyWithoutOpportunityNestedInput
+    ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
+    ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
+    CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type OpportunityUncheckedUpdateWithoutTenderRequirementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    leadId?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
+    Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
+    Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
+    ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
+    ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
+    CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type TenderDocumentUpsertWithoutRequirementInput = {
+    update: XOR<TenderDocumentUpdateWithoutRequirementInput, TenderDocumentUncheckedUpdateWithoutRequirementInput>
+    create: XOR<TenderDocumentCreateWithoutRequirementInput, TenderDocumentUncheckedCreateWithoutRequirementInput>
+    where?: TenderDocumentWhereInput
+  }
+
+  export type TenderDocumentUpdateToOneWithWhereWithoutRequirementInput = {
+    where?: TenderDocumentWhereInput
+    data: XOR<TenderDocumentUpdateWithoutRequirementInput, TenderDocumentUncheckedUpdateWithoutRequirementInput>
+  }
+
+  export type TenderDocumentUpdateWithoutRequirementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUpdateOneRequiredWithoutTenderDocumentNestedInput
+  }
+
+  export type TenderDocumentUncheckedUpdateWithoutRequirementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompanyDocumentVersionUpsertWithoutTenderRequirementInput = {
+    update: XOR<CompanyDocumentVersionUpdateWithoutTenderRequirementInput, CompanyDocumentVersionUncheckedUpdateWithoutTenderRequirementInput>
+    create: XOR<CompanyDocumentVersionCreateWithoutTenderRequirementInput, CompanyDocumentVersionUncheckedCreateWithoutTenderRequirementInput>
+    where?: CompanyDocumentVersionWhereInput
+  }
+
+  export type CompanyDocumentVersionUpdateToOneWithWhereWithoutTenderRequirementInput = {
+    where?: CompanyDocumentVersionWhereInput
+    data: XOR<CompanyDocumentVersionUpdateWithoutTenderRequirementInput, CompanyDocumentVersionUncheckedUpdateWithoutTenderRequirementInput>
+  }
+
+  export type CompanyDocumentVersionUpdateWithoutTenderRequirementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    effectiveAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    storagePath?: StringFieldUpdateOperationsInput | string
+    filename?: StringFieldUpdateOperationsInput | string
+    sha256?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    scan?: JsonNullValueInput | InputJsonValue
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Document?: CompanyDocumentUpdateOneRequiredWithoutVersionNestedInput
+    CompanyFact?: CompanyFactUpdateManyWithoutEvidenceNestedInput
+    PackageItem?: PackageItemUpdateManyWithoutDocumentVersionNestedInput
+    Receipt?: ReceiptUpdateManyWithoutDocumentVersionNestedInput
+  }
+
+  export type CompanyDocumentVersionUncheckedUpdateWithoutTenderRequirementInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    documentId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    status?: StringFieldUpdateOperationsInput | string
+    effectiveAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    storagePath?: StringFieldUpdateOperationsInput | string
+    filename?: StringFieldUpdateOperationsInput | string
+    sha256?: StringFieldUpdateOperationsInput | string
+    sizeBytes?: IntFieldUpdateOperationsInput | number
+    scan?: JsonNullValueInput | InputJsonValue
+    source?: NullableStringFieldUpdateOperationsInput | string | null
+    uploadedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    CompanyFact?: CompanyFactUncheckedUpdateManyWithoutEvidenceNestedInput
+    PackageItem?: PackageItemUncheckedUpdateManyWithoutDocumentVersionNestedInput
+    Receipt?: ReceiptUncheckedUpdateManyWithoutDocumentVersionNestedInput
   }
 
   export type saml_relay_statesCreateManyFlow_stateInput = {
@@ -206977,6 +211586,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutLeadInput = {
@@ -207008,6 +211619,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateManyWithoutLeadInput = {
@@ -208071,6 +212684,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutBuyerInput = {
@@ -208102,6 +212717,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateManyWithoutBuyerInput = {
@@ -208402,6 +213019,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutSourceInput = {
@@ -208433,6 +213052,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateManyWithoutSourceInput = {
@@ -208582,6 +213203,41 @@ export namespace Prisma {
     note?: string | null
     createdById?: string | null
     createdAt?: Date | string
+  }
+
+  export type TenderDocumentCreateManyOpportunityInput = {
+    id: string
+    title: string
+    documentType?: string | null
+    sourceUrl?: string | null
+    origin: string
+    status?: string
+    refusal?: string | null
+    storagePath?: string | null
+    filename?: string | null
+    sha256?: string | null
+    sizeBytes?: number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: Date | string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderRequirementCreateManyOpportunityInput = {
+    id: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    sourceDocumentId?: string | null
+    location?: string | null
+    evidenceVersionId?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type BidAssessmentUpdateWithoutOpportunityInput = {
@@ -208820,6 +213476,113 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type TenderDocumentUpdateWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Requirement?: TenderRequirementUpdateManyWithoutSourceDocumentNestedInput
+  }
+
+  export type TenderDocumentUncheckedUpdateWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Requirement?: TenderRequirementUncheckedUpdateManyWithoutSourceDocumentNestedInput
+  }
+
+  export type TenderDocumentUncheckedUpdateManyWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    documentType?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    refusal?: NullableStringFieldUpdateOperationsInput | string | null
+    storagePath?: NullableStringFieldUpdateOperationsInput | string | null
+    filename?: NullableStringFieldUpdateOperationsInput | string | null
+    sha256?: NullableStringFieldUpdateOperationsInput | string | null
+    sizeBytes?: NullableIntFieldUpdateOperationsInput | number | null
+    scan?: JsonNullValueInput | InputJsonValue
+    storedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementUpdateWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    SourceDocument?: TenderDocumentUpdateOneWithoutRequirementNestedInput
+    Evidence?: CompanyDocumentVersionUpdateOneWithoutTenderRequirementNestedInput
+  }
+
+  export type TenderRequirementUncheckedUpdateWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    sourceDocumentId?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceVersionId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementUncheckedUpdateManyWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    sourceDocumentId?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceVersionId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type CompanyDocumentVersionCreateManyDocumentInput = {
     id: string
     version: number
@@ -208853,6 +213616,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactUpdateManyWithoutEvidenceNestedInput
     PackageItem?: PackageItemUpdateManyWithoutDocumentVersionNestedInput
     Receipt?: ReceiptUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutEvidenceNestedInput
   }
 
   export type CompanyDocumentVersionUncheckedUpdateWithoutDocumentInput = {
@@ -208872,6 +213636,7 @@ export namespace Prisma {
     CompanyFact?: CompanyFactUncheckedUpdateManyWithoutEvidenceNestedInput
     PackageItem?: PackageItemUncheckedUpdateManyWithoutDocumentVersionNestedInput
     Receipt?: ReceiptUncheckedUpdateManyWithoutDocumentVersionNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutEvidenceNestedInput
   }
 
   export type CompanyDocumentVersionUncheckedUpdateManyWithoutDocumentInput = {
@@ -208915,6 +213680,22 @@ export namespace Prisma {
     receivedAt: Date | string
     createdById?: string | null
     createdAt?: Date | string
+  }
+
+  export type TenderRequirementCreateManyEvidenceInput = {
+    id: string
+    opportunityId: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    sourceDocumentId?: string | null
+    location?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type CompanyFactUpdateWithoutEvidenceInput = {
@@ -208996,6 +213777,54 @@ export namespace Prisma {
     receivedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementUpdateWithoutEvidenceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUpdateOneRequiredWithoutTenderRequirementNestedInput
+    SourceDocument?: TenderDocumentUpdateOneWithoutRequirementNestedInput
+  }
+
+  export type TenderRequirementUncheckedUpdateWithoutEvidenceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    sourceDocumentId?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementUncheckedUpdateManyWithoutEvidenceInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    sourceDocumentId?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PackageItemCreateManyPackageInput = {
@@ -209408,6 +214237,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateWithoutProgrammeInput = {
@@ -209439,6 +214270,8 @@ export namespace Prisma {
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
     CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderDocument?: TenderDocumentUncheckedUpdateManyWithoutOpportunityNestedInput
+    TenderRequirement?: TenderRequirementUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type OpportunityUncheckedUpdateManyWithoutProgrammeInput = {
@@ -209462,6 +214295,70 @@ export namespace Prisma {
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementCreateManySourceDocumentInput = {
+    id: string
+    opportunityId: string
+    ref?: string | null
+    text: string
+    kind: string
+    status?: string
+    location?: string | null
+    evidenceVersionId?: string | null
+    notes?: string | null
+    createdById?: string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenderRequirementUpdateWithoutSourceDocumentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUpdateOneRequiredWithoutTenderRequirementNestedInput
+    Evidence?: CompanyDocumentVersionUpdateOneWithoutTenderRequirementNestedInput
+  }
+
+  export type TenderRequirementUncheckedUpdateWithoutSourceDocumentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceVersionId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenderRequirementUncheckedUpdateManyWithoutSourceDocumentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    ref?: NullableStringFieldUpdateOperationsInput | string | null
+    text?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    evidenceVersionId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

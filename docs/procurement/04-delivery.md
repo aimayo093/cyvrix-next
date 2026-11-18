@@ -51,7 +51,10 @@ Includes:
 - partnership scoring (§40);
 - the Partnerships dashboard (§46).
 
-### Phase 4: Tender intelligence
+### Phase 4: Tender intelligence (built 19 November 2026, except where noted)
+
+Built: deadline and clarification tracking (a Deadlines tab, notice changes followed and audited), public tender documents (listed from the notice; fetched only from official notice services; uploaded by hand otherwise), and a requirements checklist that gates final approval. Not built: requirements extraction by agents, which needs a decision on personal data in tender documents (D4). The bid/no-bid weights stay fixed in code.
+
 
 Includes:
 - document retrieval for public attachments only (allow-listed hosts);
