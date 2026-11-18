@@ -155,7 +155,10 @@ function keywordPattern(keyword: string): RegExp {
   let re = patterns.get(keyword);
   if (!re) {
     const escaped = keyword.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&").replace(/\s+/g, "\\s+");
-    re = new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, "i");
+    // Whole words, with plurals ("managed services", "laptops", "firewalls").
+    // "cyber" also starts compounds ("cybersecurity").
+    const tail = keyword === "cyber" ? "" : "(?:s|es)?(?![a-z0-9])";
+    re = new RegExp(`(?<![a-z0-9])${escaped}${tail}`, "i");
     patterns.set(keyword, re);
   }
   return re;

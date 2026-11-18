@@ -34,16 +34,28 @@ export type AgentOrganisation = { id: string; name: string; categories: string[]
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const HAS_EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
 // Phone candidates: international (+ or 00, then 9-14 more digits) or UK
-// national (0 and 9-10 more digits), with spaces, brackets or dashes. Dates and
-// money ("2026-12-15", "250000") do not start with + or 0. A candidate that is
-// a date or a date range ("01-12-2026 - 15-12-2026") is not a phone number.
-const PHONE = /(?<![\w+])(?:(?:\+|00)\d[\d\s()-]{7,17}\d|0\d[\d\s()-]{8,12}\d)(?!\w)/g;
-const DATE_LIKE = /\b\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}\b/;
+// national (0 and 9-10 more digits), with spaces, brackets, dots or dashes.
+// Dates and money ("2026-12-15", "250000") do not start with + or 0. A
+// candidate holding a real calendar date ("01-12-2026", or a range of them) is
+// not a phone number; digit groups that only look date-shaped ("020-79-46-0000",
+// where 79 and 46 cannot be a day and month) are still a phone.
+const PHONE = /(?<![\w+])(?:(?:\+|00)\d[\d\s().-]{7,17}\d|0\d[\d\s().-]{8,12}\d)(?!\w)/g;
+const DATE_SHAPED = /(?<!\d)(\d{1,2})[-/.](\d{1,2})[-/.](\d{2}|\d{4})(?!\d)/g;
+
+function holdsRealDate(candidate: string): boolean {
+  for (const [, a, b] of candidate.matchAll(DATE_SHAPED)) {
+    const x = Number(a);
+    const y = Number(b);
+    // Day-month (UK) or month-day order.
+    if ((x >= 1 && x <= 31 && y >= 1 && y <= 12) || (x >= 1 && x <= 12 && y >= 1 && y <= 31)) return true;
+  }
+  return false;
+}
 const LINK = /https?:\/\/[^\s<>"')]+/gi;
 const PERSONAL_HOSTS = [/(^|\.)linkedin\.com$/i, /(^|\.)facebook\.com$/i, /(^|\.)instagram\.com$/i, /(^|\.)twitter\.com$/i, /(^|\.)x\.com$/i, /(^|\.)tiktok\.com$/i];
 
 function isPhone(candidate: string): boolean {
-  if (DATE_LIKE.test(candidate)) return false;
+  if (holdsRealDate(candidate)) return false;
   const digits = candidate.replace(/\D/g, "").length;
   return candidate.startsWith("0") && !candidate.startsWith("00") ? digits >= 10 && digits <= 11 : digits >= 10 && digits <= 16;
 }
