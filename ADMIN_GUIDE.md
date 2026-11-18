@@ -64,6 +64,10 @@ The CYVRIX Admin dashboard is split into dedicated, secure modules designed to m
 - **Organisations**: the 52 research targets and any others. Research targets are not partners.
 - **Documents**: private storage, opened through short-lived links. Mark AI-written drafts as such; only independently issued certificates are "certified evidence".
 - **Company facts**: verified details used to fill forms (founder only). Leave "public" unticked for anything withheld from the website.
+- **Accounts**: one row per supplier portal (Find a Tender, Sell2Wales and others) with CYVRIX's account status, reference, contact alias and renewal date. The credential field is the *name* of the password-manager entry, never the password; something that looks like a password is refused. A portal can hold only one live account.
+- **Standing registration policy** (founder only, with an authenticator code): on a portal confirmed as free, a registration package that makes no declarations and carries no price is approved at once. Anything with a declaration or a price still comes to you. You still register by hand and upload the confirmation; the confirmed registration becomes that portal's account record.
+- **Partnerships**: programmes run by manufacturers and other organisations. "Verified" needs the page it was checked against. "Pursue" opens a partnership opportunity.
+- **Assessment** (on each opportunity): score each category 0 to 5; a disqualifier overrides the total. It is a recommendation, not a chance of winning. Earlier assessments are kept.
 - Design and reasons: `docs/procurement/` and `docs/DECISIONS.md` section 20.
 
 ---

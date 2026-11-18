@@ -20,6 +20,7 @@ import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   addEvidence,
+  recordAssessmentAction,
   addPackageItem,
   createPackage,
   lockPackageAction,
@@ -32,6 +33,7 @@ import {
 } from "@/lib/procurement/actions";
 import { EVIDENCE_STATUSES } from "@/lib/procurement/approval-core";
 import { APPROVAL_ACTIONS, nextStates, type OpportunityKind } from "@/lib/procurement/lifecycle";
+import { CATEGORY_LABEL, WEIGHTS } from "@/lib/procurement/partnerships";
 
 export const metadata = { title: "Opportunity" };
 
@@ -76,10 +78,12 @@ async function OpportunityContent({ params, searchParams }: Props) {
   });
   if (!opp) notFound();
 
-  const [versions, history] = await Promise.all([
+  const [versions, history, assessments] = await Promise.all([
     prisma.companyDocumentVersion.findMany({ where: { status: { not: "superseded" } }, orderBy: { createdAt: "desc" }, take: 200, include: { Document: true } }),
     prisma.auditLog.findMany({ where: { entityType: "Opportunity", entityId: opp.id }, orderBy: { createdAt: "desc" }, take: 50 }),
+    prisma.bidAssessment.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "desc" }, take: 3 }),
   ]);
+  const scoringModel = opp.kind === "partnership" ? "partnership" : "bid";
   const moves = nextStates(opp.kind as OpportunityKind, opp.status);
   const docOptions = versions.map((v) => (
     <option key={v.id} value={v.id}>
@@ -140,6 +144,39 @@ async function OpportunityContent({ params, searchParams }: Props) {
             ))}
           </div>
         )}
+      </section>
+
+      <section className={`${card} space-y-3`}>
+        <h2 className="font-outfit text-lg font-black text-[#041635]">{scoringModel === "partnership" ? "Partnership assessment" : "Bid / no-bid assessment"}</h2>
+        <p className="text-sm text-slate-500">
+          Score each category 0 to 5 from what is actually known. A disqualifier (a mandatory requirement CYVRIX does
+          not meet and cannot meet in time) overrides the score. The result is a recommendation, not a chance of
+          winning. Earlier assessments are kept.
+        </p>
+        {assessments.map((a) => (
+          <p key={a.id} className="rounded-xl bg-slate-50 p-3 text-sm">
+            <span className="font-semibold">{a.total.toString()} / 100 · {a.recommendation}</span>
+            <span className="text-slate-500"> · {when(a.createdAt)}</span>
+            {a.disqualifiers.length > 0 && <span className="block text-rose-700">Disqualified by: {a.disqualifiers.join("; ")}</span>}
+            {a.assumptions && <span className="block text-slate-600">Assumptions: {a.assumptions}</span>}
+          </p>
+        ))}
+        <form action={recordAssessmentAction} className="grid gap-3 md:grid-cols-2">
+          <input type="hidden" name="opportunityId" value={opp.id} />
+          <input type="hidden" name="model" value={scoringModel} />
+          {Object.entries(WEIGHTS[scoringModel]).map(([category, weight]) => (
+            <label key={category} className="flex items-center justify-between gap-2 text-sm">
+              <span>{CATEGORY_LABEL[category] ?? category} <span className="text-xs text-slate-500">({weight}%)</span></span>
+              <select name={`score_${category}`} required defaultValue="" className={`${field} max-w-24`}>
+                <option value="" disabled>–</option>
+                {[0, 1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
+              </select>
+            </label>
+          ))}
+          <label className="space-y-1 md:col-span-2"><span className={label}>Disqualifiers, one per line (leave empty if none)</span><textarea name="disqualifiers" rows={2} className={field} /></label>
+          <label className="space-y-1 md:col-span-2"><span className={label}>Assumptions and sources</span><textarea name="assumptions" rows={2} maxLength={4000} className={field} /></label>
+          <div className="md:col-span-2"><button className={secondaryButton}>Record assessment</button></div>
+        </form>
       </section>
 
       <section className={`${card} space-y-3`}>

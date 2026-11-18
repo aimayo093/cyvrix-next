@@ -17,6 +17,7 @@ import {
   type ApprovalAction,
   type OpportunityKind,
 } from "./lifecycle";
+import { standingPolicyApplies } from "./partnerships";
 
 /**
  * Database side of the procurement rules. Every write here records an audit
@@ -235,6 +236,33 @@ export async function requestApproval(input: {
       manifestSha256: pkg.manifestSha256,
       expiresAt: expiresAt.toISOString(),
     });
+
+    // D13: a registration on a free portal with a standing policy, making no
+    // declarations and carrying no price, is approved by that policy at once.
+    // Its authority is the founder who switched the policy on, with the
+    // authenticator check made then. The founder still registers by hand (D8).
+    if (input.actionType === "register_account") {
+      const d = pkg.destination.trim();
+      const portal = await tx.supplierPortal.findFirst({ where: { OR: [{ url: d }, { registrationUrl: d }] } });
+      const policy = standingPolicyApplies({ portal, actionType: input.actionType, declarations: pkg.declarations, priceSnapshot: pkg.priceSnapshot });
+      if (policy.applies && portal?.standingPolicyById && portal.standingPolicyAt) {
+        await tx.approvalRequest.update({ where: { id }, data: { status: "approved" } });
+        const decisionId = crypto.randomUUID();
+        await tx.approvalDecision.create({
+          data: {
+            id: decisionId,
+            requestId: id,
+            decision: "approved",
+            manifestSha256: pkg.manifestSha256,
+            decidedById: portal.standingPolicyById,
+            note: `Approved by the standing registration policy for ${portal.name} (D13).`,
+            stepUpAt: portal.standingPolicyAt,
+            expiresAt,
+          },
+        });
+        await audit(tx, input.userId, "approval.policy_approved", "ApprovalRequest", id, { decisionId, portalId: portal.id, why: policy.why });
+      }
+    }
     return { ok: true, value: id };
   }), "This package is already waiting for a decision.");
 }
@@ -415,6 +443,26 @@ export async function recordExecutionOutcome(input: {
           createdById: input.userId,
         },
       });
+      // A confirmed registration becomes the portal's account record, pending
+      // the portal's own verification. Never a second live account (section 38).
+      if (exec.actionType === "register_account") {
+        const decision = await tx.approvalDecision.findUnique({ where: { id: exec.approvalDecisionId }, select: { Request: { select: { destination: true } } } });
+        const d = decision?.Request.destination.trim() ?? "";
+        const portal = d ? await tx.supplierPortal.findFirst({ where: { OR: [{ url: d }, { registrationUrl: d }] }, select: { id: true } }) : null;
+        if (portal) {
+          const live = await tx.supplierAccount.findFirst({ where: { portalId: portal.id, status: { notIn: ["not_registered", "rejected"] } }, select: { id: true } });
+          const data = {
+            status: "pending",
+            accountRef: input.portalReference?.trim().slice(0, 200) || null,
+            registeredAt: new Date(),
+            verificationStatus: "awaiting the portal",
+            approvalDecisionId: exec.approvalDecisionId,
+            ownerUserId: input.userId,
+          };
+          if (live) await tx.supplierAccount.update({ where: { id: live.id }, data });
+          else await tx.supplierAccount.create({ data: { id: crypto.randomUUID(), portalId: portal.id, ...data } });
+        }
+      }
     }
     await audit(tx, input.userId, `execution.${input.outcome}`, "ExecutionRecord", exec.id, {
       opportunityId: exec.opportunityId,

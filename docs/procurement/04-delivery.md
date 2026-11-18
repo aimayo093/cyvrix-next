@@ -38,7 +38,10 @@ Carried over from the PR 14 review (not blocking Phase 1):
 | P2-9 | Import existing CCO tender scans and the CYV-14 packs (after a personal-data check) |
 | P2-10 | Privacy wording PR (D12) and DPIA record |
 
-### Phase 3: Supplier registration and partnerships
+### Phase 3: Supplier registration and partnerships (built 18 November 2026, except where noted)
+
+Built: the portal and account registry, one live account per portal, the D13 standing policy, confirmed registrations becoming account records, partnership programmes, and the bid and partnership scoring (both scoring models, since the opportunity page needs one either way). Not yet: the registration pack builder and a separate Partnerships dashboard; `PartnershipApplication` is covered by a partnership opportunity and its lifecycle.
+
 
 Includes:
 - `SupplierPortal` and `SupplierAccount` registry;
