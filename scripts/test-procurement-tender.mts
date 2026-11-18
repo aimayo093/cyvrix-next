@@ -6,7 +6,7 @@
  */
 import { dateChange, deadlineAlerts, recordDateChanges, urgency } from "../lib/procurement/deadlines";
 import { requirementProblem, requirementsGate, summarise } from "../lib/procurement/requirements";
-import { fetchPublicDocument, fetchRefusal, MAX_FETCH_BYTES, noticeDocuments, safeFilename } from "../lib/procurement/tender-documents";
+import { fetchPublicDocument, fetchRefusal, MAX_FETCH_BYTES, noticeDocuments, safeFilename, withTypeExtension } from "../lib/procurement/tender-documents";
 
 let passed = 0;
 let failed = 0;
@@ -80,6 +80,10 @@ check("documents listed once each, unsafe links dropped", listed.map((d) => [d.u
 ]);
 check("filename from the header, made safe", safeFilename('attachment; filename="../../etc/pass wd?.pdf"', "https://x.example/a"), "_.._etc_pass wd_.pdf");
 check("filename from the address when no header", safeFilename(null, "https://x.example/files/Spec%20v2.pdf"), "Spec v2.pdf");
+check("an extensionless text attachment is named .txt", withTypeExtension("tender-document", "text/plain; charset=utf-8"), "tender-document.txt");
+check("an extensionless PDF is named .pdf", withTypeExtension("Attachment", "application/pdf"), "Attachment.pdf");
+check("a name with an extension is left alone", withTypeExtension("Spec v2.pdf", "text/plain"), "Spec v2.pdf");
+check("an unknown type adds nothing", withTypeExtension("tender-document", "application/octet-stream"), "tender-document");
 
 console.log("\n  Safe fetching (fake network)");
 const ALLOWED = "https://www.find-tender.service.gov.uk/Notice/Attachment/1";
@@ -160,6 +164,11 @@ const rows = [
   { kind: "scored", status: "partly_met", ref: null, text: "Approach" },
 ];
 check("summary counts", summarise(rows), { recorded: 4, mandatory: 3, mandatoryOpen: 1, mandatoryNotMet: 1, disqualifiers: ["SQ 3: SC clearance for all staff"] });
+check(
+  "a met requirement on lapsed evidence counts as open, as the gate counts it",
+  summarise([{ kind: "mandatory", status: "met", ref: null, text: "Insurance", evidenceCurrent: false }]).mandatoryOpen,
+  1
+);
 check("gate: a tender with nothing recorded", requirementsGate("tender", { recorded: 0, mandatoryOpen: 0, mandatoryNotMet: 0 }).ok, false);
 check("gate: a quotation with nothing recorded", requirementsGate("commercial", { recorded: 0, mandatoryOpen: 0, mandatoryNotMet: 0 }).ok, true);
 check("gate: an unmet mandatory requirement", requirementsGate("tender", { recorded: 4, mandatoryOpen: 0, mandatoryNotMet: 1 }).ok, false);

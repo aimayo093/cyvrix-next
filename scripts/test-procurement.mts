@@ -11,6 +11,7 @@ import {
   evidenceVerdict,
   mayBePublicFact,
   manifestSha256,
+  pastBuyerDeadline,
   type ExecutionCheckInput,
 } from "../lib/procurement/approval-core";
 import { checkTransition, initialStatus, nextStates, statesFor, type OpportunityKind, type TransitionFacts } from "../lib/procurement/lifecycle";
@@ -91,6 +92,29 @@ check("a quotation needs no recorded requirements", okOf(checkTransition("commer
 check("an unchecked mandatory requirement blocks final approval", okOf(checkTransition("tender", "QualityReview", "AwaitingFinalApproval", as("person", reqs(3, 1, 0)))), false);
 check("an unmet mandatory requirement blocks final approval", okOf(checkTransition("tender", "SubmissionFailed", "AwaitingFinalApproval", as("founder", reqs(3, 0, 1)))), false);
 check("an agent cannot reach final approval", okOf(checkTransition("tender", "QualityReview", "AwaitingFinalApproval", as("agent"))), false);
+// Each final-approval path with explicit checklist facts, including an empty checklist.
+check("SubmissionFailed back to final approval with an empty checklist is refused for a tender", okOf(checkTransition("tender", "SubmissionFailed", "AwaitingFinalApproval", as("person", reqs(0, 0, 0)))), false);
+check("SubmissionFailed back to final approval with a clear checklist", okOf(checkTransition("tender", "SubmissionFailed", "AwaitingFinalApproval", as("person", reqs(2, 0, 0)))), true);
+check(
+  "a current approval does not open ApprovedForSubmission once a requirement is unmet",
+  okOf(checkTransition("tender", "AwaitingFinalApproval", "ApprovedForSubmission", as("person", { currentApprovals: ["submit_tender"], ...reqs(3, 0, 1) }))),
+  false
+);
+check(
+  "nor once one is open again (for example its evidence lapsed)",
+  okOf(checkTransition("tender", "AwaitingFinalApproval", "ApprovedForSubmission", as("person", { currentApprovals: ["submit_tender"], ...reqs(3, 1, 0) }))),
+  false
+);
+check(
+  "a submission approval past the buyer's current deadline is not usable",
+  [pastBuyerDeadline("submit_tender", new Date("2026-11-19T12:00:00Z"), new Date("2026-11-19T12:00:01Z")).ok, pastBuyerDeadline("register_account", new Date("2026-11-19T12:00:00Z"), new Date("2026-11-20T00:00:00Z")).ok],
+  [false, true]
+);
+check(
+  "an approval request cannot be decided after the buyer's deadline",
+  canDecide({ status: "pending", expiresAt: new Date("2026-12-01T00:00:00Z"), actionType: "submit_tender" }, new Date("2026-11-20T00:00:00Z"), new Date("2026-11-19T12:00:00Z")).ok,
+  false
+);
 check("OperationalHandover is final", nextStates("tender", "OperationalHandover"), []);
 check(
   "every spec-14 state is reachable from Discovered",

@@ -966,6 +966,22 @@ that relies on them is deployed.
   (QualityReview or SubmissionFailed to AwaitingFinalApproval) is refused
   while any mandatory requirement is open, unmet or resting on lapsed
   evidence, and for a tender before any are recorded.
+- The checklist is checked again when the founder approves a submission, at
+  ApprovedForSubmission and when the submission starts: a requirement marked
+  unmet, or evidence lapsing, after approval stops it. Checklist writes and
+  status moves take the same opportunity lock, so neither slips between the
+  other's read and write.
+- A submission approval lapses at the buyer's deadline as it stands now, not
+  as it stood when approval was requested: a notice that brings the deadline
+  forward shortens every approval already given.
+- Feeds deliver releases out of order. A release published before one
+  already applied for the same tender is kept as evidence only and audited
+  (`opportunity.notice_out_of_order`); it never undoes newer dates.
+- `20261119150000_procurement_tender_hardening` puts the tender-document
+  rules in the database: a stored copy has a real SHA-256, a size within 5 MB,
+  a filename and a stored time; nothing about a stored file or its capture can
+  change (only its title and type label); and a requirement's source document
+  belongs to the same opportunity.
 
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).

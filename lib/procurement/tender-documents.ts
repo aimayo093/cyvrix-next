@@ -101,6 +101,27 @@ function decodeURIComponentSafe(s: string): string {
   }
 }
 
+const TYPE_EXTENSION: Record<string, string> = {
+  "application/pdf": "pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+  "application/msword": "doc",
+  "application/vnd.oasis.opendocument.text": "odt",
+  "application/rtf": "rtf",
+  "text/rtf": "rtf",
+  "text/plain": "txt",
+};
+
+/**
+ * A filename with no extension gets one from the response's content type, so
+ * the scanner (which decides plain text by its .txt name) can recognise it.
+ * A name that already has an extension is left as it is.
+ */
+export function withTypeExtension(filename: string, contentType: string | null): string {
+  if (/\.[a-z0-9]{2,5}$/i.test(filename)) return filename;
+  const ext = TYPE_EXTENSION[(contentType ?? "").split(";")[0].trim().toLowerCase()];
+  return ext ? `${filename}.${ext}`.slice(0, 125) : filename;
+}
+
 /**
  * Downloads one public document. Every hop (the first address and each
  * redirect) must pass fetchRefusal, so a redirect cannot lead the server to
@@ -122,7 +143,11 @@ export async function fetchPublicDocument(url: string, fetchImpl: FetchLike = fe
     } catch {
       return { ok: false, reason: "The site did not answer in time. Try again later or download it yourself." };
     }
+    // A response whose body is not read is cancelled, so refused downloads and
+    // redirects do not hold connections open.
+    const discard = () => res.body?.cancel().catch(() => undefined);
     if (res.status >= 300 && res.status < 400) {
+      await discard();
       const location = res.headers.get("location");
       if (!location) return { ok: false, reason: "The site redirected without saying where." };
       try {
@@ -132,9 +157,15 @@ export async function fetchPublicDocument(url: string, fetchImpl: FetchLike = fe
       }
       continue;
     }
-    if (!res.ok) return { ok: false, reason: `The site answered ${res.status}. It may need a sign-in: download it yourself and upload it.` };
+    if (!res.ok) {
+      await discard();
+      return { ok: false, reason: `The site answered ${res.status}. It may need a sign-in: download it yourself and upload it.` };
+    }
     const declared = Number(res.headers.get("content-length") ?? "0");
-    if (declared > MAX_FETCH_BYTES) return { ok: false, reason: "The file is larger than 5 MB. Download it yourself and upload the parts you need." };
+    if (declared > MAX_FETCH_BYTES) {
+      await discard();
+      return { ok: false, reason: "The file is larger than 5 MB. Download it yourself and upload the parts you need." };
+    }
     if (!res.body) return { ok: false, reason: "The site sent an empty answer." };
     const reader = res.body.getReader();
     const chunks: Uint8Array[] = [];
@@ -156,7 +187,8 @@ export async function fetchPublicDocument(url: string, fetchImpl: FetchLike = fe
       return { ok: false, reason: "The download was cut off before it finished. Try again later or download it yourself." };
     }
     if (total === 0) return { ok: false, reason: "The site sent an empty file." };
-    return { ok: true, buffer: Buffer.concat(chunks), finalUrl: current, filename: safeFilename(res.headers.get("content-disposition"), current) };
+    const filename = withTypeExtension(safeFilename(res.headers.get("content-disposition"), current), res.headers.get("content-type"));
+    return { ok: true, buffer: Buffer.concat(chunks), finalUrl: current, filename };
   }
   return { ok: false, reason: "The link redirects too many times." };
 }

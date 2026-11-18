@@ -55,13 +55,19 @@ export type RequirementsSummary = {
   disqualifiers: string[];
 };
 
-export function summarise(rows: { kind: string; status: string; ref: string | null; text: string }[]): RequirementsSummary {
+/**
+ * `evidenceCurrent: false` marks a row whose evidence has since expired or been
+ * superseded. A mandatory row marked met on such evidence counts as open, as
+ * the final-approval gate counts it (service.ts, requirementFacts), so the
+ * page never shows clear what the gate will refuse.
+ */
+export function summarise(rows: { kind: string; status: string; ref: string | null; text: string; evidenceCurrent?: boolean }[]): RequirementsSummary {
   const mandatory = rows.filter((r) => r.kind === "mandatory");
   const notMet = mandatory.filter((r) => r.status === "not_met");
   return {
     recorded: rows.length,
     mandatory: mandatory.length,
-    mandatoryOpen: mandatory.filter((r) => OPEN.includes(r.status)).length,
+    mandatoryOpen: mandatory.filter((r) => OPEN.includes(r.status) || (r.status === "met" && r.evidenceCurrent === false)).length,
     mandatoryNotMet: notMet.length,
     disqualifiers: notMet.map((r) => (r.ref ? `${r.ref}: ${r.text}` : r.text).replace(/\s+/g, " ").slice(0, 300)),
   };

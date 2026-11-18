@@ -6,7 +6,7 @@ import { scanDocument } from "@/lib/document-scan";
 import { evidenceVerdict } from "./approval-core";
 import { recordDateChanges } from "./deadlines";
 import { requirementProblem, type RequirementKind, type RequirementStatus } from "./requirements";
-import { audit } from "./service";
+import { audit, lockOpportunity } from "./service";
 import { removeDocument, storeDocument } from "./storage";
 import { fetchPublicDocument, noticeDocuments } from "./tender-documents";
 
@@ -36,12 +36,16 @@ export async function setDeadlines(input: {
   clarificationDeadlineAt: Date | null;
   userId: string;
 }): Promise<Result> {
-  if (input.deadlineAt && input.clarificationDeadlineAt && input.clarificationDeadlineAt > input.deadlineAt) {
-    return fail("The clarification deadline must come before the submission deadline.");
-  }
   return prisma.$transaction(async (tx) => {
+    await lockOpportunity(tx, input.opportunityId);
     const opp = await tx.opportunity.findUnique({ where: { id: input.opportunityId }, select: { deadlineAt: true, clarificationDeadlineAt: true } });
     if (!opp) return fail("That opportunity could not be found.");
+    // A date left empty keeps the one recorded, so the pair is checked as it will be saved.
+    const deadline = input.deadlineAt ?? opp.deadlineAt;
+    const clarification = input.clarificationDeadlineAt ?? opp.clarificationDeadlineAt;
+    if (deadline && clarification && clarification > deadline) {
+      return fail("The clarification deadline must come before the submission deadline.");
+    }
     const changes = recordDateChanges(opp, input);
     if (!changes.length) return fail("Nothing changed. Enter a new date.");
     await tx.opportunity.update({
@@ -121,8 +125,9 @@ export async function fetchTenderDocument(documentId: string, userId: string, fe
   const fetched = await fetchPublicDocument(doc.sourceUrl, fetchImpl);
   const refuse = async (reason: string) => {
     await prisma.$transaction(async (tx) => {
-      await tx.tenderDocument.updateMany({ where: { id: doc.id, status: { not: "stored" } }, data: { status: "refused", refusal: reason.slice(0, 500) } });
-      await audit(tx, userId, "tender_document.refused", "TenderDocument", doc.id, { opportunityId: doc.opportunityId, reason: reason.slice(0, 200) });
+      const r = await tx.tenderDocument.updateMany({ where: { id: doc.id, status: { not: "stored" } }, data: { status: "refused", refusal: reason.slice(0, 500) } });
+      // A copy stored by someone else meanwhile is not refused, so nothing to audit.
+      if (r.count === 1) await audit(tx, userId, "tender_document.refused", "TenderDocument", doc.id, { opportunityId: doc.opportunityId, reason: reason.slice(0, 200) });
     });
     return fail(reason);
   };
@@ -272,6 +277,9 @@ export async function saveRequirement(input: {
   };
   const id = input.id ?? crypto.randomUUID();
   return prisma.$transaction(async (tx) => {
+    // Same lock as a status move takes, so the checklist cannot change between
+    // the gate reading it and the move being written.
+    await lockOpportunity(tx, input.opportunityId);
     if (input.id) {
       const existing = await tx.tenderRequirement.findUnique({ where: { id: input.id }, select: { opportunityId: true, status: true } });
       if (existing?.opportunityId !== input.opportunityId) return fail("That requirement could not be found.");

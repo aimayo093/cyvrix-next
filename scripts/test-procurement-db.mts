@@ -89,6 +89,11 @@ async function lockedPackage(opportunityId: string, docs: string[]) {
 }
 
 async function approve(packageId: string) {
+  // A tender submission is approved only on a recorded, clear checklist (Phase 4).
+  const { opportunityId } = await prisma.package.findUniqueOrThrow({ where: { id: packageId }, select: { opportunityId: true } });
+  if (!(await prisma.tenderRequirement.count({ where: { opportunityId } }))) {
+    await prisma.tenderRequirement.create({ data: { id: uuid(), opportunityId, text: "Submit through the buyer's portal", kind: "information" } });
+  }
   const req = await service.requestApproval({ packageId, actionType: "submit_tender", userId: founder });
   if (!req.ok) throw new Error(req.reason);
   const dec = await service.decideApproval({ requestId: req.value, decision: "approved", userId: founder, stepUpAt: new Date() });
@@ -863,6 +868,12 @@ try {
   check("but its other facts are left as the team had them", afterExtension.title, "Network refresh and IT support");
   const changeLog = await prisma.auditLog.findFirst({ where: { entityId: docsOpp.id, action: "opportunity.deadline_changed" }, orderBy: { createdAt: "desc" } });
   check("the extension is audited with both dates", [(changeLog?.metadata as Record<string, unknown>)?.change, (changeLog?.metadata as Record<string, unknown>)?.by], ["extended", "notice"]);
+  // An older release arriving late must not undo the extension.
+  const olderRelease = fx.release({ ocid: "ocds-h6vhtk-0ddd01", id: "199999-2026", title: "Network refresh and IT support", cpv: "72253000", deadline: "2026-12-10T12:00:00Z" }) as Record<string, unknown>;
+  olderRelease.date = "2026-11-01T08:00:00Z";
+  await once([olderRelease]);
+  check("an older release arriving late leaves the newer deadline in place", (await prisma.opportunity.findUniqueOrThrow({ where: { id: docsOpp.id } })).deadlineAt?.toISOString(), "2026-12-17T12:00:00.000Z");
+  check("and is recorded as out of order", await prisma.auditLog.count({ where: { entityId: docsOpp.id, action: "opportunity.notice_out_of_order" } }), 1);
 
   console.log("\n  Tender documents");
   const listedDocs = await tender.refreshNoticeDocuments(docsOpp.id, founder);
@@ -884,10 +895,49 @@ try {
   const htmlFetch = await tender.fetchTenderDocument(specDoc.id, founder, notAPdf);
   check("a page that is not a document is not stored", [htmlFetch.ok, (await prisma.tenderDocument.findUniqueOrThrow({ where: { id: specDoc.id } })).status], [false, "refused"]);
   // A stored copy is the record of what the buyer published.
-  await prisma.$executeRaw`UPDATE "public"."TenderDocument" SET "status" = 'stored', "storagePath" = 'tenders/x/y.pdf', "sha256" = ${sha("spec")}, "sizeBytes" = 10 WHERE "id" = ${specDoc.id}`;
+  await rejects(
+    "a stored copy needs real file metadata (filename, time stored)",
+    () => prisma.$executeRaw`UPDATE "public"."TenderDocument" SET "status" = 'stored', "storagePath" = 'tenders/x/y.pdf', "sha256" = ${sha("spec")}, "sizeBytes" = 10 WHERE "id" = ${specDoc.id}`,
+    "TenderDocument_stored_metadata"
+  );
+  await rejects(
+    "and a real SHA-256 hash",
+    () => prisma.$executeRaw`UPDATE "public"."TenderDocument" SET "status" = 'stored', "storagePath" = 'tenders/x/y.pdf', "sha256" = 'not-a-hash', "sizeBytes" = 10, "filename" = 'spec.pdf', "storedAt" = now() WHERE "id" = ${specDoc.id}`,
+    "TenderDocument_stored_metadata"
+  );
+  await prisma.$executeRaw`UPDATE "public"."TenderDocument" SET "status" = 'stored', "storagePath" = 'tenders/x/y.pdf', "sha256" = ${sha("spec")}, "sizeBytes" = 10, "filename" = 'spec.pdf', "storedAt" = now() WHERE "id" = ${specDoc.id}`;
   await rejects("a stored copy's hash cannot be changed", () => prisma.tenderDocument.update({ where: { id: specDoc.id }, data: { sha256: sha("other") } }), "cannot be changed");
+  await rejects("nor its filename or scan record", () => prisma.tenderDocument.update({ where: { id: specDoc.id }, data: { filename: "renamed.pdf" } }), "cannot be changed");
   await rejects("a stored copy cannot be deleted", () => prisma.tenderDocument.delete({ where: { id: specDoc.id } }), "cannot be deleted");
+  check("its title can still be corrected", (await prisma.tenderDocument.update({ where: { id: specDoc.id }, data: { title: "Specification (corrected)" } })).title, "Specification (corrected)");
   check("a stored copy is not fetched again", (await tender.fetchTenderDocument(specDoc.id, founder, noNetwork)).ok, false);
+  await rejects(
+    "a requirement cannot cite another opportunity's document",
+    () => prisma.tenderRequirement.create({ data: { id: uuid(), opportunityId: bid, text: "Cross-linked requirement", kind: "information", sourceDocumentId: specDoc.id } }),
+    "must belong to the same opportunity"
+  );
+
+  console.log("\n  Approvals follow the checklist and the buyer's deadline (PR 19)");
+  const lateOpp = await newOpportunity("Discovered");
+  await prisma.tenderRequirement.create({ data: { id: uuid(), opportunityId: lateOpp, text: "Submit through the portal", kind: "information" } });
+  for (const to of ["Validated", "Qualified", "EligibilityReview", "AwaitingBidDecision", "PreparingBid", "QualityReview", "AwaitingFinalApproval"]) {
+    const r = await service.transitionOpportunity({ opportunityId: lateOpp, to, actor: "founder", userId: founder });
+    if (!r.ok) throw new Error(`${to}: ${r.reason}`);
+  }
+  const lateDoc = await newDoc("late response");
+  const latePkg = await lockedPackage(lateOpp, [lateDoc]);
+  await approve(latePkg);
+  const afterApproval = await tender.saveRequirement({ opportunityId: lateOpp, ref: "SQ 9", text: "ISO 9001 certificate", kind: "mandatory", status: "not_met", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: null, userId: founder });
+  const blocked = await service.transitionOpportunity({ opportunityId: lateOpp, to: "ApprovedForSubmission", actor: "founder", userId: founder });
+  check("an approval does not carry a submission past a requirement marked unmet afterwards", blocked.ok ? "moved" : blocked.reason.includes("not met"), true);
+  await tender.saveRequirement({ id: afterApproval.ok ? afterApproval.value : "", opportunityId: lateOpp, ref: "SQ 9", text: "ISO 9001 certificate", kind: "mandatory", status: "not_applicable", sourceDocumentId: null, location: null, evidenceVersionId: null, notes: "Not required for this lot", userId: founder });
+  check("with the checklist clear again, the approval opens ApprovedForSubmission", (await service.transitionOpportunity({ opportunityId: lateOpp, to: "ApprovedForSubmission", actor: "founder", userId: founder })).ok, true);
+  check("Submitting", (await service.transitionOpportunity({ opportunityId: lateOpp, to: "Submitting", actor: "founder", userId: founder })).ok, true);
+  // A notice brings the deadline forward to a moment already past.
+  await prisma.opportunity.update({ where: { id: lateOpp }, data: { deadlineAt: new Date(Date.now() - 60_000) } });
+  const lateDecision = await prisma.approvalDecision.findFirstOrThrow({ where: { Request: { packageId: latePkg } } });
+  const lateExec = await service.startExecution({ decisionId: lateDecision.id, mode: "manual", userId: founder });
+  check("an approval cannot be used after the buyer's current deadline", lateExec.ok ? "started" : lateExec.reason, "The buyer's submission deadline has passed.");
 
 } finally {
   await prisma.$disconnect();

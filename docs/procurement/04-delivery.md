@@ -53,7 +53,7 @@ Includes:
 
 ### Phase 4: Tender intelligence (built 19 November 2026, except where noted)
 
-Built: deadline and clarification tracking (a Deadlines tab, notice changes followed and audited), public tender documents (listed from the notice; fetched only from official notice services; uploaded by hand otherwise), and a requirements checklist that gates final approval. Not built: requirements extraction by agents. It needs a new founder decision: tender documents often name buyer staff, and under D4 (organisations and roles only) that text cannot go to the DeepSeek-backed agents as it stands, so it would have to be redacted first or handled by a provider with a UK or EU data-processing agreement. The bid/no-bid weights stay fixed in code.
+Built: deadline and clarification tracking (a Deadlines tab, notice changes followed and audited), public tender documents (listed from the notice; fetched only from official notice services; uploaded by hand otherwise), and a requirements checklist that gates final approval. Not built: requirements extraction by agents. It needs a new founder decision: tender documents often name buyer staff, and under D4 (organisations and roles only) that text cannot go to the DeepSeek-backed agents as it stands, so it would have to be redacted first or handled by a provider with a UK or EU data-processing agreement. The bid/no-bid weights stay fixed in code. Migration `20261119120000_procurement_tender_intelligence` is applied to production; its review follow-up `20261119150000_procurement_tender_hardening` is not yet applied, and must be before this code is deployed.
 
 
 Includes:

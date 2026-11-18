@@ -720,8 +720,8 @@ async function Deadlines() {
       status: { in: [...DEADLINE_STATUSES] },
       OR: [{ deadlineAt: { gte: from, lte: to } }, { clarificationDeadlineAt: { gte: from, lte: to } }],
     },
+    // No cap: the 21-day window bounds the list, and every deadline in it must show.
     select: { id: true, title: true, status: true, deadlineAt: true, clarificationDeadlineAt: true },
-    take: 500,
   });
   const alerts = deadlineAlerts(opps, now);
   return (

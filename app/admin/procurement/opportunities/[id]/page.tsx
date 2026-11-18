@@ -31,7 +31,7 @@ import {
   revisePackageAction,
   startExecutionAction,
 } from "@/lib/procurement/actions";
-import { EVIDENCE_STATUSES } from "@/lib/procurement/approval-core";
+import { EVIDENCE_STATUSES, evidenceVerdict } from "@/lib/procurement/approval-core";
 import { APPROVAL_ACTIONS, nextStates, type OpportunityKind } from "@/lib/procurement/lifecycle";
 import { CATEGORY_LABEL, WEIGHTS } from "@/lib/procurement/partnerships";
 import { MAX_DISQUALIFIERS, summarise } from "@/lib/procurement/requirements";
@@ -86,10 +86,16 @@ async function OpportunityContent({ params, searchParams }: Props) {
     prisma.auditLog.findMany({ where: { entityType: "Opportunity", entityId: opp.id }, orderBy: { createdAt: "desc" }, take: 50 }),
     // Every assessment is kept and shown, uncapped: they are the record of each judgement.
     prisma.bidAssessment.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "desc" } }),
-    prisma.tenderDocument.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "asc" }, take: 200 }),
-    prisma.tenderRequirement.findMany({ where: { opportunityId: opp.id }, orderBy: [{ createdAt: "asc" }], take: 500 }),
+    // Uncapped, so the checklist counts and the disqualifier prefill are complete.
+    prisma.tenderDocument.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "asc" } }),
+    prisma.tenderRequirement.findMany({
+      where: { opportunityId: opp.id },
+      orderBy: [{ createdAt: "asc" }],
+      include: { Evidence: { select: { id: true, status: true, expiresAt: true, Document: { select: { title: true } } } } },
+    }),
   ]);
-  const requirementSummary = summarise(requirements);
+  const requirementRows = requirements.map((r) => ({ ...r, evidenceCurrent: r.Evidence ? evidenceVerdict(r.Evidence, new Date()).ok : undefined }));
+  const requirementSummary = summarise(requirementRows);
   const scoringModel = opp.kind === "partnership" ? "partnership" : "bid";
   const moves = nextStates(opp.kind as OpportunityKind, opp.status);
   const docOptions = versions.map((v) => (
@@ -160,7 +166,7 @@ async function OpportunityContent({ params, searchParams }: Props) {
           <TenderDocumentsSection opp={opp} docs={tenderDocs} />
           <RequirementsSection
             opp={opp}
-            rows={requirements}
+            rows={requirementRows}
             docs={tenderDocs.map((d) => ({ id: d.id, title: d.title }))}
             evidenceOptions={evidenceOptions}
           />

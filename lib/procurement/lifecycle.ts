@@ -188,10 +188,14 @@ export function checkTransition(
       return { ok: true };
     case "founder":
       return facts.actor === "founder" ? { ok: true } : { ok: false, reason: `Only the founder can move a record to ${to}.` };
-    case "approval":
-      return gate.actions.some((a) => facts.currentApprovals.includes(a))
-        ? { ok: true }
-        : { ok: false, reason: `${to} needs a current founder approval (${gate.actions.join(" or ")}).` };
+    case "approval": {
+      if (!gate.actions.some((a) => facts.currentApprovals.includes(a))) {
+        return { ok: false, reason: `${to} needs a current founder approval (${gate.actions.join(" or ")}).` };
+      }
+      // A submission approval is only usable while the checklist is still
+      // clear: a requirement changed after approval stops it here.
+      return to === "ApprovedForSubmission" ? requirementsGate(kind, facts.requirements) : { ok: true };
+    }
     case "executed":
       return gate.actions.some((a) => facts.confirmedExecutions.includes(a))
         ? { ok: true }

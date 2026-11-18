@@ -791,11 +791,12 @@ export async function recordAssessmentAction(fd: FormData) {
 
 // ---------------------------------------------------------------- Phase 4: tender intelligence
 
-const londonOrNull = (raw: string | undefined, what: string): Date | null => {
+/** A London datetime-local value as UTC; an unreadable one goes back to the form it came from. */
+const londonOrNull = (raw: string | undefined, what: string, back: string): Date | null => {
   if (!raw) return null;
-  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(raw)) go(HOME, "error", `The ${what} could not be read.`);
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(raw)) go(back, "error", `The ${what} could not be read.`);
   const t = londonWallTimeToUtc(raw);
-  if (!t.ok) go(HOME, "error", t.reason);
+  if (!t.ok) go(back, "error", t.reason);
   return (t as { ok: true; date: Date }).date;
 };
 
@@ -803,8 +804,8 @@ export async function setDeadlinesAction(fd: FormData) {
   const user = await requireAdmin();
   const id = ID.safeParse(text(fd, "opportunityId"));
   if (!id.success) go(HOME, "error", "That opportunity could not be found.");
-  const deadlineAt = londonOrNull(text(fd, "deadlineAt"), "submission deadline");
-  const clarificationDeadlineAt = londonOrNull(text(fd, "clarificationDeadlineAt"), "clarification deadline");
+  const deadlineAt = londonOrNull(text(fd, "deadlineAt"), "submission deadline", oppPath(id.data!));
+  const clarificationDeadlineAt = londonOrNull(text(fd, "clarificationDeadlineAt"), "clarification deadline", oppPath(id.data!));
   if (!deadlineAt && !clarificationDeadlineAt) go(oppPath(id.data!), "error", "Enter at least one date.");
   const result = await setDeadlines({ opportunityId: id.data!, deadlineAt, clarificationDeadlineAt, userId: user.id });
   revalidatePath(oppPath(id.data!));

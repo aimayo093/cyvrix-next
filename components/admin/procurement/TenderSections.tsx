@@ -115,7 +115,8 @@ export function TenderDocumentsSection({ opp, docs }: { opp: { id: string; ocid:
       <p className="text-sm text-slate-500">
         The buyer&apos;s documents, kept apart from CYVRIX evidence. The site fetches a copy only from the official notice
         services. Most buyers publish documents on their own e-tendering portal, which needs a sign-in: open the link,
-        download the file yourself and upload it here. Every file is scanned before it is stored.
+        download the file yourself and upload it here. Every file is checked before it is stored; an antivirus scan
+        runs as well when one is configured.
       </p>
       {docs.length === 0 ? (
         <p className="text-sm text-slate-500">No documents yet.</p>
@@ -177,6 +178,9 @@ type Requirement = {
   location: string | null;
   evidenceVersionId: string | null;
   notes: string | null;
+  /** false when the linked evidence has since expired or been superseded. */
+  evidenceCurrent?: boolean;
+  Evidence?: { id: string; Document: { title: string } } | null;
 };
 
 const REQ_STATUS_STYLE: Record<string, string> = {
@@ -218,8 +222,13 @@ function RequirementFields({ r, opportunityId, docs, evidenceOptions }: { r?: Re
         <span className={label}>Evidence document</span>
         <select name="evidenceVersionId" defaultValue={r?.evidenceVersionId ?? ""} className={field}>
           <option value="">None</option>
+          {/* The lapsed document stays visible so it can be seen and replaced; the server refuses to save it again. */}
+          {r?.evidenceCurrent === false && r.evidenceVersionId && (
+            <option value={r.evidenceVersionId}>{r.Evidence?.Document.title ?? "Linked document"} (expired or replaced: choose a current one)</option>
+          )}
           {evidenceOptions}
         </select>
+        {r?.evidenceCurrent === false && <span className="text-xs text-amber-800">This evidence has expired or been replaced, so the requirement counts as open.</span>}
       </label>
       <label className="space-y-1 md:col-span-2"><span className={label}>Notes</span><textarea name="notes" maxLength={2000} rows={1} defaultValue={r?.notes ?? ""} className={field} /></label>
     </>
@@ -257,6 +266,7 @@ export function RequirementsSection({
             <details className="rounded-xl border border-slate-200 p-3 text-sm">
               <summary className="cursor-pointer">
                 <span className={`${pill} ${REQ_STATUS_STYLE[r.status] ?? ""} mr-2`}>{REQUIREMENT_STATUS_LABEL[r.status as keyof typeof REQUIREMENT_STATUS_LABEL] ?? r.status}</span>
+                {r.status === "met" && r.evidenceCurrent === false && <span className={`${pill} bg-amber-100 text-amber-800 mr-2`}>evidence lapsed</span>}
                 <span className="text-xs font-semibold uppercase text-slate-500">{r.kind}</span>{" "}
                 {r.ref ? <span className="font-semibold">{r.ref}: </span> : null}
                 {r.text}

@@ -12,7 +12,7 @@ import {
   PROACTIS_NOTICE_TYPES,
   type FetchJson,
 } from "./feeds";
-import { crossSourceKey, isRelevant, normalise, withoutContactPoints, type NormalisedNotice, type OcdsRelease } from "./ocds";
+import { crossSourceKey, isRelevant, normalise, noticeDate, withoutContactPoints, type NormalisedNotice, type OcdsRelease } from "./ocds";
 import { rangesAgree } from "./ingest-rules";
 import { initialStatus } from "./lifecycle";
 import { recordDateChanges } from "./deadlines";
@@ -89,6 +89,17 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
     });
     if (seen) return { created: 0, updated: 0, merged: 0, contacts: 0, stored: false };
 
+    // Feeds do not always deliver releases in order. A release published before
+    // one already applied for this tender must not undo its dates or facts: it
+    // is kept as evidence only. Read before this release is stored.
+    const earlierDates = await tx.$queryRaw<{ d: string | null }[]>`SELECT "raw"->>'date' AS d FROM "public"."ProcurementNotice" WHERE "ocid" = ${notice.ocid}`;
+    const outOfOrder =
+      notice.releasedAt !== null &&
+      earlierDates.some((row) => {
+        const d = noticeDate(row.d);
+        return d !== null && d.getTime() > notice.releasedAt!.getTime();
+      });
+
     const raw = withoutContactPoints(release);
     await tx.procurementNotice.create({
       data: {
@@ -124,7 +135,16 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
       const linked = await tx.opportunityEvidence.findFirst({ where: { url: notice.noticeUrl }, select: { Opportunity: { select: DATES } } });
       existing = linked?.Opportunity ?? null;
     }
-    if (existing) {
+    if (existing && outOfOrder) {
+      // An older release arriving late: evidence only, nothing on the record changes.
+      await tx.opportunityEvidence.create({ data: { ...evidence, opportunityId: existing.id } });
+      await audit(tx, null, "opportunity.notice_out_of_order", "Opportunity", existing.id, {
+        source: sourceKey,
+        releaseId: notice.releaseId,
+        releasedAt: notice.releasedAt?.toISOString() ?? null,
+      });
+      updated = 1;
+    } else if (existing) {
       // A newer release of a tender already recorded: keep its facts current
       // while nobody is working on it yet, never blanking a value the new
       // release leaves out; always keep the new notice as evidence.
