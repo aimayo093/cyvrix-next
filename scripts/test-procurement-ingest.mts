@@ -4,11 +4,12 @@
  * ChatGPT report parser and the morning schedule.
  * Run with: npm run test:procurement-ingest
  */
+import { isDeepStrictEqual } from "node:util";
 import { buyerContacts, crossSourceKey, isRelevant, normalise, noticeUrl, withoutContactPoints } from "../lib/procurement/ocds";
 import { parseReport, parseReportWithCount } from "../lib/procurement/report-import";
 import { privacyNoticeCoversTenderContacts } from "../lib/procurement/privacy-gate";
 import { isScheduledRun } from "../lib/procurement/schedule";
-import { agentOpportunity, containsPersonalData, isPublicLink, scrub, WITHHELD_TITLE } from "../lib/procurement/agent-view";
+import { agentOpportunity, containsPersonalData, isPublicLink, linkHoldsPersonalData, scrub, WITHHELD_TITLE } from "../lib/procurement/agent-view";
 import { rangesAgree, valuesAgree } from "../lib/procurement/ingest-rules";
 import { authorise } from "../lib/paperclip-auth";
 import {
@@ -24,8 +25,9 @@ import {
 
 let passed = 0;
 let failed = 0;
+// Deep, strict equality: undefined is not null, and key order does not matter.
 function check(name: string, actual: unknown, expected: unknown) {
-  const ok = JSON.stringify(actual) === JSON.stringify(expected);
+  const ok = isDeepStrictEqual(actual, expected);
   if (ok) passed += 1;
   else failed += 1;
   console.log(`  ${ok ? "PASS" : "FAIL"}  ${name}${ok ? "" : `  expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`}`);
@@ -179,6 +181,13 @@ check("same title with different links are two leads", parseReport("1. Desktop s
 check("international 00 numbers are personal data", containsPersonalData("Call 0044 20 0000 0000"), true);
 check("a date range is not a phone number", containsPersonalData("Contract 01-12-2026 - 15-12-2027"), false);
 check("a dotted phone number is personal data", containsPersonalData("Call 020.7946.0000"), true);
+check("a notice number in a link path is not a phone", linkHoldsPersonalData("https://www.find-tender.service.gov.uk/Notice/012345-2026"), false);
+check("an email in a link is personal data", linkHoldsPersonalData("https://example.com/contact?to=jo@example.com"), true);
+check("a phone in a link's query is personal data", linkHoldsPersonalData("https://example.com/call?n=01792%20000000"), true);
+check("a bolded link loses its markdown", parseReport("1. **Laptop refresh** **https://example.com/t/1**")[0].url, "https://example.com/t/1");
+check("a summer notice time without an offset is London time", normalise("fts", { ...ftsTraining, tender: { ...ftsTraining.tender, tenderPeriod: { endDate: "2026-07-01T12:00:00" } } })!.deadlineAt?.toISOString(), "2026-07-01T11:00:00.000Z");
+check("a winter one is GMT", normalise("fts", { ...ftsTraining, tender: { ...ftsTraining.tender, tenderPeriod: { endDate: "2026-12-01T12:00:00" } } })!.deadlineAt?.toISOString(), "2026-12-01T12:00:00.000Z");
+check("an explicit offset is kept", normalise("fts", { ...ftsTraining, tender: { ...ftsTraining.tender, tenderPeriod: { endDate: "2026-07-01T12:00:00Z" } } })!.deadlineAt?.toISOString(), "2026-07-01T12:00:00.000Z");
 check("a dash-grouped phone with 2-digit groups is personal data", containsPersonalData("Call 020-79-46-0000"), true);
 check("plural buying signals count", ["Two tenders for desktop support", "RFQs for laptops", "Requests for proposals for Wi-Fi"].map((t) => parseReport(`1. ${t} https://example.com/x`)[0].confirmedBuying), [true, true, true]);
 check(
