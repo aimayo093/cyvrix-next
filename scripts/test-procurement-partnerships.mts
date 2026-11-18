@@ -51,6 +51,7 @@ check("address forms: as typed, normalised and with a slash", addressVariants("h
 check("a fragment is not part of the address", normaliseAddress("https://www.sell2wales.gov.wales/#top"), "https://www.sell2wales.gov.wales");
 check("a query is kept", normaliseAddress("https://portal.example/register?ref=1"), "https://portal.example/register?ref=1");
 check("an email destination is left as it is", addressVariants(" tenders@buyer.example "), ["tenders@buyer.example"]);
+check("a malformed http-looking destination does not crash", addressVariants("https://exa mple.com/x"), ["https://exa mple.com/x"]);
 
 console.log("\n  Form lists and programme sources");
 check("a valid list is read", parseList("company_name, company_number\nvat_number", /^[a-z][a-z0-9_]{1,63}$/), { ok: true, values: ["company_name", "company_number", "vat_number"] });

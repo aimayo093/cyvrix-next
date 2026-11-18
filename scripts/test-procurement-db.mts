@@ -638,6 +638,11 @@ try {
   const partnershipScores = { revenue_potential: 3, existing_technical_capability: 3, accessibility_and_eligibility: 3, recurring_assignment_potential: 3, profitability: 3, strategic_importance: 3, onboarding_cost: 3 };
   const wrongModel = await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "partnership", scores: partnershipScores, disqualifiers: [], authorId: founder });
   check("partnership scoring is refused on a tender, for that reason", wrongModel.ok ? "recorded" : wrongModel.reason, "Partnership scoring is for partnership opportunities.");
+  // And a valid partnership assessment is accepted by the database's category check.
+  const partnershipOpp = uuid();
+  await prisma.opportunity.create({ data: { id: partnershipOpp, kind: "partnership", status: "TargetIdentified", title: "Test partnership", origin: "manual" } });
+  const goodPartnership = await partnerships.recordAssessment({ opportunityId: partnershipOpp, model: "partnership", scores: partnershipScores, disqualifiers: [], authorId: founder });
+  check("a valid partnership assessment is recorded", goodPartnership.ok ? [goodPartnership.value.total, goodPartnership.value.recommendation] : goodPartnership.reason, [60, "consider"]);
   const dq = await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "bid", scores: bidScores, disqualifiers: ["Needs ISO 27001 certificate", " "], authorId: founder });
   check("a disqualifier overrides the score", dq.ok ? dq.value.recommendation : dq.reason, "disqualified");
   check("blank disqualifier lines are dropped", dq.ok ? (await prisma.bidAssessment.findUniqueOrThrow({ where: { id: dq.value.id } })).disqualifiers : null, ["Needs ISO 27001 certificate"]);
@@ -720,11 +725,8 @@ try {
   const sharedPkg = await registrationPackage(sharedUrl, []);
   const sharedReq = await service.requestApproval({ packageId: sharedPkg, actionType: "register_account", userId: founder });
   check("a destination shared by two portals is never pre-approved", sharedReq.ok ? (await prisma.approvalRequest.findUniqueOrThrow({ where: { id: sharedReq.value } })).status : "failed", "pending");
-  check(
-    "an address differing only by a trailing slash or capitals is the same portal",
-    (await partnerships.savePortalRecord({ name: "Slash copy", kind: "procurement_portal", url: "https://Contracts.MOD.uk", registrationUrl: null, termsUrl: null, cost: "free", organisationId: null, notes: null, requiredFacts: [], requiredDocuments: [] }, founder)).ok,
-    false
-  );
+  const slashCopy = await partnerships.savePortalRecord({ name: "Slash copy", kind: "procurement_portal", url: "https://Contracts.MOD.uk", registrationUrl: null, termsUrl: null, cost: "free", organisationId: null, notes: null, requiredFacts: [], requiredDocuments: [] }, founder);
+  check("an address differing only by a trailing slash or capitals is the same portal", slashCopy.ok ? "saved" : slashCopy.reason.includes("already uses that address"), true);
   // A destination typed without the trailing slash still finds the portal and its policy.
   await partnerships.setStandingPolicy(dsp.id, true, founder, new Date());
   await prisma.supplierPortal.update({ where: { id: dsp.id }, data: { registrationUrl: null } });

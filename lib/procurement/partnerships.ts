@@ -143,7 +143,12 @@ export function addressVariants(raw: string): string[] {
   const t = raw.trim();
   if (!t) return [];
   const n = normaliseAddress(t);
-  const withSlash = /^https?:\/\//i.test(n) && !new URL(n).search ? `${n}/` : n;
+  let withSlash = n;
+  try {
+    if (/^https?:\/\//i.test(n) && !new URL(n).search) withSlash = `${n}/`;
+  } catch {
+    // Not a parsable URL (normaliseAddress returned it as typed): no slash form.
+  }
   return [...new Set([t, n, withSlash])];
 }
 

@@ -27,7 +27,10 @@ export async function portalForDestination(tx: Db, destination: string, options:
   if (found.length !== 1) return { portal: null, ambiguous: found.length > 1 } as const;
   if (options.lock) await tx.$queryRaw`SELECT 1 FROM "public"."SupplierPortal" WHERE "id" = ${found[0].id} FOR UPDATE`;
   const portal = await tx.supplierPortal.findUnique({ where: { id: found[0].id } });
-  return portal ? ({ portal, ambiguous: false } as const) : ({ portal: null, ambiguous: false } as const);
+  // Checked again after the lock: an address edited in the meantime means
+  // this portal is no longer the one the package was addressed to.
+  const stillMatches = !!portal && (variants.includes(portal.url) || (!!portal.registrationUrl && variants.includes(portal.registrationUrl)));
+  return stillMatches ? ({ portal, ambiguous: false } as const) : ({ portal: null, ambiguous: false } as const);
 }
 
 /**
