@@ -853,7 +853,27 @@ resubmit. Tenders stay once-only in the service.
 Uploads are checked structurally, not for malware, unless a scanning service
 is configured.
 
-**Tests:** `npm run test:procurement` (rules, no database) and
+**Phase 2: official feeds and the ChatGPT import (18 November 2026).**
+- Find a Tender, Public Contracts Scotland and Sell2Wales are read from their
+  public OCDS APIs. Each feed is off until the founder switches it on, then
+  read once a day at 06:00 UTC. The schedule is daily because every other job
+  on this site is, and the plan's cron limits were not confirmed. "Run now" is
+  available to the founder.
+- Only IT-relevant notices are kept, matched by CPV code or wording
+  (`lib/procurement/ocds.ts`). The filter was checked on a real day's notices.
+- One opportunity per OCID. The same tender on two portals (Scottish notices
+  appear on both Find a Tender and PCS) is matched by buyer, title and
+  deadline day, and added as evidence rather than stored twice.
+- Raw notices are stored without contact points. Buyer contacts (D12) are
+  stored as `Contact` rows on the buyer organisation.
+- The ChatGPT report is pasted in (D1). Its items keep their section, link and
+  text as evidence, and are marked as from the task. Nothing is labelled as
+  from the ChatGPT task unless it was pasted from it.
+- No agent API in Phase 2: D4's "full access" would send personal data to
+  DeepSeek without a transfer basis (§15). See
+  `docs/procurement/privacy-notice-draft.md`.
+
+**Tests:** `npm run test:procurement` (rules, no database), `npm run test:procurement-ingest` (feeds and import parsing, no network) and
 `npm run test:procurement-db` (a throwaway local Postgres only; it refuses any
 non-local URL).
 

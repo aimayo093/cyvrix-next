@@ -21,6 +21,8 @@ import {
 } from "./service";
 import { evidenceVerdict, mayBePublicFact, PUBLIC_FACT_KEYS } from "./approval-core";
 import { londonWallTimeToUtc } from "./london-time";
+import { OFFICIAL_SOURCES, runSource, type OfficialSource } from "./ingest";
+import { MAX_REPORT_CHARS, parseReport } from "./report-import";
 import { verifyStepUp } from "./step-up";
 
 /**
@@ -459,4 +461,100 @@ export async function saveCompanyFact(fd: FormData) {
   });
   revalidatePath(HOME);
   go(back, "success", "Saved.");
+}
+
+
+// ---------------------------------------------------------------- sources and imports
+
+/** Switch an official feed on or off (founder only). Nothing is fetched while it is off. */
+export async function setSourceEnabled(fd: FormData) {
+  const user = await requireFounder();
+  const back = `${HOME}?tab=sources`;
+  const key = text(fd, "key") as OfficialSource | undefined;
+  if (!key || !OFFICIAL_SOURCES.includes(key)) go(back, "error", "Only the official feeds can be switched.");
+  const enabled = text(fd, "enabled") === "true";
+  await prisma.$transaction(async (tx) => {
+    await tx.opportunitySource.update({ where: { key: key! }, data: { enabled } });
+    await audit(tx, user.id, enabled ? "procurement.source_enabled" : "procurement.source_disabled", "OpportunitySource", key!, {});
+  });
+  revalidatePath(HOME);
+  go(back, "success", enabled ? "Switched on. It runs every morning; use Run now to fetch straight away." : "Switched off.");
+}
+
+/** Fetch one official feed now (founder only). Same code path as the morning run. */
+export async function runSourceNow(fd: FormData) {
+  const user = await requireFounder();
+  const back = `${HOME}?tab=sources`;
+  const key = text(fd, "key") as OfficialSource | undefined;
+  if (!key || !OFFICIAL_SOURCES.includes(key)) go(back, "error", "Only the official feeds can be run.");
+  const r = await runSource(key!, { trigger: "manual", userId: user.id, budgetMs: 45_000 });
+  revalidatePath(HOME);
+  const summary = `${r.fetched} notices read, ${r.relevant} IT-relevant: ${r.created} new, ${r.updated} updated, ${r.merged} matched to another portal's copy.`;
+  if (r.status === "succeeded") go(back, "success", r.detail ? `${summary} ${r.detail}` : summary);
+  if (r.status === "skipped") go(back, "error", r.detail ?? "Skipped.");
+  go(back, "error", `${r.status === "retry" ? "The feed is busy or down" : "The run failed"}: ${r.detail ?? "no detail"}. ${summary}`);
+}
+
+/**
+ * Paste-in import of the ChatGPT 9 am report (D1). Every item becomes an
+ * opportunity marked as from the ChatGPT task, with its own text as evidence.
+ * Items already imported in the last 30 days (same title) are skipped.
+ */
+export async function importChatgptReport(fd: FormData) {
+  const user = await requireAdmin();
+  const back = `${HOME}?tab=import`;
+  const report = String(fd.get("report") ?? "");
+  if (report.trim().length < 20) go(back, "error", "Paste the report text first.");
+  if (report.length > MAX_REPORT_CHARS) go(back, "error", `That is longer than ${MAX_REPORT_CHARS.toLocaleString("en-GB")} characters. Import it in parts.`);
+  const items = parseReport(report);
+  if (items.length === 0) go(back, "error", "No items were found. Leads should be numbered, bulleted or separated by blank lines.");
+
+  const since = new Date(Date.now() - 30 * 86_400_000);
+  const recent = await prisma.opportunity.findMany({
+    where: { origin: "chatgpt_task", createdAt: { gte: since } },
+    select: { title: true },
+  });
+  const known = new Set(recent.map((r) => r.title.toLowerCase()));
+  const runId = crypto.randomUUID();
+  let created = 0;
+  let skipped = 0;
+
+  await prisma.ingestionRun.create({ data: { id: runId, sourceKey: "chatgpt_task", status: "running", startedById: user.id } });
+  for (const item of items) {
+    if (known.has(item.title.toLowerCase())) {
+      skipped += 1;
+      continue;
+    }
+    known.add(item.title.toLowerCase());
+    const id = crypto.randomUUID();
+    await prisma.$transaction(async (tx) => {
+      await tx.opportunity.create({
+        data: {
+          id,
+          kind: item.kind,
+          status: initialStatus(item.kind),
+          title: item.title,
+          summary: item.section ? `Report section: ${item.section}` : null,
+          origin: "chatgpt_task",
+          confirmedBuying: item.confirmedBuying,
+          createdById: user.id,
+          Evidence: {
+            create: { id: crypto.randomUUID(), kind: "report", url: item.url, quote: item.quote, retrievedAt: new Date(), createdById: user.id },
+          },
+        },
+      });
+      await audit(tx, user.id, "opportunity.created", "Opportunity", id, { source: "chatgpt_task", importRunId: runId, kind: item.kind });
+    });
+    created += 1;
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.ingestionRun.update({
+      where: { id: runId },
+      data: { status: "succeeded", finishedAt: new Date(), fetched: items.length, created, updated: 0 },
+    });
+    await tx.opportunitySource.update({ where: { key: "chatgpt_task" }, data: { lastRunAt: new Date(), lastSuccessAt: new Date(), health: "ok" } });
+    await audit(tx, user.id, "procurement.report_imported", "IngestionRun", runId, { items: items.length, created, skipped });
+  });
+  revalidatePath(HOME);
+  go(`${HOME}?tab=opportunities`, "success", `Imported ${created} item(s) from the report${skipped ? `; ${skipped} already imported in the last 30 days were skipped` : ""}. Check each one and archive anything irrelevant.`);
 }

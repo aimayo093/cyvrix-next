@@ -23,11 +23,17 @@ import {
   createOpportunity,
   createOrganisation,
   decideApprovalAction,
+  importChatgptReport,
+  runSourceNow,
   saveCompanyFact,
+  setSourceEnabled,
   updateOrganisation,
 } from "@/lib/procurement/actions";
+import { OFFICIAL_SOURCES } from "@/lib/procurement/ingest";
 
 export const metadata = { title: "Procurement" };
+// "Run now" fetches a feed inside the request; give it room.
+export const maxDuration = 60;
 
 const TABS = [
   { key: "opportunities", label: "Opportunities" },
@@ -35,6 +41,7 @@ const TABS = [
   { key: "organisations", label: "Organisations" },
   { key: "documents", label: "Documents" },
   { key: "facts", label: "Company facts" },
+  { key: "import", label: "Import report" },
   { key: "sources", label: "Sources" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
@@ -104,7 +111,8 @@ async function ProcurementContent({ searchParams }: { searchParams: Promise<Sear
       {tab === "organisations" && <Organisations category={sp.category} />}
       {tab === "documents" && <Documents isFounder={isFounder} />}
       {tab === "facts" && <Facts isFounder={isFounder} />}
-      {tab === "sources" && <Sources />}
+      {tab === "import" && <ImportReport />}
+      {tab === "sources" && <Sources isFounder={isFounder} />}
     </div>
   );
 }
@@ -586,27 +594,87 @@ async function Facts({ isFounder }: { isFounder: boolean }) {
   );
 }
 
-async function Sources() {
-  const sources = await prisma.opportunitySource.findMany({ orderBy: { key: "asc" } });
+function ImportReport() {
+  return (
+    <div className="space-y-4">
+      <p className="max-w-3xl text-sm text-slate-500">
+        Paste the ChatGPT &ldquo;Cyvrix UK Daily Leads&rdquo; report here. Each numbered or bulleted lead (or each
+        paragraph) becomes an opportunity marked as from the ChatGPT 9 am report. Its section, its first link and
+        its own text are kept as evidence. Commercial and government leads are both kept. Titles already imported
+        in the last 30 days are skipped. Check each new one and archive anything irrelevant.
+      </p>
+      <form action={importChatgptReport} className={`${card} space-y-3`}>
+        <label className="block space-y-1">
+          <span className={label}>Report text</span>
+          <textarea name="report" required rows={16} maxLength={100000} className={`${field} font-mono text-xs`} />
+        </label>
+        <button className={primaryButton}>Import leads</button>
+      </form>
+    </div>
+  );
+}
+
+async function Sources({ isFounder }: { isFounder: boolean }) {
+  const [sources, runs] = await Promise.all([
+    prisma.opportunitySource.findMany({ orderBy: { key: "asc" } }),
+    prisma.ingestionRun.findMany({ orderBy: { startedAt: "desc" }, take: 30 }),
+  ]);
+  const lastRun = (key: string) => runs.find((r) => r.sourceKey === key);
+  const official = OFFICIAL_SOURCES as readonly string[];
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-500">
-        Where opportunities come from. The official feeds are switched on in Phase 2. Leads marked ChatGPT 9 am report
-        are only ever ones imported from that task, never ones researched elsewhere.
+        Where opportunities come from. A switched-on official feed is read every morning (06:00 UTC, before the
+        09:00 report). Only IT-related notices are kept: by CPV code or wording. Buyer contact details from
+        notices are kept on the buyer&apos;s record and stay in this admin. Leads marked ChatGPT 9 am report are only
+        ever ones imported from that task.
+      </p>
+      <p className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        Before switching on a feed, add the procurement-contacts section to the privacy policy (Admin &rarr; Legal
+        Pages). Switching a feed on starts storing published buyer contacts. The draft wording is in
+        docs/procurement/privacy-notice-draft.md.
       </p>
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Source</th><th className="px-4 py-3">Kind</th><th className="px-4 py-3">State</th><th className="px-4 py-3">Last success</th><th className="px-4 py-3">Licence</th></tr></thead>
+          <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th className="px-4 py-3">Source</th><th className="px-4 py-3">State</th><th className="px-4 py-3">Last run</th><th className="px-4 py-3">Licence</th><th className="px-4 py-3"><span className="sr-only">Actions</span></th></tr></thead>
           <tbody>
-            {sources.map((s) => (
-              <tr key={s.key} className="border-t border-slate-100">
-                <td className="px-4 py-3"><span className="font-semibold">{s.name}</span>{s.notes && <div className="text-xs text-slate-500">{s.notes}</div>}</td>
-                <td className="px-4 py-3">{s.kind}</td>
-                <td className="px-4 py-3">{s.enabled ? `on · ${s.health}` : "off"}</td>
-                <td className="px-4 py-3">{when(s.lastSuccessAt)}</td>
-                <td className="px-4 py-3 text-xs">{s.licence ?? "—"}</td>
-              </tr>
-            ))}
+            {sources.map((s) => {
+              const run = lastRun(s.key);
+              return (
+                <tr key={s.key} className="border-t border-slate-100 align-top">
+                  <td className="px-4 py-3"><span className="font-semibold">{s.name}</span>{s.notes && <div className="text-xs text-slate-500">{s.notes}</div>}</td>
+                  <td className="px-4 py-3">{s.enabled ? `on · ${s.health}` : "off"}</td>
+                  <td className="px-4 py-3 text-xs">
+                    {run ? (
+                      <>
+                        {when(run.startedAt)} · {run.status}
+                        <div className="text-slate-500">{run.fetched} read · {run.created} new · {run.updated} updated</div>
+                        {run.errorDetail && <div className="text-rose-700">{run.errorDetail.slice(0, 160)}</div>}
+                      </>
+                    ) : (
+                      "—"
+                    )}
+                    {s.lastSuccessAt && <div className="text-slate-500">Last success {when(s.lastSuccessAt)}</div>}
+                  </td>
+                  <td className="px-4 py-3 text-xs">{s.licence ?? "—"}</td>
+                  <td className="px-4 py-3">
+                    {isFounder && official.includes(s.key) && (
+                      <div className="flex flex-wrap gap-2">
+                        <form action={setSourceEnabled}>
+                          <input type="hidden" name="key" value={s.key} />
+                          <input type="hidden" name="enabled" value={s.enabled ? "false" : "true"} />
+                          <button className={secondaryButton}>{s.enabled ? "Switch off" : "Switch on"}</button>
+                        </form>
+                        <form action={runSourceNow}>
+                          <input type="hidden" name="key" value={s.key} />
+                          <button className={primaryButton}>Run now</button>
+                        </form>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

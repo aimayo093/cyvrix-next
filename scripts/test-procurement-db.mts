@@ -31,6 +31,8 @@ process.env.DATABASE_URL = url;
 
 const { prisma } = await import("../lib/prisma");
 const service = await import("../lib/procurement/service");
+const ingest = await import("../lib/procurement/ingest");
+const fx = await import("./fixtures/procurement/ocds");
 
 let passed = 0;
 let failed = 0;
@@ -386,6 +388,75 @@ try {
   );
   check("three identical racing moves: exactly one wins", raced.filter((r) => r.ok).length, 1);
   check("and only one is recorded", await prisma.auditLog.count({ where: { entityId: oppE, action: "opportunity.transition" } }), 1);
+  console.log("\n  Official feed ingestion (fake feeds, Phase 2)");
+  const FTS = "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages";
+  const calls: string[] = [];
+  const s2wStatus: number = 503;
+  const fakeFetch = async (url: string) => {
+    calls.push(url);
+    await new Promise((r) => setTimeout(r, 150));
+    if (url.startsWith(FTS)) {
+      if (url.includes("cursor=")) return { status: 200, retryAfter: null, body: { releases: [fx.ftsKeywordOnly] } };
+      return {
+        status: 200,
+        retryAfter: null,
+        body: {
+          releases: [fx.ftsItSupport, fx.ftsTraining, fx.awardOnly],
+          links: { next: `${FTS}?stages=tender&limit=100&updatedFrom=2026-11-16T00:00:00&updatedTo=2026-11-18T10:00:00&cursor=abc` },
+        },
+      };
+    }
+    if (url.startsWith("https://api.publiccontractsscotland.gov.uk/")) {
+      return { status: 200, retryAfter: null, body: { releases: [fx.pcsCopyOfItSupport, fx.pcsCyber] } };
+    }
+    if (url.startsWith("https://api.sell2wales.gov.wales/")) return { status: s2wStatus, retryAfter: "120", body: s2wStatus === 200 ? { releases: [] } : null };
+    throw new Error(`unexpected url ${url}`);
+  };
+  const morning = new Date("2026-11-18T06:00:00Z");
+
+  const off = await ingest.runSource("fts", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("a switched-off source is skipped by the cron", [off.status, calls.length], ["skipped", 0]);
+
+  await prisma.opportunitySource.updateMany({ where: { key: { in: ["fts", "pcs", "s2w"] } }, data: { enabled: true } });
+  const fts1 = await ingest.runSource("fts", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("both pages read through the cursor", [fts1.status, fts1.fetched, calls.length], ["succeeded", 4, 2]);
+  check("only IT tenders kept (support + Wi-Fi/cabling), award and training skipped", [fts1.relevant, fts1.created], [2, 2]);
+  check("buyer contact stored once", fts1.contacts, 1);
+  const ftsSource = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "fts" } });
+  check("next window starts at the chain's updatedTo", ftsSource.lastSuccessAt?.toISOString(), "2026-11-18T10:00:00.000Z");
+  check("no cursor left over", ftsSource.cursor, null);
+  check("health ok", ftsSource.health, "ok");
+  const itSupport = await prisma.opportunity.findFirstOrThrow({ where: { ocid: "ocds-h6vhtk-0aaaa1" }, include: { Buyer: true, Evidence: true } });
+  check("opportunity is a confirmed tender in Discovered", [itSupport.kind, itSupport.status, itSupport.confirmedBuying, itSupport.origin], ["tender", "Discovered", true, "fts"]);
+  check("buyer organisation created and marked as a buyer", [itSupport.Buyer?.name, itSupport.Buyer?.categories], ["Example County Council", ["buyer"]]);
+  check("evidence links to the notice", itSupport.Evidence[0]?.url, "https://www.find-tender.service.gov.uk/Notice/100001-2026");
+  const storedRaw = await prisma.procurementNotice.findFirstOrThrow({ where: { ocid: "ocds-h6vhtk-0aaaa1" } });
+  check("stored raw notice has no contact points", JSON.stringify(storedRaw.raw).includes("Pat Example"), false);
+
+  calls.length = 0;
+  const fts2 = await ingest.runSource("fts", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("re-reading the same notices creates nothing", [fts2.created, fts2.updated, fts2.contacts], [0, 0, 0]);
+
+  const pcs = await ingest.runSource("pcs", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("PCS copy of the same tender is merged, the cyber tender is new", [pcs.merged, pcs.created], [1, 1]);
+  check("the merged tender now has evidence from both portals", await prisma.opportunityEvidence.count({ where: { opportunityId: itSupport.id } }), 2);
+  check("opportunities from the feeds so far", await prisma.opportunity.count({ where: { origin: { in: ["fts", "pcs"] } } }), 3);
+  check("health board created as a buyer with its contact", await prisma.contact.count({ where: { Organisation: { name: "Example Health Board" } } }), 1);
+
+  const s2w = await ingest.runSource("s2w", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("an unavailable feed is recorded as retry, not a crash", [s2w.status, s2w.detail?.includes("503")], ["retry", true]);
+  const s2wSource = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "s2w" } });
+  check("and its health shows degraded", s2wSource.health, "degraded");
+  const s2wRun = await prisma.ingestionRun.findFirstOrThrow({ where: { sourceKey: "s2w" }, orderBy: { startedAt: "desc" } });
+  check("the run is kept with its error", [s2wRun.status, s2wRun.errorClass], ["retry", "unavailable"]);
+
+  const [a1, a2] = await Promise.all([
+    ingest.runSource("pcs", { trigger: "manual", fetchJson: fakeFetch, now: morning }),
+    ingest.runSource("pcs", { trigger: "manual", fetchJson: fakeFetch, now: morning }),
+  ]);
+  check("two runs of one source at once: one is turned away", [a1.status, a2.status].sort(), ["skipped", "succeeded"]);
+  check("every completed run is audited (5)", await prisma.auditLog.count({ where: { action: "procurement.sync" } }), 5);
+
 } finally {
   await prisma.$disconnect();
 }

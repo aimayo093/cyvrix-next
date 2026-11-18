@@ -1,6 +1,8 @@
 # Procurement, tenders and partnerships: Phase 0 proposal
 
-**Status (15 November 2026):** Phase 0 approved. Phase 1 is built on PR 14,
+**Status (18 November 2026):** Phase 1 is merged (PR 14, `0162546`), deployed and checked on the live site,
+including a test upload to private storage. Phase 2 (official feeds and the ChatGPT import) is built on
+branch `feat/procurement-phase2`; it needs no migration. Phase 1 was built on PR 14,
 with review fixes. Production has the two Phase 1 migrations
 (`procurement_foundation`, `procurement_target_organisations`) and the
 hardening migration (`procurement_hardening`, from `20261115130000`). Each was
@@ -116,6 +118,13 @@ The founder answered in the Phase 0 follow-up:
 - **"Dry-run, then apply"** (Phase 1 migrations). Dry-run on production in a rolled-back transaction succeeded, then `procurement_foundation` and `procurement_target_organisations` were applied on 15 November 2026. Verified: 52 organisations (6 at priority 1), 10 sources all off, private bucket `company-documents` with no storage policies, RLS on all 16 new tables with no API-role grants, 4 guard triggers. The Supabase security advisor reports only the expected "RLS enabled, no policy" notes (server-only tables, as `AgentDraft`). The Phase 1 **code is not merged or deployed**.
 
 Still open: D1, D3, D4, D8, D10, D12, D13, D14, and merging and deploying the Phase 1 code.
+
+### Phase 2 decisions (15–18 November 2026)
+
+- **D1:** paste-in import of the ChatGPT report. Built (Admin → Procurement → Import report). Email forwarding was not chosen.
+- **D10:** not yet. No Paperclip agent is created; agent 13 is to be decided once real data flows.
+- **D12:** store buyer contacts from published notices, and update the privacy notice. Contacts are stored on the buyer organisation and stay in the admin. Draft wording: [privacy-notice-draft.md](privacy-notice-draft.md). It must be published before a feed is switched on.
+- **D4:** the founder chose "allow agent full access". **Not built.** Agents run on DeepSeek (China), and there is no UK GDPR transfer mechanism for personal data (`DECISIONS.md` §15). Giving agents buyer contacts would be an unlawful transfer until one is in place. Phase 2 therefore gives agents no procurement access at all, pending the founder's choice in the draft: (a) organisations and roles only, (b) a transfer mechanism first, or (c) a UK/EU provider.
 
 ### Decisions requested
 
