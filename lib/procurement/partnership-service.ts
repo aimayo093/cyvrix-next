@@ -62,7 +62,9 @@ export async function savePortalRecord(input: PortalInput, userId: string): Prom
         requiredDocuments: input.requiredDocuments,
       };
       // A destination must name one portal (portal-lookup.ts), so two portals
-      // may not share an address or registration page.
+      // may not share an address or registration page. Portal saves take one
+      // shared lock first, so two saved at once cannot both pass this check.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('procurement.supplier_portal.addresses'))`;
       const clash = await portalSharingAddress(tx, [input.url, input.registrationUrl], input.id ?? null);
       if (clash) return fail(`${clash.name} already uses that address or registration page. Each portal needs its own.`);
       let policyReset = false;

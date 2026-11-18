@@ -37,6 +37,8 @@ check("too short is refused", credentialLabelProblem("ab") !== null, true);
 check("a key with slashes is still a secret", credentialLabelProblem("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")?.includes("looks like a password") ?? false, true);
 check("a key with colons is still a secret", credentialLabelProblem("token:abc123:XYZ789:def456")?.includes("looks like a password") ?? false, true);
 check("a hyphenated name is not a secret", credentialLabelProblem("Bitwarden: tender-portal-accounts"), null);
+check("a domain in the name is not a secret", credentialLabelProblem("1Password: sell2wales.gov.uk"), null);
+check("a dotted secret ending in digits is still refused", credentialLabelProblem("abc.def123.ghi456")?.includes("looks like a password") ?? false, true);
 
 console.log("\n  Portal changes and the standing policy (D13)");
 const portal = { url: "https://contracts.mod.uk/", registrationUrl: null, cost: "free" };
@@ -113,6 +115,7 @@ check("a missing category is a problem", scoreAssessment("bid", { technical_capa
 check("6 is out of range", scoreAssessment("bid", { ...all("bid", 3), profitability: 6 }, []).problems.length, 1);
 check("2.5 is not whole", scoreAssessment("bid", { ...all("bid", 3), profitability: 2.5 }, []).problems.length, 1);
 check("an unknown category is a problem", scoreAssessment("bid", { ...all("bid", 3), luck: 5 }, []).problems, ["Unknown category: luck."]);
+check("a built-in property name is not a category", scoreAssessment("bid", { ...all("bid", 3), constructor: 5 }, []).problems, ["Unknown category: constructor."]);
 check("the pursue threshold is inclusive", scoreAssessment("bid", { ...all("bid", 4), technical_capability: 2, cash_flow_impact: 3 }, []), { total: 70, recommendation: "pursue", problems: [] });
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);

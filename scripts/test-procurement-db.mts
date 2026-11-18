@@ -708,6 +708,10 @@ try {
     founder
   );
   check("a second portal at an address already in use is refused", clash.ok ? "saved" : clash.reason.includes("already uses that address"), true);
+  const racing = (name: string) =>
+    partnerships.savePortalRecord({ name, kind: "supplier_portal", url: "https://race.example/", registrationUrl: null, termsUrl: null, cost: "unknown", organisationId: null, notes: null, requiredFacts: [], requiredDocuments: [] }, founder);
+  const racedPortals = await Promise.all([racing("Race portal one"), racing("Race portal two")]);
+  check("two portals saved at once with one address: exactly one is kept", [racedPortals.filter((r) => r.ok).length, await prisma.supplierPortal.count({ where: { url: "https://race.example/" } })], [1, 1]);
   // Two portals sharing an address (as could exist from before this rule) name no portal: no policy applies.
   const sharedUrl = "https://shared-portal.example/";
   for (const name of ["Shared portal A", "Shared portal B"]) {

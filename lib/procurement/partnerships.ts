@@ -81,6 +81,8 @@ export function credentialLabelProblem(label: string): string | null {
   const secretLike = runs.some((r) => {
     if (/^https?:\/\//i.test(r)) return false;
     const core = r.replace(/[:,]+$/, "");
+    // A bare domain ("sell2wales.gov.uk") names a site, not a secret.
+    if (/^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i.test(core)) return false;
     return core.length >= 12 && /[A-Za-z]/.test(core) && /[\d_]|[^\w-]/.test(core);
   });
   if (secretLike) return "That looks like a password or key. Enter only the name of the entry in your password manager, never the secret.";
@@ -273,7 +275,8 @@ export function scoreAssessment(model: ScoringModel, scores: Record<string, numb
     }
     total += (weight * s) / 5;
   }
-  for (const key of Object.keys(scores)) if (!(key in weights)) problems.push(`Unknown category: ${key}.`);
+  // Own properties only: "constructor" or "toString" is not a category.
+  for (const key of Object.keys(scores)) if (!Object.hasOwn(weights, key)) problems.push(`Unknown category: ${key}.`);
   total = Math.round(total * 100) / 100;
   const real = disqualifiers.map((d) => d.trim()).filter(Boolean);
   const recommendation: Recommendation = real.length
