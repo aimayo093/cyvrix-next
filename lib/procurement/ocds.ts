@@ -1,3 +1,5 @@
+import { londonWallTimeToUtc } from "./london-time";
+
 /**
  * Open Contracting (OCDS) releases from the official UK feeds, turned into the
  * shape the CRM stores. Pure: no network, no database, so it is tested on
@@ -123,9 +125,22 @@ export const RELEVANT_KEYWORDS = [
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
+/**
+ * A notice date. With an offset or "Z" it is exact. Without one it is a UK
+ * notice's local time, so it is read as London wall time (BST in summer), not
+ * as the server's time zone; a date alone is London midnight. Only the
+ * repeated hour when the clocks go back cannot be placed, and is read as GMT.
+ */
 function date(v: unknown): Date | null {
   const s = str(v);
   if (!s) return null;
+  const local = s.match(/^(\d{4}-\d{2}-\d{2})(?:T(\d{2}:\d{2})(?::\d{2}(?:\.\d+)?)?)?$/);
+  if (local) {
+    const london = londonWallTimeToUtc(`${local[1]}T${local[2] ?? "00:00"}`);
+    if (london.ok) return london.date;
+    const gmt = new Date(`${local[1]}T${local[2] ?? "00:00"}:00Z`);
+    return Number.isNaN(gmt.getTime()) ? null : gmt;
+  }
   const d = new Date(s);
   return Number.isNaN(d.getTime()) ? null : d;
 }

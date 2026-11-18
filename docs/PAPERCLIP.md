@@ -16,10 +16,11 @@ Paperclip (your computer)                    cyvrix.co.uk
                                      you, in /admin/ai-drafts: edit, approve, reject
 ```
 
-## 1. Make two tokens
+## 1. Make two tokens (a third is optional)
 
-Run this twice, once per token, and keep each value somewhere safe (a password
-manager). They must be different. Never paste them into a chat or a ticket.
+Run this once per token, and keep each value somewhere safe (a password
+manager). They must all be different. Never paste them into a chat or a
+ticket. The third, optional, token is for procurement (step 4a).
 
 ```bash
 openssl rand -hex 32
@@ -46,8 +47,10 @@ Production, **Sensitive** on:
 Then **Deployments → latest Production → ⋯ → Redeploy**. Until a token is set,
 its routes answer 404, as if they did not exist.
 
-The Security Center's **Paperclip Integration Tokens** check confirms both are
-set, long enough and different. AI drafts shows "drafts on · read on".
+The Security Center's **Paperclip Integration Tokens** check confirms the read
+and draft tokens are set, long enough and different. The procurement token is
+optional; when it is set, the site turns procurement access off if it matches
+either of the others (step 4a). AI drafts shows "drafts on · read on".
 
 ## 3. Let Paperclip through the firewall
 
