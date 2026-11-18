@@ -23,8 +23,8 @@ import { evidenceVerdict, mayBePublicFact, PUBLIC_FACT_KEYS } from "./approval-c
 import { londonWallTimeToUtc } from "./london-time";
 import { OFFICIAL_SOURCES, runSource, type OfficialSource } from "./ingest";
 import { privacyNoticeCoversTenderContacts } from "./privacy-gate";
-import { recordAssessment, saveAccount, setStandingPolicy } from "./partnership-service";
-import { ACCOUNT_STATUSES, PARTNERSHIP_CATEGORIES, WEIGHTS, type AccountStatus, type ScoringModel } from "./partnerships";
+import { pursueProgrammeRecord, recordAssessment, saveAccount, savePortalRecord, saveProgrammeRecord, setStandingPolicy } from "./partnership-service";
+import { ACCOUNT_STATUSES, PARTNERSHIP_CATEGORIES, parseList, WEIGHTS, type AccountStatus, type ScoringModel } from "./partnerships";
 import { MAX_REPORT_CHARS, parseReportWithCount } from "./report-import";
 import { verifyStepUp } from "./step-up";
 import { REQUIREMENT_KINDS, REQUIREMENT_STATUSES } from "./requirements";
@@ -605,13 +605,6 @@ const dateField = (fd: FormData, key: string) => {
   const d = new Date(`${v}T12:00:00Z`);
   return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v ? undefined : d;
 };
-const list = (v: string | undefined, re: RegExp) =>
-  (v ?? "")
-    .split(/[,\n]/)
-    .map((x) => x.trim().toLowerCase())
-    .filter((x) => re.test(x))
-    .slice(0, 30);
-
 /** Add or update a supplier portal or partner programme portal (admin). */
 export async function savePortal(fd: FormData) {
   const user = await requireAdmin();
@@ -640,33 +633,31 @@ export async function savePortal(fd: FormData) {
     });
   if (!parsed.success) go(ACCOUNTS, "error", parsed.error!.issues[0]?.message ?? "Check the form.");
   const d = parsed.data!;
-  const data = {
-    name: d.name,
-    kind: d.kind,
-    url: d.url,
-    registrationUrl: d.registrationUrl ?? null,
-    termsUrl: d.termsUrl ?? null,
-    cost: d.cost,
-    organisationId: d.organisationId ?? null,
-    notes: d.notes ?? null,
-    requiredFacts: list(text(fd, "requiredFacts"), /^[a-z][a-z0-9_]{1,63}$/),
-    requiredDocuments: list(text(fd, "requiredDocuments"), /^[a-z][a-z0-9 _-]{1,59}$/),
-    // A portal that is no longer confirmed free loses its standing policy (D13).
-    ...(d.cost !== "free" ? { standingPolicy: false, standingPolicyById: null, standingPolicyAt: null } : {}),
-  };
-  const id = d.id ?? crypto.randomUUID();
-  try {
-    await prisma.$transaction(async (tx) => {
-      if (d.id) await tx.supplierPortal.update({ where: { id }, data });
-      else await tx.supplierPortal.create({ data: { id, ...data } });
-      await audit(tx, user.id, d.id ? "supplier_portal.updated" : "supplier_portal.created", "SupplierPortal", id, { name: d.name, cost: d.cost });
-    });
-  } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") go(ACCOUNTS, "error", "A portal with that name already exists.");
-    throw error;
-  }
+  // A mistyped requirement is an error, never silently dropped.
+  const facts = parseList(text(fd, "requiredFacts"), /^[a-z][a-z0-9_]{1,63}$/);
+  if (!facts.ok) go(ACCOUNTS, "error", `Required facts: ${facts.reason} Use lower-case keys such as company_number.`);
+  const documents = parseList(text(fd, "requiredDocuments"), /^[a-z][a-z0-9 _-]{1,59}$/);
+  if (!documents.ok) go(ACCOUNTS, "error", `Required documents: ${documents.reason}`);
+  const result = await savePortalRecord(
+    {
+      id: d.id,
+      name: d.name,
+      kind: d.kind,
+      url: d.url,
+      registrationUrl: d.registrationUrl ?? null,
+      termsUrl: d.termsUrl ?? null,
+      cost: d.cost,
+      organisationId: d.organisationId ?? null,
+      notes: d.notes ?? null,
+      requiredFacts: (facts as { values: string[] }).values,
+      requiredDocuments: (documents as { values: string[] }).values,
+    },
+    user.id
+  );
   revalidatePath(HOME);
-  go(ACCOUNTS, "success", "Portal saved.");
+  if (!result.ok) go(ACCOUNTS, "error", result.reason);
+  const v = (result as { value: { policyReset: boolean } }).value;
+  go(ACCOUNTS, "success", v.policyReset ? "Portal saved. Its address or cost changed, so its standing policy is off: switch it on again if it still applies." : "Portal saved.");
 }
 
 /** Record or update CYVRIX's account on a portal (D3). Never a password: only the password-manager entry's name. */
@@ -719,14 +710,15 @@ export async function setPortalPolicy(fd: FormData) {
   go(ACCOUNTS, "success", on ? "Standing policy on: free registrations here with no declarations and no price are pre-approved. You still register by hand." : "Standing policy off.");
 }
 
-/** Add a partnership programme to an organisation (spec sections 35-36). */
+/** Add or update a partnership programme (spec sections 35-36). */
 export async function saveProgramme(fd: FormData) {
   const user = await requireAdmin();
   const parsed = z
     .object({
+      id: ID.optional(),
       organisationId: ID,
       name: z.string().min(3).max(200),
-      categories: z.array(z.enum(PARTNERSHIP_CATEGORIES)).max(8),
+      categories: z.array(z.enum(PARTNERSHIP_CATEGORIES)).max(PARTNERSHIP_CATEGORIES.length),
       url: httpUrl.optional(),
       sourceUrl: httpUrl.optional(),
       verified: z.boolean(),
@@ -736,6 +728,7 @@ export async function saveProgramme(fd: FormData) {
       portalId: ID.optional(),
     })
     .safeParse({
+      id: text(fd, "id"),
       organisationId: text(fd, "organisationId"),
       name: text(fd, "name"),
       categories: fd.getAll("categories").map(String),
@@ -749,17 +742,20 @@ export async function saveProgramme(fd: FormData) {
     });
   if (!parsed.success) go(PARTNERS, "error", parsed.error!.issues[0]?.message ?? "Check the form.");
   const d = parsed.data!;
-  // Spec section 35: a programme is verified only with a source from the organisation itself.
-  if (d.verified && !d.sourceUrl) go(PARTNERS, "error", "A verified programme needs the organisation's own page as its source.");
-  const id = crypto.randomUUID();
-  await prisma.$transaction(async (tx) => {
-    await tx.partnershipProgramme.create({
-      data: { id, ...d, url: d.url ?? null, sourceUrl: d.sourceUrl ?? null, fees: d.fees ?? null, requirements: d.requirements ?? null, portalId: d.portalId ?? null, verifiedAt: d.verified ? new Date() : null },
-    });
-    await audit(tx, user.id, "programme.created", "PartnershipProgramme", id, { organisationId: d.organisationId, verified: d.verified });
-  });
+  const result = await saveProgrammeRecord(
+    {
+      ...d,
+      url: d.url ?? null,
+      sourceUrl: d.sourceUrl ?? null,
+      fees: d.fees ?? null,
+      requirements: d.requirements ?? null,
+      portalId: d.portalId ?? null,
+    },
+    user.id
+  );
   revalidatePath(HOME);
-  go(PARTNERS, "success", "Programme added.");
+  if (!result.ok) go(PARTNERS, "error", result.reason);
+  go(PARTNERS, "success", d.id ? "Programme updated." : "Programme added.");
 }
 
 /** Start pursuing a programme: a partnership opportunity at TargetIdentified, linked to it. */
@@ -767,31 +763,11 @@ export async function pursueProgramme(fd: FormData) {
   const user = await requireAdmin();
   const programmeId = ID.safeParse(text(fd, "programmeId"));
   if (!programmeId.success) go(PARTNERS, "error", "That programme could not be found.");
-  const programme = await prisma.partnershipProgramme.findUnique({ where: { id: programmeId.data! }, include: { Organisation: true, Opportunity: { select: { id: true } } } });
-  if (!programme) go(PARTNERS, "error", "That programme could not be found.");
-  if (programme!.Opportunity.length) go(oppPath(programme!.Opportunity[0].id), "success", "Already being pursued.");
-  const link = programme!.sourceUrl ?? programme!.url;
-  const id = crypto.randomUUID();
-  await prisma.$transaction(async (tx) => {
-    await tx.opportunity.create({
-      data: {
-        id,
-        kind: "partnership",
-        status: initialStatus("partnership"),
-        title: `${programme!.Organisation.name}: ${programme!.name}`.slice(0, 300),
-        buyerOrganisationId: programme!.organisationId,
-        programmeId: programme!.id,
-        origin: "manual",
-        createdById: user.id,
-        Evidence: {
-          create: { id: crypto.randomUUID(), kind: link ? "web" : "note", url: link, quote: link ? null : "Programme recorded without a link yet.", retrievedAt: new Date(), createdById: user.id },
-        },
-      },
-    });
-    await audit(tx, user.id, "opportunity.created", "Opportunity", id, { kind: "partnership", programmeId: programme!.id });
-  });
+  const result = await pursueProgrammeRecord(programmeId.data!, user.id);
   revalidatePath(HOME);
-  go(oppPath(id), "success", "Now pursuing this programme. Its lifecycle starts at TargetIdentified.");
+  if (!result.ok) go(PARTNERS, "error", result.reason);
+  const v = (result as { value: { id: string; existing: boolean } }).value;
+  go(oppPath(v.id), "success", v.existing ? "Already being pursued." : "Now pursuing this programme. Its lifecycle starts at TargetIdentified.");
 }
 
 /** Record a bid/no-bid or partnership assessment (spec 12, 40). Each is kept; a new one never overwrites. */

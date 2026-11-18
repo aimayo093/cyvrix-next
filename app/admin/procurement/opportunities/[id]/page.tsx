@@ -84,7 +84,8 @@ async function OpportunityContent({ params, searchParams }: Props) {
   const [versions, history, assessments, tenderDocs, requirements] = await Promise.all([
     prisma.companyDocumentVersion.findMany({ where: { status: { not: "superseded" } }, orderBy: { createdAt: "desc" }, take: 200, include: { Document: true } }),
     prisma.auditLog.findMany({ where: { entityType: "Opportunity", entityId: opp.id }, orderBy: { createdAt: "desc" }, take: 50 }),
-    prisma.bidAssessment.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "desc" }, take: 3 }),
+    // Every assessment is kept and shown, uncapped: they are the record of each judgement.
+    prisma.bidAssessment.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "desc" } }),
     prisma.tenderDocument.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "asc" }, take: 200 }),
     prisma.tenderRequirement.findMany({ where: { opportunityId: opp.id }, orderBy: [{ createdAt: "asc" }], take: 500 }),
   ]);
@@ -173,14 +174,28 @@ async function OpportunityContent({ params, searchParams }: Props) {
           not meet and cannot meet in time) overrides the score. The result is a recommendation, not a chance of
           winning. Earlier assessments are kept.
         </p>
-        {assessments.map((a) => (
-          <p key={a.id} className="rounded-xl bg-slate-50 p-3 text-sm">
-            <span className="font-semibold">{a.total.toString()} / 100 · {a.recommendation}</span>
-            <span className="text-slate-500"> · {when(a.createdAt)}</span>
-            {a.disqualifiers.length > 0 && <span className="block text-rose-700">Disqualified by: {a.disqualifiers.join("; ")}</span>}
-            {a.assumptions && <span className="block text-slate-600">Assumptions: {a.assumptions}</span>}
-          </p>
-        ))}
+        {assessments.map((a, i) => {
+          const scores = (a.scores ?? {}) as Record<string, number>;
+          const weights = (a.weights ?? {}) as Record<string, number>;
+          return (
+            <details key={a.id} open={i === 0} className="rounded-xl bg-slate-50 p-3 text-sm">
+              <summary className="cursor-pointer">
+                <span className="font-semibold">{a.total.toString()} / 100 · {a.recommendation}</span>
+                <span className="text-slate-500"> · {when(a.createdAt)}</span>
+              </summary>
+              <ul className="mt-2 grid gap-x-4 gap-y-1 md:grid-cols-2">
+                {Object.keys(weights).map((c) => (
+                  <li key={c} className="flex justify-between gap-2">
+                    <span>{CATEGORY_LABEL[c] ?? c} <span className="text-xs text-slate-500">({weights[c]}%)</span></span>
+                    <span className="font-semibold tabular-nums">{scores[c] ?? "–"} / 5</span>
+                  </li>
+                ))}
+              </ul>
+              {a.disqualifiers.length > 0 && <p className="mt-2 text-rose-700">Disqualified by: {a.disqualifiers.join("; ")}</p>}
+              {a.assumptions && <p className="mt-1 text-slate-600">Assumptions: {a.assumptions}</p>}
+            </details>
+          );
+        })}
         <form action={recordAssessmentAction} className="grid gap-3 md:grid-cols-2">
           <input type="hidden" name="opportunityId" value={opp.id} />
           <input type="hidden" name="model" value={scoringModel} />
