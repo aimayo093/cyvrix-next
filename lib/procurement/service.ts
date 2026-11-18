@@ -17,6 +17,8 @@ import {
   type ApprovalAction,
   type OpportunityKind,
 } from "./lifecycle";
+import { LIVE_ACCOUNT_STATUSES, REREGISTERABLE_STATUSES, standingPolicyApplies } from "./partnerships";
+import { portalForDestination } from "./portal-lookup";
 
 /**
  * Database side of the procurement rules. Every write here records an audit
@@ -235,6 +237,35 @@ export async function requestApproval(input: {
       manifestSha256: pkg.manifestSha256,
       expiresAt: expiresAt.toISOString(),
     });
+
+    // D13: a registration on a free portal with a standing policy, making no
+    // declarations and carrying no price, is approved by that policy at once.
+    // Its authority is the founder who switched the policy on, with the
+    // authenticator check made then. The founder still registers by hand (D8).
+    if (input.actionType === "register_account") {
+      // Two portals at one address name no portal, so no policy applies.
+      // The portal row is locked and read again, so a policy switched off or an
+      // address changed at this moment is seen before the approval is written.
+      const { portal } = await portalForDestination(tx, pkg.destination, { lock: true });
+      const policy = standingPolicyApplies({ portal, actionType: input.actionType, declarations: pkg.declarations, priceSnapshot: pkg.priceSnapshot });
+      if (policy.applies && portal?.standingPolicyById && portal.standingPolicyAt) {
+        await tx.approvalRequest.update({ where: { id }, data: { status: "approved" } });
+        const decisionId = crypto.randomUUID();
+        await tx.approvalDecision.create({
+          data: {
+            id: decisionId,
+            requestId: id,
+            decision: "approved",
+            manifestSha256: pkg.manifestSha256,
+            decidedById: portal.standingPolicyById,
+            note: `Approved by the standing registration policy for ${portal.name} (D13).`,
+            stepUpAt: portal.standingPolicyAt,
+            expiresAt,
+          },
+        });
+        await audit(tx, input.userId, "approval.policy_approved", "ApprovalRequest", id, { decisionId, portalId: portal.id, why: policy.why });
+      }
+    }
     return { ok: true, value: id };
   }), "This package is already waiting for a decision.");
 }
@@ -415,6 +446,60 @@ export async function recordExecutionOutcome(input: {
           createdById: input.userId,
         },
       });
+      // A confirmed registration becomes the portal's account record, pending
+      // the portal's own verification. Never a second live account (section 38).
+      if (exec.actionType === "register_account") {
+        const decision = await tx.approvalDecision.findUnique({ where: { id: exec.approvalDecisionId }, select: { Request: { select: { destination: true } } } });
+        // Never over an account already active: that one is kept and the
+        // duplicate registration is recorded for a person to look at. A
+        // destination that matches no portal is recorded too, not passed over.
+        // Locking the portal row serialises two confirmations (and an admin
+        // recording an account) for one portal: the second sees the first's
+        // account instead of colliding with the one-live-account rule.
+        const { portal, ambiguous } = await portalForDestination(tx, decision?.Request.destination ?? "", { lock: true });
+        if (!portal) {
+          await audit(tx, input.userId, ambiguous ? "registration.portal_ambiguous" : "registration.no_portal_matched", "ExecutionRecord", exec.id, {
+            opportunityId: exec.opportunityId,
+            destination: decision?.Request.destination ?? null,
+          });
+        } else {
+          const live = await tx.supplierAccount.findFirst({
+            where: { portalId: portal.id, status: { in: [...LIVE_ACCOUNT_STATUSES] } },
+            select: { id: true, status: true, accountRef: true },
+          });
+          const data = {
+            status: "pending",
+            accountRef: input.portalReference?.trim().slice(0, 200) || null,
+            registeredAt: new Date(),
+            verificationStatus: "awaiting the portal",
+            approvalDecisionId: exec.approvalDecisionId,
+            ownerUserId: input.userId,
+          };
+          // Conditional on the status at the moment of writing, so an account
+          // marked active by someone else since it was read is never overwritten.
+          const replaced = live
+            ? await tx.supplierAccount.updateMany({ where: { id: live.id, status: { in: [...REREGISTERABLE_STATUSES] } }, data })
+            : null;
+          if (live && replaced?.count !== 1) {
+            await audit(tx, input.userId, "registration.account_already_active", "SupplierAccount", live.id, {
+              portalId: portal.id,
+              executionId: exec.id,
+              portalReference: input.portalReference ?? null,
+            });
+          } else if (live) {
+            // What the account was before (a suspension, say) stays on record.
+            await audit(tx, input.userId, "registration.account_replaced", "SupplierAccount", live.id, {
+              portalId: portal.id,
+              executionId: exec.id,
+              previousStatus: live.status,
+              previousReference: live.accountRef,
+              portalReference: input.portalReference ?? null,
+            });
+          } else {
+            await tx.supplierAccount.create({ data: { id: crypto.randomUUID(), portalId: portal.id, ...data } });
+          }
+        }
+      }
     }
     await audit(tx, input.userId, `execution.${input.outcome}`, "ExecutionRecord", exec.id, {
       opportunityId: exec.opportunityId,

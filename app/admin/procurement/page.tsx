@@ -19,11 +19,17 @@ import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { EVIDENCE_STATUSES } from "@/lib/procurement/approval-core";
+import { ACCOUNT_STATUSES, PARTNERSHIP_CATEGORIES, PARTNERSHIP_CATEGORY_LABEL, registrationReadiness, SERVICE_DELIVERY_CATEGORIES } from "@/lib/procurement/partnerships";
 import {
   createOpportunity,
   createOrganisation,
   decideApprovalAction,
   importChatgptReport,
+  pursueProgramme,
+  saveProgramme,
+  savePortal,
+  saveSupplierAccount,
+  setPortalPolicy,
   runSourceNow,
   saveCompanyFact,
   setSourceEnabled,
@@ -41,6 +47,8 @@ const TABS = [
   { key: "organisations", label: "Organisations" },
   { key: "documents", label: "Documents" },
   { key: "facts", label: "Company facts" },
+  { key: "accounts", label: "Accounts" },
+  { key: "partnerships", label: "Partnerships" },
   { key: "import", label: "Import report" },
   { key: "sources", label: "Sources" },
 ] as const;
@@ -111,6 +119,8 @@ async function ProcurementContent({ searchParams }: { searchParams: Promise<Sear
       {tab === "organisations" && <Organisations category={sp.category} />}
       {tab === "documents" && <Documents isFounder={isFounder} />}
       {tab === "facts" && <Facts isFounder={isFounder} />}
+      {tab === "accounts" && <Accounts isFounder={isFounder} />}
+      {tab === "partnerships" && <Partnerships />}
       {tab === "import" && <ImportReport />}
       {tab === "sources" && <Sources isFounder={isFounder} />}
     </div>
@@ -591,6 +601,259 @@ async function Facts({ isFounder }: { isFounder: boolean }) {
         </form>
       )}
     </div>
+  );
+}
+
+async function Accounts({ isFounder }: { isFounder: boolean }) {
+  const now = new Date();
+  const [portals, orgs, facts, docs] = await Promise.all([
+    prisma.supplierPortal.findMany({ orderBy: { name: "asc" }, include: { Account: { orderBy: { updatedAt: "desc" } }, Organisation: { select: { name: true } } } }),
+    prisma.organisation.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.companyFact.findMany({ select: { key: true, verifiedAt: true } }),
+    prisma.companyDocument.findMany({ select: { kind: true, Version: { orderBy: { version: "desc" }, take: 1, select: { status: true, expiresAt: true } } } }),
+  ]);
+  const documents = docs.flatMap((d) => d.Version.map((v) => ({ kind: d.kind, status: v.status, expiresAt: v.expiresAt })));
+  return (
+    <div className="space-y-6">
+      <p className="max-w-3xl text-sm text-slate-500">
+        CYVRIX&apos;s accounts on procurement portals and partner programmes. Record each one you already have (status,
+        reference, renewal) so none is created twice. <strong>Never enter a password:</strong> the &ldquo;password-manager
+        entry&rdquo; field is only the name of the entry where you keep it. Registrations are carried out by you; a
+        standing policy can pre-approve free ones that make no declarations.
+      </p>
+      <ul className="space-y-4">
+        {portals.map((p) => {
+          const live = p.Account.find((a) => a.status !== "not_registered" && a.status !== "rejected") ?? p.Account[0];
+          const readiness = registrationReadiness({ requiredFacts: p.requiredFacts, requiredDocuments: p.requiredDocuments, facts, documents, now });
+          const renewalSoon = live?.renewalAt && live.renewalAt.getTime() - now.getTime() < 30 * 86_400_000;
+          return (
+            <li key={p.id} className={`${card} space-y-3`}>
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h2 className="font-semibold text-[#041635]">
+                  <a href={p.url} target="_blank" rel="noreferrer noopener" className="hover:underline">{p.name}</a>
+                  <span className="text-xs font-normal text-slate-500"> · {p.kind.replace("_", " ")} · {p.cost}{p.Organisation ? ` · ${p.Organisation.name}` : ""}</span>
+                </h2>
+                <span className={`${pill} ${live && live.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-700"}`}>
+                  {live ? live.status.replace("_", " ") : "no account recorded"}
+                </span>
+              </div>
+              {p.notes && <p className="text-xs text-slate-500">{p.notes}</p>}
+              {live && (
+                <p className="text-sm text-slate-600">
+                  {live.accountRef ? `Ref ${live.accountRef} · ` : ""}
+                  {live.contactAlias ? `${live.contactAlias} · ` : ""}
+                  {live.credentialLabel ? `Password manager: ${live.credentialLabel} · ` : ""}
+                  {live.renewalAt ? <span className={renewalSoon ? "font-semibold text-amber-700" : ""}>renews {when(live.renewalAt)}</span> : "no renewal date"}
+                </p>
+              )}
+              <p className="text-xs text-slate-600">
+                Ready to register:{" "}
+                {readiness.ready ? (
+                  <span className="font-semibold text-emerald-700">yes</span>
+                ) : (
+                  <span className="text-amber-800">
+                    missing {[...readiness.missingFacts.map((f) => `fact "${f}"`), ...readiness.missingDocuments.map((d) => `document "${d}"`)].join(", ")}
+                  </span>
+                )}
+                {" · "}Standing policy: {p.standingPolicy ? <span className="font-semibold">on since {when(p.standingPolicyAt)}</span> : "off"}
+              </p>
+              <details>
+                <summary className="cursor-pointer text-sm font-semibold text-[#0f5aab]">{live ? "Update the account" : "Record an account"}</summary>
+                <form action={saveSupplierAccount} className="mt-3 grid gap-3 md:grid-cols-3">
+                  <input type="hidden" name="portalId" value={p.id} />
+                  {live && <input type="hidden" name="id" value={live.id} />}
+                  <label className="space-y-1"><span className={label}>Status</span>
+                    <select name="status" defaultValue={live?.status ?? "unknown"} className={field}>{ACCOUNT_STATUSES.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}</select>
+                  </label>
+                  <label className="space-y-1"><span className={label}>Portal reference</span><input name="accountRef" defaultValue={live?.accountRef ?? ""} maxLength={200} className={field} /></label>
+                  <label className="space-y-1"><span className={label}>Account mailbox (alias)</span><input name="contactAlias" type="email" defaultValue={live?.contactAlias ?? ""} className={field} /></label>
+                  <label className="space-y-1"><span className={label}>Password-manager entry name</span><input name="credentialLabel" defaultValue={live?.credentialLabel ?? ""} maxLength={120} placeholder="e.g. 1Password: Cyvrix / Sell2Wales" className={field} /></label>
+                  <label className="space-y-1"><span className={label}>Registered on</span><input name="registeredAt" type="date" defaultValue={live?.registeredAt?.toISOString().slice(0, 10) ?? ""} className={field} /></label>
+                  <label className="space-y-1"><span className={label}>Renewal date</span><input name="renewalAt" type="date" defaultValue={live?.renewalAt?.toISOString().slice(0, 10) ?? ""} className={field} /></label>
+                  <label className="space-y-1"><span className={label}>Restrictions (what the account may not do)</span><input name="restrictions" defaultValue={live?.restrictions ?? ""} maxLength={1000} className={field} /></label>
+                  <label className="space-y-1"><span className={label}>Notes</span><input name="notes" defaultValue={live?.notes ?? ""} maxLength={2000} className={field} /></label>
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="mfaRequired" defaultChecked={live?.mfaRequired ?? false} /> Two-factor required</label>
+                  <div className="md:col-span-3"><button className={secondaryButton}>Save account</button></div>
+                </form>
+              </details>
+              <details>
+                <summary className="cursor-pointer text-sm font-semibold text-[#0f5aab]">Edit the portal (cost, address, requirements)</summary>
+                <form action={savePortal} className="mt-3 grid gap-3 md:grid-cols-2">
+                  <PortalFields orgs={orgs} p={p} />
+                  <div className="md:col-span-2"><button className={secondaryButton}>Save portal</button></div>
+                </form>
+              </details>
+              {isFounder && p.cost === "free" && (
+                <form action={setPortalPolicy} className="flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3">
+                  <input type="hidden" name="portalId" value={p.id} />
+                  <input type="hidden" name="on" value={p.standingPolicy ? "false" : "true"} />
+                  {!p.standingPolicy && (
+                    <label className="space-y-1"><span className={label}>Authenticator code</span><input name="code" inputMode="numeric" autoComplete="one-time-code" pattern="\d{6}" maxLength={6} required className={`${field} max-w-40`} /></label>
+                  )}
+                  <button className={secondaryButton}>{p.standingPolicy ? "Switch the standing policy off" : "Pre-approve free, declaration-free registrations here"}</button>
+                </form>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <form action={savePortal} className={`${card} grid gap-3 md:grid-cols-2`}>
+        <h2 className="font-outfit text-lg font-black text-[#041635] md:col-span-2">Add a portal or partner programme site</h2>
+        <PortalFields orgs={orgs} />
+        <div className="md:col-span-2"><button className={primaryButton}>Add portal</button></div>
+      </form>
+    </div>
+  );
+}
+
+type PortalRecord = {
+  id: string;
+  name: string;
+  kind: string;
+  url: string;
+  registrationUrl: string | null;
+  termsUrl: string | null;
+  cost: string;
+  organisationId: string | null;
+  requiredFacts: string[];
+  requiredDocuments: string[];
+  notes: string | null;
+};
+
+/** The portal form, empty to add one or filled to edit one. */
+function PortalFields({ orgs, p }: { orgs: { id: string; name: string }[]; p?: PortalRecord }) {
+  return (
+    <>
+      {p && <input type="hidden" name="id" value={p.id} />}
+      <label className="space-y-1"><span className={label}>Name</span><input name="name" required maxLength={200} defaultValue={p?.name ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Kind</span>
+        <select name="kind" defaultValue={p?.kind ?? "supplier_portal"} className={field}><option value="procurement_portal">Public procurement portal</option><option value="supplier_portal">Company supplier portal</option><option value="partner_programme">Partner programme site</option></select>
+      </label>
+      <label className="space-y-1"><span className={label}>Address (https)</span><input name="url" type="url" required defaultValue={p?.url ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Registration page</span><input name="registrationUrl" type="url" defaultValue={p?.registrationUrl ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Terms page</span><input name="termsUrl" type="url" defaultValue={p?.termsUrl ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Cost to register</span>
+        <select name="cost" defaultValue={p?.cost ?? "unknown"} className={field}><option value="unknown">Not checked</option><option value="free">Free (checked)</option><option value="paid">Paid</option></select>
+      </label>
+      <label className="space-y-1"><span className={label}>Organisation</span>
+        <select name="organisationId" defaultValue={p?.organisationId ?? ""} className={field}><option value="">None</option>{orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
+      </label>
+      <label className="space-y-1"><span className={label}>Facts it asks for (keys, comma separated)</span><input name="requiredFacts" defaultValue={p?.requiredFacts.join(", ") ?? ""} placeholder="company_name, company_number, vat_number" className={field} /></label>
+      <label className="space-y-1"><span className={label}>Documents it asks for (types)</span><input name="requiredDocuments" defaultValue={p?.requiredDocuments.join(", ") ?? ""} placeholder="insurance, policy" className={field} /></label>
+      <label className="space-y-1 md:col-span-2"><span className={label}>Notes</span><input name="notes" maxLength={4000} defaultValue={p?.notes ?? ""} className={field} /></label>
+      {p && (
+        <p className="text-xs text-slate-500 md:col-span-2">
+          Changing the address, registration page or cost switches off this portal&apos;s standing policy; you switch it on again with a fresh code.
+        </p>
+      )}
+    </>
+  );
+}
+
+async function Partnerships() {
+  const [orgs, portals] = await Promise.all([
+    prisma.organisation.findMany({
+      where: { isResearchTarget: true },
+      orderBy: [{ priority: "asc" }, { name: "asc" }],
+      include: { Programme: { include: { Opportunity: { select: { id: true, status: true } } } } },
+    }),
+    prisma.supplierPortal.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
+  const withProgrammes = orgs.filter((o) => o.Programme.length);
+  const delivery = (cats: string[]) => cats.some((c) => SERVICE_DELIVERY_CATEGORIES.has(c));
+  return (
+    <div className="space-y-6">
+      <p className="max-w-3xl text-sm text-slate-500">
+        Partner and supplier programmes at the target organisations. A programme counts as verified only with the
+        organisation&apos;s own page as its source; an organisation listed here is a research target, not a partner.
+        Programmes that bring engineering or service work come before reseller and distribution ones.
+      </p>
+      {withProgrammes.length === 0 ? (
+        <p className={`${card} text-sm text-slate-600`}>No programmes recorded yet. Add the first one below.</p>
+      ) : (
+        <ul className="space-y-3">
+          {withProgrammes.map((o) => (
+            <li key={o.id} className={card}>
+              <h2 className="font-semibold text-[#041635]">{o.name} <span className="text-xs font-normal text-slate-500">· priority {o.priority}</span></h2>
+              <ul className="mt-2 space-y-2 text-sm">
+                {[...o.Programme].sort((a, b) => Number(delivery(b.categories)) - Number(delivery(a.categories))).map((p) => (
+                  <li key={p.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-slate-50 p-3">
+                    <span>
+                      <span className="font-semibold">{p.name}</span>
+                      <span className={`${pill} ml-2 ${p.verified ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>{p.verified ? "verified" : "unverified"}</span>
+                      <span className="ml-2 text-xs text-slate-500">{p.availability.replace("_", " ")}{p.fees ? ` · fees: ${p.fees}` : ""}</span>
+                      <span className="block text-xs text-slate-500">{p.categories.map((c) => PARTNERSHIP_CATEGORY_LABEL[c as (typeof PARTNERSHIP_CATEGORIES)[number]] ?? c).join(", ") || "No category yet"}</span>
+                      {(p.sourceUrl ?? p.url) && <a href={p.sourceUrl ?? p.url!} target="_blank" rel="noreferrer noopener" className="text-xs text-[#0f5aab] hover:underline">{p.sourceUrl ?? p.url}</a>}
+                    </span>
+                    {p.Opportunity[0] ? (
+                      <Link href={`/admin/procurement/opportunities/${p.Opportunity[0].id}`} className={secondaryButton}>Pursuing · {p.Opportunity[0].status}</Link>
+                    ) : (
+                      <form action={pursueProgramme}><input type="hidden" name="programmeId" value={p.id} /><button className={primaryButton}>Pursue</button></form>
+                    )}
+                    <details className="w-full">
+                      <summary className="cursor-pointer text-xs font-semibold text-[#0f5aab]">Edit (verify, availability, fees)</summary>
+                      <form action={saveProgramme} className="mt-2 grid gap-3 md:grid-cols-2">
+                        <ProgrammeFields orgs={orgs} portals={portals} p={p} />
+                        <div className="md:col-span-2"><button className={secondaryButton}>Save programme</button></div>
+                      </form>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+        </ul>
+      )}
+      <form action={saveProgramme} className={`${card} grid gap-3 md:grid-cols-2`}>
+        <h2 className="font-outfit text-lg font-black text-[#041635] md:col-span-2">Add a programme</h2>
+        <ProgrammeFields orgs={orgs} portals={portals} />
+        <div className="md:col-span-2"><button className={primaryButton}>Add programme</button></div>
+      </form>
+    </div>
+  );
+}
+
+type ProgrammeRecord = {
+  id: string;
+  organisationId: string;
+  name: string;
+  categories: string[];
+  url: string | null;
+  sourceUrl: string | null;
+  verified: boolean;
+  availability: string;
+  fees: string | null;
+  requirements: string | null;
+  portalId: string | null;
+};
+
+/** The programme form, empty to add one or filled to edit one. */
+function ProgrammeFields({ orgs, portals, p }: { orgs: { id: string; name: string }[]; portals: { id: string; name: string }[]; p?: ProgrammeRecord }) {
+  return (
+    <>
+      {p && <input type="hidden" name="id" value={p.id} />}
+      <label className="space-y-1"><span className={label}>Organisation</span>
+        <select name="organisationId" required defaultValue={p?.organisationId ?? ""} className={field}><option value="" disabled>Choose…</option>{orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
+      </label>
+      <label className="space-y-1"><span className={label}>Programme name</span><input name="name" required maxLength={200} defaultValue={p?.name ?? ""} className={field} /></label>
+      <fieldset className="space-y-1 md:col-span-2">
+        <legend className={label}>What kind of partnership (spec section 36)</legend>
+        <div className="grid gap-1 text-sm md:grid-cols-3">
+          {PARTNERSHIP_CATEGORIES.map((c) => <label key={c} className="flex items-center gap-1"><input type="checkbox" name="categories" value={c} defaultChecked={p?.categories.includes(c) ?? false} /> {PARTNERSHIP_CATEGORY_LABEL[c]}</label>)}
+        </div>
+      </fieldset>
+      <label className="space-y-1"><span className={label}>Programme page</span><input name="url" type="url" defaultValue={p?.url ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Source (a page on the organisation&apos;s own site)</span><input name="sourceUrl" type="url" defaultValue={p?.sourceUrl ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Availability</span>
+        <select name="availability" defaultValue={p?.availability ?? "unconfirmed"} className={field}><option value="unconfirmed">Unconfirmed</option><option value="open">Open</option><option value="invitation_only">Invitation only</option><option value="closed">Closed</option></select>
+      </label>
+      <label className="space-y-1"><span className={label}>Registration portal</span>
+        <select name="portalId" defaultValue={p?.portalId ?? ""} className={field}><option value="">None</option>{portals.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+      </label>
+      <label className="space-y-1"><span className={label}>Fees (as published)</span><input name="fees" maxLength={500} defaultValue={p?.fees ?? ""} className={field} /></label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="verified" defaultChecked={p?.verified ?? false} /> Verified on the organisation&apos;s own site</label>
+      <label className="space-y-1 md:col-span-2"><span className={label}>Requirements (insurance, certifications, coverage…)</span><textarea name="requirements" rows={3} maxLength={4000} defaultValue={p?.requirements ?? ""} className={field} /></label>
+    </>
   );
 }
 

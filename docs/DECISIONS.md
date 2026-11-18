@@ -183,7 +183,10 @@ bare audit: it fails exactly as before, except for an advisory listed in
 advisory, or an expired entry fails the build; a fixed advisory leaves a note
 to remove its entry. Each entry records its reason and who approved it. Do
 not add an entry to make a build pass: an entry needs a reason a reviewer can
-check, as this one does.
+check, as this one does. Later the same day npm audit stopped reporting the
+advisory (picomatch still at 4.0.7, so the advisory itself changed), the gate
+noted the entry was no longer needed, and it was removed. The gate stays, with
+an empty list, for the next advisory that has no fix.
 
 **A firewall challenge is not the site's answer** (13 November 2026). The live
 checks request the site's own public URL, so Vercel's bot protection
@@ -823,7 +826,7 @@ approvals. Design and reasoning: `docs/procurement/`. Phase 1 (15 November
   manifest and refuses on any difference, expiry, reuse, or a second confirmed
   action of the same type. Decisions and receipts cannot be edited or
   deleted (triggers).
-- **Nothing is sent from here (D8 recommendation, not yet decided).** The
+- **Nothing is sent from here (D8, decided 18 November 2026: by hand).** The
   founder submits on the portal or by email and records the outcome.
   "Confirmed" needs the portal's reference and receipt; "not sure" stops
   everything until someone checks.
@@ -899,9 +902,44 @@ is configured.
   - The token must differ from the read and draft tokens, or the scope stays
     off.
 
-**Tests:** `npm run test:procurement` (rules, no database), `npm run test:procurement-ingest` (feeds and import parsing, no network) and
+**Tests:** `npm run test:procurement` (rules, no database), `npm run test:procurement-ingest` (feeds and import parsing, no network),
+`npm run test:procurement-partnerships` (accounts, policy and scoring rules) and
 `npm run test:procurement-db` (a throwaway local Postgres only; it refuses any
 non-local URL).
+
+**Phase 3: supplier accounts, partnerships and scoring (18 November 2026).**
+The database rules below come from three migrations:
+`20261118120000_procurement_partnerships` (tables, one live account per
+portal, the free-portal policy check, verified needs a source),
+`20261119130000_procurement_partnerships_hardening` (one opportunity per
+programme; a disqualifier means "disqualified"; scores are whole numbers 0 to
+5) and `20261119140000_procurement_assessment_keys` (an assessment holds
+exactly its model's categories). All three must be applied before the code
+that relies on them is deployed.
+- People register and submit by hand (D8). The site never holds a portal
+  password: an account records only the name of the password-manager entry,
+  and a value that looks like a secret is refused (D7).
+- One live account per portal, enforced by a partial unique index; a
+  "not registered" or "rejected" row does not count.
+- The standing registration policy (D13) is per portal, set by the founder
+  with an authenticator code, and only on a portal recorded as free (a
+  database check). It approves a registration package only when it carries no
+  declarations and no price; a portal user agreement is entered as a declaration, so it still comes to the
+  founder. The approval it creates names the founder and the moment the policy
+  was set, not the moment of the request, so the audit shows where the
+  authority came from. Switching the policy off clears that authority, and so
+  does changing the portal's address, registration page or cost: the
+  founder approved that portal at that address, not wherever it is later
+  pointed.
+- A confirmed registration (with the portal's reference and an uploaded
+  confirmation) becomes the portal's account, pending the portal's checks.
+  It never overwrites an account that is already active (that one is kept and
+  the duplicate is audited), and a destination matching no portal is audited
+  rather than silently passed over.
+- A programme is "verified" only with the page it was checked against.
+- Assessments (spec 12 and 40) are recommendations, not chances of winning.
+  Scores are whole numbers 0 to 5; a disqualifier overrides the total. Rows
+  are immutable: a new assessment is added, never an old one edited.
 
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).

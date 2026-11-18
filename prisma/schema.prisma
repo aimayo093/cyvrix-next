@@ -2054,6 +2054,8 @@ model Organisation {
   ClientCompany    ClientCompany? @relation(fields: [clientCompanyId], references: [id])
   Contact          Contact[]
   Opportunity      Opportunity[]
+  SupplierPortal   SupplierPortal[]
+  Programme        PartnershipProgramme[]
 
   @@schema("public")
 }
@@ -2136,10 +2138,15 @@ model Opportunity {
   confirmedBuying         Boolean               @default(false)
   leadId                  String?
   paperclipIssueId        String?
+  /// The partnership programme this opportunity pursues (migration 20261118120000).
+  /// One opportunity per programme: partial unique index in migration 20261119130000.
+  programmeId             String?
   createdById             String?
   createdAt               DateTime              @default(now())
   updatedAt               DateTime              @default(now()) @updatedAt
   Buyer                   Organisation?         @relation(fields: [buyerOrganisationId], references: [id])
+  Programme               PartnershipProgramme? @relation(fields: [programmeId], references: [id])
+  Assessment              BidAssessment[]
   Source                  OpportunitySource     @relation(fields: [origin], references: [key])
   Lead                    Lead?                 @relation(fields: [leadId], references: [id])
   Evidence                OpportunityEvidence[]
@@ -2289,6 +2296,7 @@ model ApprovalDecision {
   createdAt       DateTime         @default(now())
   Request         ApprovalRequest  @relation(fields: [requestId], references: [id], onDelete: Restrict)
   ExecutionRecord ExecutionRecord?
+  SupplierAccount SupplierAccount[]
 
   @@schema("public")
 }
@@ -2342,5 +2350,106 @@ model CostEntry {
   Opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
 
   @@index([date])
+  @@schema("public")
+}
+
+// ---------------------------------------------------------------------------
+// Procurement Phase 3: supplier accounts and partnerships (migration
+// 20261118120000). Server-only tables. No credentials are stored (D7).
+// ---------------------------------------------------------------------------
+
+model SupplierPortal {
+  id                  String                 @id
+  name                String
+  kind                String
+  url                 String
+  registrationUrl     String?
+  termsUrl            String?
+  organisationId      String?
+  cost                String                 @default("unknown")
+  automationPermitted Boolean                @default(false)
+  standingPolicy      Boolean                @default(false)
+  standingPolicyById  String?
+  standingPolicyAt    DateTime?
+  requiredFacts       String[]               @default([])
+  requiredDocuments   String[]               @default([])
+  notes               String?
+  sourceUrl           String?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @default(now()) @updatedAt
+  Organisation        Organisation?          @relation(fields: [organisationId], references: [id])
+  Account             SupplierAccount[]
+  Programme           PartnershipProgramme[]
+
+  @@schema("public")
+}
+
+/// One live account per portal (partial unique index in the migration).
+/// credentialLabel names a password-manager entry; it is never a secret.
+model SupplierAccount {
+  id                 String            @id
+  portalId           String
+  status             String            @default("unknown")
+  accountRef         String?
+  registeredAt       DateTime?
+  verificationStatus String?
+  contactAlias       String?
+  credentialLabel    String?
+  mfaRequired        Boolean?
+  termsVersion       String?
+  renewalAt          DateTime?
+  restrictions       String?
+  lastAccessAt       DateTime?
+  approvalDecisionId String?
+  ownerUserId        String?
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @default(now()) @updatedAt
+  Portal             SupplierPortal    @relation(fields: [portalId], references: [id], onDelete: Restrict)
+  Decision           ApprovalDecision? @relation(fields: [approvalDecisionId], references: [id])
+
+  @@schema("public")
+}
+
+model PartnershipProgramme {
+  id             String          @id
+  organisationId String
+  name           String
+  categories     String[]        @default([])
+  url            String?
+  portalId       String?
+  verified       Boolean         @default(false)
+  verifiedAt     DateTime?
+  sourceUrl      String?
+  availability   String          @default("unconfirmed")
+  fees           String?
+  requirements   String?
+  notes          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @default(now()) @updatedAt
+  Organisation   Organisation    @relation(fields: [organisationId], references: [id], onDelete: Restrict)
+  Portal         SupplierPortal? @relation(fields: [portalId], references: [id])
+  Opportunity    Opportunity[]
+
+  @@index([organisationId])
+  @@schema("public")
+}
+
+/// Immutable (trigger): a new assessment is added, never an old one edited.
+model BidAssessment {
+  id             String      @id
+  opportunityId  String
+  model          String
+  weights        Json
+  scores         Json
+  disqualifiers  String[]    @default([])
+  assumptions    String?
+  total          Decimal     @db.Decimal(5, 2)
+  recommendation String
+  authorId       String?
+  createdAt      DateTime    @default(now())
+  Opportunity    Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Restrict)
+
+  @@index([opportunityId, createdAt])
   @@schema("public")
 }

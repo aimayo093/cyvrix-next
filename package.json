@@ -31,6 +31,7 @@
     "test:password-reset": "tsx scripts/test-password-reset.mts",
     "test:procurement": "tsx scripts/test-procurement.mts",
     "test:procurement-ingest": "tsx scripts/test-procurement-ingest.mts",
+    "test:procurement-partnerships": "tsx scripts/test-procurement-partnerships.mts",
     "test:procurement-db": "node --conditions=react-server --import tsx scripts/test-procurement-db.mts",
     "scan:deps": "tsx scripts/dependency-holds.mts",
     "audit:gate": "tsx scripts/audit-gate.mts",

@@ -117,7 +117,7 @@ The founder answered in the Phase 0 follow-up:
 
 - **"Dry-run, then apply"** (Phase 1 migrations). Dry-run on production in a rolled-back transaction succeeded, then `procurement_foundation` and `procurement_target_organisations` were applied on 15 November 2026. Verified: 52 organisations (6 at priority 1), 10 sources all off, private bucket `company-documents` with no storage policies, RLS on all 16 new tables with no API-role grants, 4 guard triggers. The Supabase security advisor reports only the expected "RLS enabled, no policy" notes (server-only tables, as `AgentDraft`). (The code followed in PR 14, merged 15 November.)
 
-Still open after Phase 1: D3, D8, D13, D14 (D1, D4, D10 and D12 were decided for Phase 2, below).
+Still open after Phase 1: D3, D8, D13, D14. Since decided: D1, D4 and D12 for Phase 2, and D3, D8 and D13 for Phase 3 (below). Still open: D10 (the founder's answer was "not yet") and D14.
 
 ### Phase 2 decisions (15–18 November 2026)
 
@@ -126,7 +126,16 @@ Still open after Phase 1: D3, D8, D13, D14 (D1, D4, D10 and D12 were decided for
 - **D12:** store buyer contacts from published notices, and update the privacy notice. Contacts are stored on the buyer organisation and stay in the admin. Draft wording: [privacy-notice-draft.md](privacy-notice-draft.md). It must be published before a feed is switched on.
 - **D4:** first "allow agent full access"; on 18 November, after the transfer issue was explained (agents run on DeepSeek in China, no UK GDPR transfer basis: `DECISIONS.md` §15), the founder chose **organisations and roles only**. Built: a separate `PAPERCLIP_PROCUREMENT_TOKEN` scope; agents read opportunities and organisations through an allow-list with no contacts, notice text or personal links, may record research (refused if it holds personal data) and may only validate, qualify or research. Off until the founder sets the token.
 
-### Decisions requested
+### Phase 3 decisions (18 November 2026)
+
+- **D8:** you register and submit by hand. The site holds the package you assemble (its documents, price and declarations, locked to a fingerprint) and the approval for it; it never signs in to a portal. The package is put together by a person: the registration pack builder that would fill it from company facts is not built yet. Portal automation is not built.
+- **Migration:** `20261118120000_procurement_partnerships` (the new admin tabs need it) was dry-run in a rolled-back transaction and applied to production on 18 November 2026. The review follow-up `20261119130000_procurement_partnerships_hardening` (one opportunity per programme; assessment rules in the database) was dry-run and applied to production on 19 November 2026 with the founder's approval. The second follow-up `20261119140000_procurement_assessment_keys` (an assessment holds exactly its model's categories) was dry-run twice and applied to production on 19 November 2026 with the founder's approval. The first dry run showed the check function was still executable by the public API roles through the default PUBLIC grant; the migration was changed to revoke it before it was applied.
+- **D13:** a standing policy for free, non-binding registrations. Built per portal: you switch it on with an authenticator code, only on a portal recorded as free (the database refuses otherwise). It approves a registration package only when it makes no declarations and carries no price; a portal user agreement goes in the package as a declaration, so those registrations still come to you. Only the Defence Sourcing Portal is seeded as free (the MOD guide states no charge); the others stay "unknown" until their terms are read.
+- **D3:** you enter existing accounts in the admin (Admin → Procurement → Accounts). No passwords: the credential field names the password-manager entry (D7), and anything that looks like a secret is refused.
+
+### Decisions requested (Phase 0, as put to the founder)
+
+The table is the original request. Every row except D10 and D14 has since been decided; the outcome is recorded in the sections above (D1, D4, D12: Phase 2; D3, D8, D13: Phase 3; D2, D5, D6, D7, D9, D11: Phase 1). D10 was answered "not yet": no agent is created until real data flows.
 
 | # | Decision | Options | Recommendation |
 | --- | --- | --- | --- |

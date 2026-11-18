@@ -1,14 +1,4 @@
 {
-  "$comment": "Advisories CI accepts for a limited time, each for named packages only. Read by scripts/audit-gate.mts. Every entry needs a reason a reviewer can check and a reviewBy date; an expired entry fails CI. See docs/DECISIONS.md, 'An advisory with no fix'.",
-  "exceptions": [
-    {
-      "advisory": "GHSA-fc5q-39xc-vjpf",
-      "title": "picomatch ReDoS through single-branch repeated extglobs",
-      "packages": ["picomatch", "fdir", "@rollup/pluginutils", "@rollup/plugin-commonjs", "@sentry/nextjs"],
-      "reason": "No fixed release exists (every version up to 4.0.7, the latest). picomatch is reached only through @rollup/plugin-commonjs, which @sentry/nextjs loads in its webpack wrapping loader (build/cjs/config/loaders/wrappingLoader.js) at build time. The patterns it matches come from our own build configuration, never from a request, so a visitor cannot send it a pattern. Downgrading Sentry to 8.38.0, npm's only suggestion, would drop three major versions of error monitoring.",
-      "addedOn": "2026-11-19",
-      "approvedBy": "founder, 19 November 2026 (\"Allow the exception\")",
-      "reviewBy": "2027-01-15"
-    }
-  ]
+  "$comment": "Advisories CI accepts for a limited time, each for named packages only. Read by scripts/audit-gate.mts. Every entry needs a reason a reviewer can check and a reviewBy date; an expired entry fails CI. See docs/DECISIONS.md, 'An advisory with no fix'. Empty: GHSA-fc5q-39xc-vjpf (picomatch) was excepted on 19 November 2026 and removed the same day, when npm audit stopped reporting it.",
+  "exceptions": []
 }

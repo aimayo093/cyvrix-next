@@ -23,6 +23,8 @@ import { evidenceVerdict, mayBePublicFact, PUBLIC_FACT_KEYS } from "./approval-c
 import { londonWallTimeToUtc } from "./london-time";
 import { OFFICIAL_SOURCES, runSource, type OfficialSource } from "./ingest";
 import { privacyNoticeCoversTenderContacts } from "./privacy-gate";
+import { pursueProgrammeRecord, recordAssessment, saveAccount, savePortalRecord, saveProgrammeRecord, setStandingPolicy } from "./partnership-service";
+import { ACCOUNT_STATUSES, PARTNERSHIP_CATEGORIES, parseList, WEIGHTS, type AccountStatus, type ScoringModel } from "./partnerships";
 import { MAX_REPORT_CHARS, parseReportWithCount } from "./report-import";
 import { verifyStepUp } from "./step-up";
 
@@ -588,4 +590,199 @@ export async function importChatgptReport(fd: FormData) {
   }
   revalidatePath(HOME);
   go(`${HOME}?tab=opportunities`, "success", `Imported ${created} lead(s) from the report${skipped ? `; ${skipped} already imported in the last 30 days were skipped` : ""}. Check each one and archive anything irrelevant.`);
+}
+
+// ---------------------------------------------------------------- accounts and partnerships (Phase 3)
+
+const ACCOUNTS = `${HOME}?tab=accounts`;
+const PARTNERS = `${HOME}?tab=partnerships`;
+const dateField = (fd: FormData, key: string) => {
+  const v = text(fd, key);
+  if (!v) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return undefined;
+  const d = new Date(`${v}T12:00:00Z`);
+  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== v ? undefined : d;
+};
+/** Add or update a supplier portal or partner programme portal (admin). */
+export async function savePortal(fd: FormData) {
+  const user = await requireAdmin();
+  const parsed = z
+    .object({
+      id: ID.optional(),
+      name: z.string().min(2).max(200),
+      kind: z.enum(["procurement_portal", "supplier_portal", "partner_programme"]),
+      url: httpUrl.refine((u) => u.startsWith("https://"), "Use the portal's https address."),
+      registrationUrl: httpUrl.optional(),
+      termsUrl: httpUrl.optional(),
+      cost: z.enum(["free", "paid", "unknown"]),
+      organisationId: ID.optional(),
+      notes: z.string().max(4000).optional(),
+    })
+    .safeParse({
+      id: text(fd, "id"),
+      name: text(fd, "name"),
+      kind: text(fd, "kind"),
+      url: text(fd, "url"),
+      registrationUrl: text(fd, "registrationUrl"),
+      termsUrl: text(fd, "termsUrl"),
+      cost: text(fd, "cost") ?? "unknown",
+      organisationId: text(fd, "organisationId"),
+      notes: text(fd, "notes"),
+    });
+  if (!parsed.success) go(ACCOUNTS, "error", parsed.error!.issues[0]?.message ?? "Check the form.");
+  const d = parsed.data!;
+  // A mistyped requirement is an error, never silently dropped.
+  const facts = parseList(text(fd, "requiredFacts"), /^[a-z][a-z0-9_]{1,63}$/);
+  if (!facts.ok) go(ACCOUNTS, "error", `Required facts: ${facts.reason} Use lower-case keys such as company_number.`);
+  const documents = parseList(text(fd, "requiredDocuments"), /^[a-z][a-z0-9 _-]{1,59}$/);
+  if (!documents.ok) go(ACCOUNTS, "error", `Required documents: ${documents.reason}`);
+  const result = await savePortalRecord(
+    {
+      id: d.id,
+      name: d.name,
+      kind: d.kind,
+      url: d.url,
+      registrationUrl: d.registrationUrl ?? null,
+      termsUrl: d.termsUrl ?? null,
+      cost: d.cost,
+      organisationId: d.organisationId ?? null,
+      notes: d.notes ?? null,
+      requiredFacts: (facts as { values: string[] }).values,
+      requiredDocuments: (documents as { values: string[] }).values,
+    },
+    user.id
+  );
+  revalidatePath(HOME);
+  if (!result.ok) go(ACCOUNTS, "error", result.reason);
+  const v = (result as { value: { policyReset: boolean } }).value;
+  go(ACCOUNTS, "success", v.policyReset ? "Portal saved. Its address or cost changed, so its standing policy is off: switch it on again if it still applies." : "Portal saved.");
+}
+
+/** Record or update CYVRIX's account on a portal (D3). Never a password: only the password-manager entry's name. */
+export async function saveSupplierAccount(fd: FormData) {
+  const user = await requireAdmin();
+  const portalId = ID.safeParse(text(fd, "portalId"));
+  const status = text(fd, "status") as AccountStatus | undefined;
+  if (!portalId.success || !status || !ACCOUNT_STATUSES.includes(status)) go(ACCOUNTS, "error", "Choose the portal and a status.");
+  const registeredAt = dateField(fd, "registeredAt");
+  const renewalAt = dateField(fd, "renewalAt");
+  if (registeredAt === undefined || renewalAt === undefined) go(ACCOUNTS, "error", "Dates must be real dates.");
+  const contactAlias = text(fd, "contactAlias");
+  if (contactAlias && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactAlias)) go(ACCOUNTS, "error", "The account mailbox must be an email address (a shared alias such as tenders@).");
+  const accountId = text(fd, "id");
+  if (accountId && !ID.safeParse(accountId).success) go(ACCOUNTS, "error", "That account could not be found.");
+  const result = await saveAccount({
+    id: accountId,
+    portalId: portalId.data!,
+    status: status!,
+    accountRef: text(fd, "accountRef")?.slice(0, 200) ?? null,
+    registeredAt: registeredAt ?? null,
+    contactAlias: contactAlias?.toLowerCase().slice(0, 254) ?? null,
+    credentialLabel: text(fd, "credentialLabel") ?? null,
+    mfaRequired: fd.get("mfaRequired") === "on" ? true : null,
+    renewalAt: renewalAt ?? null,
+    restrictions: text(fd, "restrictions")?.slice(0, 1000) ?? null,
+    notes: text(fd, "notes")?.slice(0, 2000) ?? null,
+    userId: user.id,
+  });
+  revalidatePath(HOME);
+  if (!result.ok) go(ACCOUNTS, "error", result.reason);
+  go(ACCOUNTS, "success", "Account saved.");
+}
+
+/** Switch a portal's standing registration policy (D13). Founder, with a fresh authenticator code. */
+export async function setPortalPolicy(fd: FormData) {
+  const user = await requireFounder();
+  const portalId = ID.safeParse(text(fd, "portalId"));
+  if (!portalId.success) go(ACCOUNTS, "error", "That portal could not be found.");
+  const on = text(fd, "on") === "true";
+  let at = new Date();
+  if (on) {
+    const stepUp = await verifyStepUp(user.id, text(fd, "code") ?? "");
+    if (!stepUp.ok) go(ACCOUNTS, "error", stepUp.reason);
+    at = (stepUp as { at: Date }).at;
+  }
+  const result = await setStandingPolicy(portalId.data!, on, user.id, at);
+  revalidatePath(HOME);
+  if (!result.ok) go(ACCOUNTS, "error", result.reason);
+  go(ACCOUNTS, "success", on ? "Standing policy on: free registrations here with no declarations and no price are pre-approved. You still register by hand." : "Standing policy off.");
+}
+
+/** Add or update a partnership programme (spec sections 35-36). */
+export async function saveProgramme(fd: FormData) {
+  const user = await requireAdmin();
+  const parsed = z
+    .object({
+      id: ID.optional(),
+      organisationId: ID,
+      name: z.string().min(3).max(200),
+      categories: z.array(z.enum(PARTNERSHIP_CATEGORIES)).max(PARTNERSHIP_CATEGORIES.length),
+      url: httpUrl.optional(),
+      sourceUrl: httpUrl.optional(),
+      verified: z.boolean(),
+      availability: z.enum(["open", "closed", "invitation_only", "unconfirmed"]),
+      fees: z.string().max(500).optional(),
+      requirements: z.string().max(4000).optional(),
+      portalId: ID.optional(),
+    })
+    .safeParse({
+      id: text(fd, "id"),
+      organisationId: text(fd, "organisationId"),
+      name: text(fd, "name"),
+      categories: fd.getAll("categories").map(String),
+      url: text(fd, "url"),
+      sourceUrl: text(fd, "sourceUrl"),
+      verified: fd.get("verified") === "on",
+      availability: text(fd, "availability") ?? "unconfirmed",
+      fees: text(fd, "fees"),
+      requirements: text(fd, "requirements"),
+      portalId: text(fd, "portalId"),
+    });
+  if (!parsed.success) go(PARTNERS, "error", parsed.error!.issues[0]?.message ?? "Check the form.");
+  const d = parsed.data!;
+  const result = await saveProgrammeRecord(
+    {
+      ...d,
+      url: d.url ?? null,
+      sourceUrl: d.sourceUrl ?? null,
+      fees: d.fees ?? null,
+      requirements: d.requirements ?? null,
+      portalId: d.portalId ?? null,
+    },
+    user.id
+  );
+  revalidatePath(HOME);
+  if (!result.ok) go(PARTNERS, "error", result.reason);
+  go(PARTNERS, "success", d.id ? "Programme updated." : "Programme added.");
+}
+
+/** Start pursuing a programme: a partnership opportunity at TargetIdentified, linked to it. */
+export async function pursueProgramme(fd: FormData) {
+  const user = await requireAdmin();
+  const programmeId = ID.safeParse(text(fd, "programmeId"));
+  if (!programmeId.success) go(PARTNERS, "error", "That programme could not be found.");
+  const result = await pursueProgrammeRecord(programmeId.data!, user.id);
+  revalidatePath(HOME);
+  if (!result.ok) go(PARTNERS, "error", result.reason);
+  const v = (result as { value: { id: string; existing: boolean } }).value;
+  go(oppPath(v.id), "success", v.existing ? "Already being pursued." : "Now pursuing this programme. Its lifecycle starts at TargetIdentified.");
+}
+
+/** Record a bid/no-bid or partnership assessment (spec 12, 40). Each is kept; a new one never overwrites. */
+export async function recordAssessmentAction(fd: FormData) {
+  const user = await requireAdmin();
+  const id = ID.safeParse(text(fd, "opportunityId"));
+  const model = text(fd, "model") as ScoringModel | undefined;
+  if (!id.success || (model !== "bid" && model !== "partnership")) go(HOME, "error", "That assessment could not be read.");
+  const scores: Record<string, number> = {};
+  for (const category of Object.keys(WEIGHTS[model!])) {
+    const raw = text(fd, `score_${category}`);
+    scores[category] = raw === undefined ? NaN : Number(raw);
+  }
+  const disqualifiers = (text(fd, "disqualifiers") ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 20);
+  const result = await recordAssessment({ opportunityId: id.data!, model: model!, scores, disqualifiers, assumptions: text(fd, "assumptions"), authorId: user.id });
+  revalidatePath(oppPath(id.data!));
+  if (!result.ok) go(oppPath(id.data!), "error", result.reason);
+  const v = (result as { value: { total: number; recommendation: string } }).value;
+  go(oppPath(id.data!), "success", `Assessment recorded: ${v.total} / 100, ${v.recommendation}. This is a recommendation, not a prediction of winning.`);
 }
