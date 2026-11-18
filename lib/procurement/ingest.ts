@@ -13,7 +13,7 @@ import {
   type FetchJson,
 } from "./feeds";
 import { crossSourceKey, isRelevant, normalise, withoutContactPoints, type NormalisedNotice, type OcdsRelease } from "./ocds";
-import { valuesAgree } from "./ingest-rules";
+import { rangesAgree } from "./ingest-rules";
 import { initialStatus } from "./lifecycle";
 import { audit } from "./service";
 
@@ -159,13 +159,13 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
             origin: { not: sourceKey },
             deadlineAt: { gte: new Date(`${day}T00:00:00Z`), lt: new Date(new Date(`${day}T00:00:00Z`).getTime() + 86_400_000) },
           },
-          select: { id: true, title: true, deadlineAt: true, valueMax: true },
+          select: { id: true, title: true, deadlineAt: true, valueMin: true, valueMax: true },
         });
         twin =
           candidates.find((c) => {
             if (crossSourceKey({ buyerName: notice.buyerName, title: c.title, deadlineAt: c.deadlineAt }) !== key) return false;
-            const theirs = c.valueMax === null ? null : Number(c.valueMax.toString());
-            return valuesAgree(theirs, notice.valueMax);
+            const num = (v: { toString(): string } | null) => (v === null ? null : Number(v.toString()));
+            return rangesAgree({ valueMin: num(c.valueMin), valueMax: num(c.valueMax) }, notice);
           })?.id ?? null;
       }
       if (twin) {

@@ -23,6 +23,9 @@ export type AuditReport = { vulnerabilities?: Record<string, { severity: string;
 
 const BLOCKING = new Set(["moderate", "high", "critical"]);
 const advisoryId = (url: string | undefined) => url?.match(/GHSA-[\w-]+/)?.[0] ?? url ?? "unknown advisory";
+/** A real calendar date in YYYY-MM-DD form (2027-99-99 is not). */
+const isDate = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) && !Number.isNaN(Date.parse(`${d}T00:00:00Z`)) && new Date(`${d}T00:00:00Z`).toISOString().slice(0, 10) === d;
+export const blockingCount = (report: AuditReport) => Object.values(report.vulnerabilities ?? {}).filter((v) => BLOCKING.has(v.severity)).length;
 
 export function evaluate(report: AuditReport, exceptions: Exception[], today: string): { failures: string[]; notes: string[] } {
   const failures: string[] = [];
@@ -30,11 +33,11 @@ export function evaluate(report: AuditReport, exceptions: Exception[], today: st
   const used = new Set<string>();
 
   for (const e of exceptions) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(e.reviewBy)) failures.push(`Exception ${e.advisory} has no valid reviewBy date.`);
+    if (!isDate(e.reviewBy)) failures.push(`Exception ${e.advisory} has no valid reviewBy date.`);
     else if (e.reviewBy < today) failures.push(`Exception ${e.advisory} expired on ${e.reviewBy}. Check for a fix and renew it or remove it.`);
     if (!e.reason || e.reason.trim().length < 40) failures.push(`Exception ${e.advisory} needs a reason a reviewer can check.`);
   }
-  const live = exceptions.filter((e) => /^\d{4}-\d{2}-\d{2}$/.test(e.reviewBy) && e.reviewBy >= today);
+  const live = exceptions.filter((e) => isDate(e.reviewBy) && e.reviewBy >= today);
 
   // Each vulnerable package is excused only if every advisory reaching it is
   // excepted for that package, directly or through another vulnerable package.
@@ -80,7 +83,7 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { failures, notes } = evaluate(report, file.exceptions, new Date().toISOString().slice(0, 10));
   for (const n of notes) console.log(`  note  ${n}`);
   for (const f of failures) console.error(`  FAIL  ${f}`);
-  const excused = Object.keys(report.vulnerabilities).length;
+  const excused = blockingCount(report);
   if (failures.length) process.exit(1);
   console.log(`  Dependency audit passed${excused ? ` (${excused} package(s) under a dated exception)` : ""}.`);
 }

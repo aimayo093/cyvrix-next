@@ -530,6 +530,8 @@ try {
     cursor = r.more ? r.next : null;
   }
   check("three rows with one timestamp, paged one at a time: none skipped", tied.every((t) => seen.has(t.id)), true);
+  const everything = await prisma.opportunity.count();
+  check("a full last page says there is no more", (await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: everything })).more, false);
   check("an empty page keeps the caller's position", (await agentApi.listOpportunitiesForAgents({ after: { at: new Date("2099-01-01T00:00:00Z"), id: null }, kind: null, status: null, limit: 5 })).next, "2099-01-01T00:00:00.000Z");
 
   // CYVRIX clients are not listed to agents.

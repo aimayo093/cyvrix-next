@@ -43,7 +43,8 @@ export async function listOpportunitiesForAgents(params: { after: PageCursor | n
       ...(params.status ? { status: params.status } : {}),
     },
     orderBy: [{ updatedAt: "asc" }, { id: "asc" }],
-    take,
+    // One row beyond the page tells whether another page exists.
+    take: take + 1,
     // Only the columns the agent view uses: no summary, no notes, no contacts.
     select: {
       id: true,
@@ -64,11 +65,13 @@ export async function listOpportunitiesForAgents(params: { after: PageCursor | n
       Evidence: { select: { url: true } },
     },
   });
-  const opportunities: AgentOpportunity[] = rows.map(agentOpportunity);
-  const last = rows[rows.length - 1];
+  const more = rows.length > take;
+  const page = more ? rows.slice(0, take) : rows;
+  const opportunities: AgentOpportunity[] = page.map(agentOpportunity);
+  const last = page[page.length - 1];
   // An empty page keeps the caller's position, so copying `next` never resets to the start.
   const next = last ? `${last.updatedAt.toISOString()}|${last.id}` : after ? `${after.at.toISOString()}|${after.id ?? ""}`.replace(/\|$/, "") : null;
-  return { opportunities, next, more: rows.length === take };
+  return { opportunities, next, more };
 }
 
 /**
