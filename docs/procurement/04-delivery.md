@@ -28,7 +28,7 @@ Carried over from the PR 14 review (not blocking Phase 1):
 | ID | Item |
 | --- | --- |
 | P2-1 | Find a Tender adapter (cursor, `updatedFrom`, `Retry-After`, raw store, contact-point split) |
-| P2-2 | Sell2Wales adapter (API with monthly OCDS download fallback, health flag) |
+| P2-2 | Sell2Wales adapter (API with a health flag; built). The monthly OCDS download fallback is not built: a failing API shows as degraded |
 | P2-3 | Public Contracts Scotland and Contracts Finder adapters |
 | P2-4 | Cron handler with London-time gate, per-source lock, dead-letter status, zero-result alert |
 | P2-5 | ChatGPT import page (paste or upload) → parser → review screen → opportunities with `origin = chatgpt_task` (D1-A) |

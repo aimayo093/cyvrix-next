@@ -60,6 +60,21 @@ function isPhone(candidate: string): boolean {
   return candidate.startsWith("0") && !candidate.startsWith("00") ? digits >= 10 && digits <= 11 : digits >= 10 && digits <= 16;
 }
 
+/**
+ * True when a link carries personal data: an email address anywhere, a
+ * mailto/tel scheme, or a phone number in its query. A notice number in the
+ * path (Notice/012345-2026) is not a phone number.
+ */
+export function linkHoldsPersonalData(url: string): boolean {
+  if (HAS_EMAIL.test(url) || /^(?:mailto|tel):/i.test(url)) return true;
+  try {
+    const query = decodeURIComponent(new URL(url).search.replace(/\+/g, " "));
+    return (query.match(PHONE) ?? []).some(isPhone);
+  } catch {
+    return true;
+  }
+}
+
 /** True when text holds an email address, a phone number or a personal-profile link. */
 export function containsPersonalData(text: string): boolean {
   if (HAS_EMAIL.test(text)) return true;

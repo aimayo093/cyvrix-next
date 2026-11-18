@@ -2,7 +2,7 @@ import "server-only";
 import crypto from "node:crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { agentOpportunity, agentOrganisation, containsPersonalData, isPublicLink, type AgentOpportunity } from "./agent-view";
+import { agentOpportunity, agentOrganisation, containsPersonalData, isPublicLink, linkHoldsPersonalData, type AgentOpportunity } from "./agent-view";
 import { initialStatus } from "./lifecycle";
 import { audit, transitionOpportunity } from "./service";
 
@@ -120,13 +120,17 @@ export const researchSchema = z
       .string()
       .url()
       .max(1000)
-      .refine((u) => isPublicLink(u) && !containsPersonalData(u), "Evidence must be an https link to a public page, with no personal data in it."),
+      .refine((u) => isPublicLink(u) && !linkHoldsPersonalData(u), "Evidence must be an https link to a public page, with no personal data in it."),
     deadlineAt: z.string().datetime({ offset: true }).optional(),
     valueMax: z.number().nonnegative().max(1e10).optional(),
     source: z
       .object({
         agent: agentName,
-        issueId: z.string().regex(/^[A-Za-z0-9._:-]{1,100}$/, "issueId is a Paperclip issue id or key.").optional(),
+        issueId: z
+          .string()
+          .regex(/^[A-Za-z0-9._:-]{1,100}$/, "issueId is a Paperclip issue id or key.")
+          .refine((v) => !containsPersonalData(v), "issueId must not hold personal data.")
+          .optional(),
       })
       .strict(),
   })

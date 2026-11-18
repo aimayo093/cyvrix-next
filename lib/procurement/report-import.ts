@@ -64,7 +64,8 @@ function toItem(section: string | null, lines: string[]): ReportItem | null {
   const first = stripMarkdown(lines[0].replace(ITEM_START, ""));
   const title = first.split(/\s+[–—|]\s+|\s+-\s+(?=https?:)/)[0].replace(URL, "").replace(/[\s:–—-]+$/, "").trim().slice(0, 300);
   if (title.length < 4) return null;
-  const url = block.match(URL)?.[0].replace(/[.,;:]+$/, "") ?? null;
+  // Trailing punctuation and markdown emphasis (**https://…**) are not part of the link.
+  const url = block.match(URL)?.[0].replace(/[.,;:*_]+$/, "") ?? null;
   const context = `${section ?? ""} ${block}`;
   return {
     section,
