@@ -29,8 +29,11 @@ jobs:
           cache: npm
 
       - run: npm ci
+      # Fails on any moderate or worse advisory in a production dependency,
+      # except one listed in scripts/audit-exceptions.json for the packages it
+      # names, until its review date (docs/DECISIONS.md, "An advisory with no fix").
       - name: Audit production dependencies
-        run: npm audit --omit=dev --audit-level=moderate
+        run: npm run audit:gate
       - run: npx tsc --noEmit
       - name: Lint (zero warnings, so the backlog cannot creep back)
         run: npx eslint . --max-warnings=0
@@ -54,6 +57,7 @@ jobs:
           npm run test:scan
           npm run test:feed
           npm run test:paperclip
+          npm run test:audit-gate
       - name: Production build
         # No database in CI; the build falls back as it does locally.
         env:
