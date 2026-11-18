@@ -183,7 +183,10 @@ bare audit: it fails exactly as before, except for an advisory listed in
 advisory, or an expired entry fails the build; a fixed advisory leaves a note
 to remove its entry. Each entry records its reason and who approved it. Do
 not add an entry to make a build pass: an entry needs a reason a reviewer can
-check, as this one does.
+check, as this one does. Later the same day npm audit stopped reporting the
+advisory (picomatch still at 4.0.7, so the advisory itself changed), the gate
+noted the entry was no longer needed, and it was removed. The gate stays, with
+an empty list, for the next advisory that has no fix.
 
 **A firewall challenge is not the site's answer** (13 November 2026). The live
 checks request the site's own public URL, so Vercel's bot protection
