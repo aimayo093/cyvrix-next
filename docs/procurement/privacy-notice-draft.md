@@ -18,8 +18,8 @@ contacts.
 
 When a public body publishes a tender, the notice usually names a contact
 person with a work email address and telephone number. When we find an
-opportunity that fits our services, we keep that published contact with the
-opportunity. We also keep business contact details that appear in the
+opportunity that fits our services, we keep that published contact on our
+record of the organisation that published it. We also keep business contact details that appear in the
 opportunities we research or are told about.
 
 - **What we keep:** the person's name, job role if given, work email address

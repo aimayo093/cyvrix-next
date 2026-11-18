@@ -432,7 +432,8 @@ try {
   check("buyer organisation created and marked as a buyer", [itSupport.Buyer?.name, itSupport.Buyer?.categories], ["Example County Council", ["buyer"]]);
   check("evidence links to the notice", itSupport.Evidence[0]?.url, "https://www.find-tender.service.gov.uk/Notice/100001-2026");
   const storedRaw = await prisma.procurementNotice.findFirstOrThrow({ where: { ocid: "ocds-h6vhtk-0aaaa1" } });
-  check("stored raw notice has no contact points", JSON.stringify(storedRaw.raw).includes("Pat Example"), false);
+  const rawText = JSON.stringify(storedRaw.raw);
+  check("stored raw notice has no contact name, email or phone", [rawText.includes("Pat Example"), rawText.includes("@"), rawText.includes("0000 000000")], [false, false, false]);
 
   calls.length = 0;
   const fts2 = await ingest.runSource("fts", { trigger: "cron", fetchJson: fakeFetch, now: morning });
@@ -459,7 +460,7 @@ try {
   check("every completed run is audited (5)", await prisma.auditLog.count({ where: { action: "procurement.sync" } }), 5);
 
   console.log("\n  Agent access: organisations and roles only (D4)");
-  const listed = await agentApi.listOpportunitiesForAgents({ since: null, kind: null, status: null, limit: 200 });
+  const listed = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: 200 });
   const wire = JSON.stringify(listed);
   check("agents see the feed opportunities", listed.opportunities.some((o) => o.title === "Managed IT Support Services"), true);
   check("no email address reaches an agent", /@/.test(wire), false);
@@ -495,6 +496,50 @@ try {
   );
   check("an agent may validate", (await agentApi.agentMove(first.id, "Validated", "CCO")).ok, true);
   check("an agent may not archive or skip ahead", [(await agentApi.agentMove(first.id, "Archived", "CCO")).ok, (await agentApi.agentMove(first.id, "Submitted", "CCO")).ok], [false, false]);
+  check("an agent name holding an email is refused", (await agentApi.agentMove(first.id, "Qualified", "cco@example.com")).ok, false);
+
+  console.log("\n  Review fixes (PR 15)");
+  // Two different notices from the same portal with the same buyer, title and deadline stay separate.
+  const sameTitleOther = fx.release({ ocid: "ocds-h6vhtk-0bbbb1", id: "100010-2026", title: "Managed IT Support Services", cpv: "72253000", amount: 250000 });
+  const unreadable = fx.release({ ocid: "ocds-h6vhtk-0bbbb2", id: "100011-2026", title: "", cpv: "72253000" });
+  const ftsBefore = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "fts" } });
+  const fetch2 = async (url: string) => ({ status: 200, retryAfter: null, body: { releases: url.startsWith(FTS) ? [sameTitleOther, unreadable] : [] } });
+  const fts3 = await ingest.runSource("fts", { trigger: "manual", fetchJson: fetch2, now: morning });
+  check("a same-portal notice with the same title is a new opportunity, not merged", [fts3.created, fts3.merged], [1, 0]);
+  check("an unreadable relevant notice is recorded on the run", fts3.detail?.includes("unreadable notice"), true);
+  const ftsAfter = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "fts" } });
+  check("and the checkpoint is not advanced, so it is read again", [ftsAfter.lastSuccessAt?.toISOString(), ftsAfter.health], [ftsBefore.lastSuccessAt?.toISOString(), "degraded"]);
+
+  // A switched-off feed cannot be run by hand either.
+  await prisma.opportunitySource.update({ where: { key: "s2w" }, data: { enabled: false } });
+  calls.length = 0;
+  const offManual = await ingest.runSource("s2w", { trigger: "manual", fetchJson: fakeFetch, now: morning });
+  check("Run now on a switched-off feed reads nothing", [offManual.status, calls.length], ["skipped", 0]);
+
+  // Paging never skips rows that share a timestamp.
+  const tied = await prisma.opportunity.findMany({ where: { origin: { in: ["fts", "pcs"] } }, select: { id: true }, take: 3 });
+  const stamp = new Date("2026-11-18T09:00:00.000Z");
+  await prisma.$executeRaw`UPDATE "public"."Opportunity" SET "updatedAt" = ${stamp} WHERE "id" = ANY(${tied.map((t) => t.id)})`;
+  const seen = new Set<string>();
+  let cursor: string | null = `${new Date(stamp.getTime() - 1).toISOString()}`;
+  for (let page = 0; page < 6 && cursor; page++) {
+    const r = await agentApi.listOpportunitiesForAgents({ after: agentApi.parseCursor(cursor, null), kind: null, status: null, limit: 1 });
+    r.opportunities.forEach((o) => seen.add(o.id));
+    cursor = r.more ? r.next : null;
+  }
+  check("three rows with one timestamp, paged one at a time: none skipped", tied.every((t) => seen.has(t.id)), true);
+  check("an empty page keeps the caller's position", (await agentApi.listOpportunitiesForAgents({ after: { at: new Date("2099-01-01T00:00:00Z"), id: null }, kind: null, status: null, limit: 5 })).next, "2099-01-01T00:00:00.000Z");
+
+  // CYVRIX clients are not listed to agents.
+  await prisma.$executeRaw`INSERT INTO "public"."ClientCompany" (id, name) VALUES ('client-1', 'Example Client Ltd')`;
+  await prisma.organisation.create({ data: { id: uuid(), name: "Example Client Ltd", categories: ["buyer"], clientCompanyId: "client-1" } });
+  check("a client organisation is not listed to agents", (await agentApi.listOrganisationsForAgents(null)).organisations.some((o) => o.name === "Example Client Ltd"), false);
+
+  // Titles from the pasted ChatGPT report are withheld.
+  const reportLead = uuid();
+  await prisma.opportunity.create({ data: { id: reportLead, kind: "commercial", status: "Discovered", title: "Jo Bloggs at Example Ltd is hiring", origin: "chatgpt_task" } });
+  const listedAgain = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: 200 });
+  check("a ChatGPT report title never reaches an agent", JSON.stringify(listedAgain).includes("Jo Bloggs"), false);
 
 } finally {
   await prisma.$disconnect();

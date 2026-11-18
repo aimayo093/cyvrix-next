@@ -44,15 +44,17 @@ export const defaultFetchJson: FetchJson = async (url) => {
 };
 
 function check(status: number, retryAfter: string | null, source: string) {
-  if (status === 429 || status === 503) {
-    const seconds = Number(retryAfter);
+  if (status === 429 || status >= 500) {
+    // A missing Retry-After stays undefined (Number(null) would read as 0).
+    const seconds = retryAfter === null ? NaN : Number(retryAfter);
     throw new FeedError({
       kind: status === 429 ? "rate_limited" : "unavailable",
       detail: `${source} answered ${status}${retryAfter ? `; retry after ${retryAfter}s` : ""}.`,
       retryAfterSeconds: Number.isFinite(seconds) ? seconds : undefined,
     });
   }
-  if (status < 200 || status >= 300) throw new FeedError({ kind: "unavailable", detail: `${source} answered ${status}.` });
+  // Any other non-2xx (400, 401, 404…) will not fix itself by retrying.
+  if (status < 200 || status >= 300) throw new FeedError({ kind: "bad_response", detail: `${source} answered ${status}.` });
 }
 
 function releasesOf(body: unknown, source: string): OcdsRelease[] {
@@ -74,11 +76,12 @@ export async function fetchFtsPage(url: string, fetchJson: FetchJson): Promise<F
   const { status, retryAfter, body } = await fetchJson(url);
   check(status, retryAfter, "Find a Tender");
   const next = (body as { links?: { next?: unknown } })?.links?.next;
-  return {
-    releases: releasesOf(body, "Find a Tender"),
-    // Only ever follow a next link on the same endpoint (no redirection elsewhere).
-    next: typeof next === "string" && next.startsWith(`${FTS_BASE}?`) ? next : null,
-  };
+  // Only ever follow a next link on the same endpoint. A next link elsewhere is
+  // an error, not the end of the list: stopping quietly would skip releases.
+  if (next !== undefined && next !== null && !(typeof next === "string" && next.startsWith(`${FTS_BASE}?`))) {
+    throw new FeedError({ kind: "bad_response", detail: "Find a Tender returned a next-page link to another address." });
+  }
+  return { releases: releasesOf(body, "Find a Tender"), next: typeof next === "string" ? next : null };
 }
 
 /**

@@ -34,18 +34,25 @@ function stripMarkdown(s: string): string {
     .trim();
 }
 
-function isHeading(line: string): boolean {
+/**
+ * `startsBlock`: the line follows a blank line or opens the text. A line that
+ * merely ends in a colon is a heading only then, so "Source:" or "Link:" inside
+ * a lead stays part of that lead. Indented lines are never headings.
+ */
+function isHeading(line: string, startsBlock: boolean): boolean {
   const t = line.trim();
-  if (!t || ITEM_START.test(t)) return false;
+  if (!t || ITEM_START.test(t) || /^\s/.test(line)) return false;
   if (/^#{1,6}\s/.test(t)) return true;
   const plain = stripMarkdown(t);
   if (/^\*\*[^*]+\*\*:?$/.test(t) && plain.length <= 80) return true;
-  if (plain.length <= 80 && /:$/.test(plain) && !URL.test(plain)) return true;
+  if (startsBlock && plain.length <= 80 && /:$/.test(plain) && !URL.test(plain)) return true;
   return plain.length >= 4 && plain.length <= 60 && plain === plain.toUpperCase() && /[A-Z]/.test(plain);
 }
 
 const PUBLIC_SECTOR = /government|public sector|public-sector|tender|defence|defense|\bmod\b|nhs|council|authority|police|university|framework|procurement/i;
-const BUYING_SIGNAL = /\btender\b|\bitt\b|\brfq\b|\brfp\b|\brfi\b|invitation to tender|request for (?:quot|propos|informat)|contract notice|find a tender|contracts finder|sell2wales|deadline/i;
+// A published tender or a request for quotes or proposals. Not "deadline" on its
+// own, and not a request for information, which is market engagement, not buying.
+const BUYING_SIGNAL = /\btender\b|\bitt\b|\brfq\b|\brfp\b|invitation to tender|request for (?:quot|propos)|contract notice|find a tender|contracts finder|sell2wales/i;
 
 function toItem(section: string | null, lines: string[]): ReportItem | null {
   const block = lines.join("\n").trim();
@@ -65,12 +72,16 @@ function toItem(section: string | null, lines: string[]): ReportItem | null {
   };
 }
 
-export function parseReport(text: string): ReportItem[] {
+export type ParsedReport = { items: ReportItem[]; omitted: number };
+
+/** The leads in a report, at most MAX_REPORT_ITEMS, and how many more were left out. */
+export function parseReportWithCount(text: string): ParsedReport {
   const lines = text.slice(0, MAX_REPORT_CHARS).replace(/\r\n?/g, "\n").split("\n");
   const hasMarkers = lines.some((l) => ITEM_START.test(l));
   const items: ReportItem[] = [];
   let section: string | null = null;
   let current: string[] = [];
+  let prevBlank = true;
   const flush = () => {
     const item = toItem(section, current);
     if (item) items.push(item);
@@ -79,7 +90,9 @@ export function parseReport(text: string): ReportItem[] {
 
   for (const raw of lines) {
     const line = raw.trimEnd();
-    if (isHeading(line)) {
+    const startsBlock = prevBlank;
+    prevBlank = !line.trim();
+    if (isHeading(line, startsBlock)) {
       flush();
       section = stripMarkdown(line).replace(/:$/, "").slice(0, 120) || section;
       continue;
@@ -103,14 +116,17 @@ export function parseReport(text: string): ReportItem[] {
   }
   flush();
 
-  // The same title twice in one report is one item.
+  // The same lead twice in one report (same title and link) is one item.
   const seen = new Set<string>();
-  return items
-    .filter((i) => {
-      const key = i.title.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    })
-    .slice(0, MAX_REPORT_ITEMS);
+  const unique = items.filter((i) => {
+    const key = `${i.title.toLowerCase()}|${i.url ?? ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+  return { items: unique.slice(0, MAX_REPORT_ITEMS), omitted: Math.max(0, unique.length - MAX_REPORT_ITEMS) };
+}
+
+export function parseReport(text: string): ReportItem[] {
+  return parseReportWithCount(text).items;
 }

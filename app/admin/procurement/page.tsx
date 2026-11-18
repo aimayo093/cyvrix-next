@@ -599,9 +599,10 @@ function ImportReport() {
     <div className="space-y-4">
       <p className="max-w-3xl text-sm text-slate-500">
         Paste the ChatGPT &ldquo;Cyvrix UK Daily Leads&rdquo; report here. Each numbered or bulleted lead (or each
-        paragraph) becomes an opportunity marked as from the ChatGPT 9 am report. Its section, its first link and
-        its own text are kept as evidence. Commercial and government leads are both kept. Titles already imported
-        in the last 30 days are skipped. Check each new one and archive anything irrelevant.
+        paragraph) becomes an opportunity marked as from the ChatGPT 9 am report. Its first link and its own text
+        are kept as evidence, and its section is noted on the opportunity. Commercial and government leads are both
+        kept. Leads already imported in the last 30 days are skipped, and at most 100 can be imported at once.
+        Check each new one and archive anything irrelevant.
       </p>
       <form action={importChatgptReport} className={`${card} space-y-3`}>
         <label className="block space-y-1">
@@ -617,7 +618,8 @@ function ImportReport() {
 async function Sources({ isFounder }: { isFounder: boolean }) {
   const [sources, runs] = await Promise.all([
     prisma.opportunitySource.findMany({ orderBy: { key: "asc" } }),
-    prisma.ingestionRun.findMany({ orderBy: { startedAt: "desc" }, take: 30 }),
+    // The latest run of each source, however many runs other sources had since.
+    prisma.ingestionRun.findMany({ distinct: ["sourceKey"], orderBy: [{ sourceKey: "asc" }, { startedAt: "desc" }] }),
   ]);
   const lastRun = (key: string) => runs.find((r) => r.sourceKey === key);
   const official = OFFICIAL_SOURCES as readonly string[];

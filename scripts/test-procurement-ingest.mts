@@ -5,9 +5,11 @@
  * Run with: npm run test:procurement-ingest
  */
 import { buyerContacts, crossSourceKey, isRelevant, normalise, noticeUrl, withoutContactPoints } from "../lib/procurement/ocds";
-import { parseReport } from "../lib/procurement/report-import";
+import { parseReport, parseReportWithCount } from "../lib/procurement/report-import";
+import { privacyNoticeCoversTenderContacts } from "../lib/procurement/privacy-gate";
 import { isScheduledRun } from "../lib/procurement/schedule";
-import { agentOpportunity, containsPersonalData, isPublicLink, scrub } from "../lib/procurement/agent-view";
+import { agentOpportunity, containsPersonalData, isPublicLink, scrub, WITHHELD_TITLE } from "../lib/procurement/agent-view";
+import { valuesAgree } from "../lib/procurement/ingest-rules";
 import { authorise } from "../lib/paperclip-auth";
 import {
   awardOnly,
@@ -156,6 +158,36 @@ check("the procurement token does not open client data", authorise("read", `Bear
 check("reusing the read token switches it off", authorise("procurement", `Bearer ${R}`, { PAPERCLIP_READ_TOKEN: R, PAPERCLIP_PROCUREMENT_TOKEN: R }), "off");
 check("reusing the draft token switches it off", authorise("procurement", `Bearer ${D}`, { PAPERCLIP_DRAFT_TOKEN: D, PAPERCLIP_PROCUREMENT_TOKEN: D }), "off");
 check("a short token is off", authorise("procurement", "Bearer short", { PAPERCLIP_PROCUREMENT_TOKEN: "short" }), "off");
+
+console.log("\n  Review fixes (PR 15)");
+const kw = (title: string) => isRelevant({ ocid: "o", id: "1", tag: ["tender"], tender: { title, classification: { scheme: "CPV", id: "45000000" } } }).relevant;
+check("'it services' does not match 'audit services'", kw("Internal audit services"), false);
+check("'lan' does not match 'plan' or 'clean'", [kw("Business plan review"), kw("Cleaning contract")], [false, false]);
+check("whole-word IT phrases still match", [kw("IT services framework"), kw("LAN upgrade"), kw("Break/fix support")], [true, true, true]);
+check(
+  "an email is lower-cased",
+  buyerContacts({ ...pcsCyber, parties: [{ roles: ["buyer"], name: "X", contactPoint: { email: "Tenders@Example.GOV.uk" } }] })[0].email,
+  "tenders@example.gov.uk"
+);
+const colon = parseReport("1. Example Ltd needs a new MSP\nSource:\nhttps://example.com/msp\n2. Second lead here https://example.com/two");
+check("a 'Source:' line inside a lead does not become a heading", [colon.length, colon[0].url, colon[0].section], [2, "https://example.com/msp", null]);
+check("'deadline' alone is not a buying signal", parseReport("1. Example Ltd office move, deadline for decision March https://example.com/m")[0].confirmedBuying, false);
+check("a request for information is not either", parseReport("1. Example Council request for information on IT support https://example.com/rfi")[0].confirmedBuying, false);
+const many = Array.from({ length: 105 }, (_, n) => `${n + 1}. Lead number ${n + 1} https://example.com/${n}`).join("\n");
+check("over 100 leads are counted, not silently dropped", parseReportWithCount(many).omitted, 5);
+check("same title with different links are two leads", parseReport("1. Desktop support - Example A https://a.example\n2. Desktop support - Example A https://b.example").length, 2);
+check("international 00 numbers are personal data", containsPersonalData("Call 0044 20 0000 0000"), true);
+check("a date range is not a phone number", containsPersonalData("Contract 01-12-2026 - 15-12-2027"), false);
+check("a profile link in a title is removed", scrub("Lead via https://www.linkedin.com/in/someone today"), "Lead via [link removed] today");
+check(
+  "ChatGPT report titles are withheld from agents",
+  agentOpportunity({ ...{ id: "o2", kind: "commercial", status: "Discovered", title: "Jo Bloggs at Example Ltd is hiring", origin: "chatgpt_task", confirmedBuying: false, deadlineAt: null, clarificationDeadlineAt: null, valueMin: null, valueMax: null, currency: "GBP", region: null, cpv: [], updatedAt: new Date() } }).title,
+  WITHHELD_TITLE
+);
+check("values within 25% agree", [valuesAgree(100000, 120000), valuesAgree(100000, 200000), valuesAgree(null, 5)], [true, false, true]);
+check("privacy gate: unpublished policy blocks", privacyNoticeCoversTenderContacts({ status: "DRAFT", body: "Business contacts from public tenders" }), false);
+check("privacy gate: published without the section blocks", privacyNoticeCoversTenderContacts({ status: "PUBLISHED", body: "We collect your email." }), false);
+check("privacy gate: published with the section passes", privacyNoticeCoversTenderContacts({ status: "PUBLISHED", body: "## Business contacts from public tenders\n…" }), true);
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

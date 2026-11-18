@@ -13,6 +13,7 @@ import {
   type FetchJson,
 } from "./feeds";
 import { crossSourceKey, isRelevant, normalise, withoutContactPoints, type NormalisedNotice, type OcdsRelease } from "./ocds";
+import { valuesAgree } from "./ingest-rules";
 import { initialStatus } from "./lifecycle";
 import { audit } from "./service";
 
@@ -114,29 +115,40 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
     let updated = 0;
     let merged = 0;
 
-    const byOcid = await tx.opportunity.findFirst({ where: { ocid: notice.ocid }, select: { id: true, status: true } });
-    if (byOcid) {
+    // The opportunity this notice belongs to: by OCID, or (for a copy already
+    // matched to another portal's record) by the copy's stable notice link.
+    let existing = await tx.opportunity.findFirst({ where: { ocid: notice.ocid }, select: { id: true, status: true } });
+    if (!existing && notice.noticeUrl && notice.noticeUrl.includes(notice.ocid)) {
+      const linked = await tx.opportunityEvidence.findFirst({ where: { url: notice.noticeUrl }, select: { Opportunity: { select: { id: true, status: true } } } });
+      existing = linked?.Opportunity ?? null;
+    }
+    if (existing) {
       // A newer release of a tender already recorded: keep its facts current
-      // while nobody is working on it yet; always keep the new notice as evidence.
-      if (EARLY_STATUSES.includes(byOcid.status)) {
+      // while nobody is working on it yet, never blanking a value the new
+      // release leaves out; always keep the new notice as evidence.
+      if (EARLY_STATUSES.includes(existing.status)) {
         await tx.opportunity.update({
-          where: { id: byOcid.id },
+          where: { id: existing.id },
           data: {
             title: notice.title,
-            summary: notice.summary,
-            deadlineAt: notice.deadlineAt,
-            clarificationDeadlineAt: notice.clarificationDeadlineAt,
-            valueMin: notice.valueMin,
-            valueMax: notice.valueMax,
-            cpv: notice.cpv,
+            ...(notice.summary !== null ? { summary: notice.summary } : {}),
+            ...(notice.deadlineAt !== null ? { deadlineAt: notice.deadlineAt } : {}),
+            ...(notice.clarificationDeadlineAt !== null ? { clarificationDeadlineAt: notice.clarificationDeadlineAt } : {}),
+            ...(notice.valueMin !== null ? { valueMin: notice.valueMin } : {}),
+            ...(notice.valueMax !== null ? { valueMax: notice.valueMax } : {}),
+            ...(notice.cpv.length ? { cpv: notice.cpv } : {}),
           },
         });
+      } else {
+        await tx.opportunity.update({ where: { id: existing.id }, data: { updatedAt: new Date() } });
       }
-      await tx.opportunityEvidence.create({ data: { ...evidence, opportunityId: byOcid.id } });
-      await audit(tx, null, "opportunity.notice_updated", "Opportunity", byOcid.id, { source: sourceKey, releaseId: notice.releaseId });
+      await tx.opportunityEvidence.create({ data: { ...evidence, opportunityId: existing.id } });
+      await audit(tx, null, "opportunity.notice_updated", "Opportunity", existing.id, { source: sourceKey, releaseId: notice.releaseId });
       updated = 1;
     } else {
-      // The same tender from another portal: same buyer, title and deadline day.
+      // The same tender published on another portal: same buyer, title and
+      // deadline day, a different source, and no conflicting value. Two notices
+      // from the same portal are never merged, whatever their titles.
       const key = crossSourceKey(notice);
       let twin: string | null = null;
       if (key && buyerId && notice.deadlineAt) {
@@ -144,15 +156,22 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
         const candidates = await tx.opportunity.findMany({
           where: {
             buyerOrganisationId: buyerId,
+            origin: { not: sourceKey },
             deadlineAt: { gte: new Date(`${day}T00:00:00Z`), lt: new Date(new Date(`${day}T00:00:00Z`).getTime() + 86_400_000) },
           },
-          select: { id: true, title: true, deadlineAt: true },
+          select: { id: true, title: true, deadlineAt: true, valueMax: true },
         });
         twin =
-          candidates.find((c) => crossSourceKey({ buyerName: notice.buyerName, title: c.title, deadlineAt: c.deadlineAt }) === key)?.id ?? null;
+          candidates.find((c) => {
+            if (crossSourceKey({ buyerName: notice.buyerName, title: c.title, deadlineAt: c.deadlineAt }) !== key) return false;
+            const theirs = c.valueMax === null ? null : Number(c.valueMax.toString());
+            return valuesAgree(theirs, notice.valueMax);
+          })?.id ?? null;
       }
       if (twin) {
         await tx.opportunityEvidence.create({ data: { ...evidence, opportunityId: twin } });
+        // Agents page on updatedAt, so the new link must move the record.
+        await tx.opportunity.update({ where: { id: twin }, data: { updatedAt: new Date() } });
         await audit(tx, null, "opportunity.duplicate_merged", "Opportunity", twin, { source: sourceKey, ocid: notice.ocid });
         merged = 1;
       } else {
@@ -214,8 +233,12 @@ async function ingestPage(sourceKey: OfficialSource, runId: string, releases: Oc
     const { relevant, why } = isRelevant(release);
     if (!relevant) continue;
     const notice = normalise(sourceKey, release);
-    if (!notice) continue;
     counts.relevant += 1;
+    if (!notice) {
+      // IT-relevant but missing an OCID, a release id or a title: recorded, not dropped silently.
+      errors.push(`${release.ocid ?? "no ocid"}: unreadable notice`);
+      continue;
+    }
     try {
       const r = await ingestOne(sourceKey, runId, release, notice, why ?? "");
       counts.created += r.created;
@@ -241,7 +264,8 @@ export async function runSource(
   const counts: Counts = { fetched: 0, relevant: 0, created: 0, updated: 0, merged: 0, contacts: 0 };
   const source = await prisma.opportunitySource.findUnique({ where: { key: sourceKey } });
   if (!source) return { source: sourceKey, status: "skipped", ...counts, detail: "Unknown source." };
-  if (!source.enabled && options.trigger === "cron") return { source: sourceKey, status: "skipped", ...counts, detail: "Switched off." };
+  // A switched-off feed is never read, by the cron or by hand: reading it stores buyer contacts.
+  if (!source.enabled) return { source: sourceKey, status: "skipped", ...counts, detail: "This feed is switched off. Switch it on first." };
 
   // Claim the source: refuse if a run started recently and has not finished.
   const runId = crypto.randomUUID();
@@ -328,13 +352,21 @@ export async function runSource(
       where: { key: sourceKey },
       data:
         status === "succeeded"
-          ? {
-              // Next window starts where this chain's window ended (or when this run began).
-              lastSuccessAt: nextCursor ? source.lastSuccessAt : (chainUpto ?? now),
-              cursor: nextCursor,
-              health: errors.length ? "degraded" : "ok",
-            }
-          : { health: status === "retry" ? "degraded" : "failing" },
+          ? errors.length
+            ? // Some notices were not stored: keep the old checkpoint, so the next
+              // run reads the same window again. Stored notices are skipped then;
+              // the failed ones are retried.
+              { cursor: null, health: "degraded" }
+            : {
+                // Next window starts where this chain's window ended (or when this run began).
+                lastSuccessAt: nextCursor ? source.lastSuccessAt : (chainUpto ?? now),
+                cursor: nextCursor,
+                health: "ok",
+              }
+          : status === "retry"
+            ? { health: "degraded" }
+            : // A hard failure clears any saved page link, so a bad link cannot keep the source stuck.
+              { health: "failing", cursor: null },
     });
     await audit(tx, options.userId ?? null, "procurement.sync", "IngestionRun", runId, { source: sourceKey, trigger: options.trigger, status, ...counts });
   });

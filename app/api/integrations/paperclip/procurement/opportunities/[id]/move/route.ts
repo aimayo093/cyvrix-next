@@ -1,6 +1,6 @@
 import { connection } from "next/server";
 import { z } from "zod";
-import { agentMove } from "@/lib/procurement/agent-api";
+import { agentMove, agentName } from "@/lib/procurement/agent-api";
 import { guard, json } from "@/lib/paperclip-route";
 
 /**
@@ -9,7 +9,7 @@ import { guard, json } from "@/lib/paperclip-route";
  * Only the moves the lifecycle allows agents succeed (validate, qualify,
  * research); everything else is refused with the reason (409).
  */
-const bodySchema = z.object({ to: z.string().regex(/^[A-Za-z]{3,40}$/), agent: z.string().trim().min(2).max(80) });
+const bodySchema = z.object({ to: z.string().regex(/^[A-Za-z]{3,40}$/), agent: agentName }).strict();
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   await connection();

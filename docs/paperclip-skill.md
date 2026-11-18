@@ -164,8 +164,8 @@ personal profile link (LinkedIn and similar) is refused with 422.
 
 | Call | What it does |
 | --- | --- |
-| `GET /procurement/opportunities?since=<ISO>&kind=&status=&limit=` | Opportunities changed since `since`, oldest first. Pass the returned `next` back as `since`. |
-| `GET /procurement/organisations?category=` | Research targets and buyers (`field_engineering`, `government_defence`, `manufacturer`, `enterprise_distribution`, `buyer`). |
+| `GET /procurement/opportunities?cursor=&kind=&status=&limit=` | Opportunities changed after `cursor`, oldest first. Pass the returned `next` back as `cursor`; `more` is true while another page waits. `since=<ISO time>` starts from a moment instead. Leads typed or pasted by people (the ChatGPT report) show their title as withheld: open the link. |
+| `GET /procurement/organisations?category=&after=` | Research targets and buyers (`field_engineering`, `government_defence`, `manufacturer`, `enterprise_distribution`, `buyer`), 500 per page; pass `next` back as `after`. CYVRIX clients are not listed. |
 | `POST /procurement/research` | Record an opportunity you found. It lands as `Discovered` (or `TargetIdentified` for a partnership) for a person to review. |
 | `POST /procurement/opportunities/<id>/move` | Ask to move a record: `{ "to": "Validated", "agent": "<your name>" }`. Only validate, qualify and research moves can succeed; anything else returns 409 with the reason. |
 
@@ -180,14 +180,14 @@ Research body:
   "evidenceUrl": "https://example.com/news/new-stores",
   "deadlineAt": "2026-12-15T12:00:00Z",
   "valueMax": 50000,
-  "confirmedBuying": false,
   "source": { "agent": "CCO", "issueId": "<Paperclip issue id>" }
 }
 ```
 
 - `kind`: `commercial`, `tender` or `partnership`.
 - `evidenceUrl` is required and must be an `https` link to a public page.
-- `confirmedBuying` is `true` only for a published tender or request for quotes, never for an inferred prospect.
+- Whether something is a confirmed buying opportunity is decided by a person; you cannot set it.
+- Unknown fields are refused (422), so send only the fields above. `source.issueId` is a Paperclip issue id or key.
 - Retrying with the same `idempotencyKey` returns the original; the same evidence link within 30 days does too.
 
 You cannot submit, approve, award or contact anyone through this API. Those steps

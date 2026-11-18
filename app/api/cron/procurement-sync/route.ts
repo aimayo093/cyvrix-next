@@ -11,9 +11,17 @@ import { isScheduledRun } from "@/lib/procurement/schedule";
  * for a source the founder has not switched on (Admin -> Procurement -> Sources).
  *
  * Sources run one after another, so the database pool sees one connection at a
- * time (DECISIONS section 7).
+ * time (DECISIONS section 7). Each is isolated: one failing never stops the next.
+ * The response is 500 when any source failed, so the cron monitor shows it.
  */
 export const maxDuration = 60;
+
+// One feed request may take up to 20 s (lib/procurement/feeds.ts), and the
+// budget is only checked between requests, so each source gets at most 15 s
+// of new requests and the loop stops starting sources with under 25 s left.
+const TOTAL_BUDGET_MS = 55_000;
+const PER_SOURCE_BUDGET_MS = 15_000;
+const RESERVE_MS = 25_000;
 
 function isAuthorised(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -22,6 +30,8 @@ function isAuthorised(req: Request) {
   const expected = Buffer.from(`Bearer ${secret}`);
   return given.length === expected.length && crypto.timingSafeEqual(given, expected);
 }
+
+const empty = { fetched: 0, relevant: 0, created: 0, updated: 0, merged: 0, contacts: 0 };
 
 export async function GET(req: Request) {
   if (!isAuthorised(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -32,9 +42,18 @@ export async function GET(req: Request) {
   const results: RunResult[] = [];
   const started = Date.now();
   for (const source of OFFICIAL_SOURCES) {
-    const remaining = 55_000 - (Date.now() - started);
-    if (remaining < 10_000) break;
-    results.push(await runSource(source, { trigger: "cron", now, budgetMs: Math.min(40_000, remaining - 5_000) }));
+    const remaining = TOTAL_BUDGET_MS - (Date.now() - started);
+    if (remaining < RESERVE_MS) {
+      results.push({ source, status: "skipped", ...empty, detail: "Not reached in today's time budget; it runs tomorrow or with Run now." });
+      continue;
+    }
+    try {
+      results.push(await runSource(source, { trigger: "cron", now, budgetMs: PER_SOURCE_BUDGET_MS }));
+    } catch (error) {
+      console.error("[procurement-sync] source failed", source, error instanceof Error ? error.name : "error");
+      results.push({ source, status: "failed", ...empty, detail: error instanceof Error ? error.name : "error" });
+    }
   }
-  return NextResponse.json({ ok: true, results });
+  const ok = results.every((r) => r.status !== "failed");
+  return NextResponse.json({ ok, results }, { status: ok ? 200 : 500 });
 }

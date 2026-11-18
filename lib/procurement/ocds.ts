@@ -94,8 +94,8 @@ export const RELEVANT_KEYWORDS = [
   "network infrastructure",
   "network installation",
   "networking",
-  "lan ",
-  "wan ",
+  "lan",
+  "wan",
   "microsoft 365",
   "office 365",
   "azure",
@@ -146,12 +146,27 @@ export function cpvCodes(release: OcdsRelease): string[] {
   return [...codes].filter((c) => /^\d{8}$/.test(c));
 }
 
+/**
+ * A keyword matches only as whole words, so "it services" does not match
+ * "audit services" and "lan" does not match "plan" or "clean".
+ */
+const patterns = new Map<string, RegExp>();
+function keywordPattern(keyword: string): RegExp {
+  let re = patterns.get(keyword);
+  if (!re) {
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&").replace(/\s+/g, "\\s+");
+    re = new RegExp(`(?<![a-z0-9])${escaped}(?![a-z0-9])`, "i");
+    patterns.set(keyword, re);
+  }
+  return re;
+}
+
 export function isRelevant(release: OcdsRelease): { relevant: boolean; why: string | null } {
   const codes = cpvCodes(release);
   const hit = codes.find((c) => RELEVANT_CPV_PREFIXES.some((p) => c.startsWith(p)));
   if (hit) return { relevant: true, why: `CPV ${hit}` };
   const text = `${release.tender?.title ?? ""} ${release.tender?.description ?? ""}`.toLowerCase();
-  const word = RELEVANT_KEYWORDS.find((k) => text.includes(k));
+  const word = RELEVANT_KEYWORDS.find((k) => keywordPattern(k).test(text));
   if (word) return { relevant: true, why: `keyword "${word}"` };
   return { relevant: false, why: null };
 }

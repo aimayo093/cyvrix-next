@@ -33,28 +33,47 @@ export type AgentOrganisation = { id: string; name: string; categories: string[]
 
 const EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const HAS_EMAIL = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
-// Phone numbers: international (+ and 9-14 more digits) or UK national (0 and
-// 9-10 more digits), allowing spaces, brackets and dashes. Dates and money
-// ("2026-12-15", "250000") do not start with + or 0, so they are not matched.
-const PHONE = /(?<![\w+])(?:\+\d[\d\s().-]{8,17}\d|0\d[\d\s().-]{8,12}\d)(?!\w)/g;
-const HAS_PHONE = /(?<![\w+])(?:\+\d[\d\s().-]{8,17}\d|0\d[\d\s().-]{8,12}\d)(?!\w)/;
+// Phone candidates: international (+ or 00, then 9-14 more digits) or UK
+// national (0 and 9-10 more digits), with spaces, brackets or dashes. Dates and
+// money ("2026-12-15", "250000") do not start with + or 0. A candidate that is
+// a date or a date range ("01-12-2026 - 15-12-2026") is not a phone number.
+const PHONE = /(?<![\w+])(?:(?:\+|00)\d[\d\s()-]{7,17}\d|0\d[\d\s()-]{8,12}\d)(?!\w)/g;
+const DATE_LIKE = /\b\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}\b/;
+const LINK = /https?:\/\/[^\s<>"')]+/gi;
 const PERSONAL_HOSTS = [/(^|\.)linkedin\.com$/i, /(^|\.)facebook\.com$/i, /(^|\.)instagram\.com$/i, /(^|\.)twitter\.com$/i, /(^|\.)x\.com$/i, /(^|\.)tiktok\.com$/i];
+
+function isPhone(candidate: string): boolean {
+  if (DATE_LIKE.test(candidate)) return false;
+  const digits = candidate.replace(/\D/g, "").length;
+  return candidate.startsWith("0") && !candidate.startsWith("00") ? digits >= 10 && digits <= 11 : digits >= 10 && digits <= 16;
+}
 
 /** True when text holds an email address, a phone number or a personal-profile link. */
 export function containsPersonalData(text: string): boolean {
-  if (HAS_EMAIL.test(text) || HAS_PHONE.test(text)) return true;
+  if (HAS_EMAIL.test(text)) return true;
+  if ((text.match(PHONE) ?? []).some(isPhone)) return true;
   if (/mailto:|tel:/i.test(text)) return true;
-  for (const m of text.match(/https?:\/\/[^\s<>"')]+/gi) ?? []) if (!isPublicLink(m)) return true;
+  for (const m of text.match(LINK) ?? []) if (!isPublicLink(m)) return true;
   return false;
 }
 
-/** Removes email addresses and phone numbers from a short text such as a title. */
+/** Removes email addresses, phone numbers and personal links from a short text such as a title. */
 export function scrub(text: string): string {
   return text
+    .replace(LINK, (m) => (isPublicLink(m) ? m : "[link removed]"))
     .replace(EMAIL, "[email removed]")
-    .replace(PHONE, "[phone removed]")
+    .replace(PHONE, (m) => (isPhone(m) ? "[phone removed]" : m))
     .trim();
 }
+
+/**
+ * Titles typed or pasted by people (the ChatGPT report) are free text that can
+ * name a person, and no pattern reliably spots a name. They are withheld;
+ * the agent gets the lead's public link instead. Official notice titles and
+ * agents' own research titles (checked on the way in) are passed on.
+ */
+export const WITHHELD_TITLE_ORIGINS = ["chatgpt_task", "manual", "website"] as const;
+export const WITHHELD_TITLE = "Title withheld (it may name a person); see the link";
 
 /** A link an agent may receive: https, and not a personal social-media profile. */
 export function isPublicLink(url: string): boolean {
@@ -94,7 +113,7 @@ export function agentOpportunity(o: OpportunityRow): AgentOpportunity {
     id: o.id,
     kind: o.kind,
     status: o.status,
-    title: scrub(o.title),
+    title: (WITHHELD_TITLE_ORIGINS as readonly string[]).includes(o.origin) ? WITHHELD_TITLE : scrub(o.title),
     buyer: o.Buyer?.name ? scrub(o.Buyer.name) : null,
     origin: o.origin,
     confirmedBuying: o.confirmedBuying,

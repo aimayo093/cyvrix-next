@@ -855,7 +855,10 @@ is configured.
 
 **Phase 2: official feeds and the ChatGPT import (18 November 2026).**
 - Find a Tender, Public Contracts Scotland and Sell2Wales are read from their
-  public OCDS APIs. Each feed is off until the founder switches it on, then
+  public OCDS APIs (Sell2Wales has no download fallback; a failing API shows
+  as degraded). Each feed is off until the founder switches it on, which is
+  refused until the published privacy policy covers buyer contacts from public
+  tenders (`lib/procurement/privacy-gate.ts`, D12). It is then
   read once a day at 06:00 UTC. The schedule is daily because every other job
   on this site is, and the plan's cron limits were not confirmed. "Run now" is
   available to the founder.
