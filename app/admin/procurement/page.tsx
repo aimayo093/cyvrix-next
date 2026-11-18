@@ -670,7 +670,8 @@ async function Accounts({ isFounder }: { isFounder: boolean }) {
                   <label className="space-y-1"><span className={label}>Password-manager entry name</span><input name="credentialLabel" defaultValue={live?.credentialLabel ?? ""} maxLength={120} placeholder="e.g. 1Password: Cyvrix / Sell2Wales" className={field} /></label>
                   <label className="space-y-1"><span className={label}>Registered on</span><input name="registeredAt" type="date" defaultValue={live?.registeredAt?.toISOString().slice(0, 10) ?? ""} className={field} /></label>
                   <label className="space-y-1"><span className={label}>Renewal date</span><input name="renewalAt" type="date" defaultValue={live?.renewalAt?.toISOString().slice(0, 10) ?? ""} className={field} /></label>
-                  <label className="space-y-1 md:col-span-2"><span className={label}>Restrictions or notes</span><input name="notes" defaultValue={live?.notes ?? ""} maxLength={2000} className={field} /></label>
+                  <label className="space-y-1"><span className={label}>Restrictions (what the account may not do)</span><input name="restrictions" defaultValue={live?.restrictions ?? ""} maxLength={1000} className={field} /></label>
+                  <label className="space-y-1"><span className={label}>Notes</span><input name="notes" defaultValue={live?.notes ?? ""} maxLength={2000} className={field} /></label>
                   <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="mfaRequired" defaultChecked={live?.mfaRequired ?? false} /> Two-factor required</label>
                   <div className="md:col-span-3"><button className={secondaryButton}>Save account</button></div>
                 </form>

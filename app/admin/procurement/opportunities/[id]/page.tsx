@@ -81,8 +81,8 @@ async function OpportunityContent({ params, searchParams }: Props) {
   const [versions, history, assessments] = await Promise.all([
     prisma.companyDocumentVersion.findMany({ where: { status: { not: "superseded" } }, orderBy: { createdAt: "desc" }, take: 200, include: { Document: true } }),
     prisma.auditLog.findMany({ where: { entityType: "Opportunity", entityId: opp.id }, orderBy: { createdAt: "desc" }, take: 50 }),
-    // Every assessment is kept and shown: they are the record of each judgement.
-    prisma.bidAssessment.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "desc" }, take: 200 }),
+    // Every assessment is kept and shown, uncapped: they are the record of each judgement.
+    prisma.bidAssessment.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "desc" } }),
   ]);
   const scoringModel = opp.kind === "partnership" ? "partnership" : "bid";
   const moves = nextStates(opp.kind as OpportunityKind, opp.status);

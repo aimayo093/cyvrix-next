@@ -244,7 +244,9 @@ export async function requestApproval(input: {
     // authenticator check made then. The founder still registers by hand (D8).
     if (input.actionType === "register_account") {
       // Two portals at one address name no portal, so no policy applies.
-      const { portal } = await portalForDestination(tx, pkg.destination);
+      // The portal row is locked and read again, so a policy switched off or an
+      // address changed at this moment is seen before the approval is written.
+      const { portal } = await portalForDestination(tx, pkg.destination, { lock: true });
       const policy = standingPolicyApplies({ portal, actionType: input.actionType, declarations: pkg.declarations, priceSnapshot: pkg.priceSnapshot });
       if (policy.applies && portal?.standingPolicyById && portal.standingPolicyAt) {
         await tx.approvalRequest.update({ where: { id }, data: { status: "approved" } });
@@ -451,7 +453,10 @@ export async function recordExecutionOutcome(input: {
         // Never over an account already active: that one is kept and the
         // duplicate registration is recorded for a person to look at. A
         // destination that matches no portal is recorded too, not passed over.
-        const { portal, ambiguous } = await portalForDestination(tx, decision?.Request.destination ?? "");
+        // Locking the portal row serialises two confirmations (and an admin
+        // recording an account) for one portal: the second sees the first's
+        // account instead of colliding with the one-live-account rule.
+        const { portal, ambiguous } = await portalForDestination(tx, decision?.Request.destination ?? "", { lock: true });
         if (!portal) {
           await audit(tx, input.userId, ambiguous ? "registration.portal_ambiguous" : "registration.no_portal_matched", "ExecutionRecord", exec.id, {
             opportunityId: exec.opportunityId,
@@ -460,7 +465,7 @@ export async function recordExecutionOutcome(input: {
         } else {
           const live = await tx.supplierAccount.findFirst({
             where: { portalId: portal.id, status: { in: [...LIVE_ACCOUNT_STATUSES] } },
-            select: { id: true, status: true },
+            select: { id: true, status: true, accountRef: true },
           });
           const data = {
             status: "pending",
@@ -481,7 +486,16 @@ export async function recordExecutionOutcome(input: {
               executionId: exec.id,
               portalReference: input.portalReference ?? null,
             });
-          } else if (!live) {
+          } else if (live) {
+            // What the account was before (a suspension, say) stays on record.
+            await audit(tx, input.userId, "registration.account_replaced", "SupplierAccount", live.id, {
+              portalId: portal.id,
+              executionId: exec.id,
+              previousStatus: live.status,
+              previousReference: live.accountRef,
+              portalReference: input.portalReference ?? null,
+            });
+          } else {
             await tx.supplierAccount.create({ data: { id: crypto.randomUUID(), portalId: portal.id, ...data } });
           }
         }

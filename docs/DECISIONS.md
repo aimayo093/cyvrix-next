@@ -908,6 +908,14 @@ is configured.
 non-local URL).
 
 **Phase 3: supplier accounts, partnerships and scoring (18 November 2026).**
+The database rules below come from three migrations:
+`20261118120000_procurement_partnerships` (tables, one live account per
+portal, the free-portal policy check, verified needs a source),
+`20261119130000_procurement_partnerships_hardening` (one opportunity per
+programme; a disqualifier means "disqualified"; scores are whole numbers 0 to
+5) and `20261119140000_procurement_assessment_keys` (an assessment holds
+exactly its model's categories). All three must be applied before the code
+that relies on them is deployed.
 - People register and submit by hand (D8). The site never holds a portal
   password: an account records only the name of the password-manager entry,
   and a value that looks like a secret is refused (D7).

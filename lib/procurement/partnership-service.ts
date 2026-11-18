@@ -112,7 +112,11 @@ export async function saveProgrammeRecord(input: ProgrammeInput, userId: string)
   const org = await prisma.organisation.findUnique({ where: { id: input.organisationId }, select: { website: true } });
   if (!org) return fail("That organisation could not be found.");
   if (input.verified && input.sourceUrl && !sourceMatchesOrganisation(input.sourceUrl, org.website)) {
-    return fail("A verified programme's source must be on the organisation's own website.");
+    return fail(
+      org.website
+        ? "A verified programme's source must be on the organisation's own website."
+        : "Record the organisation's website first: a programme is verified against a page on that site."
+    );
   }
   const id = input.id ?? crypto.randomUUID();
   try {
@@ -207,13 +211,16 @@ export async function saveAccount(input: {
     renewalAt: input.renewalAt ?? null,
     restrictions: input.restrictions ?? null,
     notes: input.notes ?? null,
-    ownerUserId: input.userId,
   };
   try {
     const id = input.id ?? crypto.randomUUID();
     await prisma.$transaction(async (tx) => {
+      // Same lock as a confirmed registration takes (service.ts), so the two
+      // cannot interleave on one portal's accounts.
+      await tx.$queryRaw`SELECT 1 FROM "public"."SupplierPortal" WHERE "id" = ${input.portalId} FOR UPDATE`;
+      // The owner is whoever recorded the account; editing it does not move ownership.
       if (input.id) await tx.supplierAccount.update({ where: { id: input.id }, data });
-      else await tx.supplierAccount.create({ data: { id, ...data } });
+      else await tx.supplierAccount.create({ data: { id, ...data, ownerUserId: input.userId } });
       // The label is a name, but it is still not copied into the audit log.
       await audit(tx, input.userId, input.id ? "supplier_account.updated" : "supplier_account.created", "SupplierAccount", id, {
         portalId: input.portalId,

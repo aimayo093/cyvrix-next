@@ -96,7 +96,8 @@ export function policyMustReset(
   before: { url: string; registrationUrl: string | null; cost: string },
   after: { url: string; registrationUrl: string | null; cost: string }
 ): boolean {
-  return after.cost !== "free" || before.url !== after.url || (before.registrationUrl ?? null) !== (after.registrationUrl ?? null) || before.cost !== after.cost;
+  const same = (a: string | null, b: string | null) => (a ? normaliseAddress(a) : null) === (b ? normaliseAddress(b) : null);
+  return after.cost !== "free" || !same(before.url, after.url) || !same(before.registrationUrl ?? null, after.registrationUrl ?? null) || before.cost !== after.cost;
 }
 
 /**
@@ -113,12 +114,45 @@ export function parseList(raw: string | undefined, re: RegExp, max = 30): { ok: 
 }
 
 /**
+ * A portal address in the one form it is stored and compared in: lower-case
+ * scheme and host, no default port, no fragment, no trailing slash on a
+ * path. Anything that is not a URL is returned trimmed, as it was.
+ */
+export function normaliseAddress(raw: string): string {
+  const t = raw.trim();
+  try {
+    const u = new URL(t);
+    if (u.protocol !== "https:" && u.protocol !== "http:") return t;
+    u.hash = "";
+    const path = u.pathname.replace(/\/+$/, "");
+    return `${u.protocol}//${u.host.toLowerCase()}${path}${u.search}`;
+  } catch {
+    return t;
+  }
+}
+
+/**
+ * The forms an address may have been stored in: as typed, normalised, and
+ * normalised with a trailing slash (the seeded portals end in "/"). Matching
+ * on all of them means a trailing slash or a capital letter in the host does
+ * not decide whether a standing policy applies.
+ */
+export function addressVariants(raw: string): string[] {
+  const t = raw.trim();
+  if (!t) return [];
+  const n = normaliseAddress(t);
+  const withSlash = /^https?:\/\//i.test(n) && !new URL(n).search ? `${n}/` : n;
+  return [...new Set([t, n, withSlash])];
+}
+
+/**
  * Spec section 35: a programme is verified against the organisation's own
- * page. When the organisation's website is known, the source must be on that
- * site (or a subdomain of it).
+ * page, so the source must be on the organisation's recorded website (or a
+ * subdomain of it). With no website recorded there is nothing to check
+ * against, and a programme cannot be marked verified.
  */
 export function sourceMatchesOrganisation(sourceUrl: string, website: string | null): boolean {
-  if (!website) return true;
+  if (!website) return false;
   try {
     const host = new URL(sourceUrl).hostname.toLowerCase().replace(/^www\./, "");
     const site = new URL(website).hostname.toLowerCase().replace(/^www\./, "");

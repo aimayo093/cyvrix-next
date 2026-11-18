@@ -5,9 +5,10 @@
  *
  * Runs ONLY against a throwaway local database, never Supabase:
  *   1. start Postgres locally (for example docker run … postgres:17-alpine)
- *   2. apply scripts/fixtures/procurement/stub-schema.sql, then the four
- *      procurement migrations in order (foundation, organisations, hardening,
- *      partnerships)
+ *   2. apply scripts/fixtures/procurement/stub-schema.sql, then every
+ *      procurement migration in name order (prisma/migrations/*_procurement_*):
+ *      foundation, target organisations, hardening, partnerships, partnerships
+ *      hardening, assessment keys. Later checks rely on the last two.
  *
  * The stub has no audit hash-chain triggers: the chain itself is tested by the
  * Security Center's audit_log_verify() on the real database, not here.
@@ -651,6 +652,12 @@ try {
   await rejects("and 'disqualified' without a disqualifier", () => rawAssessment({ recommendation: "disqualified" }), "BidAssessment_disqualified_matches");
   await rejects("the database refuses a score of 6", () => rawAssessment({ scores: { ...bidScores, profitability: 6 } }), "BidAssessment_scores_check");
   await rejects("and a score of 2.5", () => rawAssessment({ scores: { ...bidScores, profitability: 2.5 } }), "BidAssessment_scores_check");
+  const { strategic_value: _dropped, ...sixScores } = bidScores;
+  void _dropped;
+  await rejects("the database refuses an assessment missing a category", () => rawAssessment({ scores: sixScores }), "BidAssessment_scores_keys");
+  await rejects("and one with an unknown category", () => rawAssessment({ scores: { ...bidScores, luck: 5 } }), "BidAssessment_scores_keys");
+  await rejects("and empty scores", () => rawAssessment({ scores: {} }), "BidAssessment_scores_keys");
+  await rejects("and bid categories under the partnership model", () => rawAssessment({ model: "partnership" }), "BidAssessment_scores_keys");
 
   console.log("\n  Review fixes (PR 16)");
   // A portal's address change ends its standing policy.
@@ -709,8 +716,39 @@ try {
   const sharedPkg = await registrationPackage(sharedUrl, []);
   const sharedReq = await service.requestApproval({ packageId: sharedPkg, actionType: "register_account", userId: founder });
   check("a destination shared by two portals is never pre-approved", sharedReq.ok ? (await prisma.approvalRequest.findUniqueOrThrow({ where: { id: sharedReq.value } })).status : "failed", "pending");
+  check(
+    "an address differing only by a trailing slash or capitals is the same portal",
+    (await partnerships.savePortalRecord({ name: "Slash copy", kind: "procurement_portal", url: "https://Contracts.MOD.uk", registrationUrl: null, termsUrl: null, cost: "free", organisationId: null, notes: null, requiredFacts: [], requiredDocuments: [] }, founder)).ok,
+    false
+  );
+  // A destination typed without the trailing slash still finds the portal and its policy.
+  await partnerships.setStandingPolicy(dsp.id, true, founder, new Date());
+  await prisma.supplierPortal.update({ where: { id: dsp.id }, data: { registrationUrl: null } });
+  await prisma.supplierAccount.updateMany({ where: { portalId: dsp.id, status: "active" }, data: { status: "expired" } });
+  const noSlash = await registrationPackage("https://contracts.mod.uk", []);
+  const noSlashReq = await service.requestApproval({ packageId: noSlash, actionType: "register_account", userId: founder });
+  check("a destination without the trailing slash is still pre-approved", noSlashReq.ok ? (await prisma.approvalRequest.findUniqueOrThrow({ where: { id: noSlashReq.value } })).status : "failed", "approved");
+  // Replacing an expired account keeps what it was on record.
+  const noSlashDecision = noSlashReq.ok ? await prisma.approvalDecision.findUnique({ where: { requestId: noSlashReq.value } }) : null;
+  const noSlashExec = await service.startExecution({ decisionId: noSlashDecision?.id ?? "", mode: "manual", userId: founder });
+  await service.recordExecutionOutcome({ executionId: noSlashExec.ok ? noSlashExec.value : "", outcome: "confirmed", portalReference: "DSP-NEW-2", receiptVersionId: await newDoc("dsp third confirmation"), userId: founder });
+  const replacedLog = await prisma.auditLog.findFirst({ where: { action: "registration.account_replaced", entityId: liveAccount.id } });
+  check("the replaced account's previous status and reference are audited", [(replacedLog?.metadata as Record<string, unknown>)?.previousStatus, (replacedLog?.metadata as Record<string, unknown>)?.previousReference], ["expired", "DSP-LIVE-1"]);
+  check("and the account now carries the new registration", (await prisma.supplierAccount.findUniqueOrThrow({ where: { id: liveAccount.id } })).accountRef, "DSP-NEW-2");
+  // Editing an account keeps its owner and saves its restrictions.
+  await prisma.supplierAccount.update({ where: { id: liveAccount.id }, data: { ownerUserId: "original-owner" } });
+  await partnerships.saveAccount({ id: liveAccount.id, portalId: dsp.id, status: "active", restrictions: "Lot 1 only", userId: "another-admin" });
+  const edited = await prisma.supplierAccount.findUniqueOrThrow({ where: { id: liveAccount.id } });
+  check("editing an account does not move its owner", edited.ownerUserId, "original-owner");
+  check("restrictions are saved", edited.restrictions, "Lot 1 only");
 
   // Programmes: verified only from the organisation's own site; one opportunity each.
+  const noSiteOrg = await prisma.organisation.create({ data: { id: uuid(), name: "No Website Ltd", categories: ["manufacturer"] } });
+  const noSite = await partnerships.saveProgrammeRecord(
+    { organisationId: noSiteOrg.id, name: "Reseller", categories: [], url: null, sourceUrl: "https://anywhere.example/page", verified: true, availability: "open", fees: null, requirements: null, portalId: null },
+    founder
+  );
+  check("with no website recorded, a programme cannot be marked verified", noSite.ok ? "saved" : noSite.reason.includes("Record the organisation's website first"), true);
   await prisma.organisation.update({ where: { id: vendor.id }, data: { website: "https://www.example-vendor.com" } });
   const offSite = await partnerships.saveProgrammeRecord(
     { organisationId: vendor.id, name: "Service partner", categories: ["managed_service_delivery"], url: null, sourceUrl: "https://blog.elsewhere.example/post", verified: true, availability: "open", fees: null, requirements: null, portalId: null },

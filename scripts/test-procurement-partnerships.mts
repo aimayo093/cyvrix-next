@@ -5,7 +5,9 @@
  * Run with: npm run test:procurement-partnerships
  */
 import {
+  addressVariants,
   credentialLabelProblem,
+  normaliseAddress,
   parseList,
   policyMustReset,
   registrationReadiness,
@@ -28,12 +30,12 @@ console.log("\n  Credential labels (D7)");
 check("a password-manager entry name is fine", credentialLabelProblem("1Password: Cyvrix / Sell2Wales"), null);
 check("a plain name is fine", credentialLabelProblem("Bitwarden - Find a Tender login"), null);
 check("a long word without digits is fine", credentialLabelProblem("Cyvrix procurement-portals"), null);
-check("a password-like string is refused", credentialLabelProblem("Tr0ub4dor&3xyzQ!")?.includes("password") ?? false, true);
-check("an API-key-like string is refused", credentialLabelProblem("sk_live_51HabcDEF123456789")?.includes("password") ?? false, true);
-check("a secret after a name is refused", credentialLabelProblem("Sell2Wales: hunter2hunter2!!")?.includes("password") ?? false, true);
+check("a password-like string is refused", credentialLabelProblem("Tr0ub4dor&3xyzQ!")?.includes("looks like a password") ?? false, true);
+check("an API-key-like string is refused", credentialLabelProblem("sk_live_51HabcDEF123456789")?.includes("looks like a password") ?? false, true);
+check("a secret after a name is refused", credentialLabelProblem("Sell2Wales: hunter2hunter2!!")?.includes("looks like a password") ?? false, true);
 check("too short is refused", credentialLabelProblem("ab") !== null, true);
-check("a key with slashes is still a secret", credentialLabelProblem("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")?.includes("password") ?? false, true);
-check("a key with colons is still a secret", credentialLabelProblem("token:abc123:XYZ789:def456")?.includes("password") ?? false, true);
+check("a key with slashes is still a secret", credentialLabelProblem("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")?.includes("looks like a password") ?? false, true);
+check("a key with colons is still a secret", credentialLabelProblem("token:abc123:XYZ789:def456")?.includes("looks like a password") ?? false, true);
 check("a hyphenated name is not a secret", credentialLabelProblem("Bitwarden: tender-portal-accounts"), null);
 
 console.log("\n  Portal changes and the standing policy (D13)");
@@ -42,6 +44,11 @@ check("an unchanged free portal keeps its policy", policyMustReset(portal, { ...
 check("a new address ends it", policyMustReset(portal, { ...portal, url: "https://other.example/" }), true);
 check("a new registration page ends it", policyMustReset(portal, { ...portal, registrationUrl: "https://contracts.mod.uk/register" }), true);
 check("no longer free ends it", policyMustReset(portal, { ...portal, cost: "unknown" }), true);
+check("a trailing slash or capital in the host is not a change", policyMustReset(portal, { ...portal, url: "https://Contracts.MOD.uk" }), false);
+check("address forms: as typed, normalised and with a slash", addressVariants("https://Contracts.MOD.uk/"), ["https://Contracts.MOD.uk/", "https://contracts.mod.uk", "https://contracts.mod.uk/"]);
+check("a fragment is not part of the address", normaliseAddress("https://www.sell2wales.gov.wales/#top"), "https://www.sell2wales.gov.wales");
+check("a query is kept", normaliseAddress("https://portal.example/register?ref=1"), "https://portal.example/register?ref=1");
+check("an email destination is left as it is", addressVariants(" tenders@buyer.example "), ["tenders@buyer.example"]);
 
 console.log("\n  Form lists and programme sources");
 check("a valid list is read", parseList("company_name, company_number\nvat_number", /^[a-z][a-z0-9_]{1,63}$/), { ok: true, values: ["company_name", "company_number", "vat_number"] });
@@ -50,7 +57,7 @@ check("too many entries is an error", parseList(Array.from({ length: 31 }, (_, i
 check("a source on the organisation's site matches", sourceMatchesOrganisation("https://partners.dell.com/uk/programme", "https://www.dell.com"), true);
 check("a source elsewhere does not", sourceMatchesOrganisation("https://blog.example.com/dell-programme", "https://www.dell.com"), false);
 check("a look-alike host does not", sourceMatchesOrganisation("https://dell.com.evil.example/x", "https://www.dell.com"), false);
-check("with no known website, any source is accepted", sourceMatchesOrganisation("https://example.com/x", null), true);
+check("with no website recorded, nothing can be verified", sourceMatchesOrganisation("https://example.com/x", null), false);
 
 console.log("\n  Standing registration policy (D13)");
 const freeOn = { standingPolicy: true, cost: "free" };
