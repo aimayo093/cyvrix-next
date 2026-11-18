@@ -27,6 +27,8 @@ import { pursueProgrammeRecord, recordAssessment, saveAccount, savePortalRecord,
 import { ACCOUNT_STATUSES, PARTNERSHIP_CATEGORIES, parseList, WEIGHTS, type AccountStatus, type ScoringModel } from "./partnerships";
 import { MAX_REPORT_CHARS, parseReportWithCount } from "./report-import";
 import { verifyStepUp } from "./step-up";
+import { MAX_DISQUALIFIERS, REQUIREMENT_KINDS, REQUIREMENT_STATUSES } from "./requirements";
+import { fetchTenderDocument, refreshNoticeDocuments, saveRequirement, setDeadlines } from "./tender-service";
 
 /**
  * Admin actions for /admin/procurement. Each one checks the role again (a form
@@ -779,10 +781,101 @@ export async function recordAssessmentAction(fd: FormData) {
     const raw = text(fd, `score_${category}`);
     scores[category] = raw === undefined ? NaN : Number(raw);
   }
-  const disqualifiers = (text(fd, "disqualifiers") ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 20);
+  const disqualifiers = (text(fd, "disqualifiers") ?? "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, MAX_DISQUALIFIERS);
   const result = await recordAssessment({ opportunityId: id.data!, model: model!, scores, disqualifiers, assumptions: text(fd, "assumptions"), authorId: user.id });
   revalidatePath(oppPath(id.data!));
   if (!result.ok) go(oppPath(id.data!), "error", result.reason);
   const v = (result as { value: { total: number; recommendation: string } }).value;
   go(oppPath(id.data!), "success", `Assessment recorded: ${v.total} / 100, ${v.recommendation}. This is a recommendation, not a prediction of winning.`);
+}
+
+// ---------------------------------------------------------------- Phase 4: tender intelligence
+
+/** A London datetime-local value as UTC; an unreadable one goes back to the form it came from. */
+const londonOrNull = (raw: string | undefined, what: string, back: string): Date | null => {
+  if (!raw) return null;
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(raw)) go(back, "error", `The ${what} could not be read.`);
+  const t = londonWallTimeToUtc(raw);
+  if (!t.ok) go(back, "error", t.reason);
+  return (t as { ok: true; date: Date }).date;
+};
+
+export async function setDeadlinesAction(fd: FormData) {
+  const user = await requireAdmin();
+  const id = ID.safeParse(text(fd, "opportunityId"));
+  if (!id.success) go(HOME, "error", "That opportunity could not be found.");
+  const deadlineAt = londonOrNull(text(fd, "deadlineAt"), "submission deadline", oppPath(id.data!));
+  const clarificationDeadlineAt = londonOrNull(text(fd, "clarificationDeadlineAt"), "clarification deadline", oppPath(id.data!));
+  if (!deadlineAt && !clarificationDeadlineAt) go(oppPath(id.data!), "error", "Enter at least one date.");
+  const result = await setDeadlines({ opportunityId: id.data!, deadlineAt, clarificationDeadlineAt, userId: user.id });
+  revalidatePath(oppPath(id.data!));
+  if (!result.ok) go(oppPath(id.data!), "error", result.reason);
+  go(oppPath(id.data!), "success", "Dates saved (London time).");
+}
+
+export async function refreshTenderDocumentsAction(fd: FormData) {
+  const user = await requireAdmin();
+  const id = ID.safeParse(text(fd, "opportunityId"));
+  if (!id.success) go(HOME, "error", "That opportunity could not be found.");
+  const result = await refreshNoticeDocuments(id.data!, user.id);
+  revalidatePath(oppPath(id.data!));
+  if (!result.ok) go(oppPath(id.data!), "error", result.reason);
+  const added = (result as { value: number }).value;
+  go(oppPath(id.data!), "success", added ? `${added} document(s) listed from the notice.` : "No new documents in the notice.");
+}
+
+export async function fetchTenderDocumentAction(fd: FormData) {
+  const user = await requireAdmin();
+  const id = ID.safeParse(text(fd, "documentId"));
+  if (!id.success) go(HOME, "error", "That document could not be found.");
+  const doc = await prisma.tenderDocument.findUnique({ where: { id: id.data! }, select: { opportunityId: true } });
+  if (!doc) go(HOME, "error", "That document could not be found.");
+  const result = await fetchTenderDocument(id.data!, user.id);
+  revalidatePath(oppPath(doc!.opportunityId));
+  if (!result.ok) go(oppPath(doc!.opportunityId), "error", result.reason);
+  go(oppPath(doc!.opportunityId), "success", "A scanned copy is stored.");
+}
+
+const requirementSchema = z.object({
+  id: ID.optional(),
+  opportunityId: ID,
+  ref: z.string().max(40).optional(),
+  text: z.string().min(3).max(2000),
+  kind: z.enum(REQUIREMENT_KINDS),
+  status: z.enum(REQUIREMENT_STATUSES),
+  sourceDocumentId: ID.optional(),
+  location: z.string().max(120).optional(),
+  evidenceVersionId: ID.optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+export async function saveRequirementAction(fd: FormData) {
+  const user = await requireAdmin();
+  const parsed = requirementSchema.safeParse({
+    id: text(fd, "id"),
+    opportunityId: text(fd, "opportunityId"),
+    ref: text(fd, "ref"),
+    text: text(fd, "text"),
+    kind: text(fd, "kind"),
+    status: text(fd, "status"),
+    sourceDocumentId: text(fd, "sourceDocumentId"),
+    location: text(fd, "location"),
+    evidenceVersionId: text(fd, "evidenceVersionId"),
+    notes: text(fd, "notes"),
+  });
+  const back = ID.safeParse(text(fd, "opportunityId")).success ? oppPath(text(fd, "opportunityId")!) : HOME;
+  if (!parsed.success) go(back, "error", parsed.error.issues[0]?.message ?? "Check the requirement and try again.");
+  const d = parsed.data!;
+  const result = await saveRequirement({
+    ...d,
+    ref: d.ref ?? null,
+    sourceDocumentId: d.sourceDocumentId ?? null,
+    location: d.location ?? null,
+    evidenceVersionId: d.evidenceVersionId ?? null,
+    notes: d.notes ?? null,
+    userId: user.id,
+  });
+  revalidatePath(back);
+  if (!result.ok) go(back, "error", result.reason);
+  go(back, "success", d.id ? "Requirement updated." : "Requirement added.");
 }

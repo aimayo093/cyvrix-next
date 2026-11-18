@@ -12,9 +12,13 @@
  *             listed actions, bound to the current package (02-design §5)
  *   executed  a confirmed execution of one of the listed actions, with a receipt
  *   evidence  an uploaded document from the buyer or organisation
+ *   requirements  a person, once the tender's requirements are recorded and
+ *             every mandatory one is met or not applicable (Phase 4)
  * Agents may make only the moves that list "agent". Nothing an agent sends can
  * reach Submitted, Awarded, ApprovedPartner or any approved state.
  */
+
+import { requirementsGate } from "./requirements";
 
 export const OPPORTUNITY_KINDS = ["commercial", "tender", "partnership", "assignment"] as const;
 export type OpportunityKind = (typeof OPPORTUNITY_KINDS)[number];
@@ -47,7 +51,8 @@ type Gate =
   | { kind: "founder" }
   | { kind: "approval"; actions: ApprovalAction[] }
   | { kind: "executed"; actions: ApprovalAction[] }
-  | { kind: "evidence" };
+  | { kind: "evidence" }
+  | { kind: "requirements" };
 
 type Move = { from: string; to: string; gate: Gate };
 
@@ -71,14 +76,14 @@ const PIPELINE: Move[] = [
   { from: "AwaitingBidDecision", to: "NoBid", gate: founder },
   { from: "PreparingBid", to: "QualityReview", gate: person },
   { from: "QualityReview", to: "PreparingBid", gate: person },
-  { from: "QualityReview", to: "AwaitingFinalApproval", gate: person },
+  { from: "QualityReview", to: "AwaitingFinalApproval", gate: { kind: "requirements" } },
   { from: "AwaitingFinalApproval", to: "PreparingBid", gate: founder },
   { from: "AwaitingFinalApproval", to: "ApprovedForSubmission", gate: { kind: "approval", actions: ["submit_tender", "send_quote"] } },
   { from: "AwaitingFinalApproval", to: "Rejected", gate: founder },
   { from: "ApprovedForSubmission", to: "Submitting", gate: person },
   { from: "Submitting", to: "Submitted", gate: { kind: "executed", actions: ["submit_tender", "send_quote"] } },
   { from: "Submitting", to: "SubmissionFailed", gate: person },
-  { from: "SubmissionFailed", to: "AwaitingFinalApproval", gate: person },
+  { from: "SubmissionFailed", to: "AwaitingFinalApproval", gate: { kind: "requirements" } },
   { from: "Submitted", to: "UnderEvaluation", gate: person },
   { from: "UnderEvaluation", to: "ClarificationRequired", gate: person },
   { from: "ClarificationRequired", to: "UnderEvaluation", gate: person },
@@ -107,7 +112,7 @@ const PARTNERSHIP: Move[] = [
   { from: "AccountCreated", to: "ApplicationPreparation", gate: person },
   { from: "ApplicationPreparation", to: "QualityReview", gate: person },
   { from: "QualityReview", to: "ApplicationPreparation", gate: person },
-  { from: "QualityReview", to: "AwaitingFinalApproval", gate: person },
+  { from: "QualityReview", to: "AwaitingFinalApproval", gate: { kind: "requirements" } },
   { from: "AwaitingFinalApproval", to: "ApplicationSubmitted", gate: { kind: "executed", actions: ["submit_application"] } },
   { from: "AwaitingFinalApproval", to: "ApplicationPreparation", gate: founder },
   { from: "ApplicationSubmitted", to: "UnderReview", gate: person },
@@ -155,6 +160,8 @@ export type TransitionFacts = {
   confirmedExecutions: ApprovalAction[];
   /** A document version uploaded as evidence for this move. */
   evidenceVersionId?: string | null;
+  /** The requirements checklist, counted in the same transaction (Phase 4). */
+  requirements: { recorded: number; mandatoryOpen: number; mandatoryNotMet: number };
 };
 
 export type TransitionVerdict = { ok: true } | { ok: false; reason: string };
@@ -181,10 +188,14 @@ export function checkTransition(
       return { ok: true };
     case "founder":
       return facts.actor === "founder" ? { ok: true } : { ok: false, reason: `Only the founder can move a record to ${to}.` };
-    case "approval":
-      return gate.actions.some((a) => facts.currentApprovals.includes(a))
-        ? { ok: true }
-        : { ok: false, reason: `${to} needs a current founder approval (${gate.actions.join(" or ")}).` };
+    case "approval": {
+      if (!gate.actions.some((a) => facts.currentApprovals.includes(a))) {
+        return { ok: false, reason: `${to} needs a current founder approval (${gate.actions.join(" or ")}).` };
+      }
+      // A submission approval is only usable while the checklist is still
+      // clear: a requirement changed after approval stops it here.
+      return to === "ApprovedForSubmission" ? requirementsGate(kind, facts.requirements) : { ok: true };
+    }
     case "executed":
       return gate.actions.some((a) => facts.confirmedExecutions.includes(a))
         ? { ok: true }
@@ -193,5 +204,7 @@ export function checkTransition(
       return facts.evidenceVersionId
         ? { ok: true }
         : { ok: false, reason: `${to} needs an uploaded document from the buyer or organisation as evidence.` };
+    case "requirements":
+      return requirementsGate(kind, facts.requirements);
   }
 }

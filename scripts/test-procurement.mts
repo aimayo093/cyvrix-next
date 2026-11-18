@@ -11,6 +11,7 @@ import {
   evidenceVerdict,
   mayBePublicFact,
   manifestSha256,
+  pastBuyerDeadline,
   type ExecutionCheckInput,
 } from "../lib/procurement/approval-core";
 import { checkTransition, initialStatus, nextStates, statesFor, type OpportunityKind, type TransitionFacts } from "../lib/procurement/lifecycle";
@@ -41,7 +42,7 @@ function check(name: string, actual: unknown, expected: unknown) {
 }
 const okOf = (v: { ok: boolean }) => v.ok;
 
-const none: TransitionFacts = { actor: "person", currentApprovals: [], confirmedExecutions: [] };
+const none: TransitionFacts = { actor: "person", currentApprovals: [], confirmedExecutions: [], requirements: { recorded: 1, mandatoryOpen: 0, mandatoryNotMet: 0 } };
 const as = (actor: TransitionFacts["actor"], extra: Partial<TransitionFacts> = {}): TransitionFacts => ({ ...none, actor, ...extra });
 
 console.log("\n  Lifecycle: tenders and commercial (spec section 14)");
@@ -85,6 +86,35 @@ check("Awarded with evidence", okOf(checkTransition("tender", "UnderEvaluation",
 check("agent cannot mark Awarded even with evidence", okOf(checkTransition("tender", "UnderEvaluation", "Awarded", as("agent", { evidenceVersionId: "x" }))), false);
 check("system actor cannot move anything", okOf(checkTransition("tender", "Discovered", "Validated", as("system"))), false);
 check("SubmissionFailed returns to final approval", okOf(checkTransition("tender", "SubmissionFailed", "AwaitingFinalApproval", as("person"))), true);
+const reqs = (recorded: number, mandatoryOpen: number, mandatoryNotMet: number) => ({ requirements: { recorded, mandatoryOpen, mandatoryNotMet } });
+check("final approval refused for a tender with no requirements recorded", okOf(checkTransition("tender", "QualityReview", "AwaitingFinalApproval", as("person", reqs(0, 0, 0)))), false);
+check("a quotation needs no recorded requirements", okOf(checkTransition("commercial", "QualityReview", "AwaitingFinalApproval", as("person", reqs(0, 0, 0)))), true);
+check("an unchecked mandatory requirement blocks final approval", okOf(checkTransition("tender", "QualityReview", "AwaitingFinalApproval", as("person", reqs(3, 1, 0)))), false);
+check("an unmet mandatory requirement blocks final approval", okOf(checkTransition("tender", "SubmissionFailed", "AwaitingFinalApproval", as("founder", reqs(3, 0, 1)))), false);
+check("an agent cannot reach final approval", okOf(checkTransition("tender", "QualityReview", "AwaitingFinalApproval", as("agent"))), false);
+// Each final-approval path with explicit checklist facts, including an empty checklist.
+check("SubmissionFailed back to final approval with an empty checklist is refused for a tender", okOf(checkTransition("tender", "SubmissionFailed", "AwaitingFinalApproval", as("person", reqs(0, 0, 0)))), false);
+check("SubmissionFailed back to final approval with a clear checklist", okOf(checkTransition("tender", "SubmissionFailed", "AwaitingFinalApproval", as("person", reqs(2, 0, 0)))), true);
+check(
+  "a current approval does not open ApprovedForSubmission once a requirement is unmet",
+  okOf(checkTransition("tender", "AwaitingFinalApproval", "ApprovedForSubmission", as("person", { currentApprovals: ["submit_tender"], ...reqs(3, 0, 1) }))),
+  false
+);
+check(
+  "nor once one is open again (for example its evidence lapsed)",
+  okOf(checkTransition("tender", "AwaitingFinalApproval", "ApprovedForSubmission", as("person", { currentApprovals: ["submit_tender"], ...reqs(3, 1, 0) }))),
+  false
+);
+check(
+  "a submission approval past the buyer's current deadline is not usable",
+  [pastBuyerDeadline("submit_tender", new Date("2026-11-19T12:00:00Z"), new Date("2026-11-19T12:00:01Z")).ok, pastBuyerDeadline("register_account", new Date("2026-11-19T12:00:00Z"), new Date("2026-11-20T00:00:00Z")).ok],
+  [false, true]
+);
+check(
+  "an approval request cannot be decided after the buyer's deadline",
+  canDecide({ status: "pending", expiresAt: new Date("2026-12-01T00:00:00Z"), actionType: "submit_tender" }, new Date("2026-11-20T00:00:00Z"), new Date("2026-11-19T12:00:00Z")).ok,
+  false
+);
 check("OperationalHandover is final", nextStates("tender", "OperationalHandover"), []);
 check(
   "every spec-14 state is reachable from Discovered",

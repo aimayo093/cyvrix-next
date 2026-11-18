@@ -101,10 +101,23 @@ export function evidenceVerdict(version: { status: string; expiresAt?: Date | nu
   return { ok: true };
 }
 
-export function canDecide(request: { status: string; expiresAt: Date }, now: Date): Verdict {
+/** The actions a buyer's submission deadline applies to. */
+export const SUBMISSION_ACTIONS: readonly ApprovalAction[] = ["submit_tender", "send_quote"];
+
+/**
+ * A submission approval lapses at the buyer's deadline as it stands now, not
+ * as it stood when the approval was requested: a notice that brings the
+ * deadline forward shortens every approval already given.
+ */
+export function pastBuyerDeadline(action: string, deadlineAt: Date | null | undefined, now: Date): Verdict {
+  if (!(SUBMISSION_ACTIONS as readonly string[]).includes(action) || !deadlineAt) return { ok: true };
+  return deadlineAt.getTime() <= now.getTime() ? { ok: false, reason: "The buyer's submission deadline has passed." } : { ok: true };
+}
+
+export function canDecide(request: { status: string; expiresAt: Date; actionType?: string }, now: Date, deadlineAt?: Date | null): Verdict {
   if (request.status !== "pending") return { ok: false, reason: "This request has already been decided." };
   if (request.expiresAt.getTime() <= now.getTime()) return { ok: false, reason: "This request has expired. Ask for a new one." };
-  return { ok: true };
+  return pastBuyerDeadline(request.actionType ?? "", deadlineAt, now);
 }
 
 export type ExecutionCheckInput = {
@@ -120,6 +133,8 @@ export type ExecutionCheckInput = {
   hasConfirmedSameAction: boolean;
   /** Another execution of the same action on this opportunity is pending or unclear. */
   hasUnresolvedSameAction: boolean;
+  /** The opportunity's submission deadline as it stands now. */
+  deadlineAt?: Date | null;
 };
 
 /**
@@ -132,6 +147,8 @@ export function canExecute(input: ExecutionCheckInput): Verdict {
   if (!decision || decision.decision !== "approved") return { ok: false, reason: "There is no founder approval for this action." };
   if (request.actionType !== input.action) return { ok: false, reason: "The approval is for a different action." };
   if (decision.expiresAt.getTime() <= input.now.getTime()) return { ok: false, reason: "The approval has expired." };
+  const deadline = pastBuyerDeadline(input.action, input.deadlineAt, input.now);
+  if (!deadline.ok) return deadline;
   if (input.alreadyUsed) return { ok: false, reason: "This approval has already been used." };
   if (pkg.opportunityId !== request.opportunityId) return { ok: false, reason: "The package belongs to a different opportunity." };
   if (pkg.status !== "locked") return { ok: false, reason: "The package is no longer the approved version." };

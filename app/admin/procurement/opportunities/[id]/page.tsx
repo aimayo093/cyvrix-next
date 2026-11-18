@@ -31,9 +31,11 @@ import {
   revisePackageAction,
   startExecutionAction,
 } from "@/lib/procurement/actions";
-import { EVIDENCE_STATUSES } from "@/lib/procurement/approval-core";
+import { EVIDENCE_STATUSES, evidenceVerdict } from "@/lib/procurement/approval-core";
 import { APPROVAL_ACTIONS, nextStates, type OpportunityKind } from "@/lib/procurement/lifecycle";
 import { CATEGORY_LABEL, WEIGHTS } from "@/lib/procurement/partnerships";
+import { MAX_DISQUALIFIERS, summarise } from "@/lib/procurement/requirements";
+import { DatesSection, RequirementsSection, TenderDocumentsSection } from "@/components/admin/procurement/TenderSections";
 
 export const metadata = { title: "Opportunity" };
 
@@ -44,6 +46,7 @@ const GATE_HINT: Record<string, string> = {
   approval: "needs a current approval",
   executed: "needs a confirmed receipt",
   evidence: "needs an evidence document",
+  requirements: "needs the requirements checklist clear",
 };
 
 export default function OpportunityPage(props: Props) {
@@ -78,12 +81,21 @@ async function OpportunityContent({ params, searchParams }: Props) {
   });
   if (!opp) notFound();
 
-  const [versions, history, assessments] = await Promise.all([
+  const [versions, history, assessments, tenderDocs, requirements] = await Promise.all([
     prisma.companyDocumentVersion.findMany({ where: { status: { not: "superseded" } }, orderBy: { createdAt: "desc" }, take: 200, include: { Document: true } }),
     prisma.auditLog.findMany({ where: { entityType: "Opportunity", entityId: opp.id }, orderBy: { createdAt: "desc" }, take: 50 }),
     // Every assessment is kept and shown, uncapped: they are the record of each judgement.
     prisma.bidAssessment.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "desc" } }),
+    // Uncapped, so the checklist counts and the disqualifier prefill are complete.
+    prisma.tenderDocument.findMany({ where: { opportunityId: opp.id }, orderBy: { createdAt: "asc" } }),
+    prisma.tenderRequirement.findMany({
+      where: { opportunityId: opp.id },
+      orderBy: [{ createdAt: "asc" }],
+      include: { Evidence: { select: { id: true, status: true, expiresAt: true, Document: { select: { title: true } } } } },
+    }),
   ]);
+  const requirementRows = requirements.map((r) => ({ ...r, evidenceCurrent: r.Evidence ? evidenceVerdict(r.Evidence, new Date()).ok : undefined }));
+  const requirementSummary = summarise(requirementRows);
   const scoringModel = opp.kind === "partnership" ? "partnership" : "bid";
   const moves = nextStates(opp.kind as OpportunityKind, opp.status);
   const docOptions = versions.map((v) => (
@@ -121,6 +133,8 @@ async function OpportunityContent({ params, searchParams }: Props) {
         {opp.summary && <p className="whitespace-pre-wrap text-sm text-slate-700 md:col-span-4">{opp.summary}</p>}
       </section>
 
+      <DatesSection opp={opp} now={now} />
+
       <section className={`${card} space-y-3`}>
         <h2 className="font-outfit text-lg font-black text-[#041635]">Move to</h2>
         {moves.length === 0 ? (
@@ -146,6 +160,18 @@ async function OpportunityContent({ params, searchParams }: Props) {
           </div>
         )}
       </section>
+
+      {opp.kind !== "partnership" && (
+        <>
+          <TenderDocumentsSection opp={opp} docs={tenderDocs} />
+          <RequirementsSection
+            opp={opp}
+            rows={requirementRows}
+            docs={tenderDocs.map((d) => ({ id: d.id, title: d.title }))}
+            evidenceOptions={evidenceOptions}
+          />
+        </>
+      )}
 
       <section className={`${card} space-y-3`}>
         <h2 className="font-outfit text-lg font-black text-[#041635]">{scoringModel === "partnership" ? "Partnership assessment" : "Bid / no-bid assessment"}</h2>
@@ -188,7 +214,7 @@ async function OpportunityContent({ params, searchParams }: Props) {
               </select>
             </label>
           ))}
-          <label className="space-y-1 md:col-span-2"><span className={label}>Disqualifiers, one per line (leave empty if none)</span><textarea name="disqualifiers" rows={2} className={field} /></label>
+          <label className="space-y-1 md:col-span-2"><span className={label}>Disqualifiers, one per line (leave empty if none)</span><textarea name="disqualifiers" rows={2} defaultValue={requirementSummary.disqualifiers.slice(0, MAX_DISQUALIFIERS).join("\n")} className={field} /></label>
           <label className="space-y-1 md:col-span-2"><span className={label}>Assumptions and sources</span><textarea name="assumptions" rows={2} maxLength={4000} className={field} /></label>
           <div className="md:col-span-2"><button className={secondaryButton}>Record assessment</button></div>
         </form>
