@@ -164,11 +164,26 @@ latest major falls outside one of those ranges — ESLint 10 while
 eslint-config-next's plugins stop at 9, TypeScript 7 while typescript-eslint
 stops below 6.1 — the scan names the package and what holds it instead of
 raising a warning nobody can act on. It is not a blind spot: Dependabot
-proposes the upgrade once the ceiling lifts, and CI's
-`npm audit --omit=dev --audit-level=moderate` still blocks a production
-dependency with a moderate or worse advisory. That audit does not cover
+proposes the upgrade once the ceiling lifts, and CI's audit gate
+(`npm run audit:gate`, below) still blocks a production dependency with a
+moderate or worse advisory. That audit does not cover
 development-only packages, which is where both of today's held-back packages
 sit.
+
+**An advisory with no fix** (19 November 2026). The picomatch ReDoS advisory
+(GHSA-fc5q-39xc-vjpf) covers every release up to the latest, 4.0.7, so no
+upgrade clears it, and npm's only suggestion is Sentry 8.38.0 (three majors
+back). picomatch reaches this project only through `@rollup/plugin-commonjs`,
+which `@sentry/nextjs` loads in its webpack loader at build time; the patterns
+it matches come from our own configuration, never a request. The founder
+approved a dated exception. CI now runs `npm run audit:gate` instead of the
+bare audit: it fails exactly as before, except for an advisory listed in
+`scripts/audit-exceptions.json` *for the packages listed there*, until its
+`reviewBy` date. The same advisory reaching any other package, any other
+advisory, or an expired entry fails the build; a fixed advisory leaves a note
+to remove its entry. Each entry records its reason and who approved it. Do
+not add an entry to make a build pass: an entry needs a reason a reviewer can
+check, as this one does.
 
 **A firewall challenge is not the site's answer** (13 November 2026). The live
 checks request the site's own public URL, so Vercel's bot protection
