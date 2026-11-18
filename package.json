@@ -34,7 +34,9 @@
     "test:procurement-partnerships": "tsx scripts/test-procurement-partnerships.mts",
     "test:procurement-tender": "tsx scripts/test-procurement-tender.mts",
     "test:procurement-db": "node --conditions=react-server --import tsx scripts/test-procurement-db.mts",
-    "scan:deps": "tsx scripts/dependency-holds.mts"
+    "scan:deps": "tsx scripts/dependency-holds.mts",
+    "audit:gate": "tsx scripts/audit-gate.mts",
+    "test:audit-gate": "tsx scripts/test-audit-gate.mts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.1",
