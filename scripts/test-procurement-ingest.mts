@@ -178,6 +178,21 @@ check("over 100 leads are counted, not silently dropped", parseReportWithCount(m
 check("same title with different links are two leads", parseReport("1. Desktop support - Example A https://a.example\n2. Desktop support - Example A https://b.example").length, 2);
 check("international 00 numbers are personal data", containsPersonalData("Call 0044 20 0000 0000"), true);
 check("a date range is not a phone number", containsPersonalData("Contract 01-12-2026 - 15-12-2027"), false);
+check("a dotted phone number is personal data", containsPersonalData("Call 020.7946.0000"), true);
+check("a dash-grouped phone with 2-digit groups is personal data", containsPersonalData("Call 020-79-46-0000"), true);
+check("plural buying signals count", ["Two tenders for desktop support", "RFQs for laptops", "Requests for proposals for Wi-Fi"].map((t) => parseReport(`1. ${t} https://example.com/x`)[0].confirmedBuying), [true, true, true]);
+check(
+  "a colon heading straight after a lead starts a new section",
+  parseReport("Defence:\n1. MOD laptop refresh https://a.example\nNHS:\n2. Trust Wi-Fi upgrade https://b.example").map((i) => i.section),
+  ["Defence", "NHS"]
+);
+check(
+  "a lead's own 'Source:' label stays part of the lead",
+  parseReport("Defence:\n1. MOD laptop refresh\nSource:\nhttps://a.example\n2. Another lead https://b.example").map((i) => i.section),
+  ["Defence", "Defence"]
+);
+check("plural keywords are relevant", ["Managed services for schools", "Supply of laptops", "Firewalls and switches", "Cybersecurity assurance"].map((t) => isRelevant({ ...ftsTraining, tender: { ...ftsTraining.tender, title: t, description: "" } }).relevant), [true, true, true, true]);
+check("a word merely containing a keyword is not", isRelevant({ ...ftsTraining, tender: { ...ftsTraining.tender, title: "Planning consultancy", description: "" } }).relevant, false);
 check("a profile link in a title is removed", scrub("Lead via https://www.linkedin.com/in/someone today"), "Lead via [link removed] today");
 check(
   "ChatGPT report titles are withheld from agents",

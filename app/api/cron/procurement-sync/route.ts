@@ -17,11 +17,13 @@ import { isScheduledRun } from "@/lib/procurement/schedule";
 export const maxDuration = 60;
 
 // One feed request may take up to 20 s (lib/procurement/feeds.ts), and the
-// budget is only checked between requests, so each source gets at most 15 s
-// of new requests and the loop stops starting sources with under 25 s left.
-const TOTAL_BUDGET_MS = 55_000;
+// budget is only checked between requests, so a source can start a request
+// just inside its 15 s budget and run 20 s past it: 35 s at worst. The loop
+// starts a source only with that much left before the function's 60 s limit.
+const TOTAL_BUDGET_MS = 58_000;
 const PER_SOURCE_BUDGET_MS = 15_000;
-const RESERVE_MS = 25_000;
+const FEED_REQUEST_TIMEOUT_MS = 20_000;
+const RESERVE_MS = PER_SOURCE_BUDGET_MS + FEED_REQUEST_TIMEOUT_MS;
 
 function isAuthorised(req: Request) {
   const secret = process.env.CRON_SECRET;

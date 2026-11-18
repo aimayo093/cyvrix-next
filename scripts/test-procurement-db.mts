@@ -443,6 +443,7 @@ try {
   calls.length = 0;
   const fts2 = await ingest.runSource("fts", { trigger: "cron", fetchJson: fakeFetch, now: morning });
   check("re-reading the same notices creates nothing", [fts2.created, fts2.updated, fts2.contacts], [0, 0, 0]);
+  check("and it did read them again", calls.length > 0, true);
 
   const pcs = await ingest.runSource("pcs", { trigger: "cron", fetchJson: fakeFetch, now: morning });
   check("PCS copy of the same tender is merged, the cyber tender is new", [pcs.merged, pcs.created], [1, 1]);
@@ -533,8 +534,10 @@ try {
     cursor = r.more ? r.next : null;
   }
   check("three rows with one timestamp, paged one at a time: none skipped", tied.every((t) => seen.has(t.id)), true);
+  // Within the 200-row page cap, a page exactly as long as what is left is the last.
   const everything = await prisma.opportunity.count();
-  check("a full last page says there is no more", (await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: everything })).more, false);
+  const lastPage = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: Math.min(everything, 200) });
+  check("a full last page says there is no more", lastPage.more, everything > 200);
   check("an empty page keeps the caller's position", (await agentApi.listOpportunitiesForAgents({ after: { at: new Date("2099-01-01T00:00:00Z"), id: null }, kind: null, status: null, limit: 5 })).next, "2099-01-01T00:00:00.000Z");
 
   // CYVRIX clients are not listed to agents.
