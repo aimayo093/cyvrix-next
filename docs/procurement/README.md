@@ -126,6 +126,12 @@ Still open after Phase 1: D3, D8, D13, D14 (D1, D4, D10 and D12 were decided for
 - **D12:** store buyer contacts from published notices, and update the privacy notice. Contacts are stored on the buyer organisation and stay in the admin. Draft wording: [privacy-notice-draft.md](privacy-notice-draft.md). It must be published before a feed is switched on.
 - **D4:** first "allow agent full access"; on 18 November, after the transfer issue was explained (agents run on DeepSeek in China, no UK GDPR transfer basis: `DECISIONS.md` §15), the founder chose **organisations and roles only**. Built: a separate `PAPERCLIP_PROCUREMENT_TOKEN` scope; agents read opportunities and organisations through an allow-list with no contacts, notice text or personal links, may record research (refused if it holds personal data) and may only validate, qualify or research. Off until the founder sets the token.
 
+### Phase 3 decisions (18 November 2026)
+
+- **D8:** you register and submit by hand. The site prepares the exact package and holds the approval; it never signs in to a portal. Portal automation is not built.
+- **D13:** a standing policy for free, non-binding registrations. Built per portal: you switch it on with an authenticator code, only on a portal recorded as free (the database refuses otherwise). It approves a registration package only when it makes no declarations and carries no price; a portal user agreement goes in the package as a declaration, so those registrations still come to you. Only the Defence Sourcing Portal is seeded as free (the MOD guide states no charge); the others stay "unknown" until their terms are read.
+- **D3:** you enter existing accounts in the admin (Admin → Procurement → Accounts). No passwords: the credential field names the password-manager entry (D7), and anything that looks like a secret is refused.
+
 ### Decisions requested
 
 | # | Decision | Options | Recommendation |

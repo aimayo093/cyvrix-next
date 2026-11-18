@@ -5,8 +5,9 @@
  *
  * Runs ONLY against a throwaway local database, never Supabase:
  *   1. start Postgres locally (for example docker run … postgres:17-alpine)
- *   2. apply scripts/fixtures/procurement/stub-schema.sql, then the three
- *      procurement migrations in order (foundation, organisations, hardening)
+ *   2. apply scripts/fixtures/procurement/stub-schema.sql, then the four
+ *      procurement migrations in order (foundation, organisations, hardening,
+ *      partnerships)
  *
  * The stub has no audit hash-chain triggers: the chain itself is tested by the
  * Security Center's audit_log_verify() on the real database, not here.
@@ -34,6 +35,7 @@ const service = await import("../lib/procurement/service");
 const ingest = await import("../lib/procurement/ingest");
 const fx = await import("./fixtures/procurement/ocds");
 const agentApi = await import("../lib/procurement/agent-api");
+const partnerships = await import("../lib/procurement/partnership-service");
 
 let passed = 0;
 let failed = 0;
@@ -545,6 +547,99 @@ try {
   await prisma.opportunity.create({ data: { id: reportLead, kind: "commercial", status: "Discovered", title: "Jo Bloggs at Example Ltd is hiring", origin: "chatgpt_task" } });
   const listedAgain = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: 200 });
   check("a ChatGPT report title never reaches an agent", JSON.stringify(listedAgain).includes("Jo Bloggs"), false);
+
+  // ------------------------------------------------------------ Phase 3
+  console.log("\n  Supplier portals and accounts");
+  check("six portals seeded", await prisma.supplierPortal.count(), 6);
+  const dsp = await prisma.supplierPortal.findFirstOrThrow({ where: { url: "https://contracts.mod.uk/" } });
+  const s2wPortal = await prisma.supplierPortal.findFirstOrThrow({ where: { name: "Sell2Wales" } });
+  check("only the Defence Sourcing Portal is seeded as free", (await prisma.supplierPortal.findMany({ where: { cost: "free" } })).map((p) => p.name), ["Defence Sourcing Portal"]);
+  check("no portal starts with a standing policy", await prisma.supplierPortal.count({ where: { standingPolicy: true } }), 0);
+  await rejects(
+    "the database refuses a standing policy on a portal not known to be free",
+    () => prisma.supplierPortal.update({ where: { id: s2wPortal.id }, data: { standingPolicy: true } }),
+    "SupplierPortal_policy_needs_free"
+  );
+  check("the service refuses it too", (await partnerships.setStandingPolicy(s2wPortal.id, true, founder, new Date())).ok, false);
+
+  check(
+    "a password typed as the credential label is refused",
+    (await partnerships.saveAccount({ portalId: s2wPortal.id, status: "active", credentialLabel: "Sell2Wales: Xk9#mPq2$vLw8!", userId: founder })).ok,
+    false
+  );
+  const s2wAccount = await partnerships.saveAccount({ portalId: s2wPortal.id, status: "active", credentialLabel: "1Password: Cyvrix / Sell2Wales", userId: founder });
+  check("an account with a password-manager label saves", s2wAccount.ok, true);
+  const second = await partnerships.saveAccount({ portalId: s2wPortal.id, status: "pending", userId: founder });
+  check("a second live account on one portal is refused", second.ok ? "saved" : second.reason.includes("already has an account"), true);
+  check("a 'not registered' row beside it is allowed", (await partnerships.saveAccount({ portalId: s2wPortal.id, status: "not_registered", userId: founder })).ok, true);
+  check(
+    "account audit does not copy the credential label",
+    JSON.stringify(await prisma.auditLog.findMany({ where: { entityType: "SupplierAccount" } })).includes("1Password"),
+    false
+  );
+
+  console.log("\n  Standing registration policy (D13)");
+  const policyAt = new Date("2026-11-18T10:00:00.000Z");
+  check("policy switched on for the free portal", (await partnerships.setStandingPolicy(dsp.id, true, founder, policyAt)).ok, true);
+  async function registrationPackage(destination: string, declarations: string[]) {
+    const oppId = await newOpportunity("Discovered");
+    const id = uuid();
+    await prisma.package.create({ data: { id, opportunityId: oppId, version: 1, destination, declarations } });
+    const doc = await newDoc(`registration ${id.slice(0, 6)}`);
+    const v = await prisma.companyDocumentVersion.findUniqueOrThrow({ where: { id: doc } });
+    await prisma.packageItem.create({ data: { id: uuid(), packageId: id, documentVersionId: doc, label: v.filename, sha256: v.sha256 } });
+    const locked = await service.lockPackage(id, founder);
+    if (!locked.ok) throw new Error(locked.reason);
+    return id;
+  }
+  const plainReg = await registrationPackage("https://contracts.mod.uk/", []);
+  const auto = await service.requestApproval({ packageId: plainReg, actionType: "register_account", userId: founder });
+  const autoReq = auto.ok ? await prisma.approvalRequest.findUniqueOrThrow({ where: { id: auto.value } }) : null;
+  check("a plain registration on that portal is approved by the policy", autoReq?.status, "approved");
+  const autoDecision = auto.ok ? await prisma.approvalDecision.findUnique({ where: { requestId: auto.value } }) : null;
+  check("the decision carries the founder and the moment the policy was set", [autoDecision?.decidedById, autoDecision?.stepUpAt?.toISOString()], [founder, policyAt.toISOString()]);
+  check("the policy approval is audited", await prisma.auditLog.count({ where: { action: "approval.policy_approved", entityId: auto.ok ? auto.value : "" } }), 1);
+
+  const declaringReg = await registrationPackage("https://contracts.mod.uk/", ["We accept the portal user agreement"]);
+  const manual = await service.requestApproval({ packageId: declaringReg, actionType: "register_account", userId: founder });
+  check("a registration that makes a declaration waits for the founder", manual.ok ? (await prisma.approvalRequest.findUniqueOrThrow({ where: { id: manual.value } })).status : "failed", "pending");
+  const unknownCost = await registrationPackage("https://www.sell2wales.gov.wales/", []);
+  const notFree = await service.requestApproval({ packageId: unknownCost, actionType: "register_account", userId: founder });
+  check("a portal whose cost is unknown waits for the founder", notFree.ok ? (await prisma.approvalRequest.findUniqueOrThrow({ where: { id: notFree.value } })).status : "failed", "pending");
+
+  console.log("\n  Confirmed registration becomes the account");
+  const regExec = await service.startExecution({ decisionId: autoDecision?.id ?? "", mode: "manual", userId: founder });
+  check("the founder starts the registration by hand", regExec.ok ? true : regExec.reason, true);
+  const regReceipt = await newDoc("dsp confirmation email");
+  check(
+    "registration confirmed with the portal's reference",
+    (await service.recordExecutionOutcome({ executionId: regExec.ok ? regExec.value : "", outcome: "confirmed", portalReference: "DSP-SUP-123", receiptVersionId: regReceipt, userId: founder })).ok,
+    true
+  );
+  const dspAccounts = await prisma.supplierAccount.findMany({ where: { portalId: dsp.id } });
+  check("one pending account with that reference", dspAccounts.map((a) => [a.status, a.accountRef, a.approvalDecisionId]), [["pending", "DSP-SUP-123", autoDecision?.id]]);
+  check("adding another live account on that portal is refused", (await partnerships.saveAccount({ portalId: dsp.id, status: "active", userId: founder })).ok, false);
+  check("switching the policy off clears its authority", (await partnerships.setStandingPolicy(dsp.id, false, founder, new Date())).ok, true);
+  check("policy fields cleared", await prisma.supplierPortal.findUniqueOrThrow({ where: { id: dsp.id }, select: { standingPolicy: true, standingPolicyById: true } }), { standingPolicy: false, standingPolicyById: null });
+
+  console.log("\n  Programmes and assessments");
+  const vendor = await prisma.organisation.findFirstOrThrow({ where: { isResearchTarget: true } });
+  await rejects(
+    "a programme cannot be marked verified without a source",
+    () => prisma.partnershipProgramme.create({ data: { id: uuid(), organisationId: vendor.id, name: "Unsourced programme", verified: true } }),
+    "PartnershipProgramme_verified_needs_source"
+  );
+  const tenderOpp = await newOpportunity("Discovered");
+  const bidScores = { technical_capability: 2, mandatory_eligibility: 4, profitability: 4, delivery_capacity: 4, cash_flow_impact: 3, security_and_compliance: 4, strategic_value: 4 };
+  const assessed = await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "bid", scores: bidScores, disqualifiers: [], authorId: founder });
+  check("a bid assessment is recorded with its total", assessed.ok ? [assessed.value.total, assessed.value.recommendation] : assessed.reason, [70, "pursue"]);
+  check("partnership scoring is refused on a tender", (await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "partnership", scores: {}, disqualifiers: [], authorId: founder })).ok, false);
+  const dq = await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "bid", scores: bidScores, disqualifiers: ["Needs ISO 27001 certificate", " "], authorId: founder });
+  check("a disqualifier overrides the score", dq.ok ? dq.value.recommendation : dq.reason, "disqualified");
+  check("blank disqualifier lines are dropped", dq.ok ? (await prisma.bidAssessment.findUniqueOrThrow({ where: { id: dq.value.id } })).disqualifiers : null, ["Needs ISO 27001 certificate"]);
+  const firstAssessment = assessed.ok ? assessed.value.id : "";
+  await rejects("an assessment cannot be edited", () => prisma.bidAssessment.update({ where: { id: firstAssessment }, data: { assumptions: "changed" } }), "cannot be changed");
+  await rejects("an assessment cannot be deleted", () => prisma.bidAssessment.delete({ where: { id: firstAssessment } }), "cannot be changed");
 
 } finally {
   await prisma.$disconnect();

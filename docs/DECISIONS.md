@@ -899,9 +899,30 @@ is configured.
   - The token must differ from the read and draft tokens, or the scope stays
     off.
 
-**Tests:** `npm run test:procurement` (rules, no database), `npm run test:procurement-ingest` (feeds and import parsing, no network) and
+**Tests:** `npm run test:procurement` (rules, no database), `npm run test:procurement-ingest` (feeds and import parsing, no network),
+`npm run test:procurement-partnerships` (accounts, policy and scoring rules) and
 `npm run test:procurement-db` (a throwaway local Postgres only; it refuses any
 non-local URL).
+
+**Phase 3: supplier accounts, partnerships and scoring (18 November 2026).**
+- People register and submit by hand (D8). The site never holds a portal
+  password: an account records only the name of the password-manager entry,
+  and a value that looks like a secret is refused (D7).
+- One live account per portal, enforced by a partial unique index; a
+  "not registered" or "rejected" row does not count.
+- The standing registration policy (D13) is per portal, set by the founder
+  with an authenticator code, and only on a portal recorded as free (a
+  database check). It approves a registration package only when it carries no
+  declarations and no price; a portal user agreement is entered as a declaration, so it still comes to the
+  founder. The approval it creates names the founder and the moment the policy
+  was set, not the moment of the request, so the audit shows where the
+  authority came from. Switching the policy off clears that authority.
+- A confirmed registration (with the portal's reference and an uploaded
+  confirmation) becomes the portal's account, pending the portal's checks.
+- A programme is "verified" only with the page it was checked against.
+- Assessments (spec 12 and 40) are recommendations, not chances of winning.
+  Scores are whole numbers 0 to 5; a disqualifier overrides the total. Rows
+  are immutable: a new assessment is added, never an old one edited.
 
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).

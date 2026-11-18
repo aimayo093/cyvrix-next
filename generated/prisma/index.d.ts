@@ -609,6 +609,27 @@ export type Receipt = $Result.DefaultSelection<Prisma.$ReceiptPayload>
  * 
  */
 export type CostEntry = $Result.DefaultSelection<Prisma.$CostEntryPayload>
+/**
+ * Model SupplierPortal
+ * 
+ */
+export type SupplierPortal = $Result.DefaultSelection<Prisma.$SupplierPortalPayload>
+/**
+ * Model SupplierAccount
+ * One live account per portal (partial unique index in the migration).
+ * credentialLabel names a password-manager entry; it is never a secret.
+ */
+export type SupplierAccount = $Result.DefaultSelection<Prisma.$SupplierAccountPayload>
+/**
+ * Model PartnershipProgramme
+ * 
+ */
+export type PartnershipProgramme = $Result.DefaultSelection<Prisma.$PartnershipProgrammePayload>
+/**
+ * Model BidAssessment
+ * Immutable (trigger): a new assessment is added, never an old one edited.
+ */
+export type BidAssessment = $Result.DefaultSelection<Prisma.$BidAssessmentPayload>
 
 /**
  * Enums
@@ -2096,6 +2117,46 @@ export class PrismaClient<
     * ```
     */
   get costEntry(): Prisma.CostEntryDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.supplierPortal`: Exposes CRUD operations for the **SupplierPortal** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SupplierPortals
+    * const supplierPortals = await prisma.supplierPortal.findMany()
+    * ```
+    */
+  get supplierPortal(): Prisma.SupplierPortalDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.supplierAccount`: Exposes CRUD operations for the **SupplierAccount** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SupplierAccounts
+    * const supplierAccounts = await prisma.supplierAccount.findMany()
+    * ```
+    */
+  get supplierAccount(): Prisma.SupplierAccountDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.partnershipProgramme`: Exposes CRUD operations for the **PartnershipProgramme** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PartnershipProgrammes
+    * const partnershipProgrammes = await prisma.partnershipProgramme.findMany()
+    * ```
+    */
+  get partnershipProgramme(): Prisma.PartnershipProgrammeDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.bidAssessment`: Exposes CRUD operations for the **BidAssessment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BidAssessments
+    * const bidAssessments = await prisma.bidAssessment.findMany()
+    * ```
+    */
+  get bidAssessment(): Prisma.BidAssessmentDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2655,7 +2716,11 @@ export namespace Prisma {
     ApprovalDecision: 'ApprovalDecision',
     ExecutionRecord: 'ExecutionRecord',
     Receipt: 'Receipt',
-    CostEntry: 'CostEntry'
+    CostEntry: 'CostEntry',
+    SupplierPortal: 'SupplierPortal',
+    SupplierAccount: 'SupplierAccount',
+    PartnershipProgramme: 'PartnershipProgramme',
+    BidAssessment: 'BidAssessment'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2671,7 +2736,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "auditLog" | "blogPost" | "careerJob" | "caseStudy" | "clientCompany" | "clientDocument" | "cmsPage" | "contact" | "contentBlock" | "fAQ" | "industry" | "jobApplication" | "knowledgeBaseArticle" | "landingPage" | "lead" | "leadNote" | "legalPage" | "mediaAsset" | "navigationItem" | "newsletterSubscriber" | "notification" | "proposal" | "proposalItem" | "quoteRequest" | "service" | "servicePackage" | "siteSetting" | "testimonial" | "ticket" | "ticketAttachment" | "ticketMessage" | "user" | "userSession" | "rateLimitBucket" | "verificationToken" | "websiteSection" | "audit_logs" | "blog_categories" | "blog_posts" | "career_applications" | "career_jobs" | "case_studies" | "client_companies" | "client_company_users" | "client_documents" | "leads" | "media_assets" | "navigation_items" | "notifications" | "pages" | "profiles" | "quote_requests" | "service_faqs" | "services" | "site_settings" | "support_tickets" | "ticket_messages" | "brandAsset" | "menu" | "menuItem" | "footerSection" | "footerLink" | "pageSection" | "partnerLogo" | "trustedBusinessLogo" | "complianceCard" | "socialLink" | "surveySetting" | "surveyRequest" | "surveyResponse" | "workOrder" | "agentDraft" | "passwordResetToken" | "emailMessage" | "organisation" | "opportunitySource" | "ingestionRun" | "procurementNotice" | "opportunity" | "opportunityEvidence" | "companyDocument" | "companyDocumentVersion" | "companyFact" | "package" | "packageItem" | "approvalRequest" | "approvalDecision" | "executionRecord" | "receipt" | "costEntry"
+      modelProps: "audit_log_entries" | "custom_oauth_providers" | "flow_state" | "identities" | "instances" | "mfa_amr_claims" | "mfa_challenges" | "mfa_factors" | "oauth_authorizations" | "oauth_client_states" | "oauth_clients" | "oauth_consents" | "one_time_tokens" | "refresh_tokens" | "saml_providers" | "saml_relay_states" | "schema_migrations" | "sessions" | "sso_domains" | "sso_providers" | "users" | "webauthn_challenges" | "webauthn_credentials" | "auditLog" | "blogPost" | "careerJob" | "caseStudy" | "clientCompany" | "clientDocument" | "cmsPage" | "contact" | "contentBlock" | "fAQ" | "industry" | "jobApplication" | "knowledgeBaseArticle" | "landingPage" | "lead" | "leadNote" | "legalPage" | "mediaAsset" | "navigationItem" | "newsletterSubscriber" | "notification" | "proposal" | "proposalItem" | "quoteRequest" | "service" | "servicePackage" | "siteSetting" | "testimonial" | "ticket" | "ticketAttachment" | "ticketMessage" | "user" | "userSession" | "rateLimitBucket" | "verificationToken" | "websiteSection" | "audit_logs" | "blog_categories" | "blog_posts" | "career_applications" | "career_jobs" | "case_studies" | "client_companies" | "client_company_users" | "client_documents" | "leads" | "media_assets" | "navigation_items" | "notifications" | "pages" | "profiles" | "quote_requests" | "service_faqs" | "services" | "site_settings" | "support_tickets" | "ticket_messages" | "brandAsset" | "menu" | "menuItem" | "footerSection" | "footerLink" | "pageSection" | "partnerLogo" | "trustedBusinessLogo" | "complianceCard" | "socialLink" | "surveySetting" | "surveyRequest" | "surveyResponse" | "workOrder" | "agentDraft" | "passwordResetToken" | "emailMessage" | "organisation" | "opportunitySource" | "ingestionRun" | "procurementNotice" | "opportunity" | "opportunityEvidence" | "companyDocument" | "companyDocumentVersion" | "companyFact" | "package" | "packageItem" | "approvalRequest" | "approvalDecision" | "executionRecord" | "receipt" | "costEntry" | "supplierPortal" | "supplierAccount" | "partnershipProgramme" | "bidAssessment"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -11037,6 +11102,302 @@ export namespace Prisma {
           }
         }
       }
+      SupplierPortal: {
+        payload: Prisma.$SupplierPortalPayload<ExtArgs>
+        fields: Prisma.SupplierPortalFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SupplierPortalFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SupplierPortalFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>
+          }
+          findFirst: {
+            args: Prisma.SupplierPortalFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SupplierPortalFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>
+          }
+          findMany: {
+            args: Prisma.SupplierPortalFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>[]
+          }
+          create: {
+            args: Prisma.SupplierPortalCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>
+          }
+          createMany: {
+            args: Prisma.SupplierPortalCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SupplierPortalCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>[]
+          }
+          delete: {
+            args: Prisma.SupplierPortalDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>
+          }
+          update: {
+            args: Prisma.SupplierPortalUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>
+          }
+          deleteMany: {
+            args: Prisma.SupplierPortalDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SupplierPortalUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SupplierPortalUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>[]
+          }
+          upsert: {
+            args: Prisma.SupplierPortalUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierPortalPayload>
+          }
+          aggregate: {
+            args: Prisma.SupplierPortalAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSupplierPortal>
+          }
+          groupBy: {
+            args: Prisma.SupplierPortalGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SupplierPortalGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SupplierPortalCountArgs<ExtArgs>
+            result: $Utils.Optional<SupplierPortalCountAggregateOutputType> | number
+          }
+        }
+      }
+      SupplierAccount: {
+        payload: Prisma.$SupplierAccountPayload<ExtArgs>
+        fields: Prisma.SupplierAccountFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SupplierAccountFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SupplierAccountFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>
+          }
+          findFirst: {
+            args: Prisma.SupplierAccountFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SupplierAccountFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>
+          }
+          findMany: {
+            args: Prisma.SupplierAccountFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>[]
+          }
+          create: {
+            args: Prisma.SupplierAccountCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>
+          }
+          createMany: {
+            args: Prisma.SupplierAccountCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SupplierAccountCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>[]
+          }
+          delete: {
+            args: Prisma.SupplierAccountDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>
+          }
+          update: {
+            args: Prisma.SupplierAccountUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>
+          }
+          deleteMany: {
+            args: Prisma.SupplierAccountDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SupplierAccountUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SupplierAccountUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>[]
+          }
+          upsert: {
+            args: Prisma.SupplierAccountUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SupplierAccountPayload>
+          }
+          aggregate: {
+            args: Prisma.SupplierAccountAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSupplierAccount>
+          }
+          groupBy: {
+            args: Prisma.SupplierAccountGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SupplierAccountGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SupplierAccountCountArgs<ExtArgs>
+            result: $Utils.Optional<SupplierAccountCountAggregateOutputType> | number
+          }
+        }
+      }
+      PartnershipProgramme: {
+        payload: Prisma.$PartnershipProgrammePayload<ExtArgs>
+        fields: Prisma.PartnershipProgrammeFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PartnershipProgrammeFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PartnershipProgrammeFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>
+          }
+          findFirst: {
+            args: Prisma.PartnershipProgrammeFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PartnershipProgrammeFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>
+          }
+          findMany: {
+            args: Prisma.PartnershipProgrammeFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>[]
+          }
+          create: {
+            args: Prisma.PartnershipProgrammeCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>
+          }
+          createMany: {
+            args: Prisma.PartnershipProgrammeCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PartnershipProgrammeCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>[]
+          }
+          delete: {
+            args: Prisma.PartnershipProgrammeDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>
+          }
+          update: {
+            args: Prisma.PartnershipProgrammeUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>
+          }
+          deleteMany: {
+            args: Prisma.PartnershipProgrammeDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PartnershipProgrammeUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PartnershipProgrammeUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>[]
+          }
+          upsert: {
+            args: Prisma.PartnershipProgrammeUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PartnershipProgrammePayload>
+          }
+          aggregate: {
+            args: Prisma.PartnershipProgrammeAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePartnershipProgramme>
+          }
+          groupBy: {
+            args: Prisma.PartnershipProgrammeGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PartnershipProgrammeGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PartnershipProgrammeCountArgs<ExtArgs>
+            result: $Utils.Optional<PartnershipProgrammeCountAggregateOutputType> | number
+          }
+        }
+      }
+      BidAssessment: {
+        payload: Prisma.$BidAssessmentPayload<ExtArgs>
+        fields: Prisma.BidAssessmentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BidAssessmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BidAssessmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>
+          }
+          findFirst: {
+            args: Prisma.BidAssessmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BidAssessmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>
+          }
+          findMany: {
+            args: Prisma.BidAssessmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>[]
+          }
+          create: {
+            args: Prisma.BidAssessmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>
+          }
+          createMany: {
+            args: Prisma.BidAssessmentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BidAssessmentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>[]
+          }
+          delete: {
+            args: Prisma.BidAssessmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>
+          }
+          update: {
+            args: Prisma.BidAssessmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>
+          }
+          deleteMany: {
+            args: Prisma.BidAssessmentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BidAssessmentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BidAssessmentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>[]
+          }
+          upsert: {
+            args: Prisma.BidAssessmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BidAssessmentPayload>
+          }
+          aggregate: {
+            args: Prisma.BidAssessmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBidAssessment>
+          }
+          groupBy: {
+            args: Prisma.BidAssessmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BidAssessmentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BidAssessmentCountArgs<ExtArgs>
+            result: $Utils.Optional<BidAssessmentCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -11273,6 +11634,10 @@ export namespace Prisma {
     executionRecord?: ExecutionRecordOmit
     receipt?: ReceiptOmit
     costEntry?: CostEntryOmit
+    supplierPortal?: SupplierPortalOmit
+    supplierAccount?: SupplierAccountOmit
+    partnershipProgramme?: PartnershipProgrammeOmit
+    bidAssessment?: BidAssessmentOmit
   }
 
   /* Types for Logging */
@@ -12490,11 +12855,15 @@ export namespace Prisma {
   export type OrganisationCountOutputType = {
     Contact: number
     Opportunity: number
+    SupplierPortal: number
+    Programme: number
   }
 
   export type OrganisationCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Contact?: boolean | OrganisationCountOutputTypeCountContactArgs
     Opportunity?: boolean | OrganisationCountOutputTypeCountOpportunityArgs
+    SupplierPortal?: boolean | OrganisationCountOutputTypeCountSupplierPortalArgs
+    Programme?: boolean | OrganisationCountOutputTypeCountProgrammeArgs
   }
 
   // Custom InputTypes
@@ -12520,6 +12889,20 @@ export namespace Prisma {
    */
   export type OrganisationCountOutputTypeCountOpportunityArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OpportunityWhereInput
+  }
+
+  /**
+   * OrganisationCountOutputType without action
+   */
+  export type OrganisationCountOutputTypeCountSupplierPortalArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SupplierPortalWhereInput
+  }
+
+  /**
+   * OrganisationCountOutputType without action
+   */
+  export type OrganisationCountOutputTypeCountProgrammeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PartnershipProgrammeWhereInput
   }
 
 
@@ -12608,6 +12991,7 @@ export namespace Prisma {
    */
 
   export type OpportunityCountOutputType = {
+    Assessment: number
     Evidence: number
     Package: number
     ApprovalRequest: number
@@ -12616,6 +13000,7 @@ export namespace Prisma {
   }
 
   export type OpportunityCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Assessment?: boolean | OpportunityCountOutputTypeCountAssessmentArgs
     Evidence?: boolean | OpportunityCountOutputTypeCountEvidenceArgs
     Package?: boolean | OpportunityCountOutputTypeCountPackageArgs
     ApprovalRequest?: boolean | OpportunityCountOutputTypeCountApprovalRequestArgs
@@ -12632,6 +13017,13 @@ export namespace Prisma {
      * Select specific fields to fetch from the OpportunityCountOutputType
      */
     select?: OpportunityCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * OpportunityCountOutputType without action
+   */
+  export type OpportunityCountOutputTypeCountAssessmentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BidAssessmentWhereInput
   }
 
   /**
@@ -12791,6 +13183,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type ApprovalDecisionCountOutputType
+   */
+
+  export type ApprovalDecisionCountOutputType = {
+    SupplierAccount: number
+  }
+
+  export type ApprovalDecisionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    SupplierAccount?: boolean | ApprovalDecisionCountOutputTypeCountSupplierAccountArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ApprovalDecisionCountOutputType without action
+   */
+  export type ApprovalDecisionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApprovalDecisionCountOutputType
+     */
+    select?: ApprovalDecisionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ApprovalDecisionCountOutputType without action
+   */
+  export type ApprovalDecisionCountOutputTypeCountSupplierAccountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SupplierAccountWhereInput
+  }
+
+
+  /**
    * Count Type ExecutionRecordCountOutputType
    */
 
@@ -12818,6 +13241,77 @@ export namespace Prisma {
    */
   export type ExecutionRecordCountOutputTypeCountReceiptArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ReceiptWhereInput
+  }
+
+
+  /**
+   * Count Type SupplierPortalCountOutputType
+   */
+
+  export type SupplierPortalCountOutputType = {
+    Account: number
+    Programme: number
+  }
+
+  export type SupplierPortalCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Account?: boolean | SupplierPortalCountOutputTypeCountAccountArgs
+    Programme?: boolean | SupplierPortalCountOutputTypeCountProgrammeArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * SupplierPortalCountOutputType without action
+   */
+  export type SupplierPortalCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortalCountOutputType
+     */
+    select?: SupplierPortalCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * SupplierPortalCountOutputType without action
+   */
+  export type SupplierPortalCountOutputTypeCountAccountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SupplierAccountWhereInput
+  }
+
+  /**
+   * SupplierPortalCountOutputType without action
+   */
+  export type SupplierPortalCountOutputTypeCountProgrammeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PartnershipProgrammeWhereInput
+  }
+
+
+  /**
+   * Count Type PartnershipProgrammeCountOutputType
+   */
+
+  export type PartnershipProgrammeCountOutputType = {
+    Opportunity: number
+  }
+
+  export type PartnershipProgrammeCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | PartnershipProgrammeCountOutputTypeCountOpportunityArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PartnershipProgrammeCountOutputType without action
+   */
+  export type PartnershipProgrammeCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgrammeCountOutputType
+     */
+    select?: PartnershipProgrammeCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PartnershipProgrammeCountOutputType without action
+   */
+  export type PartnershipProgrammeCountOutputTypeCountOpportunityArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OpportunityWhereInput
   }
 
 
@@ -124881,6 +125375,8 @@ export namespace Prisma {
     ClientCompany?: boolean | Organisation$ClientCompanyArgs<ExtArgs>
     Contact?: boolean | Organisation$ContactArgs<ExtArgs>
     Opportunity?: boolean | Organisation$OpportunityArgs<ExtArgs>
+    SupplierPortal?: boolean | Organisation$SupplierPortalArgs<ExtArgs>
+    Programme?: boolean | Organisation$ProgrammeArgs<ExtArgs>
     _count?: boolean | OrganisationCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["organisation"]>
 
@@ -124936,6 +125432,8 @@ export namespace Prisma {
     ClientCompany?: boolean | Organisation$ClientCompanyArgs<ExtArgs>
     Contact?: boolean | Organisation$ContactArgs<ExtArgs>
     Opportunity?: boolean | Organisation$OpportunityArgs<ExtArgs>
+    SupplierPortal?: boolean | Organisation$SupplierPortalArgs<ExtArgs>
+    Programme?: boolean | Organisation$ProgrammeArgs<ExtArgs>
     _count?: boolean | OrganisationCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type OrganisationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -124951,6 +125449,8 @@ export namespace Prisma {
       ClientCompany: Prisma.$ClientCompanyPayload<ExtArgs> | null
       Contact: Prisma.$ContactPayload<ExtArgs>[]
       Opportunity: Prisma.$OpportunityPayload<ExtArgs>[]
+      SupplierPortal: Prisma.$SupplierPortalPayload<ExtArgs>[]
+      Programme: Prisma.$PartnershipProgrammePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -125362,6 +125862,8 @@ export namespace Prisma {
     ClientCompany<T extends Organisation$ClientCompanyArgs<ExtArgs> = {}>(args?: Subset<T, Organisation$ClientCompanyArgs<ExtArgs>>): Prisma__ClientCompanyClient<$Result.GetResult<Prisma.$ClientCompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     Contact<T extends Organisation$ContactArgs<ExtArgs> = {}>(args?: Subset<T, Organisation$ContactArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ContactPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     Opportunity<T extends Organisation$OpportunityArgs<ExtArgs> = {}>(args?: Subset<T, Organisation$OpportunityArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    SupplierPortal<T extends Organisation$SupplierPortalArgs<ExtArgs> = {}>(args?: Subset<T, Organisation$SupplierPortalArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    Programme<T extends Organisation$ProgrammeArgs<ExtArgs> = {}>(args?: Subset<T, Organisation$ProgrammeArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -125868,6 +126370,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: OpportunityScalarFieldEnum | OpportunityScalarFieldEnum[]
+  }
+
+  /**
+   * Organisation.SupplierPortal
+   */
+  export type Organisation$SupplierPortalArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    where?: SupplierPortalWhereInput
+    orderBy?: SupplierPortalOrderByWithRelationInput | SupplierPortalOrderByWithRelationInput[]
+    cursor?: SupplierPortalWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SupplierPortalScalarFieldEnum | SupplierPortalScalarFieldEnum[]
+  }
+
+  /**
+   * Organisation.Programme
+   */
+  export type Organisation$ProgrammeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    where?: PartnershipProgrammeWhereInput
+    orderBy?: PartnershipProgrammeOrderByWithRelationInput | PartnershipProgrammeOrderByWithRelationInput[]
+    cursor?: PartnershipProgrammeWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PartnershipProgrammeScalarFieldEnum | PartnershipProgrammeScalarFieldEnum[]
   }
 
   /**
@@ -129503,6 +130053,7 @@ export namespace Prisma {
     confirmedBuying: boolean | null
     leadId: string | null
     paperclipIssueId: string | null
+    programmeId: string | null
     createdById: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -129527,6 +130078,7 @@ export namespace Prisma {
     confirmedBuying: boolean | null
     leadId: string | null
     paperclipIssueId: string | null
+    programmeId: string | null
     createdById: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -129552,6 +130104,7 @@ export namespace Prisma {
     confirmedBuying: number
     leadId: number
     paperclipIssueId: number
+    programmeId: number
     createdById: number
     createdAt: number
     updatedAt: number
@@ -129588,6 +130141,7 @@ export namespace Prisma {
     confirmedBuying?: true
     leadId?: true
     paperclipIssueId?: true
+    programmeId?: true
     createdById?: true
     createdAt?: true
     updatedAt?: true
@@ -129612,6 +130166,7 @@ export namespace Prisma {
     confirmedBuying?: true
     leadId?: true
     paperclipIssueId?: true
+    programmeId?: true
     createdById?: true
     createdAt?: true
     updatedAt?: true
@@ -129637,6 +130192,7 @@ export namespace Prisma {
     confirmedBuying?: true
     leadId?: true
     paperclipIssueId?: true
+    programmeId?: true
     createdById?: true
     createdAt?: true
     updatedAt?: true
@@ -129749,6 +130305,7 @@ export namespace Prisma {
     confirmedBuying: boolean
     leadId: string | null
     paperclipIssueId: string | null
+    programmeId: string | null
     createdById: string | null
     createdAt: Date
     updatedAt: Date
@@ -129793,10 +130350,13 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: boolean
     paperclipIssueId?: boolean
+    programmeId?: boolean
     createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     Buyer?: boolean | Opportunity$BuyerArgs<ExtArgs>
+    Programme?: boolean | Opportunity$ProgrammeArgs<ExtArgs>
+    Assessment?: boolean | Opportunity$AssessmentArgs<ExtArgs>
     Source?: boolean | OpportunitySourceDefaultArgs<ExtArgs>
     Lead?: boolean | Opportunity$LeadArgs<ExtArgs>
     Evidence?: boolean | Opportunity$EvidenceArgs<ExtArgs>
@@ -129827,10 +130387,12 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: boolean
     paperclipIssueId?: boolean
+    programmeId?: boolean
     createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     Buyer?: boolean | Opportunity$BuyerArgs<ExtArgs>
+    Programme?: boolean | Opportunity$ProgrammeArgs<ExtArgs>
     Source?: boolean | OpportunitySourceDefaultArgs<ExtArgs>
     Lead?: boolean | Opportunity$LeadArgs<ExtArgs>
   }, ExtArgs["result"]["opportunity"]>
@@ -129855,10 +130417,12 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: boolean
     paperclipIssueId?: boolean
+    programmeId?: boolean
     createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     Buyer?: boolean | Opportunity$BuyerArgs<ExtArgs>
+    Programme?: boolean | Opportunity$ProgrammeArgs<ExtArgs>
     Source?: boolean | OpportunitySourceDefaultArgs<ExtArgs>
     Lead?: boolean | Opportunity$LeadArgs<ExtArgs>
   }, ExtArgs["result"]["opportunity"]>
@@ -129883,14 +130447,17 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: boolean
     paperclipIssueId?: boolean
+    programmeId?: boolean
     createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type OpportunityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "kind" | "status" | "statusChangedAt" | "title" | "summary" | "buyerOrganisationId" | "origin" | "ocid" | "deadlineAt" | "clarificationDeadlineAt" | "valueMin" | "valueMax" | "currency" | "region" | "cpv" | "confirmedBuying" | "leadId" | "paperclipIssueId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["opportunity"]>
+  export type OpportunityOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "kind" | "status" | "statusChangedAt" | "title" | "summary" | "buyerOrganisationId" | "origin" | "ocid" | "deadlineAt" | "clarificationDeadlineAt" | "valueMin" | "valueMax" | "currency" | "region" | "cpv" | "confirmedBuying" | "leadId" | "paperclipIssueId" | "programmeId" | "createdById" | "createdAt" | "updatedAt", ExtArgs["result"]["opportunity"]>
   export type OpportunityInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Buyer?: boolean | Opportunity$BuyerArgs<ExtArgs>
+    Programme?: boolean | Opportunity$ProgrammeArgs<ExtArgs>
+    Assessment?: boolean | Opportunity$AssessmentArgs<ExtArgs>
     Source?: boolean | OpportunitySourceDefaultArgs<ExtArgs>
     Lead?: boolean | Opportunity$LeadArgs<ExtArgs>
     Evidence?: boolean | Opportunity$EvidenceArgs<ExtArgs>
@@ -129902,11 +130469,13 @@ export namespace Prisma {
   }
   export type OpportunityIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Buyer?: boolean | Opportunity$BuyerArgs<ExtArgs>
+    Programme?: boolean | Opportunity$ProgrammeArgs<ExtArgs>
     Source?: boolean | OpportunitySourceDefaultArgs<ExtArgs>
     Lead?: boolean | Opportunity$LeadArgs<ExtArgs>
   }
   export type OpportunityIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Buyer?: boolean | Opportunity$BuyerArgs<ExtArgs>
+    Programme?: boolean | Opportunity$ProgrammeArgs<ExtArgs>
     Source?: boolean | OpportunitySourceDefaultArgs<ExtArgs>
     Lead?: boolean | Opportunity$LeadArgs<ExtArgs>
   }
@@ -129915,6 +130484,8 @@ export namespace Prisma {
     name: "Opportunity"
     objects: {
       Buyer: Prisma.$OrganisationPayload<ExtArgs> | null
+      Programme: Prisma.$PartnershipProgrammePayload<ExtArgs> | null
+      Assessment: Prisma.$BidAssessmentPayload<ExtArgs>[]
       Source: Prisma.$OpportunitySourcePayload<ExtArgs>
       Lead: Prisma.$LeadPayload<ExtArgs> | null
       Evidence: Prisma.$OpportunityEvidencePayload<ExtArgs>[]
@@ -129949,6 +130520,10 @@ export namespace Prisma {
       confirmedBuying: boolean
       leadId: string | null
       paperclipIssueId: string | null
+      /**
+       * The partnership programme this opportunity pursues (migration 20261118120000).
+       */
+      programmeId: string | null
       createdById: string | null
       createdAt: Date
       updatedAt: Date
@@ -130347,6 +130922,8 @@ export namespace Prisma {
   export interface Prisma__OpportunityClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     Buyer<T extends Opportunity$BuyerArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$BuyerArgs<ExtArgs>>): Prisma__OrganisationClient<$Result.GetResult<Prisma.$OrganisationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    Programme<T extends Opportunity$ProgrammeArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$ProgrammeArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    Assessment<T extends Opportunity$AssessmentArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$AssessmentArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     Source<T extends OpportunitySourceDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OpportunitySourceDefaultArgs<ExtArgs>>): Prisma__OpportunitySourceClient<$Result.GetResult<Prisma.$OpportunitySourcePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     Lead<T extends Opportunity$LeadArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$LeadArgs<ExtArgs>>): Prisma__LeadClient<$Result.GetResult<Prisma.$LeadPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     Evidence<T extends Opportunity$EvidenceArgs<ExtArgs> = {}>(args?: Subset<T, Opportunity$EvidenceArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OpportunityEvidencePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -130402,6 +130979,7 @@ export namespace Prisma {
     readonly confirmedBuying: FieldRef<"Opportunity", 'Boolean'>
     readonly leadId: FieldRef<"Opportunity", 'String'>
     readonly paperclipIssueId: FieldRef<"Opportunity", 'String'>
+    readonly programmeId: FieldRef<"Opportunity", 'String'>
     readonly createdById: FieldRef<"Opportunity", 'String'>
     readonly createdAt: FieldRef<"Opportunity", 'DateTime'>
     readonly updatedAt: FieldRef<"Opportunity", 'DateTime'>
@@ -130822,6 +131400,49 @@ export namespace Prisma {
      */
     include?: OrganisationInclude<ExtArgs> | null
     where?: OrganisationWhereInput
+  }
+
+  /**
+   * Opportunity.Programme
+   */
+  export type Opportunity$ProgrammeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    where?: PartnershipProgrammeWhereInput
+  }
+
+  /**
+   * Opportunity.Assessment
+   */
+  export type Opportunity$AssessmentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    where?: BidAssessmentWhereInput
+    orderBy?: BidAssessmentOrderByWithRelationInput | BidAssessmentOrderByWithRelationInput[]
+    cursor?: BidAssessmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BidAssessmentScalarFieldEnum | BidAssessmentScalarFieldEnum[]
   }
 
   /**
@@ -139290,6 +139911,8 @@ export namespace Prisma {
     createdAt?: boolean
     Request?: boolean | ApprovalRequestDefaultArgs<ExtArgs>
     ExecutionRecord?: boolean | ApprovalDecision$ExecutionRecordArgs<ExtArgs>
+    SupplierAccount?: boolean | ApprovalDecision$SupplierAccountArgs<ExtArgs>
+    _count?: boolean | ApprovalDecisionCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["approvalDecision"]>
 
   export type ApprovalDecisionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -139334,6 +139957,8 @@ export namespace Prisma {
   export type ApprovalDecisionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Request?: boolean | ApprovalRequestDefaultArgs<ExtArgs>
     ExecutionRecord?: boolean | ApprovalDecision$ExecutionRecordArgs<ExtArgs>
+    SupplierAccount?: boolean | ApprovalDecision$SupplierAccountArgs<ExtArgs>
+    _count?: boolean | ApprovalDecisionCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ApprovalDecisionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     Request?: boolean | ApprovalRequestDefaultArgs<ExtArgs>
@@ -139347,6 +139972,7 @@ export namespace Prisma {
     objects: {
       Request: Prisma.$ApprovalRequestPayload<ExtArgs>
       ExecutionRecord: Prisma.$ExecutionRecordPayload<ExtArgs> | null
+      SupplierAccount: Prisma.$SupplierAccountPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -139754,6 +140380,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     Request<T extends ApprovalRequestDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ApprovalRequestDefaultArgs<ExtArgs>>): Prisma__ApprovalRequestClient<$Result.GetResult<Prisma.$ApprovalRequestPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     ExecutionRecord<T extends ApprovalDecision$ExecutionRecordArgs<ExtArgs> = {}>(args?: Subset<T, ApprovalDecision$ExecutionRecordArgs<ExtArgs>>): Prisma__ExecutionRecordClient<$Result.GetResult<Prisma.$ExecutionRecordPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    SupplierAccount<T extends ApprovalDecision$SupplierAccountArgs<ExtArgs> = {}>(args?: Subset<T, ApprovalDecision$SupplierAccountArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -140209,6 +140836,30 @@ export namespace Prisma {
      */
     include?: ExecutionRecordInclude<ExtArgs> | null
     where?: ExecutionRecordWhereInput
+  }
+
+  /**
+   * ApprovalDecision.SupplierAccount
+   */
+  export type ApprovalDecision$SupplierAccountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    where?: SupplierAccountWhereInput
+    orderBy?: SupplierAccountOrderByWithRelationInput | SupplierAccountOrderByWithRelationInput[]
+    cursor?: SupplierAccountWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SupplierAccountScalarFieldEnum | SupplierAccountScalarFieldEnum[]
   }
 
   /**
@@ -143701,6 +144352,4975 @@ export namespace Prisma {
 
 
   /**
+   * Model SupplierPortal
+   */
+
+  export type AggregateSupplierPortal = {
+    _count: SupplierPortalCountAggregateOutputType | null
+    _min: SupplierPortalMinAggregateOutputType | null
+    _max: SupplierPortalMaxAggregateOutputType | null
+  }
+
+  export type SupplierPortalMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    kind: string | null
+    url: string | null
+    registrationUrl: string | null
+    termsUrl: string | null
+    organisationId: string | null
+    cost: string | null
+    automationPermitted: boolean | null
+    standingPolicy: boolean | null
+    standingPolicyById: string | null
+    standingPolicyAt: Date | null
+    notes: string | null
+    sourceUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SupplierPortalMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    kind: string | null
+    url: string | null
+    registrationUrl: string | null
+    termsUrl: string | null
+    organisationId: string | null
+    cost: string | null
+    automationPermitted: boolean | null
+    standingPolicy: boolean | null
+    standingPolicyById: string | null
+    standingPolicyAt: Date | null
+    notes: string | null
+    sourceUrl: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SupplierPortalCountAggregateOutputType = {
+    id: number
+    name: number
+    kind: number
+    url: number
+    registrationUrl: number
+    termsUrl: number
+    organisationId: number
+    cost: number
+    automationPermitted: number
+    standingPolicy: number
+    standingPolicyById: number
+    standingPolicyAt: number
+    requiredFacts: number
+    requiredDocuments: number
+    notes: number
+    sourceUrl: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SupplierPortalMinAggregateInputType = {
+    id?: true
+    name?: true
+    kind?: true
+    url?: true
+    registrationUrl?: true
+    termsUrl?: true
+    organisationId?: true
+    cost?: true
+    automationPermitted?: true
+    standingPolicy?: true
+    standingPolicyById?: true
+    standingPolicyAt?: true
+    notes?: true
+    sourceUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SupplierPortalMaxAggregateInputType = {
+    id?: true
+    name?: true
+    kind?: true
+    url?: true
+    registrationUrl?: true
+    termsUrl?: true
+    organisationId?: true
+    cost?: true
+    automationPermitted?: true
+    standingPolicy?: true
+    standingPolicyById?: true
+    standingPolicyAt?: true
+    notes?: true
+    sourceUrl?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SupplierPortalCountAggregateInputType = {
+    id?: true
+    name?: true
+    kind?: true
+    url?: true
+    registrationUrl?: true
+    termsUrl?: true
+    organisationId?: true
+    cost?: true
+    automationPermitted?: true
+    standingPolicy?: true
+    standingPolicyById?: true
+    standingPolicyAt?: true
+    requiredFacts?: true
+    requiredDocuments?: true
+    notes?: true
+    sourceUrl?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SupplierPortalAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SupplierPortal to aggregate.
+     */
+    where?: SupplierPortalWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SupplierPortals to fetch.
+     */
+    orderBy?: SupplierPortalOrderByWithRelationInput | SupplierPortalOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SupplierPortalWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SupplierPortals from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SupplierPortals.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SupplierPortals
+    **/
+    _count?: true | SupplierPortalCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SupplierPortalMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SupplierPortalMaxAggregateInputType
+  }
+
+  export type GetSupplierPortalAggregateType<T extends SupplierPortalAggregateArgs> = {
+        [P in keyof T & keyof AggregateSupplierPortal]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSupplierPortal[P]>
+      : GetScalarType<T[P], AggregateSupplierPortal[P]>
+  }
+
+
+
+
+  export type SupplierPortalGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SupplierPortalWhereInput
+    orderBy?: SupplierPortalOrderByWithAggregationInput | SupplierPortalOrderByWithAggregationInput[]
+    by: SupplierPortalScalarFieldEnum[] | SupplierPortalScalarFieldEnum
+    having?: SupplierPortalScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SupplierPortalCountAggregateInputType | true
+    _min?: SupplierPortalMinAggregateInputType
+    _max?: SupplierPortalMaxAggregateInputType
+  }
+
+  export type SupplierPortalGroupByOutputType = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl: string | null
+    termsUrl: string | null
+    organisationId: string | null
+    cost: string
+    automationPermitted: boolean
+    standingPolicy: boolean
+    standingPolicyById: string | null
+    standingPolicyAt: Date | null
+    requiredFacts: string[]
+    requiredDocuments: string[]
+    notes: string | null
+    sourceUrl: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: SupplierPortalCountAggregateOutputType | null
+    _min: SupplierPortalMinAggregateOutputType | null
+    _max: SupplierPortalMaxAggregateOutputType | null
+  }
+
+  type GetSupplierPortalGroupByPayload<T extends SupplierPortalGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SupplierPortalGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SupplierPortalGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SupplierPortalGroupByOutputType[P]>
+            : GetScalarType<T[P], SupplierPortalGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SupplierPortalSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    kind?: boolean
+    url?: boolean
+    registrationUrl?: boolean
+    termsUrl?: boolean
+    organisationId?: boolean
+    cost?: boolean
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: boolean
+    standingPolicyAt?: boolean
+    requiredFacts?: boolean
+    requiredDocuments?: boolean
+    notes?: boolean
+    sourceUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Organisation?: boolean | SupplierPortal$OrganisationArgs<ExtArgs>
+    Account?: boolean | SupplierPortal$AccountArgs<ExtArgs>
+    Programme?: boolean | SupplierPortal$ProgrammeArgs<ExtArgs>
+    _count?: boolean | SupplierPortalCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["supplierPortal"]>
+
+  export type SupplierPortalSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    kind?: boolean
+    url?: boolean
+    registrationUrl?: boolean
+    termsUrl?: boolean
+    organisationId?: boolean
+    cost?: boolean
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: boolean
+    standingPolicyAt?: boolean
+    requiredFacts?: boolean
+    requiredDocuments?: boolean
+    notes?: boolean
+    sourceUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Organisation?: boolean | SupplierPortal$OrganisationArgs<ExtArgs>
+  }, ExtArgs["result"]["supplierPortal"]>
+
+  export type SupplierPortalSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    kind?: boolean
+    url?: boolean
+    registrationUrl?: boolean
+    termsUrl?: boolean
+    organisationId?: boolean
+    cost?: boolean
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: boolean
+    standingPolicyAt?: boolean
+    requiredFacts?: boolean
+    requiredDocuments?: boolean
+    notes?: boolean
+    sourceUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Organisation?: boolean | SupplierPortal$OrganisationArgs<ExtArgs>
+  }, ExtArgs["result"]["supplierPortal"]>
+
+  export type SupplierPortalSelectScalar = {
+    id?: boolean
+    name?: boolean
+    kind?: boolean
+    url?: boolean
+    registrationUrl?: boolean
+    termsUrl?: boolean
+    organisationId?: boolean
+    cost?: boolean
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: boolean
+    standingPolicyAt?: boolean
+    requiredFacts?: boolean
+    requiredDocuments?: boolean
+    notes?: boolean
+    sourceUrl?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SupplierPortalOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "kind" | "url" | "registrationUrl" | "termsUrl" | "organisationId" | "cost" | "automationPermitted" | "standingPolicy" | "standingPolicyById" | "standingPolicyAt" | "requiredFacts" | "requiredDocuments" | "notes" | "sourceUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["supplierPortal"]>
+  export type SupplierPortalInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Organisation?: boolean | SupplierPortal$OrganisationArgs<ExtArgs>
+    Account?: boolean | SupplierPortal$AccountArgs<ExtArgs>
+    Programme?: boolean | SupplierPortal$ProgrammeArgs<ExtArgs>
+    _count?: boolean | SupplierPortalCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type SupplierPortalIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Organisation?: boolean | SupplierPortal$OrganisationArgs<ExtArgs>
+  }
+  export type SupplierPortalIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Organisation?: boolean | SupplierPortal$OrganisationArgs<ExtArgs>
+  }
+
+  export type $SupplierPortalPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SupplierPortal"
+    objects: {
+      Organisation: Prisma.$OrganisationPayload<ExtArgs> | null
+      Account: Prisma.$SupplierAccountPayload<ExtArgs>[]
+      Programme: Prisma.$PartnershipProgrammePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      kind: string
+      url: string
+      registrationUrl: string | null
+      termsUrl: string | null
+      organisationId: string | null
+      cost: string
+      automationPermitted: boolean
+      standingPolicy: boolean
+      standingPolicyById: string | null
+      standingPolicyAt: Date | null
+      requiredFacts: string[]
+      requiredDocuments: string[]
+      notes: string | null
+      sourceUrl: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["supplierPortal"]>
+    composites: {}
+  }
+
+  type SupplierPortalGetPayload<S extends boolean | null | undefined | SupplierPortalDefaultArgs> = $Result.GetResult<Prisma.$SupplierPortalPayload, S>
+
+  type SupplierPortalCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SupplierPortalFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SupplierPortalCountAggregateInputType | true
+    }
+
+  export interface SupplierPortalDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SupplierPortal'], meta: { name: 'SupplierPortal' } }
+    /**
+     * Find zero or one SupplierPortal that matches the filter.
+     * @param {SupplierPortalFindUniqueArgs} args - Arguments to find a SupplierPortal
+     * @example
+     * // Get one SupplierPortal
+     * const supplierPortal = await prisma.supplierPortal.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SupplierPortalFindUniqueArgs>(args: SelectSubset<T, SupplierPortalFindUniqueArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SupplierPortal that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SupplierPortalFindUniqueOrThrowArgs} args - Arguments to find a SupplierPortal
+     * @example
+     * // Get one SupplierPortal
+     * const supplierPortal = await prisma.supplierPortal.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SupplierPortalFindUniqueOrThrowArgs>(args: SelectSubset<T, SupplierPortalFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SupplierPortal that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierPortalFindFirstArgs} args - Arguments to find a SupplierPortal
+     * @example
+     * // Get one SupplierPortal
+     * const supplierPortal = await prisma.supplierPortal.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SupplierPortalFindFirstArgs>(args?: SelectSubset<T, SupplierPortalFindFirstArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SupplierPortal that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierPortalFindFirstOrThrowArgs} args - Arguments to find a SupplierPortal
+     * @example
+     * // Get one SupplierPortal
+     * const supplierPortal = await prisma.supplierPortal.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SupplierPortalFindFirstOrThrowArgs>(args?: SelectSubset<T, SupplierPortalFindFirstOrThrowArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SupplierPortals that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierPortalFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SupplierPortals
+     * const supplierPortals = await prisma.supplierPortal.findMany()
+     * 
+     * // Get first 10 SupplierPortals
+     * const supplierPortals = await prisma.supplierPortal.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const supplierPortalWithIdOnly = await prisma.supplierPortal.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SupplierPortalFindManyArgs>(args?: SelectSubset<T, SupplierPortalFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SupplierPortal.
+     * @param {SupplierPortalCreateArgs} args - Arguments to create a SupplierPortal.
+     * @example
+     * // Create one SupplierPortal
+     * const SupplierPortal = await prisma.supplierPortal.create({
+     *   data: {
+     *     // ... data to create a SupplierPortal
+     *   }
+     * })
+     * 
+     */
+    create<T extends SupplierPortalCreateArgs>(args: SelectSubset<T, SupplierPortalCreateArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SupplierPortals.
+     * @param {SupplierPortalCreateManyArgs} args - Arguments to create many SupplierPortals.
+     * @example
+     * // Create many SupplierPortals
+     * const supplierPortal = await prisma.supplierPortal.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SupplierPortalCreateManyArgs>(args?: SelectSubset<T, SupplierPortalCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SupplierPortals and returns the data saved in the database.
+     * @param {SupplierPortalCreateManyAndReturnArgs} args - Arguments to create many SupplierPortals.
+     * @example
+     * // Create many SupplierPortals
+     * const supplierPortal = await prisma.supplierPortal.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SupplierPortals and only return the `id`
+     * const supplierPortalWithIdOnly = await prisma.supplierPortal.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SupplierPortalCreateManyAndReturnArgs>(args?: SelectSubset<T, SupplierPortalCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SupplierPortal.
+     * @param {SupplierPortalDeleteArgs} args - Arguments to delete one SupplierPortal.
+     * @example
+     * // Delete one SupplierPortal
+     * const SupplierPortal = await prisma.supplierPortal.delete({
+     *   where: {
+     *     // ... filter to delete one SupplierPortal
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SupplierPortalDeleteArgs>(args: SelectSubset<T, SupplierPortalDeleteArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SupplierPortal.
+     * @param {SupplierPortalUpdateArgs} args - Arguments to update one SupplierPortal.
+     * @example
+     * // Update one SupplierPortal
+     * const supplierPortal = await prisma.supplierPortal.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SupplierPortalUpdateArgs>(args: SelectSubset<T, SupplierPortalUpdateArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SupplierPortals.
+     * @param {SupplierPortalDeleteManyArgs} args - Arguments to filter SupplierPortals to delete.
+     * @example
+     * // Delete a few SupplierPortals
+     * const { count } = await prisma.supplierPortal.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SupplierPortalDeleteManyArgs>(args?: SelectSubset<T, SupplierPortalDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SupplierPortals.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierPortalUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SupplierPortals
+     * const supplierPortal = await prisma.supplierPortal.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SupplierPortalUpdateManyArgs>(args: SelectSubset<T, SupplierPortalUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SupplierPortals and returns the data updated in the database.
+     * @param {SupplierPortalUpdateManyAndReturnArgs} args - Arguments to update many SupplierPortals.
+     * @example
+     * // Update many SupplierPortals
+     * const supplierPortal = await prisma.supplierPortal.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SupplierPortals and only return the `id`
+     * const supplierPortalWithIdOnly = await prisma.supplierPortal.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SupplierPortalUpdateManyAndReturnArgs>(args: SelectSubset<T, SupplierPortalUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SupplierPortal.
+     * @param {SupplierPortalUpsertArgs} args - Arguments to update or create a SupplierPortal.
+     * @example
+     * // Update or create a SupplierPortal
+     * const supplierPortal = await prisma.supplierPortal.upsert({
+     *   create: {
+     *     // ... data to create a SupplierPortal
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SupplierPortal we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SupplierPortalUpsertArgs>(args: SelectSubset<T, SupplierPortalUpsertArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SupplierPortals.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierPortalCountArgs} args - Arguments to filter SupplierPortals to count.
+     * @example
+     * // Count the number of SupplierPortals
+     * const count = await prisma.supplierPortal.count({
+     *   where: {
+     *     // ... the filter for the SupplierPortals we want to count
+     *   }
+     * })
+    **/
+    count<T extends SupplierPortalCountArgs>(
+      args?: Subset<T, SupplierPortalCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SupplierPortalCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SupplierPortal.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierPortalAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SupplierPortalAggregateArgs>(args: Subset<T, SupplierPortalAggregateArgs>): Prisma.PrismaPromise<GetSupplierPortalAggregateType<T>>
+
+    /**
+     * Group by SupplierPortal.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierPortalGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SupplierPortalGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SupplierPortalGroupByArgs['orderBy'] }
+        : { orderBy?: SupplierPortalGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SupplierPortalGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSupplierPortalGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SupplierPortal model
+   */
+  readonly fields: SupplierPortalFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SupplierPortal.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SupplierPortalClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    Organisation<T extends SupplierPortal$OrganisationArgs<ExtArgs> = {}>(args?: Subset<T, SupplierPortal$OrganisationArgs<ExtArgs>>): Prisma__OrganisationClient<$Result.GetResult<Prisma.$OrganisationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    Account<T extends SupplierPortal$AccountArgs<ExtArgs> = {}>(args?: Subset<T, SupplierPortal$AccountArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    Programme<T extends SupplierPortal$ProgrammeArgs<ExtArgs> = {}>(args?: Subset<T, SupplierPortal$ProgrammeArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SupplierPortal model
+   */
+  interface SupplierPortalFieldRefs {
+    readonly id: FieldRef<"SupplierPortal", 'String'>
+    readonly name: FieldRef<"SupplierPortal", 'String'>
+    readonly kind: FieldRef<"SupplierPortal", 'String'>
+    readonly url: FieldRef<"SupplierPortal", 'String'>
+    readonly registrationUrl: FieldRef<"SupplierPortal", 'String'>
+    readonly termsUrl: FieldRef<"SupplierPortal", 'String'>
+    readonly organisationId: FieldRef<"SupplierPortal", 'String'>
+    readonly cost: FieldRef<"SupplierPortal", 'String'>
+    readonly automationPermitted: FieldRef<"SupplierPortal", 'Boolean'>
+    readonly standingPolicy: FieldRef<"SupplierPortal", 'Boolean'>
+    readonly standingPolicyById: FieldRef<"SupplierPortal", 'String'>
+    readonly standingPolicyAt: FieldRef<"SupplierPortal", 'DateTime'>
+    readonly requiredFacts: FieldRef<"SupplierPortal", 'String[]'>
+    readonly requiredDocuments: FieldRef<"SupplierPortal", 'String[]'>
+    readonly notes: FieldRef<"SupplierPortal", 'String'>
+    readonly sourceUrl: FieldRef<"SupplierPortal", 'String'>
+    readonly createdAt: FieldRef<"SupplierPortal", 'DateTime'>
+    readonly updatedAt: FieldRef<"SupplierPortal", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SupplierPortal findUnique
+   */
+  export type SupplierPortalFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierPortal to fetch.
+     */
+    where: SupplierPortalWhereUniqueInput
+  }
+
+  /**
+   * SupplierPortal findUniqueOrThrow
+   */
+  export type SupplierPortalFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierPortal to fetch.
+     */
+    where: SupplierPortalWhereUniqueInput
+  }
+
+  /**
+   * SupplierPortal findFirst
+   */
+  export type SupplierPortalFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierPortal to fetch.
+     */
+    where?: SupplierPortalWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SupplierPortals to fetch.
+     */
+    orderBy?: SupplierPortalOrderByWithRelationInput | SupplierPortalOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SupplierPortals.
+     */
+    cursor?: SupplierPortalWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SupplierPortals from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SupplierPortals.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SupplierPortals.
+     */
+    distinct?: SupplierPortalScalarFieldEnum | SupplierPortalScalarFieldEnum[]
+  }
+
+  /**
+   * SupplierPortal findFirstOrThrow
+   */
+  export type SupplierPortalFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierPortal to fetch.
+     */
+    where?: SupplierPortalWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SupplierPortals to fetch.
+     */
+    orderBy?: SupplierPortalOrderByWithRelationInput | SupplierPortalOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SupplierPortals.
+     */
+    cursor?: SupplierPortalWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SupplierPortals from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SupplierPortals.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SupplierPortals.
+     */
+    distinct?: SupplierPortalScalarFieldEnum | SupplierPortalScalarFieldEnum[]
+  }
+
+  /**
+   * SupplierPortal findMany
+   */
+  export type SupplierPortalFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierPortals to fetch.
+     */
+    where?: SupplierPortalWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SupplierPortals to fetch.
+     */
+    orderBy?: SupplierPortalOrderByWithRelationInput | SupplierPortalOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SupplierPortals.
+     */
+    cursor?: SupplierPortalWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SupplierPortals from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SupplierPortals.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SupplierPortals.
+     */
+    distinct?: SupplierPortalScalarFieldEnum | SupplierPortalScalarFieldEnum[]
+  }
+
+  /**
+   * SupplierPortal create
+   */
+  export type SupplierPortalCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SupplierPortal.
+     */
+    data: XOR<SupplierPortalCreateInput, SupplierPortalUncheckedCreateInput>
+  }
+
+  /**
+   * SupplierPortal createMany
+   */
+  export type SupplierPortalCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SupplierPortals.
+     */
+    data: SupplierPortalCreateManyInput | SupplierPortalCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SupplierPortal createManyAndReturn
+   */
+  export type SupplierPortalCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * The data used to create many SupplierPortals.
+     */
+    data: SupplierPortalCreateManyInput | SupplierPortalCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SupplierPortal update
+   */
+  export type SupplierPortalUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SupplierPortal.
+     */
+    data: XOR<SupplierPortalUpdateInput, SupplierPortalUncheckedUpdateInput>
+    /**
+     * Choose, which SupplierPortal to update.
+     */
+    where: SupplierPortalWhereUniqueInput
+  }
+
+  /**
+   * SupplierPortal updateMany
+   */
+  export type SupplierPortalUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SupplierPortals.
+     */
+    data: XOR<SupplierPortalUpdateManyMutationInput, SupplierPortalUncheckedUpdateManyInput>
+    /**
+     * Filter which SupplierPortals to update
+     */
+    where?: SupplierPortalWhereInput
+    /**
+     * Limit how many SupplierPortals to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SupplierPortal updateManyAndReturn
+   */
+  export type SupplierPortalUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * The data used to update SupplierPortals.
+     */
+    data: XOR<SupplierPortalUpdateManyMutationInput, SupplierPortalUncheckedUpdateManyInput>
+    /**
+     * Filter which SupplierPortals to update
+     */
+    where?: SupplierPortalWhereInput
+    /**
+     * Limit how many SupplierPortals to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SupplierPortal upsert
+   */
+  export type SupplierPortalUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SupplierPortal to update in case it exists.
+     */
+    where: SupplierPortalWhereUniqueInput
+    /**
+     * In case the SupplierPortal found by the `where` argument doesn't exist, create a new SupplierPortal with this data.
+     */
+    create: XOR<SupplierPortalCreateInput, SupplierPortalUncheckedCreateInput>
+    /**
+     * In case the SupplierPortal was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SupplierPortalUpdateInput, SupplierPortalUncheckedUpdateInput>
+  }
+
+  /**
+   * SupplierPortal delete
+   */
+  export type SupplierPortalDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    /**
+     * Filter which SupplierPortal to delete.
+     */
+    where: SupplierPortalWhereUniqueInput
+  }
+
+  /**
+   * SupplierPortal deleteMany
+   */
+  export type SupplierPortalDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SupplierPortals to delete
+     */
+    where?: SupplierPortalWhereInput
+    /**
+     * Limit how many SupplierPortals to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SupplierPortal.Organisation
+   */
+  export type SupplierPortal$OrganisationArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Organisation
+     */
+    select?: OrganisationSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Organisation
+     */
+    omit?: OrganisationOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrganisationInclude<ExtArgs> | null
+    where?: OrganisationWhereInput
+  }
+
+  /**
+   * SupplierPortal.Account
+   */
+  export type SupplierPortal$AccountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    where?: SupplierAccountWhereInput
+    orderBy?: SupplierAccountOrderByWithRelationInput | SupplierAccountOrderByWithRelationInput[]
+    cursor?: SupplierAccountWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SupplierAccountScalarFieldEnum | SupplierAccountScalarFieldEnum[]
+  }
+
+  /**
+   * SupplierPortal.Programme
+   */
+  export type SupplierPortal$ProgrammeArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    where?: PartnershipProgrammeWhereInput
+    orderBy?: PartnershipProgrammeOrderByWithRelationInput | PartnershipProgrammeOrderByWithRelationInput[]
+    cursor?: PartnershipProgrammeWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PartnershipProgrammeScalarFieldEnum | PartnershipProgrammeScalarFieldEnum[]
+  }
+
+  /**
+   * SupplierPortal without action
+   */
+  export type SupplierPortalDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SupplierAccount
+   */
+
+  export type AggregateSupplierAccount = {
+    _count: SupplierAccountCountAggregateOutputType | null
+    _min: SupplierAccountMinAggregateOutputType | null
+    _max: SupplierAccountMaxAggregateOutputType | null
+  }
+
+  export type SupplierAccountMinAggregateOutputType = {
+    id: string | null
+    portalId: string | null
+    status: string | null
+    accountRef: string | null
+    registeredAt: Date | null
+    verificationStatus: string | null
+    contactAlias: string | null
+    credentialLabel: string | null
+    mfaRequired: boolean | null
+    termsVersion: string | null
+    renewalAt: Date | null
+    restrictions: string | null
+    lastAccessAt: Date | null
+    approvalDecisionId: string | null
+    ownerUserId: string | null
+    notes: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SupplierAccountMaxAggregateOutputType = {
+    id: string | null
+    portalId: string | null
+    status: string | null
+    accountRef: string | null
+    registeredAt: Date | null
+    verificationStatus: string | null
+    contactAlias: string | null
+    credentialLabel: string | null
+    mfaRequired: boolean | null
+    termsVersion: string | null
+    renewalAt: Date | null
+    restrictions: string | null
+    lastAccessAt: Date | null
+    approvalDecisionId: string | null
+    ownerUserId: string | null
+    notes: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type SupplierAccountCountAggregateOutputType = {
+    id: number
+    portalId: number
+    status: number
+    accountRef: number
+    registeredAt: number
+    verificationStatus: number
+    contactAlias: number
+    credentialLabel: number
+    mfaRequired: number
+    termsVersion: number
+    renewalAt: number
+    restrictions: number
+    lastAccessAt: number
+    approvalDecisionId: number
+    ownerUserId: number
+    notes: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type SupplierAccountMinAggregateInputType = {
+    id?: true
+    portalId?: true
+    status?: true
+    accountRef?: true
+    registeredAt?: true
+    verificationStatus?: true
+    contactAlias?: true
+    credentialLabel?: true
+    mfaRequired?: true
+    termsVersion?: true
+    renewalAt?: true
+    restrictions?: true
+    lastAccessAt?: true
+    approvalDecisionId?: true
+    ownerUserId?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SupplierAccountMaxAggregateInputType = {
+    id?: true
+    portalId?: true
+    status?: true
+    accountRef?: true
+    registeredAt?: true
+    verificationStatus?: true
+    contactAlias?: true
+    credentialLabel?: true
+    mfaRequired?: true
+    termsVersion?: true
+    renewalAt?: true
+    restrictions?: true
+    lastAccessAt?: true
+    approvalDecisionId?: true
+    ownerUserId?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type SupplierAccountCountAggregateInputType = {
+    id?: true
+    portalId?: true
+    status?: true
+    accountRef?: true
+    registeredAt?: true
+    verificationStatus?: true
+    contactAlias?: true
+    credentialLabel?: true
+    mfaRequired?: true
+    termsVersion?: true
+    renewalAt?: true
+    restrictions?: true
+    lastAccessAt?: true
+    approvalDecisionId?: true
+    ownerUserId?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type SupplierAccountAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SupplierAccount to aggregate.
+     */
+    where?: SupplierAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SupplierAccounts to fetch.
+     */
+    orderBy?: SupplierAccountOrderByWithRelationInput | SupplierAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SupplierAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SupplierAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SupplierAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SupplierAccounts
+    **/
+    _count?: true | SupplierAccountCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SupplierAccountMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SupplierAccountMaxAggregateInputType
+  }
+
+  export type GetSupplierAccountAggregateType<T extends SupplierAccountAggregateArgs> = {
+        [P in keyof T & keyof AggregateSupplierAccount]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSupplierAccount[P]>
+      : GetScalarType<T[P], AggregateSupplierAccount[P]>
+  }
+
+
+
+
+  export type SupplierAccountGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SupplierAccountWhereInput
+    orderBy?: SupplierAccountOrderByWithAggregationInput | SupplierAccountOrderByWithAggregationInput[]
+    by: SupplierAccountScalarFieldEnum[] | SupplierAccountScalarFieldEnum
+    having?: SupplierAccountScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SupplierAccountCountAggregateInputType | true
+    _min?: SupplierAccountMinAggregateInputType
+    _max?: SupplierAccountMaxAggregateInputType
+  }
+
+  export type SupplierAccountGroupByOutputType = {
+    id: string
+    portalId: string
+    status: string
+    accountRef: string | null
+    registeredAt: Date | null
+    verificationStatus: string | null
+    contactAlias: string | null
+    credentialLabel: string | null
+    mfaRequired: boolean | null
+    termsVersion: string | null
+    renewalAt: Date | null
+    restrictions: string | null
+    lastAccessAt: Date | null
+    approvalDecisionId: string | null
+    ownerUserId: string | null
+    notes: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: SupplierAccountCountAggregateOutputType | null
+    _min: SupplierAccountMinAggregateOutputType | null
+    _max: SupplierAccountMaxAggregateOutputType | null
+  }
+
+  type GetSupplierAccountGroupByPayload<T extends SupplierAccountGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SupplierAccountGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SupplierAccountGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SupplierAccountGroupByOutputType[P]>
+            : GetScalarType<T[P], SupplierAccountGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SupplierAccountSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    portalId?: boolean
+    status?: boolean
+    accountRef?: boolean
+    registeredAt?: boolean
+    verificationStatus?: boolean
+    contactAlias?: boolean
+    credentialLabel?: boolean
+    mfaRequired?: boolean
+    termsVersion?: boolean
+    renewalAt?: boolean
+    restrictions?: boolean
+    lastAccessAt?: boolean
+    approvalDecisionId?: boolean
+    ownerUserId?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Portal?: boolean | SupplierPortalDefaultArgs<ExtArgs>
+    Decision?: boolean | SupplierAccount$DecisionArgs<ExtArgs>
+  }, ExtArgs["result"]["supplierAccount"]>
+
+  export type SupplierAccountSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    portalId?: boolean
+    status?: boolean
+    accountRef?: boolean
+    registeredAt?: boolean
+    verificationStatus?: boolean
+    contactAlias?: boolean
+    credentialLabel?: boolean
+    mfaRequired?: boolean
+    termsVersion?: boolean
+    renewalAt?: boolean
+    restrictions?: boolean
+    lastAccessAt?: boolean
+    approvalDecisionId?: boolean
+    ownerUserId?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Portal?: boolean | SupplierPortalDefaultArgs<ExtArgs>
+    Decision?: boolean | SupplierAccount$DecisionArgs<ExtArgs>
+  }, ExtArgs["result"]["supplierAccount"]>
+
+  export type SupplierAccountSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    portalId?: boolean
+    status?: boolean
+    accountRef?: boolean
+    registeredAt?: boolean
+    verificationStatus?: boolean
+    contactAlias?: boolean
+    credentialLabel?: boolean
+    mfaRequired?: boolean
+    termsVersion?: boolean
+    renewalAt?: boolean
+    restrictions?: boolean
+    lastAccessAt?: boolean
+    approvalDecisionId?: boolean
+    ownerUserId?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Portal?: boolean | SupplierPortalDefaultArgs<ExtArgs>
+    Decision?: boolean | SupplierAccount$DecisionArgs<ExtArgs>
+  }, ExtArgs["result"]["supplierAccount"]>
+
+  export type SupplierAccountSelectScalar = {
+    id?: boolean
+    portalId?: boolean
+    status?: boolean
+    accountRef?: boolean
+    registeredAt?: boolean
+    verificationStatus?: boolean
+    contactAlias?: boolean
+    credentialLabel?: boolean
+    mfaRequired?: boolean
+    termsVersion?: boolean
+    renewalAt?: boolean
+    restrictions?: boolean
+    lastAccessAt?: boolean
+    approvalDecisionId?: boolean
+    ownerUserId?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type SupplierAccountOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "portalId" | "status" | "accountRef" | "registeredAt" | "verificationStatus" | "contactAlias" | "credentialLabel" | "mfaRequired" | "termsVersion" | "renewalAt" | "restrictions" | "lastAccessAt" | "approvalDecisionId" | "ownerUserId" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["supplierAccount"]>
+  export type SupplierAccountInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Portal?: boolean | SupplierPortalDefaultArgs<ExtArgs>
+    Decision?: boolean | SupplierAccount$DecisionArgs<ExtArgs>
+  }
+  export type SupplierAccountIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Portal?: boolean | SupplierPortalDefaultArgs<ExtArgs>
+    Decision?: boolean | SupplierAccount$DecisionArgs<ExtArgs>
+  }
+  export type SupplierAccountIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Portal?: boolean | SupplierPortalDefaultArgs<ExtArgs>
+    Decision?: boolean | SupplierAccount$DecisionArgs<ExtArgs>
+  }
+
+  export type $SupplierAccountPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SupplierAccount"
+    objects: {
+      Portal: Prisma.$SupplierPortalPayload<ExtArgs>
+      Decision: Prisma.$ApprovalDecisionPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      portalId: string
+      status: string
+      accountRef: string | null
+      registeredAt: Date | null
+      verificationStatus: string | null
+      contactAlias: string | null
+      credentialLabel: string | null
+      mfaRequired: boolean | null
+      termsVersion: string | null
+      renewalAt: Date | null
+      restrictions: string | null
+      lastAccessAt: Date | null
+      approvalDecisionId: string | null
+      ownerUserId: string | null
+      notes: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["supplierAccount"]>
+    composites: {}
+  }
+
+  type SupplierAccountGetPayload<S extends boolean | null | undefined | SupplierAccountDefaultArgs> = $Result.GetResult<Prisma.$SupplierAccountPayload, S>
+
+  type SupplierAccountCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SupplierAccountFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SupplierAccountCountAggregateInputType | true
+    }
+
+  export interface SupplierAccountDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SupplierAccount'], meta: { name: 'SupplierAccount' } }
+    /**
+     * Find zero or one SupplierAccount that matches the filter.
+     * @param {SupplierAccountFindUniqueArgs} args - Arguments to find a SupplierAccount
+     * @example
+     * // Get one SupplierAccount
+     * const supplierAccount = await prisma.supplierAccount.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SupplierAccountFindUniqueArgs>(args: SelectSubset<T, SupplierAccountFindUniqueArgs<ExtArgs>>): Prisma__SupplierAccountClient<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SupplierAccount that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SupplierAccountFindUniqueOrThrowArgs} args - Arguments to find a SupplierAccount
+     * @example
+     * // Get one SupplierAccount
+     * const supplierAccount = await prisma.supplierAccount.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SupplierAccountFindUniqueOrThrowArgs>(args: SelectSubset<T, SupplierAccountFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SupplierAccountClient<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SupplierAccount that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierAccountFindFirstArgs} args - Arguments to find a SupplierAccount
+     * @example
+     * // Get one SupplierAccount
+     * const supplierAccount = await prisma.supplierAccount.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SupplierAccountFindFirstArgs>(args?: SelectSubset<T, SupplierAccountFindFirstArgs<ExtArgs>>): Prisma__SupplierAccountClient<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SupplierAccount that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierAccountFindFirstOrThrowArgs} args - Arguments to find a SupplierAccount
+     * @example
+     * // Get one SupplierAccount
+     * const supplierAccount = await prisma.supplierAccount.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SupplierAccountFindFirstOrThrowArgs>(args?: SelectSubset<T, SupplierAccountFindFirstOrThrowArgs<ExtArgs>>): Prisma__SupplierAccountClient<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SupplierAccounts that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierAccountFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SupplierAccounts
+     * const supplierAccounts = await prisma.supplierAccount.findMany()
+     * 
+     * // Get first 10 SupplierAccounts
+     * const supplierAccounts = await prisma.supplierAccount.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const supplierAccountWithIdOnly = await prisma.supplierAccount.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends SupplierAccountFindManyArgs>(args?: SelectSubset<T, SupplierAccountFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SupplierAccount.
+     * @param {SupplierAccountCreateArgs} args - Arguments to create a SupplierAccount.
+     * @example
+     * // Create one SupplierAccount
+     * const SupplierAccount = await prisma.supplierAccount.create({
+     *   data: {
+     *     // ... data to create a SupplierAccount
+     *   }
+     * })
+     * 
+     */
+    create<T extends SupplierAccountCreateArgs>(args: SelectSubset<T, SupplierAccountCreateArgs<ExtArgs>>): Prisma__SupplierAccountClient<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SupplierAccounts.
+     * @param {SupplierAccountCreateManyArgs} args - Arguments to create many SupplierAccounts.
+     * @example
+     * // Create many SupplierAccounts
+     * const supplierAccount = await prisma.supplierAccount.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SupplierAccountCreateManyArgs>(args?: SelectSubset<T, SupplierAccountCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SupplierAccounts and returns the data saved in the database.
+     * @param {SupplierAccountCreateManyAndReturnArgs} args - Arguments to create many SupplierAccounts.
+     * @example
+     * // Create many SupplierAccounts
+     * const supplierAccount = await prisma.supplierAccount.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SupplierAccounts and only return the `id`
+     * const supplierAccountWithIdOnly = await prisma.supplierAccount.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SupplierAccountCreateManyAndReturnArgs>(args?: SelectSubset<T, SupplierAccountCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SupplierAccount.
+     * @param {SupplierAccountDeleteArgs} args - Arguments to delete one SupplierAccount.
+     * @example
+     * // Delete one SupplierAccount
+     * const SupplierAccount = await prisma.supplierAccount.delete({
+     *   where: {
+     *     // ... filter to delete one SupplierAccount
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SupplierAccountDeleteArgs>(args: SelectSubset<T, SupplierAccountDeleteArgs<ExtArgs>>): Prisma__SupplierAccountClient<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SupplierAccount.
+     * @param {SupplierAccountUpdateArgs} args - Arguments to update one SupplierAccount.
+     * @example
+     * // Update one SupplierAccount
+     * const supplierAccount = await prisma.supplierAccount.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SupplierAccountUpdateArgs>(args: SelectSubset<T, SupplierAccountUpdateArgs<ExtArgs>>): Prisma__SupplierAccountClient<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SupplierAccounts.
+     * @param {SupplierAccountDeleteManyArgs} args - Arguments to filter SupplierAccounts to delete.
+     * @example
+     * // Delete a few SupplierAccounts
+     * const { count } = await prisma.supplierAccount.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SupplierAccountDeleteManyArgs>(args?: SelectSubset<T, SupplierAccountDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SupplierAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierAccountUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SupplierAccounts
+     * const supplierAccount = await prisma.supplierAccount.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SupplierAccountUpdateManyArgs>(args: SelectSubset<T, SupplierAccountUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SupplierAccounts and returns the data updated in the database.
+     * @param {SupplierAccountUpdateManyAndReturnArgs} args - Arguments to update many SupplierAccounts.
+     * @example
+     * // Update many SupplierAccounts
+     * const supplierAccount = await prisma.supplierAccount.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SupplierAccounts and only return the `id`
+     * const supplierAccountWithIdOnly = await prisma.supplierAccount.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SupplierAccountUpdateManyAndReturnArgs>(args: SelectSubset<T, SupplierAccountUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SupplierAccount.
+     * @param {SupplierAccountUpsertArgs} args - Arguments to update or create a SupplierAccount.
+     * @example
+     * // Update or create a SupplierAccount
+     * const supplierAccount = await prisma.supplierAccount.upsert({
+     *   create: {
+     *     // ... data to create a SupplierAccount
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SupplierAccount we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SupplierAccountUpsertArgs>(args: SelectSubset<T, SupplierAccountUpsertArgs<ExtArgs>>): Prisma__SupplierAccountClient<$Result.GetResult<Prisma.$SupplierAccountPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SupplierAccounts.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierAccountCountArgs} args - Arguments to filter SupplierAccounts to count.
+     * @example
+     * // Count the number of SupplierAccounts
+     * const count = await prisma.supplierAccount.count({
+     *   where: {
+     *     // ... the filter for the SupplierAccounts we want to count
+     *   }
+     * })
+    **/
+    count<T extends SupplierAccountCountArgs>(
+      args?: Subset<T, SupplierAccountCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SupplierAccountCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SupplierAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierAccountAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SupplierAccountAggregateArgs>(args: Subset<T, SupplierAccountAggregateArgs>): Prisma.PrismaPromise<GetSupplierAccountAggregateType<T>>
+
+    /**
+     * Group by SupplierAccount.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SupplierAccountGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SupplierAccountGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SupplierAccountGroupByArgs['orderBy'] }
+        : { orderBy?: SupplierAccountGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SupplierAccountGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSupplierAccountGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SupplierAccount model
+   */
+  readonly fields: SupplierAccountFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SupplierAccount.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SupplierAccountClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    Portal<T extends SupplierPortalDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SupplierPortalDefaultArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    Decision<T extends SupplierAccount$DecisionArgs<ExtArgs> = {}>(args?: Subset<T, SupplierAccount$DecisionArgs<ExtArgs>>): Prisma__ApprovalDecisionClient<$Result.GetResult<Prisma.$ApprovalDecisionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SupplierAccount model
+   */
+  interface SupplierAccountFieldRefs {
+    readonly id: FieldRef<"SupplierAccount", 'String'>
+    readonly portalId: FieldRef<"SupplierAccount", 'String'>
+    readonly status: FieldRef<"SupplierAccount", 'String'>
+    readonly accountRef: FieldRef<"SupplierAccount", 'String'>
+    readonly registeredAt: FieldRef<"SupplierAccount", 'DateTime'>
+    readonly verificationStatus: FieldRef<"SupplierAccount", 'String'>
+    readonly contactAlias: FieldRef<"SupplierAccount", 'String'>
+    readonly credentialLabel: FieldRef<"SupplierAccount", 'String'>
+    readonly mfaRequired: FieldRef<"SupplierAccount", 'Boolean'>
+    readonly termsVersion: FieldRef<"SupplierAccount", 'String'>
+    readonly renewalAt: FieldRef<"SupplierAccount", 'DateTime'>
+    readonly restrictions: FieldRef<"SupplierAccount", 'String'>
+    readonly lastAccessAt: FieldRef<"SupplierAccount", 'DateTime'>
+    readonly approvalDecisionId: FieldRef<"SupplierAccount", 'String'>
+    readonly ownerUserId: FieldRef<"SupplierAccount", 'String'>
+    readonly notes: FieldRef<"SupplierAccount", 'String'>
+    readonly createdAt: FieldRef<"SupplierAccount", 'DateTime'>
+    readonly updatedAt: FieldRef<"SupplierAccount", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SupplierAccount findUnique
+   */
+  export type SupplierAccountFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierAccount to fetch.
+     */
+    where: SupplierAccountWhereUniqueInput
+  }
+
+  /**
+   * SupplierAccount findUniqueOrThrow
+   */
+  export type SupplierAccountFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierAccount to fetch.
+     */
+    where: SupplierAccountWhereUniqueInput
+  }
+
+  /**
+   * SupplierAccount findFirst
+   */
+  export type SupplierAccountFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierAccount to fetch.
+     */
+    where?: SupplierAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SupplierAccounts to fetch.
+     */
+    orderBy?: SupplierAccountOrderByWithRelationInput | SupplierAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SupplierAccounts.
+     */
+    cursor?: SupplierAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SupplierAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SupplierAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SupplierAccounts.
+     */
+    distinct?: SupplierAccountScalarFieldEnum | SupplierAccountScalarFieldEnum[]
+  }
+
+  /**
+   * SupplierAccount findFirstOrThrow
+   */
+  export type SupplierAccountFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierAccount to fetch.
+     */
+    where?: SupplierAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SupplierAccounts to fetch.
+     */
+    orderBy?: SupplierAccountOrderByWithRelationInput | SupplierAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SupplierAccounts.
+     */
+    cursor?: SupplierAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SupplierAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SupplierAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SupplierAccounts.
+     */
+    distinct?: SupplierAccountScalarFieldEnum | SupplierAccountScalarFieldEnum[]
+  }
+
+  /**
+   * SupplierAccount findMany
+   */
+  export type SupplierAccountFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * Filter, which SupplierAccounts to fetch.
+     */
+    where?: SupplierAccountWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SupplierAccounts to fetch.
+     */
+    orderBy?: SupplierAccountOrderByWithRelationInput | SupplierAccountOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SupplierAccounts.
+     */
+    cursor?: SupplierAccountWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SupplierAccounts from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SupplierAccounts.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SupplierAccounts.
+     */
+    distinct?: SupplierAccountScalarFieldEnum | SupplierAccountScalarFieldEnum[]
+  }
+
+  /**
+   * SupplierAccount create
+   */
+  export type SupplierAccountCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SupplierAccount.
+     */
+    data: XOR<SupplierAccountCreateInput, SupplierAccountUncheckedCreateInput>
+  }
+
+  /**
+   * SupplierAccount createMany
+   */
+  export type SupplierAccountCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SupplierAccounts.
+     */
+    data: SupplierAccountCreateManyInput | SupplierAccountCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SupplierAccount createManyAndReturn
+   */
+  export type SupplierAccountCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * The data used to create many SupplierAccounts.
+     */
+    data: SupplierAccountCreateManyInput | SupplierAccountCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SupplierAccount update
+   */
+  export type SupplierAccountUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SupplierAccount.
+     */
+    data: XOR<SupplierAccountUpdateInput, SupplierAccountUncheckedUpdateInput>
+    /**
+     * Choose, which SupplierAccount to update.
+     */
+    where: SupplierAccountWhereUniqueInput
+  }
+
+  /**
+   * SupplierAccount updateMany
+   */
+  export type SupplierAccountUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SupplierAccounts.
+     */
+    data: XOR<SupplierAccountUpdateManyMutationInput, SupplierAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which SupplierAccounts to update
+     */
+    where?: SupplierAccountWhereInput
+    /**
+     * Limit how many SupplierAccounts to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SupplierAccount updateManyAndReturn
+   */
+  export type SupplierAccountUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * The data used to update SupplierAccounts.
+     */
+    data: XOR<SupplierAccountUpdateManyMutationInput, SupplierAccountUncheckedUpdateManyInput>
+    /**
+     * Filter which SupplierAccounts to update
+     */
+    where?: SupplierAccountWhereInput
+    /**
+     * Limit how many SupplierAccounts to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SupplierAccount upsert
+   */
+  export type SupplierAccountUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SupplierAccount to update in case it exists.
+     */
+    where: SupplierAccountWhereUniqueInput
+    /**
+     * In case the SupplierAccount found by the `where` argument doesn't exist, create a new SupplierAccount with this data.
+     */
+    create: XOR<SupplierAccountCreateInput, SupplierAccountUncheckedCreateInput>
+    /**
+     * In case the SupplierAccount was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SupplierAccountUpdateInput, SupplierAccountUncheckedUpdateInput>
+  }
+
+  /**
+   * SupplierAccount delete
+   */
+  export type SupplierAccountDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+    /**
+     * Filter which SupplierAccount to delete.
+     */
+    where: SupplierAccountWhereUniqueInput
+  }
+
+  /**
+   * SupplierAccount deleteMany
+   */
+  export type SupplierAccountDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SupplierAccounts to delete
+     */
+    where?: SupplierAccountWhereInput
+    /**
+     * Limit how many SupplierAccounts to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SupplierAccount.Decision
+   */
+  export type SupplierAccount$DecisionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ApprovalDecision
+     */
+    select?: ApprovalDecisionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ApprovalDecision
+     */
+    omit?: ApprovalDecisionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ApprovalDecisionInclude<ExtArgs> | null
+    where?: ApprovalDecisionWhereInput
+  }
+
+  /**
+   * SupplierAccount without action
+   */
+  export type SupplierAccountDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierAccount
+     */
+    select?: SupplierAccountSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierAccount
+     */
+    omit?: SupplierAccountOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierAccountInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PartnershipProgramme
+   */
+
+  export type AggregatePartnershipProgramme = {
+    _count: PartnershipProgrammeCountAggregateOutputType | null
+    _min: PartnershipProgrammeMinAggregateOutputType | null
+    _max: PartnershipProgrammeMaxAggregateOutputType | null
+  }
+
+  export type PartnershipProgrammeMinAggregateOutputType = {
+    id: string | null
+    organisationId: string | null
+    name: string | null
+    url: string | null
+    portalId: string | null
+    verified: boolean | null
+    verifiedAt: Date | null
+    sourceUrl: string | null
+    availability: string | null
+    fees: string | null
+    requirements: string | null
+    notes: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PartnershipProgrammeMaxAggregateOutputType = {
+    id: string | null
+    organisationId: string | null
+    name: string | null
+    url: string | null
+    portalId: string | null
+    verified: boolean | null
+    verifiedAt: Date | null
+    sourceUrl: string | null
+    availability: string | null
+    fees: string | null
+    requirements: string | null
+    notes: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PartnershipProgrammeCountAggregateOutputType = {
+    id: number
+    organisationId: number
+    name: number
+    categories: number
+    url: number
+    portalId: number
+    verified: number
+    verifiedAt: number
+    sourceUrl: number
+    availability: number
+    fees: number
+    requirements: number
+    notes: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PartnershipProgrammeMinAggregateInputType = {
+    id?: true
+    organisationId?: true
+    name?: true
+    url?: true
+    portalId?: true
+    verified?: true
+    verifiedAt?: true
+    sourceUrl?: true
+    availability?: true
+    fees?: true
+    requirements?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PartnershipProgrammeMaxAggregateInputType = {
+    id?: true
+    organisationId?: true
+    name?: true
+    url?: true
+    portalId?: true
+    verified?: true
+    verifiedAt?: true
+    sourceUrl?: true
+    availability?: true
+    fees?: true
+    requirements?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PartnershipProgrammeCountAggregateInputType = {
+    id?: true
+    organisationId?: true
+    name?: true
+    categories?: true
+    url?: true
+    portalId?: true
+    verified?: true
+    verifiedAt?: true
+    sourceUrl?: true
+    availability?: true
+    fees?: true
+    requirements?: true
+    notes?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PartnershipProgrammeAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PartnershipProgramme to aggregate.
+     */
+    where?: PartnershipProgrammeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PartnershipProgrammes to fetch.
+     */
+    orderBy?: PartnershipProgrammeOrderByWithRelationInput | PartnershipProgrammeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PartnershipProgrammeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PartnershipProgrammes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PartnershipProgrammes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PartnershipProgrammes
+    **/
+    _count?: true | PartnershipProgrammeCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PartnershipProgrammeMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PartnershipProgrammeMaxAggregateInputType
+  }
+
+  export type GetPartnershipProgrammeAggregateType<T extends PartnershipProgrammeAggregateArgs> = {
+        [P in keyof T & keyof AggregatePartnershipProgramme]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePartnershipProgramme[P]>
+      : GetScalarType<T[P], AggregatePartnershipProgramme[P]>
+  }
+
+
+
+
+  export type PartnershipProgrammeGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PartnershipProgrammeWhereInput
+    orderBy?: PartnershipProgrammeOrderByWithAggregationInput | PartnershipProgrammeOrderByWithAggregationInput[]
+    by: PartnershipProgrammeScalarFieldEnum[] | PartnershipProgrammeScalarFieldEnum
+    having?: PartnershipProgrammeScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PartnershipProgrammeCountAggregateInputType | true
+    _min?: PartnershipProgrammeMinAggregateInputType
+    _max?: PartnershipProgrammeMaxAggregateInputType
+  }
+
+  export type PartnershipProgrammeGroupByOutputType = {
+    id: string
+    organisationId: string
+    name: string
+    categories: string[]
+    url: string | null
+    portalId: string | null
+    verified: boolean
+    verifiedAt: Date | null
+    sourceUrl: string | null
+    availability: string
+    fees: string | null
+    requirements: string | null
+    notes: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: PartnershipProgrammeCountAggregateOutputType | null
+    _min: PartnershipProgrammeMinAggregateOutputType | null
+    _max: PartnershipProgrammeMaxAggregateOutputType | null
+  }
+
+  type GetPartnershipProgrammeGroupByPayload<T extends PartnershipProgrammeGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PartnershipProgrammeGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PartnershipProgrammeGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PartnershipProgrammeGroupByOutputType[P]>
+            : GetScalarType<T[P], PartnershipProgrammeGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PartnershipProgrammeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organisationId?: boolean
+    name?: boolean
+    categories?: boolean
+    url?: boolean
+    portalId?: boolean
+    verified?: boolean
+    verifiedAt?: boolean
+    sourceUrl?: boolean
+    availability?: boolean
+    fees?: boolean
+    requirements?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Organisation?: boolean | OrganisationDefaultArgs<ExtArgs>
+    Portal?: boolean | PartnershipProgramme$PortalArgs<ExtArgs>
+    Opportunity?: boolean | PartnershipProgramme$OpportunityArgs<ExtArgs>
+    _count?: boolean | PartnershipProgrammeCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["partnershipProgramme"]>
+
+  export type PartnershipProgrammeSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organisationId?: boolean
+    name?: boolean
+    categories?: boolean
+    url?: boolean
+    portalId?: boolean
+    verified?: boolean
+    verifiedAt?: boolean
+    sourceUrl?: boolean
+    availability?: boolean
+    fees?: boolean
+    requirements?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Organisation?: boolean | OrganisationDefaultArgs<ExtArgs>
+    Portal?: boolean | PartnershipProgramme$PortalArgs<ExtArgs>
+  }, ExtArgs["result"]["partnershipProgramme"]>
+
+  export type PartnershipProgrammeSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    organisationId?: boolean
+    name?: boolean
+    categories?: boolean
+    url?: boolean
+    portalId?: boolean
+    verified?: boolean
+    verifiedAt?: boolean
+    sourceUrl?: boolean
+    availability?: boolean
+    fees?: boolean
+    requirements?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    Organisation?: boolean | OrganisationDefaultArgs<ExtArgs>
+    Portal?: boolean | PartnershipProgramme$PortalArgs<ExtArgs>
+  }, ExtArgs["result"]["partnershipProgramme"]>
+
+  export type PartnershipProgrammeSelectScalar = {
+    id?: boolean
+    organisationId?: boolean
+    name?: boolean
+    categories?: boolean
+    url?: boolean
+    portalId?: boolean
+    verified?: boolean
+    verifiedAt?: boolean
+    sourceUrl?: boolean
+    availability?: boolean
+    fees?: boolean
+    requirements?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PartnershipProgrammeOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "organisationId" | "name" | "categories" | "url" | "portalId" | "verified" | "verifiedAt" | "sourceUrl" | "availability" | "fees" | "requirements" | "notes" | "createdAt" | "updatedAt", ExtArgs["result"]["partnershipProgramme"]>
+  export type PartnershipProgrammeInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Organisation?: boolean | OrganisationDefaultArgs<ExtArgs>
+    Portal?: boolean | PartnershipProgramme$PortalArgs<ExtArgs>
+    Opportunity?: boolean | PartnershipProgramme$OpportunityArgs<ExtArgs>
+    _count?: boolean | PartnershipProgrammeCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PartnershipProgrammeIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Organisation?: boolean | OrganisationDefaultArgs<ExtArgs>
+    Portal?: boolean | PartnershipProgramme$PortalArgs<ExtArgs>
+  }
+  export type PartnershipProgrammeIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Organisation?: boolean | OrganisationDefaultArgs<ExtArgs>
+    Portal?: boolean | PartnershipProgramme$PortalArgs<ExtArgs>
+  }
+
+  export type $PartnershipProgrammePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PartnershipProgramme"
+    objects: {
+      Organisation: Prisma.$OrganisationPayload<ExtArgs>
+      Portal: Prisma.$SupplierPortalPayload<ExtArgs> | null
+      Opportunity: Prisma.$OpportunityPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      organisationId: string
+      name: string
+      categories: string[]
+      url: string | null
+      portalId: string | null
+      verified: boolean
+      verifiedAt: Date | null
+      sourceUrl: string | null
+      availability: string
+      fees: string | null
+      requirements: string | null
+      notes: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["partnershipProgramme"]>
+    composites: {}
+  }
+
+  type PartnershipProgrammeGetPayload<S extends boolean | null | undefined | PartnershipProgrammeDefaultArgs> = $Result.GetResult<Prisma.$PartnershipProgrammePayload, S>
+
+  type PartnershipProgrammeCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PartnershipProgrammeFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PartnershipProgrammeCountAggregateInputType | true
+    }
+
+  export interface PartnershipProgrammeDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PartnershipProgramme'], meta: { name: 'PartnershipProgramme' } }
+    /**
+     * Find zero or one PartnershipProgramme that matches the filter.
+     * @param {PartnershipProgrammeFindUniqueArgs} args - Arguments to find a PartnershipProgramme
+     * @example
+     * // Get one PartnershipProgramme
+     * const partnershipProgramme = await prisma.partnershipProgramme.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PartnershipProgrammeFindUniqueArgs>(args: SelectSubset<T, PartnershipProgrammeFindUniqueArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PartnershipProgramme that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PartnershipProgrammeFindUniqueOrThrowArgs} args - Arguments to find a PartnershipProgramme
+     * @example
+     * // Get one PartnershipProgramme
+     * const partnershipProgramme = await prisma.partnershipProgramme.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PartnershipProgrammeFindUniqueOrThrowArgs>(args: SelectSubset<T, PartnershipProgrammeFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PartnershipProgramme that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartnershipProgrammeFindFirstArgs} args - Arguments to find a PartnershipProgramme
+     * @example
+     * // Get one PartnershipProgramme
+     * const partnershipProgramme = await prisma.partnershipProgramme.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PartnershipProgrammeFindFirstArgs>(args?: SelectSubset<T, PartnershipProgrammeFindFirstArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PartnershipProgramme that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartnershipProgrammeFindFirstOrThrowArgs} args - Arguments to find a PartnershipProgramme
+     * @example
+     * // Get one PartnershipProgramme
+     * const partnershipProgramme = await prisma.partnershipProgramme.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PartnershipProgrammeFindFirstOrThrowArgs>(args?: SelectSubset<T, PartnershipProgrammeFindFirstOrThrowArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PartnershipProgrammes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartnershipProgrammeFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PartnershipProgrammes
+     * const partnershipProgrammes = await prisma.partnershipProgramme.findMany()
+     * 
+     * // Get first 10 PartnershipProgrammes
+     * const partnershipProgrammes = await prisma.partnershipProgramme.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const partnershipProgrammeWithIdOnly = await prisma.partnershipProgramme.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PartnershipProgrammeFindManyArgs>(args?: SelectSubset<T, PartnershipProgrammeFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PartnershipProgramme.
+     * @param {PartnershipProgrammeCreateArgs} args - Arguments to create a PartnershipProgramme.
+     * @example
+     * // Create one PartnershipProgramme
+     * const PartnershipProgramme = await prisma.partnershipProgramme.create({
+     *   data: {
+     *     // ... data to create a PartnershipProgramme
+     *   }
+     * })
+     * 
+     */
+    create<T extends PartnershipProgrammeCreateArgs>(args: SelectSubset<T, PartnershipProgrammeCreateArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PartnershipProgrammes.
+     * @param {PartnershipProgrammeCreateManyArgs} args - Arguments to create many PartnershipProgrammes.
+     * @example
+     * // Create many PartnershipProgrammes
+     * const partnershipProgramme = await prisma.partnershipProgramme.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PartnershipProgrammeCreateManyArgs>(args?: SelectSubset<T, PartnershipProgrammeCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PartnershipProgrammes and returns the data saved in the database.
+     * @param {PartnershipProgrammeCreateManyAndReturnArgs} args - Arguments to create many PartnershipProgrammes.
+     * @example
+     * // Create many PartnershipProgrammes
+     * const partnershipProgramme = await prisma.partnershipProgramme.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PartnershipProgrammes and only return the `id`
+     * const partnershipProgrammeWithIdOnly = await prisma.partnershipProgramme.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PartnershipProgrammeCreateManyAndReturnArgs>(args?: SelectSubset<T, PartnershipProgrammeCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PartnershipProgramme.
+     * @param {PartnershipProgrammeDeleteArgs} args - Arguments to delete one PartnershipProgramme.
+     * @example
+     * // Delete one PartnershipProgramme
+     * const PartnershipProgramme = await prisma.partnershipProgramme.delete({
+     *   where: {
+     *     // ... filter to delete one PartnershipProgramme
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PartnershipProgrammeDeleteArgs>(args: SelectSubset<T, PartnershipProgrammeDeleteArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PartnershipProgramme.
+     * @param {PartnershipProgrammeUpdateArgs} args - Arguments to update one PartnershipProgramme.
+     * @example
+     * // Update one PartnershipProgramme
+     * const partnershipProgramme = await prisma.partnershipProgramme.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PartnershipProgrammeUpdateArgs>(args: SelectSubset<T, PartnershipProgrammeUpdateArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PartnershipProgrammes.
+     * @param {PartnershipProgrammeDeleteManyArgs} args - Arguments to filter PartnershipProgrammes to delete.
+     * @example
+     * // Delete a few PartnershipProgrammes
+     * const { count } = await prisma.partnershipProgramme.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PartnershipProgrammeDeleteManyArgs>(args?: SelectSubset<T, PartnershipProgrammeDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PartnershipProgrammes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartnershipProgrammeUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PartnershipProgrammes
+     * const partnershipProgramme = await prisma.partnershipProgramme.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PartnershipProgrammeUpdateManyArgs>(args: SelectSubset<T, PartnershipProgrammeUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PartnershipProgrammes and returns the data updated in the database.
+     * @param {PartnershipProgrammeUpdateManyAndReturnArgs} args - Arguments to update many PartnershipProgrammes.
+     * @example
+     * // Update many PartnershipProgrammes
+     * const partnershipProgramme = await prisma.partnershipProgramme.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PartnershipProgrammes and only return the `id`
+     * const partnershipProgrammeWithIdOnly = await prisma.partnershipProgramme.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PartnershipProgrammeUpdateManyAndReturnArgs>(args: SelectSubset<T, PartnershipProgrammeUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PartnershipProgramme.
+     * @param {PartnershipProgrammeUpsertArgs} args - Arguments to update or create a PartnershipProgramme.
+     * @example
+     * // Update or create a PartnershipProgramme
+     * const partnershipProgramme = await prisma.partnershipProgramme.upsert({
+     *   create: {
+     *     // ... data to create a PartnershipProgramme
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PartnershipProgramme we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PartnershipProgrammeUpsertArgs>(args: SelectSubset<T, PartnershipProgrammeUpsertArgs<ExtArgs>>): Prisma__PartnershipProgrammeClient<$Result.GetResult<Prisma.$PartnershipProgrammePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PartnershipProgrammes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartnershipProgrammeCountArgs} args - Arguments to filter PartnershipProgrammes to count.
+     * @example
+     * // Count the number of PartnershipProgrammes
+     * const count = await prisma.partnershipProgramme.count({
+     *   where: {
+     *     // ... the filter for the PartnershipProgrammes we want to count
+     *   }
+     * })
+    **/
+    count<T extends PartnershipProgrammeCountArgs>(
+      args?: Subset<T, PartnershipProgrammeCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PartnershipProgrammeCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PartnershipProgramme.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartnershipProgrammeAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PartnershipProgrammeAggregateArgs>(args: Subset<T, PartnershipProgrammeAggregateArgs>): Prisma.PrismaPromise<GetPartnershipProgrammeAggregateType<T>>
+
+    /**
+     * Group by PartnershipProgramme.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PartnershipProgrammeGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PartnershipProgrammeGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PartnershipProgrammeGroupByArgs['orderBy'] }
+        : { orderBy?: PartnershipProgrammeGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PartnershipProgrammeGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPartnershipProgrammeGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PartnershipProgramme model
+   */
+  readonly fields: PartnershipProgrammeFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PartnershipProgramme.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PartnershipProgrammeClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    Organisation<T extends OrganisationDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrganisationDefaultArgs<ExtArgs>>): Prisma__OrganisationClient<$Result.GetResult<Prisma.$OrganisationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    Portal<T extends PartnershipProgramme$PortalArgs<ExtArgs> = {}>(args?: Subset<T, PartnershipProgramme$PortalArgs<ExtArgs>>): Prisma__SupplierPortalClient<$Result.GetResult<Prisma.$SupplierPortalPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    Opportunity<T extends PartnershipProgramme$OpportunityArgs<ExtArgs> = {}>(args?: Subset<T, PartnershipProgramme$OpportunityArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PartnershipProgramme model
+   */
+  interface PartnershipProgrammeFieldRefs {
+    readonly id: FieldRef<"PartnershipProgramme", 'String'>
+    readonly organisationId: FieldRef<"PartnershipProgramme", 'String'>
+    readonly name: FieldRef<"PartnershipProgramme", 'String'>
+    readonly categories: FieldRef<"PartnershipProgramme", 'String[]'>
+    readonly url: FieldRef<"PartnershipProgramme", 'String'>
+    readonly portalId: FieldRef<"PartnershipProgramme", 'String'>
+    readonly verified: FieldRef<"PartnershipProgramme", 'Boolean'>
+    readonly verifiedAt: FieldRef<"PartnershipProgramme", 'DateTime'>
+    readonly sourceUrl: FieldRef<"PartnershipProgramme", 'String'>
+    readonly availability: FieldRef<"PartnershipProgramme", 'String'>
+    readonly fees: FieldRef<"PartnershipProgramme", 'String'>
+    readonly requirements: FieldRef<"PartnershipProgramme", 'String'>
+    readonly notes: FieldRef<"PartnershipProgramme", 'String'>
+    readonly createdAt: FieldRef<"PartnershipProgramme", 'DateTime'>
+    readonly updatedAt: FieldRef<"PartnershipProgramme", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PartnershipProgramme findUnique
+   */
+  export type PartnershipProgrammeFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * Filter, which PartnershipProgramme to fetch.
+     */
+    where: PartnershipProgrammeWhereUniqueInput
+  }
+
+  /**
+   * PartnershipProgramme findUniqueOrThrow
+   */
+  export type PartnershipProgrammeFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * Filter, which PartnershipProgramme to fetch.
+     */
+    where: PartnershipProgrammeWhereUniqueInput
+  }
+
+  /**
+   * PartnershipProgramme findFirst
+   */
+  export type PartnershipProgrammeFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * Filter, which PartnershipProgramme to fetch.
+     */
+    where?: PartnershipProgrammeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PartnershipProgrammes to fetch.
+     */
+    orderBy?: PartnershipProgrammeOrderByWithRelationInput | PartnershipProgrammeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PartnershipProgrammes.
+     */
+    cursor?: PartnershipProgrammeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PartnershipProgrammes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PartnershipProgrammes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PartnershipProgrammes.
+     */
+    distinct?: PartnershipProgrammeScalarFieldEnum | PartnershipProgrammeScalarFieldEnum[]
+  }
+
+  /**
+   * PartnershipProgramme findFirstOrThrow
+   */
+  export type PartnershipProgrammeFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * Filter, which PartnershipProgramme to fetch.
+     */
+    where?: PartnershipProgrammeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PartnershipProgrammes to fetch.
+     */
+    orderBy?: PartnershipProgrammeOrderByWithRelationInput | PartnershipProgrammeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PartnershipProgrammes.
+     */
+    cursor?: PartnershipProgrammeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PartnershipProgrammes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PartnershipProgrammes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PartnershipProgrammes.
+     */
+    distinct?: PartnershipProgrammeScalarFieldEnum | PartnershipProgrammeScalarFieldEnum[]
+  }
+
+  /**
+   * PartnershipProgramme findMany
+   */
+  export type PartnershipProgrammeFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * Filter, which PartnershipProgrammes to fetch.
+     */
+    where?: PartnershipProgrammeWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PartnershipProgrammes to fetch.
+     */
+    orderBy?: PartnershipProgrammeOrderByWithRelationInput | PartnershipProgrammeOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PartnershipProgrammes.
+     */
+    cursor?: PartnershipProgrammeWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PartnershipProgrammes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PartnershipProgrammes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PartnershipProgrammes.
+     */
+    distinct?: PartnershipProgrammeScalarFieldEnum | PartnershipProgrammeScalarFieldEnum[]
+  }
+
+  /**
+   * PartnershipProgramme create
+   */
+  export type PartnershipProgrammeCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PartnershipProgramme.
+     */
+    data: XOR<PartnershipProgrammeCreateInput, PartnershipProgrammeUncheckedCreateInput>
+  }
+
+  /**
+   * PartnershipProgramme createMany
+   */
+  export type PartnershipProgrammeCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PartnershipProgrammes.
+     */
+    data: PartnershipProgrammeCreateManyInput | PartnershipProgrammeCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PartnershipProgramme createManyAndReturn
+   */
+  export type PartnershipProgrammeCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * The data used to create many PartnershipProgrammes.
+     */
+    data: PartnershipProgrammeCreateManyInput | PartnershipProgrammeCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PartnershipProgramme update
+   */
+  export type PartnershipProgrammeUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PartnershipProgramme.
+     */
+    data: XOR<PartnershipProgrammeUpdateInput, PartnershipProgrammeUncheckedUpdateInput>
+    /**
+     * Choose, which PartnershipProgramme to update.
+     */
+    where: PartnershipProgrammeWhereUniqueInput
+  }
+
+  /**
+   * PartnershipProgramme updateMany
+   */
+  export type PartnershipProgrammeUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PartnershipProgrammes.
+     */
+    data: XOR<PartnershipProgrammeUpdateManyMutationInput, PartnershipProgrammeUncheckedUpdateManyInput>
+    /**
+     * Filter which PartnershipProgrammes to update
+     */
+    where?: PartnershipProgrammeWhereInput
+    /**
+     * Limit how many PartnershipProgrammes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PartnershipProgramme updateManyAndReturn
+   */
+  export type PartnershipProgrammeUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * The data used to update PartnershipProgrammes.
+     */
+    data: XOR<PartnershipProgrammeUpdateManyMutationInput, PartnershipProgrammeUncheckedUpdateManyInput>
+    /**
+     * Filter which PartnershipProgrammes to update
+     */
+    where?: PartnershipProgrammeWhereInput
+    /**
+     * Limit how many PartnershipProgrammes to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PartnershipProgramme upsert
+   */
+  export type PartnershipProgrammeUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PartnershipProgramme to update in case it exists.
+     */
+    where: PartnershipProgrammeWhereUniqueInput
+    /**
+     * In case the PartnershipProgramme found by the `where` argument doesn't exist, create a new PartnershipProgramme with this data.
+     */
+    create: XOR<PartnershipProgrammeCreateInput, PartnershipProgrammeUncheckedCreateInput>
+    /**
+     * In case the PartnershipProgramme was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PartnershipProgrammeUpdateInput, PartnershipProgrammeUncheckedUpdateInput>
+  }
+
+  /**
+   * PartnershipProgramme delete
+   */
+  export type PartnershipProgrammeDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+    /**
+     * Filter which PartnershipProgramme to delete.
+     */
+    where: PartnershipProgrammeWhereUniqueInput
+  }
+
+  /**
+   * PartnershipProgramme deleteMany
+   */
+  export type PartnershipProgrammeDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PartnershipProgrammes to delete
+     */
+    where?: PartnershipProgrammeWhereInput
+    /**
+     * Limit how many PartnershipProgrammes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PartnershipProgramme.Portal
+   */
+  export type PartnershipProgramme$PortalArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SupplierPortal
+     */
+    select?: SupplierPortalSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SupplierPortal
+     */
+    omit?: SupplierPortalOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SupplierPortalInclude<ExtArgs> | null
+    where?: SupplierPortalWhereInput
+  }
+
+  /**
+   * PartnershipProgramme.Opportunity
+   */
+  export type PartnershipProgramme$OpportunityArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Opportunity
+     */
+    select?: OpportunitySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Opportunity
+     */
+    omit?: OpportunityOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OpportunityInclude<ExtArgs> | null
+    where?: OpportunityWhereInput
+    orderBy?: OpportunityOrderByWithRelationInput | OpportunityOrderByWithRelationInput[]
+    cursor?: OpportunityWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OpportunityScalarFieldEnum | OpportunityScalarFieldEnum[]
+  }
+
+  /**
+   * PartnershipProgramme without action
+   */
+  export type PartnershipProgrammeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PartnershipProgramme
+     */
+    select?: PartnershipProgrammeSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PartnershipProgramme
+     */
+    omit?: PartnershipProgrammeOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PartnershipProgrammeInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BidAssessment
+   */
+
+  export type AggregateBidAssessment = {
+    _count: BidAssessmentCountAggregateOutputType | null
+    _avg: BidAssessmentAvgAggregateOutputType | null
+    _sum: BidAssessmentSumAggregateOutputType | null
+    _min: BidAssessmentMinAggregateOutputType | null
+    _max: BidAssessmentMaxAggregateOutputType | null
+  }
+
+  export type BidAssessmentAvgAggregateOutputType = {
+    total: Decimal | null
+  }
+
+  export type BidAssessmentSumAggregateOutputType = {
+    total: Decimal | null
+  }
+
+  export type BidAssessmentMinAggregateOutputType = {
+    id: string | null
+    opportunityId: string | null
+    model: string | null
+    assumptions: string | null
+    total: Decimal | null
+    recommendation: string | null
+    authorId: string | null
+    createdAt: Date | null
+  }
+
+  export type BidAssessmentMaxAggregateOutputType = {
+    id: string | null
+    opportunityId: string | null
+    model: string | null
+    assumptions: string | null
+    total: Decimal | null
+    recommendation: string | null
+    authorId: string | null
+    createdAt: Date | null
+  }
+
+  export type BidAssessmentCountAggregateOutputType = {
+    id: number
+    opportunityId: number
+    model: number
+    weights: number
+    scores: number
+    disqualifiers: number
+    assumptions: number
+    total: number
+    recommendation: number
+    authorId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type BidAssessmentAvgAggregateInputType = {
+    total?: true
+  }
+
+  export type BidAssessmentSumAggregateInputType = {
+    total?: true
+  }
+
+  export type BidAssessmentMinAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    model?: true
+    assumptions?: true
+    total?: true
+    recommendation?: true
+    authorId?: true
+    createdAt?: true
+  }
+
+  export type BidAssessmentMaxAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    model?: true
+    assumptions?: true
+    total?: true
+    recommendation?: true
+    authorId?: true
+    createdAt?: true
+  }
+
+  export type BidAssessmentCountAggregateInputType = {
+    id?: true
+    opportunityId?: true
+    model?: true
+    weights?: true
+    scores?: true
+    disqualifiers?: true
+    assumptions?: true
+    total?: true
+    recommendation?: true
+    authorId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type BidAssessmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BidAssessment to aggregate.
+     */
+    where?: BidAssessmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BidAssessments to fetch.
+     */
+    orderBy?: BidAssessmentOrderByWithRelationInput | BidAssessmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BidAssessmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BidAssessments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BidAssessments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BidAssessments
+    **/
+    _count?: true | BidAssessmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BidAssessmentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BidAssessmentSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BidAssessmentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BidAssessmentMaxAggregateInputType
+  }
+
+  export type GetBidAssessmentAggregateType<T extends BidAssessmentAggregateArgs> = {
+        [P in keyof T & keyof AggregateBidAssessment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBidAssessment[P]>
+      : GetScalarType<T[P], AggregateBidAssessment[P]>
+  }
+
+
+
+
+  export type BidAssessmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BidAssessmentWhereInput
+    orderBy?: BidAssessmentOrderByWithAggregationInput | BidAssessmentOrderByWithAggregationInput[]
+    by: BidAssessmentScalarFieldEnum[] | BidAssessmentScalarFieldEnum
+    having?: BidAssessmentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BidAssessmentCountAggregateInputType | true
+    _avg?: BidAssessmentAvgAggregateInputType
+    _sum?: BidAssessmentSumAggregateInputType
+    _min?: BidAssessmentMinAggregateInputType
+    _max?: BidAssessmentMaxAggregateInputType
+  }
+
+  export type BidAssessmentGroupByOutputType = {
+    id: string
+    opportunityId: string
+    model: string
+    weights: JsonValue
+    scores: JsonValue
+    disqualifiers: string[]
+    assumptions: string | null
+    total: Decimal
+    recommendation: string
+    authorId: string | null
+    createdAt: Date
+    _count: BidAssessmentCountAggregateOutputType | null
+    _avg: BidAssessmentAvgAggregateOutputType | null
+    _sum: BidAssessmentSumAggregateOutputType | null
+    _min: BidAssessmentMinAggregateOutputType | null
+    _max: BidAssessmentMaxAggregateOutputType | null
+  }
+
+  type GetBidAssessmentGroupByPayload<T extends BidAssessmentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BidAssessmentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BidAssessmentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BidAssessmentGroupByOutputType[P]>
+            : GetScalarType<T[P], BidAssessmentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BidAssessmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    model?: boolean
+    weights?: boolean
+    scores?: boolean
+    disqualifiers?: boolean
+    assumptions?: boolean
+    total?: boolean
+    recommendation?: boolean
+    authorId?: boolean
+    createdAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bidAssessment"]>
+
+  export type BidAssessmentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    model?: boolean
+    weights?: boolean
+    scores?: boolean
+    disqualifiers?: boolean
+    assumptions?: boolean
+    total?: boolean
+    recommendation?: boolean
+    authorId?: boolean
+    createdAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bidAssessment"]>
+
+  export type BidAssessmentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    opportunityId?: boolean
+    model?: boolean
+    weights?: boolean
+    scores?: boolean
+    disqualifiers?: boolean
+    assumptions?: boolean
+    total?: boolean
+    recommendation?: boolean
+    authorId?: boolean
+    createdAt?: boolean
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["bidAssessment"]>
+
+  export type BidAssessmentSelectScalar = {
+    id?: boolean
+    opportunityId?: boolean
+    model?: boolean
+    weights?: boolean
+    scores?: boolean
+    disqualifiers?: boolean
+    assumptions?: boolean
+    total?: boolean
+    recommendation?: boolean
+    authorId?: boolean
+    createdAt?: boolean
+  }
+
+  export type BidAssessmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "opportunityId" | "model" | "weights" | "scores" | "disqualifiers" | "assumptions" | "total" | "recommendation" | "authorId" | "createdAt", ExtArgs["result"]["bidAssessment"]>
+  export type BidAssessmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }
+  export type BidAssessmentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }
+  export type BidAssessmentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    Opportunity?: boolean | OpportunityDefaultArgs<ExtArgs>
+  }
+
+  export type $BidAssessmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BidAssessment"
+    objects: {
+      Opportunity: Prisma.$OpportunityPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      opportunityId: string
+      model: string
+      weights: Prisma.JsonValue
+      scores: Prisma.JsonValue
+      disqualifiers: string[]
+      assumptions: string | null
+      total: Prisma.Decimal
+      recommendation: string
+      authorId: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["bidAssessment"]>
+    composites: {}
+  }
+
+  type BidAssessmentGetPayload<S extends boolean | null | undefined | BidAssessmentDefaultArgs> = $Result.GetResult<Prisma.$BidAssessmentPayload, S>
+
+  type BidAssessmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BidAssessmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BidAssessmentCountAggregateInputType | true
+    }
+
+  export interface BidAssessmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BidAssessment'], meta: { name: 'BidAssessment' } }
+    /**
+     * Find zero or one BidAssessment that matches the filter.
+     * @param {BidAssessmentFindUniqueArgs} args - Arguments to find a BidAssessment
+     * @example
+     * // Get one BidAssessment
+     * const bidAssessment = await prisma.bidAssessment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BidAssessmentFindUniqueArgs>(args: SelectSubset<T, BidAssessmentFindUniqueArgs<ExtArgs>>): Prisma__BidAssessmentClient<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BidAssessment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BidAssessmentFindUniqueOrThrowArgs} args - Arguments to find a BidAssessment
+     * @example
+     * // Get one BidAssessment
+     * const bidAssessment = await prisma.bidAssessment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BidAssessmentFindUniqueOrThrowArgs>(args: SelectSubset<T, BidAssessmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BidAssessmentClient<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BidAssessment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BidAssessmentFindFirstArgs} args - Arguments to find a BidAssessment
+     * @example
+     * // Get one BidAssessment
+     * const bidAssessment = await prisma.bidAssessment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BidAssessmentFindFirstArgs>(args?: SelectSubset<T, BidAssessmentFindFirstArgs<ExtArgs>>): Prisma__BidAssessmentClient<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BidAssessment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BidAssessmentFindFirstOrThrowArgs} args - Arguments to find a BidAssessment
+     * @example
+     * // Get one BidAssessment
+     * const bidAssessment = await prisma.bidAssessment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BidAssessmentFindFirstOrThrowArgs>(args?: SelectSubset<T, BidAssessmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__BidAssessmentClient<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BidAssessments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BidAssessmentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BidAssessments
+     * const bidAssessments = await prisma.bidAssessment.findMany()
+     * 
+     * // Get first 10 BidAssessments
+     * const bidAssessments = await prisma.bidAssessment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const bidAssessmentWithIdOnly = await prisma.bidAssessment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BidAssessmentFindManyArgs>(args?: SelectSubset<T, BidAssessmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BidAssessment.
+     * @param {BidAssessmentCreateArgs} args - Arguments to create a BidAssessment.
+     * @example
+     * // Create one BidAssessment
+     * const BidAssessment = await prisma.bidAssessment.create({
+     *   data: {
+     *     // ... data to create a BidAssessment
+     *   }
+     * })
+     * 
+     */
+    create<T extends BidAssessmentCreateArgs>(args: SelectSubset<T, BidAssessmentCreateArgs<ExtArgs>>): Prisma__BidAssessmentClient<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BidAssessments.
+     * @param {BidAssessmentCreateManyArgs} args - Arguments to create many BidAssessments.
+     * @example
+     * // Create many BidAssessments
+     * const bidAssessment = await prisma.bidAssessment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BidAssessmentCreateManyArgs>(args?: SelectSubset<T, BidAssessmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BidAssessments and returns the data saved in the database.
+     * @param {BidAssessmentCreateManyAndReturnArgs} args - Arguments to create many BidAssessments.
+     * @example
+     * // Create many BidAssessments
+     * const bidAssessment = await prisma.bidAssessment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BidAssessments and only return the `id`
+     * const bidAssessmentWithIdOnly = await prisma.bidAssessment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BidAssessmentCreateManyAndReturnArgs>(args?: SelectSubset<T, BidAssessmentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BidAssessment.
+     * @param {BidAssessmentDeleteArgs} args - Arguments to delete one BidAssessment.
+     * @example
+     * // Delete one BidAssessment
+     * const BidAssessment = await prisma.bidAssessment.delete({
+     *   where: {
+     *     // ... filter to delete one BidAssessment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BidAssessmentDeleteArgs>(args: SelectSubset<T, BidAssessmentDeleteArgs<ExtArgs>>): Prisma__BidAssessmentClient<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BidAssessment.
+     * @param {BidAssessmentUpdateArgs} args - Arguments to update one BidAssessment.
+     * @example
+     * // Update one BidAssessment
+     * const bidAssessment = await prisma.bidAssessment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BidAssessmentUpdateArgs>(args: SelectSubset<T, BidAssessmentUpdateArgs<ExtArgs>>): Prisma__BidAssessmentClient<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BidAssessments.
+     * @param {BidAssessmentDeleteManyArgs} args - Arguments to filter BidAssessments to delete.
+     * @example
+     * // Delete a few BidAssessments
+     * const { count } = await prisma.bidAssessment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BidAssessmentDeleteManyArgs>(args?: SelectSubset<T, BidAssessmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BidAssessments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BidAssessmentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BidAssessments
+     * const bidAssessment = await prisma.bidAssessment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BidAssessmentUpdateManyArgs>(args: SelectSubset<T, BidAssessmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BidAssessments and returns the data updated in the database.
+     * @param {BidAssessmentUpdateManyAndReturnArgs} args - Arguments to update many BidAssessments.
+     * @example
+     * // Update many BidAssessments
+     * const bidAssessment = await prisma.bidAssessment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BidAssessments and only return the `id`
+     * const bidAssessmentWithIdOnly = await prisma.bidAssessment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BidAssessmentUpdateManyAndReturnArgs>(args: SelectSubset<T, BidAssessmentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BidAssessment.
+     * @param {BidAssessmentUpsertArgs} args - Arguments to update or create a BidAssessment.
+     * @example
+     * // Update or create a BidAssessment
+     * const bidAssessment = await prisma.bidAssessment.upsert({
+     *   create: {
+     *     // ... data to create a BidAssessment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BidAssessment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BidAssessmentUpsertArgs>(args: SelectSubset<T, BidAssessmentUpsertArgs<ExtArgs>>): Prisma__BidAssessmentClient<$Result.GetResult<Prisma.$BidAssessmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BidAssessments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BidAssessmentCountArgs} args - Arguments to filter BidAssessments to count.
+     * @example
+     * // Count the number of BidAssessments
+     * const count = await prisma.bidAssessment.count({
+     *   where: {
+     *     // ... the filter for the BidAssessments we want to count
+     *   }
+     * })
+    **/
+    count<T extends BidAssessmentCountArgs>(
+      args?: Subset<T, BidAssessmentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BidAssessmentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BidAssessment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BidAssessmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BidAssessmentAggregateArgs>(args: Subset<T, BidAssessmentAggregateArgs>): Prisma.PrismaPromise<GetBidAssessmentAggregateType<T>>
+
+    /**
+     * Group by BidAssessment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BidAssessmentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BidAssessmentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BidAssessmentGroupByArgs['orderBy'] }
+        : { orderBy?: BidAssessmentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BidAssessmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBidAssessmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BidAssessment model
+   */
+  readonly fields: BidAssessmentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BidAssessment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BidAssessmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    Opportunity<T extends OpportunityDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OpportunityDefaultArgs<ExtArgs>>): Prisma__OpportunityClient<$Result.GetResult<Prisma.$OpportunityPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BidAssessment model
+   */
+  interface BidAssessmentFieldRefs {
+    readonly id: FieldRef<"BidAssessment", 'String'>
+    readonly opportunityId: FieldRef<"BidAssessment", 'String'>
+    readonly model: FieldRef<"BidAssessment", 'String'>
+    readonly weights: FieldRef<"BidAssessment", 'Json'>
+    readonly scores: FieldRef<"BidAssessment", 'Json'>
+    readonly disqualifiers: FieldRef<"BidAssessment", 'String[]'>
+    readonly assumptions: FieldRef<"BidAssessment", 'String'>
+    readonly total: FieldRef<"BidAssessment", 'Decimal'>
+    readonly recommendation: FieldRef<"BidAssessment", 'String'>
+    readonly authorId: FieldRef<"BidAssessment", 'String'>
+    readonly createdAt: FieldRef<"BidAssessment", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BidAssessment findUnique
+   */
+  export type BidAssessmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BidAssessment to fetch.
+     */
+    where: BidAssessmentWhereUniqueInput
+  }
+
+  /**
+   * BidAssessment findUniqueOrThrow
+   */
+  export type BidAssessmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BidAssessment to fetch.
+     */
+    where: BidAssessmentWhereUniqueInput
+  }
+
+  /**
+   * BidAssessment findFirst
+   */
+  export type BidAssessmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BidAssessment to fetch.
+     */
+    where?: BidAssessmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BidAssessments to fetch.
+     */
+    orderBy?: BidAssessmentOrderByWithRelationInput | BidAssessmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BidAssessments.
+     */
+    cursor?: BidAssessmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BidAssessments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BidAssessments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BidAssessments.
+     */
+    distinct?: BidAssessmentScalarFieldEnum | BidAssessmentScalarFieldEnum[]
+  }
+
+  /**
+   * BidAssessment findFirstOrThrow
+   */
+  export type BidAssessmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BidAssessment to fetch.
+     */
+    where?: BidAssessmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BidAssessments to fetch.
+     */
+    orderBy?: BidAssessmentOrderByWithRelationInput | BidAssessmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BidAssessments.
+     */
+    cursor?: BidAssessmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BidAssessments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BidAssessments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BidAssessments.
+     */
+    distinct?: BidAssessmentScalarFieldEnum | BidAssessmentScalarFieldEnum[]
+  }
+
+  /**
+   * BidAssessment findMany
+   */
+  export type BidAssessmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * Filter, which BidAssessments to fetch.
+     */
+    where?: BidAssessmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BidAssessments to fetch.
+     */
+    orderBy?: BidAssessmentOrderByWithRelationInput | BidAssessmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BidAssessments.
+     */
+    cursor?: BidAssessmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BidAssessments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BidAssessments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BidAssessments.
+     */
+    distinct?: BidAssessmentScalarFieldEnum | BidAssessmentScalarFieldEnum[]
+  }
+
+  /**
+   * BidAssessment create
+   */
+  export type BidAssessmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BidAssessment.
+     */
+    data: XOR<BidAssessmentCreateInput, BidAssessmentUncheckedCreateInput>
+  }
+
+  /**
+   * BidAssessment createMany
+   */
+  export type BidAssessmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BidAssessments.
+     */
+    data: BidAssessmentCreateManyInput | BidAssessmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BidAssessment createManyAndReturn
+   */
+  export type BidAssessmentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * The data used to create many BidAssessments.
+     */
+    data: BidAssessmentCreateManyInput | BidAssessmentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BidAssessment update
+   */
+  export type BidAssessmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BidAssessment.
+     */
+    data: XOR<BidAssessmentUpdateInput, BidAssessmentUncheckedUpdateInput>
+    /**
+     * Choose, which BidAssessment to update.
+     */
+    where: BidAssessmentWhereUniqueInput
+  }
+
+  /**
+   * BidAssessment updateMany
+   */
+  export type BidAssessmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BidAssessments.
+     */
+    data: XOR<BidAssessmentUpdateManyMutationInput, BidAssessmentUncheckedUpdateManyInput>
+    /**
+     * Filter which BidAssessments to update
+     */
+    where?: BidAssessmentWhereInput
+    /**
+     * Limit how many BidAssessments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BidAssessment updateManyAndReturn
+   */
+  export type BidAssessmentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * The data used to update BidAssessments.
+     */
+    data: XOR<BidAssessmentUpdateManyMutationInput, BidAssessmentUncheckedUpdateManyInput>
+    /**
+     * Filter which BidAssessments to update
+     */
+    where?: BidAssessmentWhereInput
+    /**
+     * Limit how many BidAssessments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BidAssessment upsert
+   */
+  export type BidAssessmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BidAssessment to update in case it exists.
+     */
+    where: BidAssessmentWhereUniqueInput
+    /**
+     * In case the BidAssessment found by the `where` argument doesn't exist, create a new BidAssessment with this data.
+     */
+    create: XOR<BidAssessmentCreateInput, BidAssessmentUncheckedCreateInput>
+    /**
+     * In case the BidAssessment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BidAssessmentUpdateInput, BidAssessmentUncheckedUpdateInput>
+  }
+
+  /**
+   * BidAssessment delete
+   */
+  export type BidAssessmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+    /**
+     * Filter which BidAssessment to delete.
+     */
+    where: BidAssessmentWhereUniqueInput
+  }
+
+  /**
+   * BidAssessment deleteMany
+   */
+  export type BidAssessmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BidAssessments to delete
+     */
+    where?: BidAssessmentWhereInput
+    /**
+     * Limit how many BidAssessments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BidAssessment without action
+   */
+  export type BidAssessmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BidAssessment
+     */
+    select?: BidAssessmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BidAssessment
+     */
+    omit?: BidAssessmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BidAssessmentInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -145421,6 +151041,7 @@ export namespace Prisma {
     confirmedBuying: 'confirmedBuying',
     leadId: 'leadId',
     paperclipIssueId: 'paperclipIssueId',
+    programmeId: 'programmeId',
     createdById: 'createdById',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -145597,6 +151218,92 @@ export namespace Prisma {
   };
 
   export type CostEntryScalarFieldEnum = (typeof CostEntryScalarFieldEnum)[keyof typeof CostEntryScalarFieldEnum]
+
+
+  export const SupplierPortalScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    kind: 'kind',
+    url: 'url',
+    registrationUrl: 'registrationUrl',
+    termsUrl: 'termsUrl',
+    organisationId: 'organisationId',
+    cost: 'cost',
+    automationPermitted: 'automationPermitted',
+    standingPolicy: 'standingPolicy',
+    standingPolicyById: 'standingPolicyById',
+    standingPolicyAt: 'standingPolicyAt',
+    requiredFacts: 'requiredFacts',
+    requiredDocuments: 'requiredDocuments',
+    notes: 'notes',
+    sourceUrl: 'sourceUrl',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SupplierPortalScalarFieldEnum = (typeof SupplierPortalScalarFieldEnum)[keyof typeof SupplierPortalScalarFieldEnum]
+
+
+  export const SupplierAccountScalarFieldEnum: {
+    id: 'id',
+    portalId: 'portalId',
+    status: 'status',
+    accountRef: 'accountRef',
+    registeredAt: 'registeredAt',
+    verificationStatus: 'verificationStatus',
+    contactAlias: 'contactAlias',
+    credentialLabel: 'credentialLabel',
+    mfaRequired: 'mfaRequired',
+    termsVersion: 'termsVersion',
+    renewalAt: 'renewalAt',
+    restrictions: 'restrictions',
+    lastAccessAt: 'lastAccessAt',
+    approvalDecisionId: 'approvalDecisionId',
+    ownerUserId: 'ownerUserId',
+    notes: 'notes',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type SupplierAccountScalarFieldEnum = (typeof SupplierAccountScalarFieldEnum)[keyof typeof SupplierAccountScalarFieldEnum]
+
+
+  export const PartnershipProgrammeScalarFieldEnum: {
+    id: 'id',
+    organisationId: 'organisationId',
+    name: 'name',
+    categories: 'categories',
+    url: 'url',
+    portalId: 'portalId',
+    verified: 'verified',
+    verifiedAt: 'verifiedAt',
+    sourceUrl: 'sourceUrl',
+    availability: 'availability',
+    fees: 'fees',
+    requirements: 'requirements',
+    notes: 'notes',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PartnershipProgrammeScalarFieldEnum = (typeof PartnershipProgrammeScalarFieldEnum)[keyof typeof PartnershipProgrammeScalarFieldEnum]
+
+
+  export const BidAssessmentScalarFieldEnum: {
+    id: 'id',
+    opportunityId: 'opportunityId',
+    model: 'model',
+    weights: 'weights',
+    scores: 'scores',
+    disqualifiers: 'disqualifiers',
+    assumptions: 'assumptions',
+    total: 'total',
+    recommendation: 'recommendation',
+    authorId: 'authorId',
+    createdAt: 'createdAt'
+  };
+
+  export type BidAssessmentScalarFieldEnum = (typeof BidAssessmentScalarFieldEnum)[keyof typeof BidAssessmentScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -154295,6 +160002,8 @@ export namespace Prisma {
     ClientCompany?: XOR<ClientCompanyNullableScalarRelationFilter, ClientCompanyWhereInput> | null
     Contact?: ContactListRelationFilter
     Opportunity?: OpportunityListRelationFilter
+    SupplierPortal?: SupplierPortalListRelationFilter
+    Programme?: PartnershipProgrammeListRelationFilter
   }
 
   export type OrganisationOrderByWithRelationInput = {
@@ -154313,6 +160022,8 @@ export namespace Prisma {
     ClientCompany?: ClientCompanyOrderByWithRelationInput
     Contact?: ContactOrderByRelationAggregateInput
     Opportunity?: OpportunityOrderByRelationAggregateInput
+    SupplierPortal?: SupplierPortalOrderByRelationAggregateInput
+    Programme?: PartnershipProgrammeOrderByRelationAggregateInput
   }
 
   export type OrganisationWhereUniqueInput = Prisma.AtLeast<{
@@ -154334,6 +160045,8 @@ export namespace Prisma {
     ClientCompany?: XOR<ClientCompanyNullableScalarRelationFilter, ClientCompanyWhereInput> | null
     Contact?: ContactListRelationFilter
     Opportunity?: OpportunityListRelationFilter
+    SupplierPortal?: SupplierPortalListRelationFilter
+    Programme?: PartnershipProgrammeListRelationFilter
   }, "id">
 
   export type OrganisationOrderByWithAggregationInput = {
@@ -154662,10 +160375,13 @@ export namespace Prisma {
     confirmedBuying?: BoolFilter<"Opportunity"> | boolean
     leadId?: StringNullableFilter<"Opportunity"> | string | null
     paperclipIssueId?: StringNullableFilter<"Opportunity"> | string | null
+    programmeId?: StringNullableFilter<"Opportunity"> | string | null
     createdById?: StringNullableFilter<"Opportunity"> | string | null
     createdAt?: DateTimeFilter<"Opportunity"> | Date | string
     updatedAt?: DateTimeFilter<"Opportunity"> | Date | string
     Buyer?: XOR<OrganisationNullableScalarRelationFilter, OrganisationWhereInput> | null
+    Programme?: XOR<PartnershipProgrammeNullableScalarRelationFilter, PartnershipProgrammeWhereInput> | null
+    Assessment?: BidAssessmentListRelationFilter
     Source?: XOR<OpportunitySourceScalarRelationFilter, OpportunitySourceWhereInput>
     Lead?: XOR<LeadNullableScalarRelationFilter, LeadWhereInput> | null
     Evidence?: OpportunityEvidenceListRelationFilter
@@ -154695,10 +160411,13 @@ export namespace Prisma {
     confirmedBuying?: SortOrder
     leadId?: SortOrderInput | SortOrder
     paperclipIssueId?: SortOrderInput | SortOrder
+    programmeId?: SortOrderInput | SortOrder
     createdById?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     Buyer?: OrganisationOrderByWithRelationInput
+    Programme?: PartnershipProgrammeOrderByWithRelationInput
+    Assessment?: BidAssessmentOrderByRelationAggregateInput
     Source?: OpportunitySourceOrderByWithRelationInput
     Lead?: LeadOrderByWithRelationInput
     Evidence?: OpportunityEvidenceOrderByRelationAggregateInput
@@ -154731,10 +160450,13 @@ export namespace Prisma {
     confirmedBuying?: BoolFilter<"Opportunity"> | boolean
     leadId?: StringNullableFilter<"Opportunity"> | string | null
     paperclipIssueId?: StringNullableFilter<"Opportunity"> | string | null
+    programmeId?: StringNullableFilter<"Opportunity"> | string | null
     createdById?: StringNullableFilter<"Opportunity"> | string | null
     createdAt?: DateTimeFilter<"Opportunity"> | Date | string
     updatedAt?: DateTimeFilter<"Opportunity"> | Date | string
     Buyer?: XOR<OrganisationNullableScalarRelationFilter, OrganisationWhereInput> | null
+    Programme?: XOR<PartnershipProgrammeNullableScalarRelationFilter, PartnershipProgrammeWhereInput> | null
+    Assessment?: BidAssessmentListRelationFilter
     Source?: XOR<OpportunitySourceScalarRelationFilter, OpportunitySourceWhereInput>
     Lead?: XOR<LeadNullableScalarRelationFilter, LeadWhereInput> | null
     Evidence?: OpportunityEvidenceListRelationFilter
@@ -154764,6 +160486,7 @@ export namespace Prisma {
     confirmedBuying?: SortOrder
     leadId?: SortOrderInput | SortOrder
     paperclipIssueId?: SortOrderInput | SortOrder
+    programmeId?: SortOrderInput | SortOrder
     createdById?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -154797,6 +160520,7 @@ export namespace Prisma {
     confirmedBuying?: BoolWithAggregatesFilter<"Opportunity"> | boolean
     leadId?: StringNullableWithAggregatesFilter<"Opportunity"> | string | null
     paperclipIssueId?: StringNullableWithAggregatesFilter<"Opportunity"> | string | null
+    programmeId?: StringNullableWithAggregatesFilter<"Opportunity"> | string | null
     createdById?: StringNullableWithAggregatesFilter<"Opportunity"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Opportunity"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Opportunity"> | Date | string
@@ -155388,6 +161112,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"ApprovalDecision"> | Date | string
     Request?: XOR<ApprovalRequestScalarRelationFilter, ApprovalRequestWhereInput>
     ExecutionRecord?: XOR<ExecutionRecordNullableScalarRelationFilter, ExecutionRecordWhereInput> | null
+    SupplierAccount?: SupplierAccountListRelationFilter
   }
 
   export type ApprovalDecisionOrderByWithRelationInput = {
@@ -155402,6 +161127,7 @@ export namespace Prisma {
     createdAt?: SortOrder
     Request?: ApprovalRequestOrderByWithRelationInput
     ExecutionRecord?: ExecutionRecordOrderByWithRelationInput
+    SupplierAccount?: SupplierAccountOrderByRelationAggregateInput
   }
 
   export type ApprovalDecisionWhereUniqueInput = Prisma.AtLeast<{
@@ -155419,6 +161145,7 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"ApprovalDecision"> | Date | string
     Request?: XOR<ApprovalRequestScalarRelationFilter, ApprovalRequestWhereInput>
     ExecutionRecord?: XOR<ExecutionRecordNullableScalarRelationFilter, ExecutionRecordWhereInput> | null
+    SupplierAccount?: SupplierAccountListRelationFilter
   }, "id" | "requestId">
 
   export type ApprovalDecisionOrderByWithAggregationInput = {
@@ -155695,6 +161422,453 @@ export namespace Prisma {
     note?: StringNullableWithAggregatesFilter<"CostEntry"> | string | null
     createdById?: StringNullableWithAggregatesFilter<"CostEntry"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"CostEntry"> | Date | string
+  }
+
+  export type SupplierPortalWhereInput = {
+    AND?: SupplierPortalWhereInput | SupplierPortalWhereInput[]
+    OR?: SupplierPortalWhereInput[]
+    NOT?: SupplierPortalWhereInput | SupplierPortalWhereInput[]
+    id?: StringFilter<"SupplierPortal"> | string
+    name?: StringFilter<"SupplierPortal"> | string
+    kind?: StringFilter<"SupplierPortal"> | string
+    url?: StringFilter<"SupplierPortal"> | string
+    registrationUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    termsUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    organisationId?: StringNullableFilter<"SupplierPortal"> | string | null
+    cost?: StringFilter<"SupplierPortal"> | string
+    automationPermitted?: BoolFilter<"SupplierPortal"> | boolean
+    standingPolicy?: BoolFilter<"SupplierPortal"> | boolean
+    standingPolicyById?: StringNullableFilter<"SupplierPortal"> | string | null
+    standingPolicyAt?: DateTimeNullableFilter<"SupplierPortal"> | Date | string | null
+    requiredFacts?: StringNullableListFilter<"SupplierPortal">
+    requiredDocuments?: StringNullableListFilter<"SupplierPortal">
+    notes?: StringNullableFilter<"SupplierPortal"> | string | null
+    sourceUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    createdAt?: DateTimeFilter<"SupplierPortal"> | Date | string
+    updatedAt?: DateTimeFilter<"SupplierPortal"> | Date | string
+    Organisation?: XOR<OrganisationNullableScalarRelationFilter, OrganisationWhereInput> | null
+    Account?: SupplierAccountListRelationFilter
+    Programme?: PartnershipProgrammeListRelationFilter
+  }
+
+  export type SupplierPortalOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    kind?: SortOrder
+    url?: SortOrder
+    registrationUrl?: SortOrderInput | SortOrder
+    termsUrl?: SortOrderInput | SortOrder
+    organisationId?: SortOrderInput | SortOrder
+    cost?: SortOrder
+    automationPermitted?: SortOrder
+    standingPolicy?: SortOrder
+    standingPolicyById?: SortOrderInput | SortOrder
+    standingPolicyAt?: SortOrderInput | SortOrder
+    requiredFacts?: SortOrder
+    requiredDocuments?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    Organisation?: OrganisationOrderByWithRelationInput
+    Account?: SupplierAccountOrderByRelationAggregateInput
+    Programme?: PartnershipProgrammeOrderByRelationAggregateInput
+  }
+
+  export type SupplierPortalWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: SupplierPortalWhereInput | SupplierPortalWhereInput[]
+    OR?: SupplierPortalWhereInput[]
+    NOT?: SupplierPortalWhereInput | SupplierPortalWhereInput[]
+    name?: StringFilter<"SupplierPortal"> | string
+    kind?: StringFilter<"SupplierPortal"> | string
+    url?: StringFilter<"SupplierPortal"> | string
+    registrationUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    termsUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    organisationId?: StringNullableFilter<"SupplierPortal"> | string | null
+    cost?: StringFilter<"SupplierPortal"> | string
+    automationPermitted?: BoolFilter<"SupplierPortal"> | boolean
+    standingPolicy?: BoolFilter<"SupplierPortal"> | boolean
+    standingPolicyById?: StringNullableFilter<"SupplierPortal"> | string | null
+    standingPolicyAt?: DateTimeNullableFilter<"SupplierPortal"> | Date | string | null
+    requiredFacts?: StringNullableListFilter<"SupplierPortal">
+    requiredDocuments?: StringNullableListFilter<"SupplierPortal">
+    notes?: StringNullableFilter<"SupplierPortal"> | string | null
+    sourceUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    createdAt?: DateTimeFilter<"SupplierPortal"> | Date | string
+    updatedAt?: DateTimeFilter<"SupplierPortal"> | Date | string
+    Organisation?: XOR<OrganisationNullableScalarRelationFilter, OrganisationWhereInput> | null
+    Account?: SupplierAccountListRelationFilter
+    Programme?: PartnershipProgrammeListRelationFilter
+  }, "id">
+
+  export type SupplierPortalOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    kind?: SortOrder
+    url?: SortOrder
+    registrationUrl?: SortOrderInput | SortOrder
+    termsUrl?: SortOrderInput | SortOrder
+    organisationId?: SortOrderInput | SortOrder
+    cost?: SortOrder
+    automationPermitted?: SortOrder
+    standingPolicy?: SortOrder
+    standingPolicyById?: SortOrderInput | SortOrder
+    standingPolicyAt?: SortOrderInput | SortOrder
+    requiredFacts?: SortOrder
+    requiredDocuments?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SupplierPortalCountOrderByAggregateInput
+    _max?: SupplierPortalMaxOrderByAggregateInput
+    _min?: SupplierPortalMinOrderByAggregateInput
+  }
+
+  export type SupplierPortalScalarWhereWithAggregatesInput = {
+    AND?: SupplierPortalScalarWhereWithAggregatesInput | SupplierPortalScalarWhereWithAggregatesInput[]
+    OR?: SupplierPortalScalarWhereWithAggregatesInput[]
+    NOT?: SupplierPortalScalarWhereWithAggregatesInput | SupplierPortalScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SupplierPortal"> | string
+    name?: StringWithAggregatesFilter<"SupplierPortal"> | string
+    kind?: StringWithAggregatesFilter<"SupplierPortal"> | string
+    url?: StringWithAggregatesFilter<"SupplierPortal"> | string
+    registrationUrl?: StringNullableWithAggregatesFilter<"SupplierPortal"> | string | null
+    termsUrl?: StringNullableWithAggregatesFilter<"SupplierPortal"> | string | null
+    organisationId?: StringNullableWithAggregatesFilter<"SupplierPortal"> | string | null
+    cost?: StringWithAggregatesFilter<"SupplierPortal"> | string
+    automationPermitted?: BoolWithAggregatesFilter<"SupplierPortal"> | boolean
+    standingPolicy?: BoolWithAggregatesFilter<"SupplierPortal"> | boolean
+    standingPolicyById?: StringNullableWithAggregatesFilter<"SupplierPortal"> | string | null
+    standingPolicyAt?: DateTimeNullableWithAggregatesFilter<"SupplierPortal"> | Date | string | null
+    requiredFacts?: StringNullableListFilter<"SupplierPortal">
+    requiredDocuments?: StringNullableListFilter<"SupplierPortal">
+    notes?: StringNullableWithAggregatesFilter<"SupplierPortal"> | string | null
+    sourceUrl?: StringNullableWithAggregatesFilter<"SupplierPortal"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SupplierPortal"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SupplierPortal"> | Date | string
+  }
+
+  export type SupplierAccountWhereInput = {
+    AND?: SupplierAccountWhereInput | SupplierAccountWhereInput[]
+    OR?: SupplierAccountWhereInput[]
+    NOT?: SupplierAccountWhereInput | SupplierAccountWhereInput[]
+    id?: StringFilter<"SupplierAccount"> | string
+    portalId?: StringFilter<"SupplierAccount"> | string
+    status?: StringFilter<"SupplierAccount"> | string
+    accountRef?: StringNullableFilter<"SupplierAccount"> | string | null
+    registeredAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    verificationStatus?: StringNullableFilter<"SupplierAccount"> | string | null
+    contactAlias?: StringNullableFilter<"SupplierAccount"> | string | null
+    credentialLabel?: StringNullableFilter<"SupplierAccount"> | string | null
+    mfaRequired?: BoolNullableFilter<"SupplierAccount"> | boolean | null
+    termsVersion?: StringNullableFilter<"SupplierAccount"> | string | null
+    renewalAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    restrictions?: StringNullableFilter<"SupplierAccount"> | string | null
+    lastAccessAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    approvalDecisionId?: StringNullableFilter<"SupplierAccount"> | string | null
+    ownerUserId?: StringNullableFilter<"SupplierAccount"> | string | null
+    notes?: StringNullableFilter<"SupplierAccount"> | string | null
+    createdAt?: DateTimeFilter<"SupplierAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"SupplierAccount"> | Date | string
+    Portal?: XOR<SupplierPortalScalarRelationFilter, SupplierPortalWhereInput>
+    Decision?: XOR<ApprovalDecisionNullableScalarRelationFilter, ApprovalDecisionWhereInput> | null
+  }
+
+  export type SupplierAccountOrderByWithRelationInput = {
+    id?: SortOrder
+    portalId?: SortOrder
+    status?: SortOrder
+    accountRef?: SortOrderInput | SortOrder
+    registeredAt?: SortOrderInput | SortOrder
+    verificationStatus?: SortOrderInput | SortOrder
+    contactAlias?: SortOrderInput | SortOrder
+    credentialLabel?: SortOrderInput | SortOrder
+    mfaRequired?: SortOrderInput | SortOrder
+    termsVersion?: SortOrderInput | SortOrder
+    renewalAt?: SortOrderInput | SortOrder
+    restrictions?: SortOrderInput | SortOrder
+    lastAccessAt?: SortOrderInput | SortOrder
+    approvalDecisionId?: SortOrderInput | SortOrder
+    ownerUserId?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    Portal?: SupplierPortalOrderByWithRelationInput
+    Decision?: ApprovalDecisionOrderByWithRelationInput
+  }
+
+  export type SupplierAccountWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: SupplierAccountWhereInput | SupplierAccountWhereInput[]
+    OR?: SupplierAccountWhereInput[]
+    NOT?: SupplierAccountWhereInput | SupplierAccountWhereInput[]
+    portalId?: StringFilter<"SupplierAccount"> | string
+    status?: StringFilter<"SupplierAccount"> | string
+    accountRef?: StringNullableFilter<"SupplierAccount"> | string | null
+    registeredAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    verificationStatus?: StringNullableFilter<"SupplierAccount"> | string | null
+    contactAlias?: StringNullableFilter<"SupplierAccount"> | string | null
+    credentialLabel?: StringNullableFilter<"SupplierAccount"> | string | null
+    mfaRequired?: BoolNullableFilter<"SupplierAccount"> | boolean | null
+    termsVersion?: StringNullableFilter<"SupplierAccount"> | string | null
+    renewalAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    restrictions?: StringNullableFilter<"SupplierAccount"> | string | null
+    lastAccessAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    approvalDecisionId?: StringNullableFilter<"SupplierAccount"> | string | null
+    ownerUserId?: StringNullableFilter<"SupplierAccount"> | string | null
+    notes?: StringNullableFilter<"SupplierAccount"> | string | null
+    createdAt?: DateTimeFilter<"SupplierAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"SupplierAccount"> | Date | string
+    Portal?: XOR<SupplierPortalScalarRelationFilter, SupplierPortalWhereInput>
+    Decision?: XOR<ApprovalDecisionNullableScalarRelationFilter, ApprovalDecisionWhereInput> | null
+  }, "id">
+
+  export type SupplierAccountOrderByWithAggregationInput = {
+    id?: SortOrder
+    portalId?: SortOrder
+    status?: SortOrder
+    accountRef?: SortOrderInput | SortOrder
+    registeredAt?: SortOrderInput | SortOrder
+    verificationStatus?: SortOrderInput | SortOrder
+    contactAlias?: SortOrderInput | SortOrder
+    credentialLabel?: SortOrderInput | SortOrder
+    mfaRequired?: SortOrderInput | SortOrder
+    termsVersion?: SortOrderInput | SortOrder
+    renewalAt?: SortOrderInput | SortOrder
+    restrictions?: SortOrderInput | SortOrder
+    lastAccessAt?: SortOrderInput | SortOrder
+    approvalDecisionId?: SortOrderInput | SortOrder
+    ownerUserId?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: SupplierAccountCountOrderByAggregateInput
+    _max?: SupplierAccountMaxOrderByAggregateInput
+    _min?: SupplierAccountMinOrderByAggregateInput
+  }
+
+  export type SupplierAccountScalarWhereWithAggregatesInput = {
+    AND?: SupplierAccountScalarWhereWithAggregatesInput | SupplierAccountScalarWhereWithAggregatesInput[]
+    OR?: SupplierAccountScalarWhereWithAggregatesInput[]
+    NOT?: SupplierAccountScalarWhereWithAggregatesInput | SupplierAccountScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"SupplierAccount"> | string
+    portalId?: StringWithAggregatesFilter<"SupplierAccount"> | string
+    status?: StringWithAggregatesFilter<"SupplierAccount"> | string
+    accountRef?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    registeredAt?: DateTimeNullableWithAggregatesFilter<"SupplierAccount"> | Date | string | null
+    verificationStatus?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    contactAlias?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    credentialLabel?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    mfaRequired?: BoolNullableWithAggregatesFilter<"SupplierAccount"> | boolean | null
+    termsVersion?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    renewalAt?: DateTimeNullableWithAggregatesFilter<"SupplierAccount"> | Date | string | null
+    restrictions?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    lastAccessAt?: DateTimeNullableWithAggregatesFilter<"SupplierAccount"> | Date | string | null
+    approvalDecisionId?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    ownerUserId?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    notes?: StringNullableWithAggregatesFilter<"SupplierAccount"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SupplierAccount"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"SupplierAccount"> | Date | string
+  }
+
+  export type PartnershipProgrammeWhereInput = {
+    AND?: PartnershipProgrammeWhereInput | PartnershipProgrammeWhereInput[]
+    OR?: PartnershipProgrammeWhereInput[]
+    NOT?: PartnershipProgrammeWhereInput | PartnershipProgrammeWhereInput[]
+    id?: StringFilter<"PartnershipProgramme"> | string
+    organisationId?: StringFilter<"PartnershipProgramme"> | string
+    name?: StringFilter<"PartnershipProgramme"> | string
+    categories?: StringNullableListFilter<"PartnershipProgramme">
+    url?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    portalId?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    verified?: BoolFilter<"PartnershipProgramme"> | boolean
+    verifiedAt?: DateTimeNullableFilter<"PartnershipProgramme"> | Date | string | null
+    sourceUrl?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    availability?: StringFilter<"PartnershipProgramme"> | string
+    fees?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    requirements?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    notes?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    createdAt?: DateTimeFilter<"PartnershipProgramme"> | Date | string
+    updatedAt?: DateTimeFilter<"PartnershipProgramme"> | Date | string
+    Organisation?: XOR<OrganisationScalarRelationFilter, OrganisationWhereInput>
+    Portal?: XOR<SupplierPortalNullableScalarRelationFilter, SupplierPortalWhereInput> | null
+    Opportunity?: OpportunityListRelationFilter
+  }
+
+  export type PartnershipProgrammeOrderByWithRelationInput = {
+    id?: SortOrder
+    organisationId?: SortOrder
+    name?: SortOrder
+    categories?: SortOrder
+    url?: SortOrderInput | SortOrder
+    portalId?: SortOrderInput | SortOrder
+    verified?: SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    availability?: SortOrder
+    fees?: SortOrderInput | SortOrder
+    requirements?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    Organisation?: OrganisationOrderByWithRelationInput
+    Portal?: SupplierPortalOrderByWithRelationInput
+    Opportunity?: OpportunityOrderByRelationAggregateInput
+  }
+
+  export type PartnershipProgrammeWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: PartnershipProgrammeWhereInput | PartnershipProgrammeWhereInput[]
+    OR?: PartnershipProgrammeWhereInput[]
+    NOT?: PartnershipProgrammeWhereInput | PartnershipProgrammeWhereInput[]
+    organisationId?: StringFilter<"PartnershipProgramme"> | string
+    name?: StringFilter<"PartnershipProgramme"> | string
+    categories?: StringNullableListFilter<"PartnershipProgramme">
+    url?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    portalId?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    verified?: BoolFilter<"PartnershipProgramme"> | boolean
+    verifiedAt?: DateTimeNullableFilter<"PartnershipProgramme"> | Date | string | null
+    sourceUrl?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    availability?: StringFilter<"PartnershipProgramme"> | string
+    fees?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    requirements?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    notes?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    createdAt?: DateTimeFilter<"PartnershipProgramme"> | Date | string
+    updatedAt?: DateTimeFilter<"PartnershipProgramme"> | Date | string
+    Organisation?: XOR<OrganisationScalarRelationFilter, OrganisationWhereInput>
+    Portal?: XOR<SupplierPortalNullableScalarRelationFilter, SupplierPortalWhereInput> | null
+    Opportunity?: OpportunityListRelationFilter
+  }, "id">
+
+  export type PartnershipProgrammeOrderByWithAggregationInput = {
+    id?: SortOrder
+    organisationId?: SortOrder
+    name?: SortOrder
+    categories?: SortOrder
+    url?: SortOrderInput | SortOrder
+    portalId?: SortOrderInput | SortOrder
+    verified?: SortOrder
+    verifiedAt?: SortOrderInput | SortOrder
+    sourceUrl?: SortOrderInput | SortOrder
+    availability?: SortOrder
+    fees?: SortOrderInput | SortOrder
+    requirements?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PartnershipProgrammeCountOrderByAggregateInput
+    _max?: PartnershipProgrammeMaxOrderByAggregateInput
+    _min?: PartnershipProgrammeMinOrderByAggregateInput
+  }
+
+  export type PartnershipProgrammeScalarWhereWithAggregatesInput = {
+    AND?: PartnershipProgrammeScalarWhereWithAggregatesInput | PartnershipProgrammeScalarWhereWithAggregatesInput[]
+    OR?: PartnershipProgrammeScalarWhereWithAggregatesInput[]
+    NOT?: PartnershipProgrammeScalarWhereWithAggregatesInput | PartnershipProgrammeScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"PartnershipProgramme"> | string
+    organisationId?: StringWithAggregatesFilter<"PartnershipProgramme"> | string
+    name?: StringWithAggregatesFilter<"PartnershipProgramme"> | string
+    categories?: StringNullableListFilter<"PartnershipProgramme">
+    url?: StringNullableWithAggregatesFilter<"PartnershipProgramme"> | string | null
+    portalId?: StringNullableWithAggregatesFilter<"PartnershipProgramme"> | string | null
+    verified?: BoolWithAggregatesFilter<"PartnershipProgramme"> | boolean
+    verifiedAt?: DateTimeNullableWithAggregatesFilter<"PartnershipProgramme"> | Date | string | null
+    sourceUrl?: StringNullableWithAggregatesFilter<"PartnershipProgramme"> | string | null
+    availability?: StringWithAggregatesFilter<"PartnershipProgramme"> | string
+    fees?: StringNullableWithAggregatesFilter<"PartnershipProgramme"> | string | null
+    requirements?: StringNullableWithAggregatesFilter<"PartnershipProgramme"> | string | null
+    notes?: StringNullableWithAggregatesFilter<"PartnershipProgramme"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"PartnershipProgramme"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PartnershipProgramme"> | Date | string
+  }
+
+  export type BidAssessmentWhereInput = {
+    AND?: BidAssessmentWhereInput | BidAssessmentWhereInput[]
+    OR?: BidAssessmentWhereInput[]
+    NOT?: BidAssessmentWhereInput | BidAssessmentWhereInput[]
+    id?: StringFilter<"BidAssessment"> | string
+    opportunityId?: StringFilter<"BidAssessment"> | string
+    model?: StringFilter<"BidAssessment"> | string
+    weights?: JsonFilter<"BidAssessment">
+    scores?: JsonFilter<"BidAssessment">
+    disqualifiers?: StringNullableListFilter<"BidAssessment">
+    assumptions?: StringNullableFilter<"BidAssessment"> | string | null
+    total?: DecimalFilter<"BidAssessment"> | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFilter<"BidAssessment"> | string
+    authorId?: StringNullableFilter<"BidAssessment"> | string | null
+    createdAt?: DateTimeFilter<"BidAssessment"> | Date | string
+    Opportunity?: XOR<OpportunityScalarRelationFilter, OpportunityWhereInput>
+  }
+
+  export type BidAssessmentOrderByWithRelationInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    model?: SortOrder
+    weights?: SortOrder
+    scores?: SortOrder
+    disqualifiers?: SortOrder
+    assumptions?: SortOrderInput | SortOrder
+    total?: SortOrder
+    recommendation?: SortOrder
+    authorId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    Opportunity?: OpportunityOrderByWithRelationInput
+  }
+
+  export type BidAssessmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: BidAssessmentWhereInput | BidAssessmentWhereInput[]
+    OR?: BidAssessmentWhereInput[]
+    NOT?: BidAssessmentWhereInput | BidAssessmentWhereInput[]
+    opportunityId?: StringFilter<"BidAssessment"> | string
+    model?: StringFilter<"BidAssessment"> | string
+    weights?: JsonFilter<"BidAssessment">
+    scores?: JsonFilter<"BidAssessment">
+    disqualifiers?: StringNullableListFilter<"BidAssessment">
+    assumptions?: StringNullableFilter<"BidAssessment"> | string | null
+    total?: DecimalFilter<"BidAssessment"> | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFilter<"BidAssessment"> | string
+    authorId?: StringNullableFilter<"BidAssessment"> | string | null
+    createdAt?: DateTimeFilter<"BidAssessment"> | Date | string
+    Opportunity?: XOR<OpportunityScalarRelationFilter, OpportunityWhereInput>
+  }, "id">
+
+  export type BidAssessmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    model?: SortOrder
+    weights?: SortOrder
+    scores?: SortOrder
+    disqualifiers?: SortOrder
+    assumptions?: SortOrderInput | SortOrder
+    total?: SortOrder
+    recommendation?: SortOrder
+    authorId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: BidAssessmentCountOrderByAggregateInput
+    _avg?: BidAssessmentAvgOrderByAggregateInput
+    _max?: BidAssessmentMaxOrderByAggregateInput
+    _min?: BidAssessmentMinOrderByAggregateInput
+    _sum?: BidAssessmentSumOrderByAggregateInput
+  }
+
+  export type BidAssessmentScalarWhereWithAggregatesInput = {
+    AND?: BidAssessmentScalarWhereWithAggregatesInput | BidAssessmentScalarWhereWithAggregatesInput[]
+    OR?: BidAssessmentScalarWhereWithAggregatesInput[]
+    NOT?: BidAssessmentScalarWhereWithAggregatesInput | BidAssessmentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"BidAssessment"> | string
+    opportunityId?: StringWithAggregatesFilter<"BidAssessment"> | string
+    model?: StringWithAggregatesFilter<"BidAssessment"> | string
+    weights?: JsonWithAggregatesFilter<"BidAssessment">
+    scores?: JsonWithAggregatesFilter<"BidAssessment">
+    disqualifiers?: StringNullableListFilter<"BidAssessment">
+    assumptions?: StringNullableWithAggregatesFilter<"BidAssessment"> | string | null
+    total?: DecimalWithAggregatesFilter<"BidAssessment"> | Decimal | DecimalJsLike | number | string
+    recommendation?: StringWithAggregatesFilter<"BidAssessment"> | string
+    authorId?: StringNullableWithAggregatesFilter<"BidAssessment"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"BidAssessment"> | Date | string
   }
 
   export type audit_log_entriesCreateInput = {
@@ -165208,6 +171382,8 @@ export namespace Prisma {
     ClientCompany?: ClientCompanyCreateNestedOneWithoutOrganisationInput
     Contact?: ContactCreateNestedManyWithoutOrganisationInput
     Opportunity?: OpportunityCreateNestedManyWithoutBuyerInput
+    SupplierPortal?: SupplierPortalCreateNestedManyWithoutOrganisationInput
+    Programme?: PartnershipProgrammeCreateNestedManyWithoutOrganisationInput
   }
 
   export type OrganisationUncheckedCreateInput = {
@@ -165225,6 +171401,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     Contact?: ContactUncheckedCreateNestedManyWithoutOrganisationInput
     Opportunity?: OpportunityUncheckedCreateNestedManyWithoutBuyerInput
+    SupplierPortal?: SupplierPortalUncheckedCreateNestedManyWithoutOrganisationInput
+    Programme?: PartnershipProgrammeUncheckedCreateNestedManyWithoutOrganisationInput
   }
 
   export type OrganisationUpdateInput = {
@@ -165242,6 +171420,8 @@ export namespace Prisma {
     ClientCompany?: ClientCompanyUpdateOneWithoutOrganisationNestedInput
     Contact?: ContactUpdateManyWithoutOrganisationNestedInput
     Opportunity?: OpportunityUpdateManyWithoutBuyerNestedInput
+    SupplierPortal?: SupplierPortalUpdateManyWithoutOrganisationNestedInput
+    Programme?: PartnershipProgrammeUpdateManyWithoutOrganisationNestedInput
   }
 
   export type OrganisationUncheckedUpdateInput = {
@@ -165259,6 +171439,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Contact?: ContactUncheckedUpdateManyWithoutOrganisationNestedInput
     Opportunity?: OpportunityUncheckedUpdateManyWithoutBuyerNestedInput
+    SupplierPortal?: SupplierPortalUncheckedUpdateManyWithoutOrganisationNestedInput
+    Programme?: PartnershipProgrammeUncheckedUpdateManyWithoutOrganisationNestedInput
   }
 
   export type OrganisationCreateManyInput = {
@@ -165626,6 +171808,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
     Lead?: LeadCreateNestedOneWithoutOpportunityInput
     Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
@@ -165655,9 +171839,11 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
@@ -165686,6 +171872,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
     Lead?: LeadUpdateOneWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
@@ -165715,9 +171903,11 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
@@ -165745,6 +171935,7 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -165792,6 +171983,7 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -166437,6 +172629,7 @@ export namespace Prisma {
     createdAt?: Date | string
     Request: ApprovalRequestCreateNestedOneWithoutDecisionInput
     ExecutionRecord?: ExecutionRecordCreateNestedOneWithoutDecisionInput
+    SupplierAccount?: SupplierAccountCreateNestedManyWithoutDecisionInput
   }
 
   export type ApprovalDecisionUncheckedCreateInput = {
@@ -166450,6 +172643,7 @@ export namespace Prisma {
     expiresAt: Date | string
     createdAt?: Date | string
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedOneWithoutDecisionInput
+    SupplierAccount?: SupplierAccountUncheckedCreateNestedManyWithoutDecisionInput
   }
 
   export type ApprovalDecisionUpdateInput = {
@@ -166463,6 +172657,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Request?: ApprovalRequestUpdateOneRequiredWithoutDecisionNestedInput
     ExecutionRecord?: ExecutionRecordUpdateOneWithoutDecisionNestedInput
+    SupplierAccount?: SupplierAccountUpdateManyWithoutDecisionNestedInput
   }
 
   export type ApprovalDecisionUncheckedUpdateInput = {
@@ -166476,6 +172671,7 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ExecutionRecord?: ExecutionRecordUncheckedUpdateOneWithoutDecisionNestedInput
+    SupplierAccount?: SupplierAccountUncheckedUpdateManyWithoutDecisionNestedInput
   }
 
   export type ApprovalDecisionCreateManyInput = {
@@ -166775,6 +172971,530 @@ export namespace Prisma {
     basis?: StringFieldUpdateOperationsInput | string
     note?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierPortalCreateInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Organisation?: OrganisationCreateNestedOneWithoutSupplierPortalInput
+    Account?: SupplierAccountCreateNestedManyWithoutPortalInput
+    Programme?: PartnershipProgrammeCreateNestedManyWithoutPortalInput
+  }
+
+  export type SupplierPortalUncheckedCreateInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    organisationId?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Account?: SupplierAccountUncheckedCreateNestedManyWithoutPortalInput
+    Programme?: PartnershipProgrammeUncheckedCreateNestedManyWithoutPortalInput
+  }
+
+  export type SupplierPortalUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Organisation?: OrganisationUpdateOneWithoutSupplierPortalNestedInput
+    Account?: SupplierAccountUpdateManyWithoutPortalNestedInput
+    Programme?: PartnershipProgrammeUpdateManyWithoutPortalNestedInput
+  }
+
+  export type SupplierPortalUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Account?: SupplierAccountUncheckedUpdateManyWithoutPortalNestedInput
+    Programme?: PartnershipProgrammeUncheckedUpdateManyWithoutPortalNestedInput
+  }
+
+  export type SupplierPortalCreateManyInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    organisationId?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SupplierPortalUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierPortalUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierAccountCreateInput = {
+    id: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Portal: SupplierPortalCreateNestedOneWithoutAccountInput
+    Decision?: ApprovalDecisionCreateNestedOneWithoutSupplierAccountInput
+  }
+
+  export type SupplierAccountUncheckedCreateInput = {
+    id: string
+    portalId: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    approvalDecisionId?: string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SupplierAccountUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Portal?: SupplierPortalUpdateOneRequiredWithoutAccountNestedInput
+    Decision?: ApprovalDecisionUpdateOneWithoutSupplierAccountNestedInput
+  }
+
+  export type SupplierAccountUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    portalId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvalDecisionId?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierAccountCreateManyInput = {
+    id: string
+    portalId: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    approvalDecisionId?: string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SupplierAccountUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierAccountUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    portalId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvalDecisionId?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PartnershipProgrammeCreateInput = {
+    id: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Organisation: OrganisationCreateNestedOneWithoutProgrammeInput
+    Portal?: SupplierPortalCreateNestedOneWithoutProgrammeInput
+    Opportunity?: OpportunityCreateNestedManyWithoutProgrammeInput
+  }
+
+  export type PartnershipProgrammeUncheckedCreateInput = {
+    id: string
+    organisationId: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    portalId?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Opportunity?: OpportunityUncheckedCreateNestedManyWithoutProgrammeInput
+  }
+
+  export type PartnershipProgrammeUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Organisation?: OrganisationUpdateOneRequiredWithoutProgrammeNestedInput
+    Portal?: SupplierPortalUpdateOneWithoutProgrammeNestedInput
+    Opportunity?: OpportunityUpdateManyWithoutProgrammeNestedInput
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organisationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    portalId?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUncheckedUpdateManyWithoutProgrammeNestedInput
+  }
+
+  export type PartnershipProgrammeCreateManyInput = {
+    id: string
+    organisationId: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    portalId?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PartnershipProgrammeUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organisationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    portalId?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BidAssessmentCreateInput = {
+    id: string
+    model: string
+    weights: JsonNullValueInput | InputJsonValue
+    scores: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentCreatedisqualifiersInput | string[]
+    assumptions?: string | null
+    total: Decimal | DecimalJsLike | number | string
+    recommendation: string
+    authorId?: string | null
+    createdAt?: Date | string
+    Opportunity: OpportunityCreateNestedOneWithoutAssessmentInput
+  }
+
+  export type BidAssessmentUncheckedCreateInput = {
+    id: string
+    opportunityId: string
+    model: string
+    weights: JsonNullValueInput | InputJsonValue
+    scores: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentCreatedisqualifiersInput | string[]
+    assumptions?: string | null
+    total: Decimal | DecimalJsLike | number | string
+    recommendation: string
+    authorId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BidAssessmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    weights?: JsonNullValueInput | InputJsonValue
+    scores?: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentUpdatedisqualifiersInput | string[]
+    assumptions?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFieldUpdateOperationsInput | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUpdateOneRequiredWithoutAssessmentNestedInput
+  }
+
+  export type BidAssessmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    weights?: JsonNullValueInput | InputJsonValue
+    scores?: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentUpdatedisqualifiersInput | string[]
+    assumptions?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFieldUpdateOperationsInput | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BidAssessmentCreateManyInput = {
+    id: string
+    opportunityId: string
+    model: string
+    weights: JsonNullValueInput | InputJsonValue
+    scores: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentCreatedisqualifiersInput | string[]
+    assumptions?: string | null
+    total: Decimal | DecimalJsLike | number | string
+    recommendation: string
+    authorId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BidAssessmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    weights?: JsonNullValueInput | InputJsonValue
+    scores?: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentUpdatedisqualifiersInput | string[]
+    assumptions?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFieldUpdateOperationsInput | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BidAssessmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    opportunityId?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    weights?: JsonNullValueInput | InputJsonValue
+    scores?: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentUpdatedisqualifiersInput | string[]
+    assumptions?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFieldUpdateOperationsInput | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -172445,6 +179165,26 @@ export namespace Prisma {
     createdAt?: SortOrder
   }
 
+  export type SupplierPortalListRelationFilter = {
+    every?: SupplierPortalWhereInput
+    some?: SupplierPortalWhereInput
+    none?: SupplierPortalWhereInput
+  }
+
+  export type PartnershipProgrammeListRelationFilter = {
+    every?: PartnershipProgrammeWhereInput
+    some?: PartnershipProgrammeWhereInput
+    none?: PartnershipProgrammeWhereInput
+  }
+
+  export type SupplierPortalOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PartnershipProgrammeOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type OrganisationCountOrderByAggregateInput = {
     id?: SortOrder
     name?: SortOrder
@@ -172665,6 +179405,17 @@ export namespace Prisma {
     fetchedAt?: SortOrder
   }
 
+  export type PartnershipProgrammeNullableScalarRelationFilter = {
+    is?: PartnershipProgrammeWhereInput | null
+    isNot?: PartnershipProgrammeWhereInput | null
+  }
+
+  export type BidAssessmentListRelationFilter = {
+    every?: BidAssessmentWhereInput
+    some?: BidAssessmentWhereInput
+    none?: BidAssessmentWhereInput
+  }
+
   export type LeadNullableScalarRelationFilter = {
     is?: LeadWhereInput | null
     isNot?: LeadWhereInput | null
@@ -172698,6 +179449,10 @@ export namespace Prisma {
     every?: CostEntryWhereInput
     some?: CostEntryWhereInput
     none?: CostEntryWhereInput
+  }
+
+  export type BidAssessmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type OpportunityEvidenceOrderByRelationAggregateInput = {
@@ -172740,6 +179495,7 @@ export namespace Prisma {
     confirmedBuying?: SortOrder
     leadId?: SortOrder
     paperclipIssueId?: SortOrder
+    programmeId?: SortOrder
     createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -172769,6 +179525,7 @@ export namespace Prisma {
     confirmedBuying?: SortOrder
     leadId?: SortOrder
     paperclipIssueId?: SortOrder
+    programmeId?: SortOrder
     createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -172793,6 +179550,7 @@ export namespace Prisma {
     confirmedBuying?: SortOrder
     leadId?: SortOrder
     paperclipIssueId?: SortOrder
+    programmeId?: SortOrder
     createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -173167,6 +179925,16 @@ export namespace Prisma {
     isNot?: ExecutionRecordWhereInput | null
   }
 
+  export type SupplierAccountListRelationFilter = {
+    every?: SupplierAccountWhereInput
+    some?: SupplierAccountWhereInput
+    none?: SupplierAccountWhereInput
+  }
+
+  export type SupplierAccountOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type ApprovalDecisionCountOrderByAggregateInput = {
     id?: SortOrder
     requestId?: SortOrder
@@ -173338,6 +180106,239 @@ export namespace Prisma {
 
   export type CostEntrySumOrderByAggregateInput = {
     amountMinor?: SortOrder
+  }
+
+  export type SupplierPortalCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    kind?: SortOrder
+    url?: SortOrder
+    registrationUrl?: SortOrder
+    termsUrl?: SortOrder
+    organisationId?: SortOrder
+    cost?: SortOrder
+    automationPermitted?: SortOrder
+    standingPolicy?: SortOrder
+    standingPolicyById?: SortOrder
+    standingPolicyAt?: SortOrder
+    requiredFacts?: SortOrder
+    requiredDocuments?: SortOrder
+    notes?: SortOrder
+    sourceUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SupplierPortalMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    kind?: SortOrder
+    url?: SortOrder
+    registrationUrl?: SortOrder
+    termsUrl?: SortOrder
+    organisationId?: SortOrder
+    cost?: SortOrder
+    automationPermitted?: SortOrder
+    standingPolicy?: SortOrder
+    standingPolicyById?: SortOrder
+    standingPolicyAt?: SortOrder
+    notes?: SortOrder
+    sourceUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SupplierPortalMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    kind?: SortOrder
+    url?: SortOrder
+    registrationUrl?: SortOrder
+    termsUrl?: SortOrder
+    organisationId?: SortOrder
+    cost?: SortOrder
+    automationPermitted?: SortOrder
+    standingPolicy?: SortOrder
+    standingPolicyById?: SortOrder
+    standingPolicyAt?: SortOrder
+    notes?: SortOrder
+    sourceUrl?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SupplierPortalScalarRelationFilter = {
+    is?: SupplierPortalWhereInput
+    isNot?: SupplierPortalWhereInput
+  }
+
+  export type SupplierAccountCountOrderByAggregateInput = {
+    id?: SortOrder
+    portalId?: SortOrder
+    status?: SortOrder
+    accountRef?: SortOrder
+    registeredAt?: SortOrder
+    verificationStatus?: SortOrder
+    contactAlias?: SortOrder
+    credentialLabel?: SortOrder
+    mfaRequired?: SortOrder
+    termsVersion?: SortOrder
+    renewalAt?: SortOrder
+    restrictions?: SortOrder
+    lastAccessAt?: SortOrder
+    approvalDecisionId?: SortOrder
+    ownerUserId?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SupplierAccountMaxOrderByAggregateInput = {
+    id?: SortOrder
+    portalId?: SortOrder
+    status?: SortOrder
+    accountRef?: SortOrder
+    registeredAt?: SortOrder
+    verificationStatus?: SortOrder
+    contactAlias?: SortOrder
+    credentialLabel?: SortOrder
+    mfaRequired?: SortOrder
+    termsVersion?: SortOrder
+    renewalAt?: SortOrder
+    restrictions?: SortOrder
+    lastAccessAt?: SortOrder
+    approvalDecisionId?: SortOrder
+    ownerUserId?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type SupplierAccountMinOrderByAggregateInput = {
+    id?: SortOrder
+    portalId?: SortOrder
+    status?: SortOrder
+    accountRef?: SortOrder
+    registeredAt?: SortOrder
+    verificationStatus?: SortOrder
+    contactAlias?: SortOrder
+    credentialLabel?: SortOrder
+    mfaRequired?: SortOrder
+    termsVersion?: SortOrder
+    renewalAt?: SortOrder
+    restrictions?: SortOrder
+    lastAccessAt?: SortOrder
+    approvalDecisionId?: SortOrder
+    ownerUserId?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrganisationScalarRelationFilter = {
+    is?: OrganisationWhereInput
+    isNot?: OrganisationWhereInput
+  }
+
+  export type SupplierPortalNullableScalarRelationFilter = {
+    is?: SupplierPortalWhereInput | null
+    isNot?: SupplierPortalWhereInput | null
+  }
+
+  export type PartnershipProgrammeCountOrderByAggregateInput = {
+    id?: SortOrder
+    organisationId?: SortOrder
+    name?: SortOrder
+    categories?: SortOrder
+    url?: SortOrder
+    portalId?: SortOrder
+    verified?: SortOrder
+    verifiedAt?: SortOrder
+    sourceUrl?: SortOrder
+    availability?: SortOrder
+    fees?: SortOrder
+    requirements?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PartnershipProgrammeMaxOrderByAggregateInput = {
+    id?: SortOrder
+    organisationId?: SortOrder
+    name?: SortOrder
+    url?: SortOrder
+    portalId?: SortOrder
+    verified?: SortOrder
+    verifiedAt?: SortOrder
+    sourceUrl?: SortOrder
+    availability?: SortOrder
+    fees?: SortOrder
+    requirements?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PartnershipProgrammeMinOrderByAggregateInput = {
+    id?: SortOrder
+    organisationId?: SortOrder
+    name?: SortOrder
+    url?: SortOrder
+    portalId?: SortOrder
+    verified?: SortOrder
+    verifiedAt?: SortOrder
+    sourceUrl?: SortOrder
+    availability?: SortOrder
+    fees?: SortOrder
+    requirements?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BidAssessmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    model?: SortOrder
+    weights?: SortOrder
+    scores?: SortOrder
+    disqualifiers?: SortOrder
+    assumptions?: SortOrder
+    total?: SortOrder
+    recommendation?: SortOrder
+    authorId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BidAssessmentAvgOrderByAggregateInput = {
+    total?: SortOrder
+  }
+
+  export type BidAssessmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    model?: SortOrder
+    assumptions?: SortOrder
+    total?: SortOrder
+    recommendation?: SortOrder
+    authorId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BidAssessmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    opportunityId?: SortOrder
+    model?: SortOrder
+    assumptions?: SortOrder
+    total?: SortOrder
+    recommendation?: SortOrder
+    authorId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BidAssessmentSumOrderByAggregateInput = {
+    total?: SortOrder
   }
 
   export type NullableStringFieldUpdateOperationsInput = {
@@ -177313,6 +184314,20 @@ export namespace Prisma {
     connect?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
   }
 
+  export type SupplierPortalCreateNestedManyWithoutOrganisationInput = {
+    create?: XOR<SupplierPortalCreateWithoutOrganisationInput, SupplierPortalUncheckedCreateWithoutOrganisationInput> | SupplierPortalCreateWithoutOrganisationInput[] | SupplierPortalUncheckedCreateWithoutOrganisationInput[]
+    connectOrCreate?: SupplierPortalCreateOrConnectWithoutOrganisationInput | SupplierPortalCreateOrConnectWithoutOrganisationInput[]
+    createMany?: SupplierPortalCreateManyOrganisationInputEnvelope
+    connect?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+  }
+
+  export type PartnershipProgrammeCreateNestedManyWithoutOrganisationInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutOrganisationInput, PartnershipProgrammeUncheckedCreateWithoutOrganisationInput> | PartnershipProgrammeCreateWithoutOrganisationInput[] | PartnershipProgrammeUncheckedCreateWithoutOrganisationInput[]
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutOrganisationInput | PartnershipProgrammeCreateOrConnectWithoutOrganisationInput[]
+    createMany?: PartnershipProgrammeCreateManyOrganisationInputEnvelope
+    connect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+  }
+
   export type ContactUncheckedCreateNestedManyWithoutOrganisationInput = {
     create?: XOR<ContactCreateWithoutOrganisationInput, ContactUncheckedCreateWithoutOrganisationInput> | ContactCreateWithoutOrganisationInput[] | ContactUncheckedCreateWithoutOrganisationInput[]
     connectOrCreate?: ContactCreateOrConnectWithoutOrganisationInput | ContactCreateOrConnectWithoutOrganisationInput[]
@@ -177325,6 +184340,20 @@ export namespace Prisma {
     connectOrCreate?: OpportunityCreateOrConnectWithoutBuyerInput | OpportunityCreateOrConnectWithoutBuyerInput[]
     createMany?: OpportunityCreateManyBuyerInputEnvelope
     connect?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+  }
+
+  export type SupplierPortalUncheckedCreateNestedManyWithoutOrganisationInput = {
+    create?: XOR<SupplierPortalCreateWithoutOrganisationInput, SupplierPortalUncheckedCreateWithoutOrganisationInput> | SupplierPortalCreateWithoutOrganisationInput[] | SupplierPortalUncheckedCreateWithoutOrganisationInput[]
+    connectOrCreate?: SupplierPortalCreateOrConnectWithoutOrganisationInput | SupplierPortalCreateOrConnectWithoutOrganisationInput[]
+    createMany?: SupplierPortalCreateManyOrganisationInputEnvelope
+    connect?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+  }
+
+  export type PartnershipProgrammeUncheckedCreateNestedManyWithoutOrganisationInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutOrganisationInput, PartnershipProgrammeUncheckedCreateWithoutOrganisationInput> | PartnershipProgrammeCreateWithoutOrganisationInput[] | PartnershipProgrammeUncheckedCreateWithoutOrganisationInput[]
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutOrganisationInput | PartnershipProgrammeCreateOrConnectWithoutOrganisationInput[]
+    createMany?: PartnershipProgrammeCreateManyOrganisationInputEnvelope
+    connect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
   }
 
   export type OrganisationUpdatecategoriesInput = {
@@ -177370,6 +184399,34 @@ export namespace Prisma {
     deleteMany?: OpportunityScalarWhereInput | OpportunityScalarWhereInput[]
   }
 
+  export type SupplierPortalUpdateManyWithoutOrganisationNestedInput = {
+    create?: XOR<SupplierPortalCreateWithoutOrganisationInput, SupplierPortalUncheckedCreateWithoutOrganisationInput> | SupplierPortalCreateWithoutOrganisationInput[] | SupplierPortalUncheckedCreateWithoutOrganisationInput[]
+    connectOrCreate?: SupplierPortalCreateOrConnectWithoutOrganisationInput | SupplierPortalCreateOrConnectWithoutOrganisationInput[]
+    upsert?: SupplierPortalUpsertWithWhereUniqueWithoutOrganisationInput | SupplierPortalUpsertWithWhereUniqueWithoutOrganisationInput[]
+    createMany?: SupplierPortalCreateManyOrganisationInputEnvelope
+    set?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+    disconnect?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+    delete?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+    connect?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+    update?: SupplierPortalUpdateWithWhereUniqueWithoutOrganisationInput | SupplierPortalUpdateWithWhereUniqueWithoutOrganisationInput[]
+    updateMany?: SupplierPortalUpdateManyWithWhereWithoutOrganisationInput | SupplierPortalUpdateManyWithWhereWithoutOrganisationInput[]
+    deleteMany?: SupplierPortalScalarWhereInput | SupplierPortalScalarWhereInput[]
+  }
+
+  export type PartnershipProgrammeUpdateManyWithoutOrganisationNestedInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutOrganisationInput, PartnershipProgrammeUncheckedCreateWithoutOrganisationInput> | PartnershipProgrammeCreateWithoutOrganisationInput[] | PartnershipProgrammeUncheckedCreateWithoutOrganisationInput[]
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutOrganisationInput | PartnershipProgrammeCreateOrConnectWithoutOrganisationInput[]
+    upsert?: PartnershipProgrammeUpsertWithWhereUniqueWithoutOrganisationInput | PartnershipProgrammeUpsertWithWhereUniqueWithoutOrganisationInput[]
+    createMany?: PartnershipProgrammeCreateManyOrganisationInputEnvelope
+    set?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    disconnect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    delete?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    connect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    update?: PartnershipProgrammeUpdateWithWhereUniqueWithoutOrganisationInput | PartnershipProgrammeUpdateWithWhereUniqueWithoutOrganisationInput[]
+    updateMany?: PartnershipProgrammeUpdateManyWithWhereWithoutOrganisationInput | PartnershipProgrammeUpdateManyWithWhereWithoutOrganisationInput[]
+    deleteMany?: PartnershipProgrammeScalarWhereInput | PartnershipProgrammeScalarWhereInput[]
+  }
+
   export type ContactUncheckedUpdateManyWithoutOrganisationNestedInput = {
     create?: XOR<ContactCreateWithoutOrganisationInput, ContactUncheckedCreateWithoutOrganisationInput> | ContactCreateWithoutOrganisationInput[] | ContactUncheckedCreateWithoutOrganisationInput[]
     connectOrCreate?: ContactCreateOrConnectWithoutOrganisationInput | ContactCreateOrConnectWithoutOrganisationInput[]
@@ -177396,6 +184453,34 @@ export namespace Prisma {
     update?: OpportunityUpdateWithWhereUniqueWithoutBuyerInput | OpportunityUpdateWithWhereUniqueWithoutBuyerInput[]
     updateMany?: OpportunityUpdateManyWithWhereWithoutBuyerInput | OpportunityUpdateManyWithWhereWithoutBuyerInput[]
     deleteMany?: OpportunityScalarWhereInput | OpportunityScalarWhereInput[]
+  }
+
+  export type SupplierPortalUncheckedUpdateManyWithoutOrganisationNestedInput = {
+    create?: XOR<SupplierPortalCreateWithoutOrganisationInput, SupplierPortalUncheckedCreateWithoutOrganisationInput> | SupplierPortalCreateWithoutOrganisationInput[] | SupplierPortalUncheckedCreateWithoutOrganisationInput[]
+    connectOrCreate?: SupplierPortalCreateOrConnectWithoutOrganisationInput | SupplierPortalCreateOrConnectWithoutOrganisationInput[]
+    upsert?: SupplierPortalUpsertWithWhereUniqueWithoutOrganisationInput | SupplierPortalUpsertWithWhereUniqueWithoutOrganisationInput[]
+    createMany?: SupplierPortalCreateManyOrganisationInputEnvelope
+    set?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+    disconnect?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+    delete?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+    connect?: SupplierPortalWhereUniqueInput | SupplierPortalWhereUniqueInput[]
+    update?: SupplierPortalUpdateWithWhereUniqueWithoutOrganisationInput | SupplierPortalUpdateWithWhereUniqueWithoutOrganisationInput[]
+    updateMany?: SupplierPortalUpdateManyWithWhereWithoutOrganisationInput | SupplierPortalUpdateManyWithWhereWithoutOrganisationInput[]
+    deleteMany?: SupplierPortalScalarWhereInput | SupplierPortalScalarWhereInput[]
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateManyWithoutOrganisationNestedInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutOrganisationInput, PartnershipProgrammeUncheckedCreateWithoutOrganisationInput> | PartnershipProgrammeCreateWithoutOrganisationInput[] | PartnershipProgrammeUncheckedCreateWithoutOrganisationInput[]
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutOrganisationInput | PartnershipProgrammeCreateOrConnectWithoutOrganisationInput[]
+    upsert?: PartnershipProgrammeUpsertWithWhereUniqueWithoutOrganisationInput | PartnershipProgrammeUpsertWithWhereUniqueWithoutOrganisationInput[]
+    createMany?: PartnershipProgrammeCreateManyOrganisationInputEnvelope
+    set?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    disconnect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    delete?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    connect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    update?: PartnershipProgrammeUpdateWithWhereUniqueWithoutOrganisationInput | PartnershipProgrammeUpdateWithWhereUniqueWithoutOrganisationInput[]
+    updateMany?: PartnershipProgrammeUpdateManyWithWhereWithoutOrganisationInput | PartnershipProgrammeUpdateManyWithWhereWithoutOrganisationInput[]
+    deleteMany?: PartnershipProgrammeScalarWhereInput | PartnershipProgrammeScalarWhereInput[]
   }
 
   export type IngestionRunCreateNestedManyWithoutSourceInput = {
@@ -177620,6 +184705,19 @@ export namespace Prisma {
     connect?: OrganisationWhereUniqueInput
   }
 
+  export type PartnershipProgrammeCreateNestedOneWithoutOpportunityInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutOpportunityInput, PartnershipProgrammeUncheckedCreateWithoutOpportunityInput>
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutOpportunityInput
+    connect?: PartnershipProgrammeWhereUniqueInput
+  }
+
+  export type BidAssessmentCreateNestedManyWithoutOpportunityInput = {
+    create?: XOR<BidAssessmentCreateWithoutOpportunityInput, BidAssessmentUncheckedCreateWithoutOpportunityInput> | BidAssessmentCreateWithoutOpportunityInput[] | BidAssessmentUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: BidAssessmentCreateOrConnectWithoutOpportunityInput | BidAssessmentCreateOrConnectWithoutOpportunityInput[]
+    createMany?: BidAssessmentCreateManyOpportunityInputEnvelope
+    connect?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+  }
+
   export type OpportunitySourceCreateNestedOneWithoutOpportunityInput = {
     create?: XOR<OpportunitySourceCreateWithoutOpportunityInput, OpportunitySourceUncheckedCreateWithoutOpportunityInput>
     connectOrCreate?: OpportunitySourceCreateOrConnectWithoutOpportunityInput
@@ -177665,6 +184763,13 @@ export namespace Prisma {
     connectOrCreate?: CostEntryCreateOrConnectWithoutOpportunityInput | CostEntryCreateOrConnectWithoutOpportunityInput[]
     createMany?: CostEntryCreateManyOpportunityInputEnvelope
     connect?: CostEntryWhereUniqueInput | CostEntryWhereUniqueInput[]
+  }
+
+  export type BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput = {
+    create?: XOR<BidAssessmentCreateWithoutOpportunityInput, BidAssessmentUncheckedCreateWithoutOpportunityInput> | BidAssessmentCreateWithoutOpportunityInput[] | BidAssessmentUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: BidAssessmentCreateOrConnectWithoutOpportunityInput | BidAssessmentCreateOrConnectWithoutOpportunityInput[]
+    createMany?: BidAssessmentCreateManyOpportunityInputEnvelope
+    connect?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
   }
 
   export type OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput = {
@@ -177715,6 +184820,30 @@ export namespace Prisma {
     delete?: OrganisationWhereInput | boolean
     connect?: OrganisationWhereUniqueInput
     update?: XOR<XOR<OrganisationUpdateToOneWithWhereWithoutOpportunityInput, OrganisationUpdateWithoutOpportunityInput>, OrganisationUncheckedUpdateWithoutOpportunityInput>
+  }
+
+  export type PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutOpportunityInput, PartnershipProgrammeUncheckedCreateWithoutOpportunityInput>
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutOpportunityInput
+    upsert?: PartnershipProgrammeUpsertWithoutOpportunityInput
+    disconnect?: PartnershipProgrammeWhereInput | boolean
+    delete?: PartnershipProgrammeWhereInput | boolean
+    connect?: PartnershipProgrammeWhereUniqueInput
+    update?: XOR<XOR<PartnershipProgrammeUpdateToOneWithWhereWithoutOpportunityInput, PartnershipProgrammeUpdateWithoutOpportunityInput>, PartnershipProgrammeUncheckedUpdateWithoutOpportunityInput>
+  }
+
+  export type BidAssessmentUpdateManyWithoutOpportunityNestedInput = {
+    create?: XOR<BidAssessmentCreateWithoutOpportunityInput, BidAssessmentUncheckedCreateWithoutOpportunityInput> | BidAssessmentCreateWithoutOpportunityInput[] | BidAssessmentUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: BidAssessmentCreateOrConnectWithoutOpportunityInput | BidAssessmentCreateOrConnectWithoutOpportunityInput[]
+    upsert?: BidAssessmentUpsertWithWhereUniqueWithoutOpportunityInput | BidAssessmentUpsertWithWhereUniqueWithoutOpportunityInput[]
+    createMany?: BidAssessmentCreateManyOpportunityInputEnvelope
+    set?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+    disconnect?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+    delete?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+    connect?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+    update?: BidAssessmentUpdateWithWhereUniqueWithoutOpportunityInput | BidAssessmentUpdateWithWhereUniqueWithoutOpportunityInput[]
+    updateMany?: BidAssessmentUpdateManyWithWhereWithoutOpportunityInput | BidAssessmentUpdateManyWithWhereWithoutOpportunityInput[]
+    deleteMany?: BidAssessmentScalarWhereInput | BidAssessmentScalarWhereInput[]
   }
 
   export type OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput = {
@@ -177803,6 +184932,20 @@ export namespace Prisma {
     update?: CostEntryUpdateWithWhereUniqueWithoutOpportunityInput | CostEntryUpdateWithWhereUniqueWithoutOpportunityInput[]
     updateMany?: CostEntryUpdateManyWithWhereWithoutOpportunityInput | CostEntryUpdateManyWithWhereWithoutOpportunityInput[]
     deleteMany?: CostEntryScalarWhereInput | CostEntryScalarWhereInput[]
+  }
+
+  export type BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput = {
+    create?: XOR<BidAssessmentCreateWithoutOpportunityInput, BidAssessmentUncheckedCreateWithoutOpportunityInput> | BidAssessmentCreateWithoutOpportunityInput[] | BidAssessmentUncheckedCreateWithoutOpportunityInput[]
+    connectOrCreate?: BidAssessmentCreateOrConnectWithoutOpportunityInput | BidAssessmentCreateOrConnectWithoutOpportunityInput[]
+    upsert?: BidAssessmentUpsertWithWhereUniqueWithoutOpportunityInput | BidAssessmentUpsertWithWhereUniqueWithoutOpportunityInput[]
+    createMany?: BidAssessmentCreateManyOpportunityInputEnvelope
+    set?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+    disconnect?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+    delete?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+    connect?: BidAssessmentWhereUniqueInput | BidAssessmentWhereUniqueInput[]
+    update?: BidAssessmentUpdateWithWhereUniqueWithoutOpportunityInput | BidAssessmentUpdateWithWhereUniqueWithoutOpportunityInput[]
+    updateMany?: BidAssessmentUpdateManyWithWhereWithoutOpportunityInput | BidAssessmentUpdateManyWithWhereWithoutOpportunityInput[]
+    deleteMany?: BidAssessmentScalarWhereInput | BidAssessmentScalarWhereInput[]
   }
 
   export type OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput = {
@@ -178285,10 +185428,24 @@ export namespace Prisma {
     connect?: ExecutionRecordWhereUniqueInput
   }
 
+  export type SupplierAccountCreateNestedManyWithoutDecisionInput = {
+    create?: XOR<SupplierAccountCreateWithoutDecisionInput, SupplierAccountUncheckedCreateWithoutDecisionInput> | SupplierAccountCreateWithoutDecisionInput[] | SupplierAccountUncheckedCreateWithoutDecisionInput[]
+    connectOrCreate?: SupplierAccountCreateOrConnectWithoutDecisionInput | SupplierAccountCreateOrConnectWithoutDecisionInput[]
+    createMany?: SupplierAccountCreateManyDecisionInputEnvelope
+    connect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+  }
+
   export type ExecutionRecordUncheckedCreateNestedOneWithoutDecisionInput = {
     create?: XOR<ExecutionRecordCreateWithoutDecisionInput, ExecutionRecordUncheckedCreateWithoutDecisionInput>
     connectOrCreate?: ExecutionRecordCreateOrConnectWithoutDecisionInput
     connect?: ExecutionRecordWhereUniqueInput
+  }
+
+  export type SupplierAccountUncheckedCreateNestedManyWithoutDecisionInput = {
+    create?: XOR<SupplierAccountCreateWithoutDecisionInput, SupplierAccountUncheckedCreateWithoutDecisionInput> | SupplierAccountCreateWithoutDecisionInput[] | SupplierAccountUncheckedCreateWithoutDecisionInput[]
+    connectOrCreate?: SupplierAccountCreateOrConnectWithoutDecisionInput | SupplierAccountCreateOrConnectWithoutDecisionInput[]
+    createMany?: SupplierAccountCreateManyDecisionInputEnvelope
+    connect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
   }
 
   export type ApprovalRequestUpdateOneRequiredWithoutDecisionNestedInput = {
@@ -178309,6 +185466,20 @@ export namespace Prisma {
     update?: XOR<XOR<ExecutionRecordUpdateToOneWithWhereWithoutDecisionInput, ExecutionRecordUpdateWithoutDecisionInput>, ExecutionRecordUncheckedUpdateWithoutDecisionInput>
   }
 
+  export type SupplierAccountUpdateManyWithoutDecisionNestedInput = {
+    create?: XOR<SupplierAccountCreateWithoutDecisionInput, SupplierAccountUncheckedCreateWithoutDecisionInput> | SupplierAccountCreateWithoutDecisionInput[] | SupplierAccountUncheckedCreateWithoutDecisionInput[]
+    connectOrCreate?: SupplierAccountCreateOrConnectWithoutDecisionInput | SupplierAccountCreateOrConnectWithoutDecisionInput[]
+    upsert?: SupplierAccountUpsertWithWhereUniqueWithoutDecisionInput | SupplierAccountUpsertWithWhereUniqueWithoutDecisionInput[]
+    createMany?: SupplierAccountCreateManyDecisionInputEnvelope
+    set?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    disconnect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    delete?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    connect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    update?: SupplierAccountUpdateWithWhereUniqueWithoutDecisionInput | SupplierAccountUpdateWithWhereUniqueWithoutDecisionInput[]
+    updateMany?: SupplierAccountUpdateManyWithWhereWithoutDecisionInput | SupplierAccountUpdateManyWithWhereWithoutDecisionInput[]
+    deleteMany?: SupplierAccountScalarWhereInput | SupplierAccountScalarWhereInput[]
+  }
+
   export type ExecutionRecordUncheckedUpdateOneWithoutDecisionNestedInput = {
     create?: XOR<ExecutionRecordCreateWithoutDecisionInput, ExecutionRecordUncheckedCreateWithoutDecisionInput>
     connectOrCreate?: ExecutionRecordCreateOrConnectWithoutDecisionInput
@@ -178317,6 +185488,20 @@ export namespace Prisma {
     delete?: ExecutionRecordWhereInput | boolean
     connect?: ExecutionRecordWhereUniqueInput
     update?: XOR<XOR<ExecutionRecordUpdateToOneWithWhereWithoutDecisionInput, ExecutionRecordUpdateWithoutDecisionInput>, ExecutionRecordUncheckedUpdateWithoutDecisionInput>
+  }
+
+  export type SupplierAccountUncheckedUpdateManyWithoutDecisionNestedInput = {
+    create?: XOR<SupplierAccountCreateWithoutDecisionInput, SupplierAccountUncheckedCreateWithoutDecisionInput> | SupplierAccountCreateWithoutDecisionInput[] | SupplierAccountUncheckedCreateWithoutDecisionInput[]
+    connectOrCreate?: SupplierAccountCreateOrConnectWithoutDecisionInput | SupplierAccountCreateOrConnectWithoutDecisionInput[]
+    upsert?: SupplierAccountUpsertWithWhereUniqueWithoutDecisionInput | SupplierAccountUpsertWithWhereUniqueWithoutDecisionInput[]
+    createMany?: SupplierAccountCreateManyDecisionInputEnvelope
+    set?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    disconnect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    delete?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    connect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    update?: SupplierAccountUpdateWithWhereUniqueWithoutDecisionInput | SupplierAccountUpdateWithWhereUniqueWithoutDecisionInput[]
+    updateMany?: SupplierAccountUpdateManyWithWhereWithoutDecisionInput | SupplierAccountUpdateManyWithWhereWithoutDecisionInput[]
+    deleteMany?: SupplierAccountScalarWhereInput | SupplierAccountScalarWhereInput[]
   }
 
   export type ApprovalDecisionCreateNestedOneWithoutExecutionRecordInput = {
@@ -178431,6 +185616,258 @@ export namespace Prisma {
     delete?: OpportunityWhereInput | boolean
     connect?: OpportunityWhereUniqueInput
     update?: XOR<XOR<OpportunityUpdateToOneWithWhereWithoutCostEntryInput, OpportunityUpdateWithoutCostEntryInput>, OpportunityUncheckedUpdateWithoutCostEntryInput>
+  }
+
+  export type SupplierPortalCreaterequiredFactsInput = {
+    set: string[]
+  }
+
+  export type SupplierPortalCreaterequiredDocumentsInput = {
+    set: string[]
+  }
+
+  export type OrganisationCreateNestedOneWithoutSupplierPortalInput = {
+    create?: XOR<OrganisationCreateWithoutSupplierPortalInput, OrganisationUncheckedCreateWithoutSupplierPortalInput>
+    connectOrCreate?: OrganisationCreateOrConnectWithoutSupplierPortalInput
+    connect?: OrganisationWhereUniqueInput
+  }
+
+  export type SupplierAccountCreateNestedManyWithoutPortalInput = {
+    create?: XOR<SupplierAccountCreateWithoutPortalInput, SupplierAccountUncheckedCreateWithoutPortalInput> | SupplierAccountCreateWithoutPortalInput[] | SupplierAccountUncheckedCreateWithoutPortalInput[]
+    connectOrCreate?: SupplierAccountCreateOrConnectWithoutPortalInput | SupplierAccountCreateOrConnectWithoutPortalInput[]
+    createMany?: SupplierAccountCreateManyPortalInputEnvelope
+    connect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+  }
+
+  export type PartnershipProgrammeCreateNestedManyWithoutPortalInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutPortalInput, PartnershipProgrammeUncheckedCreateWithoutPortalInput> | PartnershipProgrammeCreateWithoutPortalInput[] | PartnershipProgrammeUncheckedCreateWithoutPortalInput[]
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutPortalInput | PartnershipProgrammeCreateOrConnectWithoutPortalInput[]
+    createMany?: PartnershipProgrammeCreateManyPortalInputEnvelope
+    connect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+  }
+
+  export type SupplierAccountUncheckedCreateNestedManyWithoutPortalInput = {
+    create?: XOR<SupplierAccountCreateWithoutPortalInput, SupplierAccountUncheckedCreateWithoutPortalInput> | SupplierAccountCreateWithoutPortalInput[] | SupplierAccountUncheckedCreateWithoutPortalInput[]
+    connectOrCreate?: SupplierAccountCreateOrConnectWithoutPortalInput | SupplierAccountCreateOrConnectWithoutPortalInput[]
+    createMany?: SupplierAccountCreateManyPortalInputEnvelope
+    connect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+  }
+
+  export type PartnershipProgrammeUncheckedCreateNestedManyWithoutPortalInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutPortalInput, PartnershipProgrammeUncheckedCreateWithoutPortalInput> | PartnershipProgrammeCreateWithoutPortalInput[] | PartnershipProgrammeUncheckedCreateWithoutPortalInput[]
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutPortalInput | PartnershipProgrammeCreateOrConnectWithoutPortalInput[]
+    createMany?: PartnershipProgrammeCreateManyPortalInputEnvelope
+    connect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+  }
+
+  export type SupplierPortalUpdaterequiredFactsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type SupplierPortalUpdaterequiredDocumentsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type OrganisationUpdateOneWithoutSupplierPortalNestedInput = {
+    create?: XOR<OrganisationCreateWithoutSupplierPortalInput, OrganisationUncheckedCreateWithoutSupplierPortalInput>
+    connectOrCreate?: OrganisationCreateOrConnectWithoutSupplierPortalInput
+    upsert?: OrganisationUpsertWithoutSupplierPortalInput
+    disconnect?: OrganisationWhereInput | boolean
+    delete?: OrganisationWhereInput | boolean
+    connect?: OrganisationWhereUniqueInput
+    update?: XOR<XOR<OrganisationUpdateToOneWithWhereWithoutSupplierPortalInput, OrganisationUpdateWithoutSupplierPortalInput>, OrganisationUncheckedUpdateWithoutSupplierPortalInput>
+  }
+
+  export type SupplierAccountUpdateManyWithoutPortalNestedInput = {
+    create?: XOR<SupplierAccountCreateWithoutPortalInput, SupplierAccountUncheckedCreateWithoutPortalInput> | SupplierAccountCreateWithoutPortalInput[] | SupplierAccountUncheckedCreateWithoutPortalInput[]
+    connectOrCreate?: SupplierAccountCreateOrConnectWithoutPortalInput | SupplierAccountCreateOrConnectWithoutPortalInput[]
+    upsert?: SupplierAccountUpsertWithWhereUniqueWithoutPortalInput | SupplierAccountUpsertWithWhereUniqueWithoutPortalInput[]
+    createMany?: SupplierAccountCreateManyPortalInputEnvelope
+    set?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    disconnect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    delete?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    connect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    update?: SupplierAccountUpdateWithWhereUniqueWithoutPortalInput | SupplierAccountUpdateWithWhereUniqueWithoutPortalInput[]
+    updateMany?: SupplierAccountUpdateManyWithWhereWithoutPortalInput | SupplierAccountUpdateManyWithWhereWithoutPortalInput[]
+    deleteMany?: SupplierAccountScalarWhereInput | SupplierAccountScalarWhereInput[]
+  }
+
+  export type PartnershipProgrammeUpdateManyWithoutPortalNestedInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutPortalInput, PartnershipProgrammeUncheckedCreateWithoutPortalInput> | PartnershipProgrammeCreateWithoutPortalInput[] | PartnershipProgrammeUncheckedCreateWithoutPortalInput[]
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutPortalInput | PartnershipProgrammeCreateOrConnectWithoutPortalInput[]
+    upsert?: PartnershipProgrammeUpsertWithWhereUniqueWithoutPortalInput | PartnershipProgrammeUpsertWithWhereUniqueWithoutPortalInput[]
+    createMany?: PartnershipProgrammeCreateManyPortalInputEnvelope
+    set?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    disconnect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    delete?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    connect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    update?: PartnershipProgrammeUpdateWithWhereUniqueWithoutPortalInput | PartnershipProgrammeUpdateWithWhereUniqueWithoutPortalInput[]
+    updateMany?: PartnershipProgrammeUpdateManyWithWhereWithoutPortalInput | PartnershipProgrammeUpdateManyWithWhereWithoutPortalInput[]
+    deleteMany?: PartnershipProgrammeScalarWhereInput | PartnershipProgrammeScalarWhereInput[]
+  }
+
+  export type SupplierAccountUncheckedUpdateManyWithoutPortalNestedInput = {
+    create?: XOR<SupplierAccountCreateWithoutPortalInput, SupplierAccountUncheckedCreateWithoutPortalInput> | SupplierAccountCreateWithoutPortalInput[] | SupplierAccountUncheckedCreateWithoutPortalInput[]
+    connectOrCreate?: SupplierAccountCreateOrConnectWithoutPortalInput | SupplierAccountCreateOrConnectWithoutPortalInput[]
+    upsert?: SupplierAccountUpsertWithWhereUniqueWithoutPortalInput | SupplierAccountUpsertWithWhereUniqueWithoutPortalInput[]
+    createMany?: SupplierAccountCreateManyPortalInputEnvelope
+    set?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    disconnect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    delete?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    connect?: SupplierAccountWhereUniqueInput | SupplierAccountWhereUniqueInput[]
+    update?: SupplierAccountUpdateWithWhereUniqueWithoutPortalInput | SupplierAccountUpdateWithWhereUniqueWithoutPortalInput[]
+    updateMany?: SupplierAccountUpdateManyWithWhereWithoutPortalInput | SupplierAccountUpdateManyWithWhereWithoutPortalInput[]
+    deleteMany?: SupplierAccountScalarWhereInput | SupplierAccountScalarWhereInput[]
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateManyWithoutPortalNestedInput = {
+    create?: XOR<PartnershipProgrammeCreateWithoutPortalInput, PartnershipProgrammeUncheckedCreateWithoutPortalInput> | PartnershipProgrammeCreateWithoutPortalInput[] | PartnershipProgrammeUncheckedCreateWithoutPortalInput[]
+    connectOrCreate?: PartnershipProgrammeCreateOrConnectWithoutPortalInput | PartnershipProgrammeCreateOrConnectWithoutPortalInput[]
+    upsert?: PartnershipProgrammeUpsertWithWhereUniqueWithoutPortalInput | PartnershipProgrammeUpsertWithWhereUniqueWithoutPortalInput[]
+    createMany?: PartnershipProgrammeCreateManyPortalInputEnvelope
+    set?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    disconnect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    delete?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    connect?: PartnershipProgrammeWhereUniqueInput | PartnershipProgrammeWhereUniqueInput[]
+    update?: PartnershipProgrammeUpdateWithWhereUniqueWithoutPortalInput | PartnershipProgrammeUpdateWithWhereUniqueWithoutPortalInput[]
+    updateMany?: PartnershipProgrammeUpdateManyWithWhereWithoutPortalInput | PartnershipProgrammeUpdateManyWithWhereWithoutPortalInput[]
+    deleteMany?: PartnershipProgrammeScalarWhereInput | PartnershipProgrammeScalarWhereInput[]
+  }
+
+  export type SupplierPortalCreateNestedOneWithoutAccountInput = {
+    create?: XOR<SupplierPortalCreateWithoutAccountInput, SupplierPortalUncheckedCreateWithoutAccountInput>
+    connectOrCreate?: SupplierPortalCreateOrConnectWithoutAccountInput
+    connect?: SupplierPortalWhereUniqueInput
+  }
+
+  export type ApprovalDecisionCreateNestedOneWithoutSupplierAccountInput = {
+    create?: XOR<ApprovalDecisionCreateWithoutSupplierAccountInput, ApprovalDecisionUncheckedCreateWithoutSupplierAccountInput>
+    connectOrCreate?: ApprovalDecisionCreateOrConnectWithoutSupplierAccountInput
+    connect?: ApprovalDecisionWhereUniqueInput
+  }
+
+  export type SupplierPortalUpdateOneRequiredWithoutAccountNestedInput = {
+    create?: XOR<SupplierPortalCreateWithoutAccountInput, SupplierPortalUncheckedCreateWithoutAccountInput>
+    connectOrCreate?: SupplierPortalCreateOrConnectWithoutAccountInput
+    upsert?: SupplierPortalUpsertWithoutAccountInput
+    connect?: SupplierPortalWhereUniqueInput
+    update?: XOR<XOR<SupplierPortalUpdateToOneWithWhereWithoutAccountInput, SupplierPortalUpdateWithoutAccountInput>, SupplierPortalUncheckedUpdateWithoutAccountInput>
+  }
+
+  export type ApprovalDecisionUpdateOneWithoutSupplierAccountNestedInput = {
+    create?: XOR<ApprovalDecisionCreateWithoutSupplierAccountInput, ApprovalDecisionUncheckedCreateWithoutSupplierAccountInput>
+    connectOrCreate?: ApprovalDecisionCreateOrConnectWithoutSupplierAccountInput
+    upsert?: ApprovalDecisionUpsertWithoutSupplierAccountInput
+    disconnect?: ApprovalDecisionWhereInput | boolean
+    delete?: ApprovalDecisionWhereInput | boolean
+    connect?: ApprovalDecisionWhereUniqueInput
+    update?: XOR<XOR<ApprovalDecisionUpdateToOneWithWhereWithoutSupplierAccountInput, ApprovalDecisionUpdateWithoutSupplierAccountInput>, ApprovalDecisionUncheckedUpdateWithoutSupplierAccountInput>
+  }
+
+  export type PartnershipProgrammeCreatecategoriesInput = {
+    set: string[]
+  }
+
+  export type OrganisationCreateNestedOneWithoutProgrammeInput = {
+    create?: XOR<OrganisationCreateWithoutProgrammeInput, OrganisationUncheckedCreateWithoutProgrammeInput>
+    connectOrCreate?: OrganisationCreateOrConnectWithoutProgrammeInput
+    connect?: OrganisationWhereUniqueInput
+  }
+
+  export type SupplierPortalCreateNestedOneWithoutProgrammeInput = {
+    create?: XOR<SupplierPortalCreateWithoutProgrammeInput, SupplierPortalUncheckedCreateWithoutProgrammeInput>
+    connectOrCreate?: SupplierPortalCreateOrConnectWithoutProgrammeInput
+    connect?: SupplierPortalWhereUniqueInput
+  }
+
+  export type OpportunityCreateNestedManyWithoutProgrammeInput = {
+    create?: XOR<OpportunityCreateWithoutProgrammeInput, OpportunityUncheckedCreateWithoutProgrammeInput> | OpportunityCreateWithoutProgrammeInput[] | OpportunityUncheckedCreateWithoutProgrammeInput[]
+    connectOrCreate?: OpportunityCreateOrConnectWithoutProgrammeInput | OpportunityCreateOrConnectWithoutProgrammeInput[]
+    createMany?: OpportunityCreateManyProgrammeInputEnvelope
+    connect?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+  }
+
+  export type OpportunityUncheckedCreateNestedManyWithoutProgrammeInput = {
+    create?: XOR<OpportunityCreateWithoutProgrammeInput, OpportunityUncheckedCreateWithoutProgrammeInput> | OpportunityCreateWithoutProgrammeInput[] | OpportunityUncheckedCreateWithoutProgrammeInput[]
+    connectOrCreate?: OpportunityCreateOrConnectWithoutProgrammeInput | OpportunityCreateOrConnectWithoutProgrammeInput[]
+    createMany?: OpportunityCreateManyProgrammeInputEnvelope
+    connect?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+  }
+
+  export type PartnershipProgrammeUpdatecategoriesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type OrganisationUpdateOneRequiredWithoutProgrammeNestedInput = {
+    create?: XOR<OrganisationCreateWithoutProgrammeInput, OrganisationUncheckedCreateWithoutProgrammeInput>
+    connectOrCreate?: OrganisationCreateOrConnectWithoutProgrammeInput
+    upsert?: OrganisationUpsertWithoutProgrammeInput
+    connect?: OrganisationWhereUniqueInput
+    update?: XOR<XOR<OrganisationUpdateToOneWithWhereWithoutProgrammeInput, OrganisationUpdateWithoutProgrammeInput>, OrganisationUncheckedUpdateWithoutProgrammeInput>
+  }
+
+  export type SupplierPortalUpdateOneWithoutProgrammeNestedInput = {
+    create?: XOR<SupplierPortalCreateWithoutProgrammeInput, SupplierPortalUncheckedCreateWithoutProgrammeInput>
+    connectOrCreate?: SupplierPortalCreateOrConnectWithoutProgrammeInput
+    upsert?: SupplierPortalUpsertWithoutProgrammeInput
+    disconnect?: SupplierPortalWhereInput | boolean
+    delete?: SupplierPortalWhereInput | boolean
+    connect?: SupplierPortalWhereUniqueInput
+    update?: XOR<XOR<SupplierPortalUpdateToOneWithWhereWithoutProgrammeInput, SupplierPortalUpdateWithoutProgrammeInput>, SupplierPortalUncheckedUpdateWithoutProgrammeInput>
+  }
+
+  export type OpportunityUpdateManyWithoutProgrammeNestedInput = {
+    create?: XOR<OpportunityCreateWithoutProgrammeInput, OpportunityUncheckedCreateWithoutProgrammeInput> | OpportunityCreateWithoutProgrammeInput[] | OpportunityUncheckedCreateWithoutProgrammeInput[]
+    connectOrCreate?: OpportunityCreateOrConnectWithoutProgrammeInput | OpportunityCreateOrConnectWithoutProgrammeInput[]
+    upsert?: OpportunityUpsertWithWhereUniqueWithoutProgrammeInput | OpportunityUpsertWithWhereUniqueWithoutProgrammeInput[]
+    createMany?: OpportunityCreateManyProgrammeInputEnvelope
+    set?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+    disconnect?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+    delete?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+    connect?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+    update?: OpportunityUpdateWithWhereUniqueWithoutProgrammeInput | OpportunityUpdateWithWhereUniqueWithoutProgrammeInput[]
+    updateMany?: OpportunityUpdateManyWithWhereWithoutProgrammeInput | OpportunityUpdateManyWithWhereWithoutProgrammeInput[]
+    deleteMany?: OpportunityScalarWhereInput | OpportunityScalarWhereInput[]
+  }
+
+  export type OpportunityUncheckedUpdateManyWithoutProgrammeNestedInput = {
+    create?: XOR<OpportunityCreateWithoutProgrammeInput, OpportunityUncheckedCreateWithoutProgrammeInput> | OpportunityCreateWithoutProgrammeInput[] | OpportunityUncheckedCreateWithoutProgrammeInput[]
+    connectOrCreate?: OpportunityCreateOrConnectWithoutProgrammeInput | OpportunityCreateOrConnectWithoutProgrammeInput[]
+    upsert?: OpportunityUpsertWithWhereUniqueWithoutProgrammeInput | OpportunityUpsertWithWhereUniqueWithoutProgrammeInput[]
+    createMany?: OpportunityCreateManyProgrammeInputEnvelope
+    set?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+    disconnect?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+    delete?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+    connect?: OpportunityWhereUniqueInput | OpportunityWhereUniqueInput[]
+    update?: OpportunityUpdateWithWhereUniqueWithoutProgrammeInput | OpportunityUpdateWithWhereUniqueWithoutProgrammeInput[]
+    updateMany?: OpportunityUpdateManyWithWhereWithoutProgrammeInput | OpportunityUpdateManyWithWhereWithoutProgrammeInput[]
+    deleteMany?: OpportunityScalarWhereInput | OpportunityScalarWhereInput[]
+  }
+
+  export type BidAssessmentCreatedisqualifiersInput = {
+    set: string[]
+  }
+
+  export type OpportunityCreateNestedOneWithoutAssessmentInput = {
+    create?: XOR<OpportunityCreateWithoutAssessmentInput, OpportunityUncheckedCreateWithoutAssessmentInput>
+    connectOrCreate?: OpportunityCreateOrConnectWithoutAssessmentInput
+    connect?: OpportunityWhereUniqueInput
+  }
+
+  export type BidAssessmentUpdatedisqualifiersInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type OpportunityUpdateOneRequiredWithoutAssessmentNestedInput = {
+    create?: XOR<OpportunityCreateWithoutAssessmentInput, OpportunityUncheckedCreateWithoutAssessmentInput>
+    connectOrCreate?: OpportunityCreateOrConnectWithoutAssessmentInput
+    upsert?: OpportunityUpsertWithoutAssessmentInput
+    connect?: OpportunityWhereUniqueInput
+    update?: XOR<XOR<OpportunityUpdateToOneWithWhereWithoutAssessmentInput, OpportunityUpdateWithoutAssessmentInput>, OpportunityUncheckedUpdateWithoutAssessmentInput>
   }
 
   export type NestedUuidNullableFilter<$PrismaModel = never> = {
@@ -184159,6 +191596,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     Contact?: ContactCreateNestedManyWithoutOrganisationInput
     Opportunity?: OpportunityCreateNestedManyWithoutBuyerInput
+    SupplierPortal?: SupplierPortalCreateNestedManyWithoutOrganisationInput
+    Programme?: PartnershipProgrammeCreateNestedManyWithoutOrganisationInput
   }
 
   export type OrganisationUncheckedCreateWithoutClientCompanyInput = {
@@ -184175,6 +191614,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     Contact?: ContactUncheckedCreateNestedManyWithoutOrganisationInput
     Opportunity?: OpportunityUncheckedCreateNestedManyWithoutBuyerInput
+    SupplierPortal?: SupplierPortalUncheckedCreateNestedManyWithoutOrganisationInput
+    Programme?: PartnershipProgrammeUncheckedCreateNestedManyWithoutOrganisationInput
   }
 
   export type OrganisationCreateOrConnectWithoutClientCompanyInput = {
@@ -184983,6 +192424,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ClientCompany?: ClientCompanyCreateNestedOneWithoutOrganisationInput
     Opportunity?: OpportunityCreateNestedManyWithoutBuyerInput
+    SupplierPortal?: SupplierPortalCreateNestedManyWithoutOrganisationInput
+    Programme?: PartnershipProgrammeCreateNestedManyWithoutOrganisationInput
   }
 
   export type OrganisationUncheckedCreateWithoutContactInput = {
@@ -184999,6 +192442,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Opportunity?: OpportunityUncheckedCreateNestedManyWithoutBuyerInput
+    SupplierPortal?: SupplierPortalUncheckedCreateNestedManyWithoutOrganisationInput
+    Programme?: PartnershipProgrammeUncheckedCreateNestedManyWithoutOrganisationInput
   }
 
   export type OrganisationCreateOrConnectWithoutContactInput = {
@@ -185080,6 +192525,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ClientCompany?: ClientCompanyUpdateOneWithoutOrganisationNestedInput
     Opportunity?: OpportunityUpdateManyWithoutBuyerNestedInput
+    SupplierPortal?: SupplierPortalUpdateManyWithoutOrganisationNestedInput
+    Programme?: PartnershipProgrammeUpdateManyWithoutOrganisationNestedInput
   }
 
   export type OrganisationUncheckedUpdateWithoutContactInput = {
@@ -185096,6 +192543,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Opportunity?: OpportunityUncheckedUpdateManyWithoutBuyerNestedInput
+    SupplierPortal?: SupplierPortalUncheckedUpdateManyWithoutOrganisationNestedInput
+    Programme?: PartnershipProgrammeUncheckedUpdateManyWithoutOrganisationNestedInput
   }
 
   export type CmsPageCreateWithoutContentBlockInput = {
@@ -185289,6 +192738,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
     Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
     Package?: PackageCreateNestedManyWithoutOpportunityInput
@@ -185316,9 +192767,11 @@ export namespace Prisma {
     cpv?: OpportunityCreatecpvInput | string[]
     confirmedBuying?: boolean
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
@@ -185401,6 +192854,7 @@ export namespace Prisma {
     confirmedBuying?: BoolFilter<"Opportunity"> | boolean
     leadId?: StringNullableFilter<"Opportunity"> | string | null
     paperclipIssueId?: StringNullableFilter<"Opportunity"> | string | null
+    programmeId?: StringNullableFilter<"Opportunity"> | string | null
     createdById?: StringNullableFilter<"Opportunity"> | string | null
     createdAt?: DateTimeFilter<"Opportunity"> | Date | string
     updatedAt?: DateTimeFilter<"Opportunity"> | Date | string
@@ -192871,6 +200325,8 @@ export namespace Prisma {
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
     Lead?: LeadCreateNestedOneWithoutOpportunityInput
     Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
@@ -192899,9 +200355,11 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
@@ -192916,6 +200374,106 @@ export namespace Prisma {
 
   export type OpportunityCreateManyBuyerInputEnvelope = {
     data: OpportunityCreateManyBuyerInput | OpportunityCreateManyBuyerInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type SupplierPortalCreateWithoutOrganisationInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Account?: SupplierAccountCreateNestedManyWithoutPortalInput
+    Programme?: PartnershipProgrammeCreateNestedManyWithoutPortalInput
+  }
+
+  export type SupplierPortalUncheckedCreateWithoutOrganisationInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Account?: SupplierAccountUncheckedCreateNestedManyWithoutPortalInput
+    Programme?: PartnershipProgrammeUncheckedCreateNestedManyWithoutPortalInput
+  }
+
+  export type SupplierPortalCreateOrConnectWithoutOrganisationInput = {
+    where: SupplierPortalWhereUniqueInput
+    create: XOR<SupplierPortalCreateWithoutOrganisationInput, SupplierPortalUncheckedCreateWithoutOrganisationInput>
+  }
+
+  export type SupplierPortalCreateManyOrganisationInputEnvelope = {
+    data: SupplierPortalCreateManyOrganisationInput | SupplierPortalCreateManyOrganisationInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PartnershipProgrammeCreateWithoutOrganisationInput = {
+    id: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Portal?: SupplierPortalCreateNestedOneWithoutProgrammeInput
+    Opportunity?: OpportunityCreateNestedManyWithoutProgrammeInput
+  }
+
+  export type PartnershipProgrammeUncheckedCreateWithoutOrganisationInput = {
+    id: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    portalId?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Opportunity?: OpportunityUncheckedCreateNestedManyWithoutProgrammeInput
+  }
+
+  export type PartnershipProgrammeCreateOrConnectWithoutOrganisationInput = {
+    where: PartnershipProgrammeWhereUniqueInput
+    create: XOR<PartnershipProgrammeCreateWithoutOrganisationInput, PartnershipProgrammeUncheckedCreateWithoutOrganisationInput>
+  }
+
+  export type PartnershipProgrammeCreateManyOrganisationInputEnvelope = {
+    data: PartnershipProgrammeCreateManyOrganisationInput | PartnershipProgrammeCreateManyOrganisationInput[]
     skipDuplicates?: boolean
   }
 
@@ -192998,6 +200556,83 @@ export namespace Prisma {
   export type OpportunityUpdateManyWithWhereWithoutBuyerInput = {
     where: OpportunityScalarWhereInput
     data: XOR<OpportunityUpdateManyMutationInput, OpportunityUncheckedUpdateManyWithoutBuyerInput>
+  }
+
+  export type SupplierPortalUpsertWithWhereUniqueWithoutOrganisationInput = {
+    where: SupplierPortalWhereUniqueInput
+    update: XOR<SupplierPortalUpdateWithoutOrganisationInput, SupplierPortalUncheckedUpdateWithoutOrganisationInput>
+    create: XOR<SupplierPortalCreateWithoutOrganisationInput, SupplierPortalUncheckedCreateWithoutOrganisationInput>
+  }
+
+  export type SupplierPortalUpdateWithWhereUniqueWithoutOrganisationInput = {
+    where: SupplierPortalWhereUniqueInput
+    data: XOR<SupplierPortalUpdateWithoutOrganisationInput, SupplierPortalUncheckedUpdateWithoutOrganisationInput>
+  }
+
+  export type SupplierPortalUpdateManyWithWhereWithoutOrganisationInput = {
+    where: SupplierPortalScalarWhereInput
+    data: XOR<SupplierPortalUpdateManyMutationInput, SupplierPortalUncheckedUpdateManyWithoutOrganisationInput>
+  }
+
+  export type SupplierPortalScalarWhereInput = {
+    AND?: SupplierPortalScalarWhereInput | SupplierPortalScalarWhereInput[]
+    OR?: SupplierPortalScalarWhereInput[]
+    NOT?: SupplierPortalScalarWhereInput | SupplierPortalScalarWhereInput[]
+    id?: StringFilter<"SupplierPortal"> | string
+    name?: StringFilter<"SupplierPortal"> | string
+    kind?: StringFilter<"SupplierPortal"> | string
+    url?: StringFilter<"SupplierPortal"> | string
+    registrationUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    termsUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    organisationId?: StringNullableFilter<"SupplierPortal"> | string | null
+    cost?: StringFilter<"SupplierPortal"> | string
+    automationPermitted?: BoolFilter<"SupplierPortal"> | boolean
+    standingPolicy?: BoolFilter<"SupplierPortal"> | boolean
+    standingPolicyById?: StringNullableFilter<"SupplierPortal"> | string | null
+    standingPolicyAt?: DateTimeNullableFilter<"SupplierPortal"> | Date | string | null
+    requiredFacts?: StringNullableListFilter<"SupplierPortal">
+    requiredDocuments?: StringNullableListFilter<"SupplierPortal">
+    notes?: StringNullableFilter<"SupplierPortal"> | string | null
+    sourceUrl?: StringNullableFilter<"SupplierPortal"> | string | null
+    createdAt?: DateTimeFilter<"SupplierPortal"> | Date | string
+    updatedAt?: DateTimeFilter<"SupplierPortal"> | Date | string
+  }
+
+  export type PartnershipProgrammeUpsertWithWhereUniqueWithoutOrganisationInput = {
+    where: PartnershipProgrammeWhereUniqueInput
+    update: XOR<PartnershipProgrammeUpdateWithoutOrganisationInput, PartnershipProgrammeUncheckedUpdateWithoutOrganisationInput>
+    create: XOR<PartnershipProgrammeCreateWithoutOrganisationInput, PartnershipProgrammeUncheckedCreateWithoutOrganisationInput>
+  }
+
+  export type PartnershipProgrammeUpdateWithWhereUniqueWithoutOrganisationInput = {
+    where: PartnershipProgrammeWhereUniqueInput
+    data: XOR<PartnershipProgrammeUpdateWithoutOrganisationInput, PartnershipProgrammeUncheckedUpdateWithoutOrganisationInput>
+  }
+
+  export type PartnershipProgrammeUpdateManyWithWhereWithoutOrganisationInput = {
+    where: PartnershipProgrammeScalarWhereInput
+    data: XOR<PartnershipProgrammeUpdateManyMutationInput, PartnershipProgrammeUncheckedUpdateManyWithoutOrganisationInput>
+  }
+
+  export type PartnershipProgrammeScalarWhereInput = {
+    AND?: PartnershipProgrammeScalarWhereInput | PartnershipProgrammeScalarWhereInput[]
+    OR?: PartnershipProgrammeScalarWhereInput[]
+    NOT?: PartnershipProgrammeScalarWhereInput | PartnershipProgrammeScalarWhereInput[]
+    id?: StringFilter<"PartnershipProgramme"> | string
+    organisationId?: StringFilter<"PartnershipProgramme"> | string
+    name?: StringFilter<"PartnershipProgramme"> | string
+    categories?: StringNullableListFilter<"PartnershipProgramme">
+    url?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    portalId?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    verified?: BoolFilter<"PartnershipProgramme"> | boolean
+    verifiedAt?: DateTimeNullableFilter<"PartnershipProgramme"> | Date | string | null
+    sourceUrl?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    availability?: StringFilter<"PartnershipProgramme"> | string
+    fees?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    requirements?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    notes?: StringNullableFilter<"PartnershipProgramme"> | string | null
+    createdAt?: DateTimeFilter<"PartnershipProgramme"> | Date | string
+    updatedAt?: DateTimeFilter<"PartnershipProgramme"> | Date | string
   }
 
   export type IngestionRunCreateWithoutSourceInput = {
@@ -193093,6 +200728,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Lead?: LeadCreateNestedOneWithoutOpportunityInput
     Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
     Package?: PackageCreateNestedManyWithoutOpportunityInput
@@ -193120,9 +200757,11 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
@@ -193517,6 +201156,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     ClientCompany?: ClientCompanyCreateNestedOneWithoutOrganisationInput
     Contact?: ContactCreateNestedManyWithoutOrganisationInput
+    SupplierPortal?: SupplierPortalCreateNestedManyWithoutOrganisationInput
+    Programme?: PartnershipProgrammeCreateNestedManyWithoutOrganisationInput
   }
 
   export type OrganisationUncheckedCreateWithoutOpportunityInput = {
@@ -193533,11 +201174,90 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Contact?: ContactUncheckedCreateNestedManyWithoutOrganisationInput
+    SupplierPortal?: SupplierPortalUncheckedCreateNestedManyWithoutOrganisationInput
+    Programme?: PartnershipProgrammeUncheckedCreateNestedManyWithoutOrganisationInput
   }
 
   export type OrganisationCreateOrConnectWithoutOpportunityInput = {
     where: OrganisationWhereUniqueInput
     create: XOR<OrganisationCreateWithoutOpportunityInput, OrganisationUncheckedCreateWithoutOpportunityInput>
+  }
+
+  export type PartnershipProgrammeCreateWithoutOpportunityInput = {
+    id: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Organisation: OrganisationCreateNestedOneWithoutProgrammeInput
+    Portal?: SupplierPortalCreateNestedOneWithoutProgrammeInput
+  }
+
+  export type PartnershipProgrammeUncheckedCreateWithoutOpportunityInput = {
+    id: string
+    organisationId: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    portalId?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PartnershipProgrammeCreateOrConnectWithoutOpportunityInput = {
+    where: PartnershipProgrammeWhereUniqueInput
+    create: XOR<PartnershipProgrammeCreateWithoutOpportunityInput, PartnershipProgrammeUncheckedCreateWithoutOpportunityInput>
+  }
+
+  export type BidAssessmentCreateWithoutOpportunityInput = {
+    id: string
+    model: string
+    weights: JsonNullValueInput | InputJsonValue
+    scores: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentCreatedisqualifiersInput | string[]
+    assumptions?: string | null
+    total: Decimal | DecimalJsLike | number | string
+    recommendation: string
+    authorId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BidAssessmentUncheckedCreateWithoutOpportunityInput = {
+    id: string
+    model: string
+    weights: JsonNullValueInput | InputJsonValue
+    scores: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentCreatedisqualifiersInput | string[]
+    assumptions?: string | null
+    total: Decimal | DecimalJsLike | number | string
+    recommendation: string
+    authorId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BidAssessmentCreateOrConnectWithoutOpportunityInput = {
+    where: BidAssessmentWhereUniqueInput
+    create: XOR<BidAssessmentCreateWithoutOpportunityInput, BidAssessmentUncheckedCreateWithoutOpportunityInput>
+  }
+
+  export type BidAssessmentCreateManyOpportunityInputEnvelope = {
+    data: BidAssessmentCreateManyOpportunityInput | BidAssessmentCreateManyOpportunityInput[]
+    skipDuplicates?: boolean
   }
 
   export type OpportunitySourceCreateWithoutOpportunityInput = {
@@ -193837,6 +201557,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ClientCompany?: ClientCompanyUpdateOneWithoutOrganisationNestedInput
     Contact?: ContactUpdateManyWithoutOrganisationNestedInput
+    SupplierPortal?: SupplierPortalUpdateManyWithoutOrganisationNestedInput
+    Programme?: PartnershipProgrammeUpdateManyWithoutOrganisationNestedInput
   }
 
   export type OrganisationUncheckedUpdateWithoutOpportunityInput = {
@@ -193853,6 +201575,88 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Contact?: ContactUncheckedUpdateManyWithoutOrganisationNestedInput
+    SupplierPortal?: SupplierPortalUncheckedUpdateManyWithoutOrganisationNestedInput
+    Programme?: PartnershipProgrammeUncheckedUpdateManyWithoutOrganisationNestedInput
+  }
+
+  export type PartnershipProgrammeUpsertWithoutOpportunityInput = {
+    update: XOR<PartnershipProgrammeUpdateWithoutOpportunityInput, PartnershipProgrammeUncheckedUpdateWithoutOpportunityInput>
+    create: XOR<PartnershipProgrammeCreateWithoutOpportunityInput, PartnershipProgrammeUncheckedCreateWithoutOpportunityInput>
+    where?: PartnershipProgrammeWhereInput
+  }
+
+  export type PartnershipProgrammeUpdateToOneWithWhereWithoutOpportunityInput = {
+    where?: PartnershipProgrammeWhereInput
+    data: XOR<PartnershipProgrammeUpdateWithoutOpportunityInput, PartnershipProgrammeUncheckedUpdateWithoutOpportunityInput>
+  }
+
+  export type PartnershipProgrammeUpdateWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Organisation?: OrganisationUpdateOneRequiredWithoutProgrammeNestedInput
+    Portal?: SupplierPortalUpdateOneWithoutProgrammeNestedInput
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organisationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    portalId?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BidAssessmentUpsertWithWhereUniqueWithoutOpportunityInput = {
+    where: BidAssessmentWhereUniqueInput
+    update: XOR<BidAssessmentUpdateWithoutOpportunityInput, BidAssessmentUncheckedUpdateWithoutOpportunityInput>
+    create: XOR<BidAssessmentCreateWithoutOpportunityInput, BidAssessmentUncheckedCreateWithoutOpportunityInput>
+  }
+
+  export type BidAssessmentUpdateWithWhereUniqueWithoutOpportunityInput = {
+    where: BidAssessmentWhereUniqueInput
+    data: XOR<BidAssessmentUpdateWithoutOpportunityInput, BidAssessmentUncheckedUpdateWithoutOpportunityInput>
+  }
+
+  export type BidAssessmentUpdateManyWithWhereWithoutOpportunityInput = {
+    where: BidAssessmentScalarWhereInput
+    data: XOR<BidAssessmentUpdateManyMutationInput, BidAssessmentUncheckedUpdateManyWithoutOpportunityInput>
+  }
+
+  export type BidAssessmentScalarWhereInput = {
+    AND?: BidAssessmentScalarWhereInput | BidAssessmentScalarWhereInput[]
+    OR?: BidAssessmentScalarWhereInput[]
+    NOT?: BidAssessmentScalarWhereInput | BidAssessmentScalarWhereInput[]
+    id?: StringFilter<"BidAssessment"> | string
+    opportunityId?: StringFilter<"BidAssessment"> | string
+    model?: StringFilter<"BidAssessment"> | string
+    weights?: JsonFilter<"BidAssessment">
+    scores?: JsonFilter<"BidAssessment">
+    disqualifiers?: StringNullableListFilter<"BidAssessment">
+    assumptions?: StringNullableFilter<"BidAssessment"> | string | null
+    total?: DecimalFilter<"BidAssessment"> | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFilter<"BidAssessment"> | string
+    authorId?: StringNullableFilter<"BidAssessment"> | string | null
+    createdAt?: DateTimeFilter<"BidAssessment"> | Date | string
   }
 
   export type OpportunitySourceUpsertWithoutOpportunityInput = {
@@ -194139,6 +201943,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
     Lead?: LeadCreateNestedOneWithoutOpportunityInput
     Package?: PackageCreateNestedManyWithoutOpportunityInput
@@ -194167,9 +201973,11 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
@@ -194213,6 +202021,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
     Lead?: LeadUpdateOneWithoutOpportunityNestedInput
     Package?: PackageUpdateManyWithoutOpportunityNestedInput
@@ -194241,9 +202051,11 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
@@ -194674,6 +202486,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
     Lead?: LeadCreateNestedOneWithoutOpportunityInput
     Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
@@ -194702,9 +202516,11 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
@@ -194814,6 +202630,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
     Lead?: LeadUpdateOneWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
@@ -194842,9 +202660,11 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
@@ -195072,6 +202892,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
     Lead?: LeadCreateNestedOneWithoutOpportunityInput
     Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
@@ -195100,9 +202922,11 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
@@ -195159,6 +202983,7 @@ export namespace Prisma {
     expiresAt: Date | string
     createdAt?: Date | string
     ExecutionRecord?: ExecutionRecordCreateNestedOneWithoutDecisionInput
+    SupplierAccount?: SupplierAccountCreateNestedManyWithoutDecisionInput
   }
 
   export type ApprovalDecisionUncheckedCreateWithoutRequestInput = {
@@ -195171,6 +202996,7 @@ export namespace Prisma {
     expiresAt: Date | string
     createdAt?: Date | string
     ExecutionRecord?: ExecutionRecordUncheckedCreateNestedOneWithoutDecisionInput
+    SupplierAccount?: SupplierAccountUncheckedCreateNestedManyWithoutDecisionInput
   }
 
   export type ApprovalDecisionCreateOrConnectWithoutRequestInput = {
@@ -195210,6 +203036,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
     Lead?: LeadUpdateOneWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
@@ -195238,9 +203066,11 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
@@ -195309,6 +203139,7 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ExecutionRecord?: ExecutionRecordUpdateOneWithoutDecisionNestedInput
+    SupplierAccount?: SupplierAccountUpdateManyWithoutDecisionNestedInput
   }
 
   export type ApprovalDecisionUncheckedUpdateWithoutRequestInput = {
@@ -195321,6 +203152,7 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ExecutionRecord?: ExecutionRecordUncheckedUpdateOneWithoutDecisionNestedInput
+    SupplierAccount?: SupplierAccountUncheckedUpdateManyWithoutDecisionNestedInput
   }
 
   export type ApprovalRequestCreateWithoutDecisionInput = {
@@ -195389,6 +203221,56 @@ export namespace Prisma {
   export type ExecutionRecordCreateOrConnectWithoutDecisionInput = {
     where: ExecutionRecordWhereUniqueInput
     create: XOR<ExecutionRecordCreateWithoutDecisionInput, ExecutionRecordUncheckedCreateWithoutDecisionInput>
+  }
+
+  export type SupplierAccountCreateWithoutDecisionInput = {
+    id: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Portal: SupplierPortalCreateNestedOneWithoutAccountInput
+  }
+
+  export type SupplierAccountUncheckedCreateWithoutDecisionInput = {
+    id: string
+    portalId: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SupplierAccountCreateOrConnectWithoutDecisionInput = {
+    where: SupplierAccountWhereUniqueInput
+    create: XOR<SupplierAccountCreateWithoutDecisionInput, SupplierAccountUncheckedCreateWithoutDecisionInput>
+  }
+
+  export type SupplierAccountCreateManyDecisionInputEnvelope = {
+    data: SupplierAccountCreateManyDecisionInput | SupplierAccountCreateManyDecisionInput[]
+    skipDuplicates?: boolean
   }
 
   export type ApprovalRequestUpsertWithoutDecisionInput = {
@@ -195471,6 +203353,46 @@ export namespace Prisma {
     Receipt?: ReceiptUncheckedUpdateManyWithoutExecutionNestedInput
   }
 
+  export type SupplierAccountUpsertWithWhereUniqueWithoutDecisionInput = {
+    where: SupplierAccountWhereUniqueInput
+    update: XOR<SupplierAccountUpdateWithoutDecisionInput, SupplierAccountUncheckedUpdateWithoutDecisionInput>
+    create: XOR<SupplierAccountCreateWithoutDecisionInput, SupplierAccountUncheckedCreateWithoutDecisionInput>
+  }
+
+  export type SupplierAccountUpdateWithWhereUniqueWithoutDecisionInput = {
+    where: SupplierAccountWhereUniqueInput
+    data: XOR<SupplierAccountUpdateWithoutDecisionInput, SupplierAccountUncheckedUpdateWithoutDecisionInput>
+  }
+
+  export type SupplierAccountUpdateManyWithWhereWithoutDecisionInput = {
+    where: SupplierAccountScalarWhereInput
+    data: XOR<SupplierAccountUpdateManyMutationInput, SupplierAccountUncheckedUpdateManyWithoutDecisionInput>
+  }
+
+  export type SupplierAccountScalarWhereInput = {
+    AND?: SupplierAccountScalarWhereInput | SupplierAccountScalarWhereInput[]
+    OR?: SupplierAccountScalarWhereInput[]
+    NOT?: SupplierAccountScalarWhereInput | SupplierAccountScalarWhereInput[]
+    id?: StringFilter<"SupplierAccount"> | string
+    portalId?: StringFilter<"SupplierAccount"> | string
+    status?: StringFilter<"SupplierAccount"> | string
+    accountRef?: StringNullableFilter<"SupplierAccount"> | string | null
+    registeredAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    verificationStatus?: StringNullableFilter<"SupplierAccount"> | string | null
+    contactAlias?: StringNullableFilter<"SupplierAccount"> | string | null
+    credentialLabel?: StringNullableFilter<"SupplierAccount"> | string | null
+    mfaRequired?: BoolNullableFilter<"SupplierAccount"> | boolean | null
+    termsVersion?: StringNullableFilter<"SupplierAccount"> | string | null
+    renewalAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    restrictions?: StringNullableFilter<"SupplierAccount"> | string | null
+    lastAccessAt?: DateTimeNullableFilter<"SupplierAccount"> | Date | string | null
+    approvalDecisionId?: StringNullableFilter<"SupplierAccount"> | string | null
+    ownerUserId?: StringNullableFilter<"SupplierAccount"> | string | null
+    notes?: StringNullableFilter<"SupplierAccount"> | string | null
+    createdAt?: DateTimeFilter<"SupplierAccount"> | Date | string
+    updatedAt?: DateTimeFilter<"SupplierAccount"> | Date | string
+  }
+
   export type ApprovalDecisionCreateWithoutExecutionRecordInput = {
     id: string
     decision: string
@@ -195481,6 +203403,7 @@ export namespace Prisma {
     expiresAt: Date | string
     createdAt?: Date | string
     Request: ApprovalRequestCreateNestedOneWithoutDecisionInput
+    SupplierAccount?: SupplierAccountCreateNestedManyWithoutDecisionInput
   }
 
   export type ApprovalDecisionUncheckedCreateWithoutExecutionRecordInput = {
@@ -195493,6 +203416,7 @@ export namespace Prisma {
     stepUpAt: Date | string
     expiresAt: Date | string
     createdAt?: Date | string
+    SupplierAccount?: SupplierAccountUncheckedCreateNestedManyWithoutDecisionInput
   }
 
   export type ApprovalDecisionCreateOrConnectWithoutExecutionRecordInput = {
@@ -195521,6 +203445,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
     Lead?: LeadCreateNestedOneWithoutOpportunityInput
     Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
@@ -195549,9 +203475,11 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
@@ -195612,6 +203540,7 @@ export namespace Prisma {
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Request?: ApprovalRequestUpdateOneRequiredWithoutDecisionNestedInput
+    SupplierAccount?: SupplierAccountUpdateManyWithoutDecisionNestedInput
   }
 
   export type ApprovalDecisionUncheckedUpdateWithoutExecutionRecordInput = {
@@ -195624,6 +203553,7 @@ export namespace Prisma {
     stepUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
     expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    SupplierAccount?: SupplierAccountUncheckedUpdateManyWithoutDecisionNestedInput
   }
 
   export type OpportunityUpsertWithoutExecutionRecordInput = {
@@ -195658,6 +203588,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
     Lead?: LeadUpdateOneWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
@@ -195686,9 +203618,11 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
@@ -195896,6 +203830,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
     Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
     Lead?: LeadCreateNestedOneWithoutOpportunityInput
     Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
@@ -195924,9 +203860,11 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
     Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
     Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
     ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
@@ -195970,6 +203908,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
     Lead?: LeadUpdateOneWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
@@ -195998,6 +203938,815 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
+    Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
+    Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
+    ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
+    ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type OrganisationCreateWithoutSupplierPortalInput = {
+    id: string
+    name: string
+    website?: string | null
+    categories?: OrganisationCreatecategoriesInput | string[]
+    priority?: number
+    isResearchTarget?: boolean
+    notes?: string | null
+    sourceUrl?: string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ClientCompany?: ClientCompanyCreateNestedOneWithoutOrganisationInput
+    Contact?: ContactCreateNestedManyWithoutOrganisationInput
+    Opportunity?: OpportunityCreateNestedManyWithoutBuyerInput
+    Programme?: PartnershipProgrammeCreateNestedManyWithoutOrganisationInput
+  }
+
+  export type OrganisationUncheckedCreateWithoutSupplierPortalInput = {
+    id: string
+    name: string
+    website?: string | null
+    categories?: OrganisationCreatecategoriesInput | string[]
+    priority?: number
+    isResearchTarget?: boolean
+    clientCompanyId?: string | null
+    notes?: string | null
+    sourceUrl?: string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Contact?: ContactUncheckedCreateNestedManyWithoutOrganisationInput
+    Opportunity?: OpportunityUncheckedCreateNestedManyWithoutBuyerInput
+    Programme?: PartnershipProgrammeUncheckedCreateNestedManyWithoutOrganisationInput
+  }
+
+  export type OrganisationCreateOrConnectWithoutSupplierPortalInput = {
+    where: OrganisationWhereUniqueInput
+    create: XOR<OrganisationCreateWithoutSupplierPortalInput, OrganisationUncheckedCreateWithoutSupplierPortalInput>
+  }
+
+  export type SupplierAccountCreateWithoutPortalInput = {
+    id: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Decision?: ApprovalDecisionCreateNestedOneWithoutSupplierAccountInput
+  }
+
+  export type SupplierAccountUncheckedCreateWithoutPortalInput = {
+    id: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    approvalDecisionId?: string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SupplierAccountCreateOrConnectWithoutPortalInput = {
+    where: SupplierAccountWhereUniqueInput
+    create: XOR<SupplierAccountCreateWithoutPortalInput, SupplierAccountUncheckedCreateWithoutPortalInput>
+  }
+
+  export type SupplierAccountCreateManyPortalInputEnvelope = {
+    data: SupplierAccountCreateManyPortalInput | SupplierAccountCreateManyPortalInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PartnershipProgrammeCreateWithoutPortalInput = {
+    id: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Organisation: OrganisationCreateNestedOneWithoutProgrammeInput
+    Opportunity?: OpportunityCreateNestedManyWithoutProgrammeInput
+  }
+
+  export type PartnershipProgrammeUncheckedCreateWithoutPortalInput = {
+    id: string
+    organisationId: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Opportunity?: OpportunityUncheckedCreateNestedManyWithoutProgrammeInput
+  }
+
+  export type PartnershipProgrammeCreateOrConnectWithoutPortalInput = {
+    where: PartnershipProgrammeWhereUniqueInput
+    create: XOR<PartnershipProgrammeCreateWithoutPortalInput, PartnershipProgrammeUncheckedCreateWithoutPortalInput>
+  }
+
+  export type PartnershipProgrammeCreateManyPortalInputEnvelope = {
+    data: PartnershipProgrammeCreateManyPortalInput | PartnershipProgrammeCreateManyPortalInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganisationUpsertWithoutSupplierPortalInput = {
+    update: XOR<OrganisationUpdateWithoutSupplierPortalInput, OrganisationUncheckedUpdateWithoutSupplierPortalInput>
+    create: XOR<OrganisationCreateWithoutSupplierPortalInput, OrganisationUncheckedCreateWithoutSupplierPortalInput>
+    where?: OrganisationWhereInput
+  }
+
+  export type OrganisationUpdateToOneWithWhereWithoutSupplierPortalInput = {
+    where?: OrganisationWhereInput
+    data: XOR<OrganisationUpdateWithoutSupplierPortalInput, OrganisationUncheckedUpdateWithoutSupplierPortalInput>
+  }
+
+  export type OrganisationUpdateWithoutSupplierPortalInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    categories?: OrganisationUpdatecategoriesInput | string[]
+    priority?: IntFieldUpdateOperationsInput | number
+    isResearchTarget?: BoolFieldUpdateOperationsInput | boolean
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ClientCompany?: ClientCompanyUpdateOneWithoutOrganisationNestedInput
+    Contact?: ContactUpdateManyWithoutOrganisationNestedInput
+    Opportunity?: OpportunityUpdateManyWithoutBuyerNestedInput
+    Programme?: PartnershipProgrammeUpdateManyWithoutOrganisationNestedInput
+  }
+
+  export type OrganisationUncheckedUpdateWithoutSupplierPortalInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    categories?: OrganisationUpdatecategoriesInput | string[]
+    priority?: IntFieldUpdateOperationsInput | number
+    isResearchTarget?: BoolFieldUpdateOperationsInput | boolean
+    clientCompanyId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Contact?: ContactUncheckedUpdateManyWithoutOrganisationNestedInput
+    Opportunity?: OpportunityUncheckedUpdateManyWithoutBuyerNestedInput
+    Programme?: PartnershipProgrammeUncheckedUpdateManyWithoutOrganisationNestedInput
+  }
+
+  export type SupplierAccountUpsertWithWhereUniqueWithoutPortalInput = {
+    where: SupplierAccountWhereUniqueInput
+    update: XOR<SupplierAccountUpdateWithoutPortalInput, SupplierAccountUncheckedUpdateWithoutPortalInput>
+    create: XOR<SupplierAccountCreateWithoutPortalInput, SupplierAccountUncheckedCreateWithoutPortalInput>
+  }
+
+  export type SupplierAccountUpdateWithWhereUniqueWithoutPortalInput = {
+    where: SupplierAccountWhereUniqueInput
+    data: XOR<SupplierAccountUpdateWithoutPortalInput, SupplierAccountUncheckedUpdateWithoutPortalInput>
+  }
+
+  export type SupplierAccountUpdateManyWithWhereWithoutPortalInput = {
+    where: SupplierAccountScalarWhereInput
+    data: XOR<SupplierAccountUpdateManyMutationInput, SupplierAccountUncheckedUpdateManyWithoutPortalInput>
+  }
+
+  export type PartnershipProgrammeUpsertWithWhereUniqueWithoutPortalInput = {
+    where: PartnershipProgrammeWhereUniqueInput
+    update: XOR<PartnershipProgrammeUpdateWithoutPortalInput, PartnershipProgrammeUncheckedUpdateWithoutPortalInput>
+    create: XOR<PartnershipProgrammeCreateWithoutPortalInput, PartnershipProgrammeUncheckedCreateWithoutPortalInput>
+  }
+
+  export type PartnershipProgrammeUpdateWithWhereUniqueWithoutPortalInput = {
+    where: PartnershipProgrammeWhereUniqueInput
+    data: XOR<PartnershipProgrammeUpdateWithoutPortalInput, PartnershipProgrammeUncheckedUpdateWithoutPortalInput>
+  }
+
+  export type PartnershipProgrammeUpdateManyWithWhereWithoutPortalInput = {
+    where: PartnershipProgrammeScalarWhereInput
+    data: XOR<PartnershipProgrammeUpdateManyMutationInput, PartnershipProgrammeUncheckedUpdateManyWithoutPortalInput>
+  }
+
+  export type SupplierPortalCreateWithoutAccountInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Organisation?: OrganisationCreateNestedOneWithoutSupplierPortalInput
+    Programme?: PartnershipProgrammeCreateNestedManyWithoutPortalInput
+  }
+
+  export type SupplierPortalUncheckedCreateWithoutAccountInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    organisationId?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Programme?: PartnershipProgrammeUncheckedCreateNestedManyWithoutPortalInput
+  }
+
+  export type SupplierPortalCreateOrConnectWithoutAccountInput = {
+    where: SupplierPortalWhereUniqueInput
+    create: XOR<SupplierPortalCreateWithoutAccountInput, SupplierPortalUncheckedCreateWithoutAccountInput>
+  }
+
+  export type ApprovalDecisionCreateWithoutSupplierAccountInput = {
+    id: string
+    decision: string
+    manifestSha256: string
+    decidedById: string
+    note?: string | null
+    stepUpAt: Date | string
+    expiresAt: Date | string
+    createdAt?: Date | string
+    Request: ApprovalRequestCreateNestedOneWithoutDecisionInput
+    ExecutionRecord?: ExecutionRecordCreateNestedOneWithoutDecisionInput
+  }
+
+  export type ApprovalDecisionUncheckedCreateWithoutSupplierAccountInput = {
+    id: string
+    requestId: string
+    decision: string
+    manifestSha256: string
+    decidedById: string
+    note?: string | null
+    stepUpAt: Date | string
+    expiresAt: Date | string
+    createdAt?: Date | string
+    ExecutionRecord?: ExecutionRecordUncheckedCreateNestedOneWithoutDecisionInput
+  }
+
+  export type ApprovalDecisionCreateOrConnectWithoutSupplierAccountInput = {
+    where: ApprovalDecisionWhereUniqueInput
+    create: XOR<ApprovalDecisionCreateWithoutSupplierAccountInput, ApprovalDecisionUncheckedCreateWithoutSupplierAccountInput>
+  }
+
+  export type SupplierPortalUpsertWithoutAccountInput = {
+    update: XOR<SupplierPortalUpdateWithoutAccountInput, SupplierPortalUncheckedUpdateWithoutAccountInput>
+    create: XOR<SupplierPortalCreateWithoutAccountInput, SupplierPortalUncheckedCreateWithoutAccountInput>
+    where?: SupplierPortalWhereInput
+  }
+
+  export type SupplierPortalUpdateToOneWithWhereWithoutAccountInput = {
+    where?: SupplierPortalWhereInput
+    data: XOR<SupplierPortalUpdateWithoutAccountInput, SupplierPortalUncheckedUpdateWithoutAccountInput>
+  }
+
+  export type SupplierPortalUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Organisation?: OrganisationUpdateOneWithoutSupplierPortalNestedInput
+    Programme?: PartnershipProgrammeUpdateManyWithoutPortalNestedInput
+  }
+
+  export type SupplierPortalUncheckedUpdateWithoutAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Programme?: PartnershipProgrammeUncheckedUpdateManyWithoutPortalNestedInput
+  }
+
+  export type ApprovalDecisionUpsertWithoutSupplierAccountInput = {
+    update: XOR<ApprovalDecisionUpdateWithoutSupplierAccountInput, ApprovalDecisionUncheckedUpdateWithoutSupplierAccountInput>
+    create: XOR<ApprovalDecisionCreateWithoutSupplierAccountInput, ApprovalDecisionUncheckedCreateWithoutSupplierAccountInput>
+    where?: ApprovalDecisionWhereInput
+  }
+
+  export type ApprovalDecisionUpdateToOneWithWhereWithoutSupplierAccountInput = {
+    where?: ApprovalDecisionWhereInput
+    data: XOR<ApprovalDecisionUpdateWithoutSupplierAccountInput, ApprovalDecisionUncheckedUpdateWithoutSupplierAccountInput>
+  }
+
+  export type ApprovalDecisionUpdateWithoutSupplierAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    decision?: StringFieldUpdateOperationsInput | string
+    manifestSha256?: StringFieldUpdateOperationsInput | string
+    decidedById?: StringFieldUpdateOperationsInput | string
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    stepUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Request?: ApprovalRequestUpdateOneRequiredWithoutDecisionNestedInput
+    ExecutionRecord?: ExecutionRecordUpdateOneWithoutDecisionNestedInput
+  }
+
+  export type ApprovalDecisionUncheckedUpdateWithoutSupplierAccountInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requestId?: StringFieldUpdateOperationsInput | string
+    decision?: StringFieldUpdateOperationsInput | string
+    manifestSha256?: StringFieldUpdateOperationsInput | string
+    decidedById?: StringFieldUpdateOperationsInput | string
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    stepUpAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiresAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ExecutionRecord?: ExecutionRecordUncheckedUpdateOneWithoutDecisionNestedInput
+  }
+
+  export type OrganisationCreateWithoutProgrammeInput = {
+    id: string
+    name: string
+    website?: string | null
+    categories?: OrganisationCreatecategoriesInput | string[]
+    priority?: number
+    isResearchTarget?: boolean
+    notes?: string | null
+    sourceUrl?: string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ClientCompany?: ClientCompanyCreateNestedOneWithoutOrganisationInput
+    Contact?: ContactCreateNestedManyWithoutOrganisationInput
+    Opportunity?: OpportunityCreateNestedManyWithoutBuyerInput
+    SupplierPortal?: SupplierPortalCreateNestedManyWithoutOrganisationInput
+  }
+
+  export type OrganisationUncheckedCreateWithoutProgrammeInput = {
+    id: string
+    name: string
+    website?: string | null
+    categories?: OrganisationCreatecategoriesInput | string[]
+    priority?: number
+    isResearchTarget?: boolean
+    clientCompanyId?: string | null
+    notes?: string | null
+    sourceUrl?: string | null
+    verifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Contact?: ContactUncheckedCreateNestedManyWithoutOrganisationInput
+    Opportunity?: OpportunityUncheckedCreateNestedManyWithoutBuyerInput
+    SupplierPortal?: SupplierPortalUncheckedCreateNestedManyWithoutOrganisationInput
+  }
+
+  export type OrganisationCreateOrConnectWithoutProgrammeInput = {
+    where: OrganisationWhereUniqueInput
+    create: XOR<OrganisationCreateWithoutProgrammeInput, OrganisationUncheckedCreateWithoutProgrammeInput>
+  }
+
+  export type SupplierPortalCreateWithoutProgrammeInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Organisation?: OrganisationCreateNestedOneWithoutSupplierPortalInput
+    Account?: SupplierAccountCreateNestedManyWithoutPortalInput
+  }
+
+  export type SupplierPortalUncheckedCreateWithoutProgrammeInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    organisationId?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Account?: SupplierAccountUncheckedCreateNestedManyWithoutPortalInput
+  }
+
+  export type SupplierPortalCreateOrConnectWithoutProgrammeInput = {
+    where: SupplierPortalWhereUniqueInput
+    create: XOR<SupplierPortalCreateWithoutProgrammeInput, SupplierPortalUncheckedCreateWithoutProgrammeInput>
+  }
+
+  export type OpportunityCreateWithoutProgrammeInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    paperclipIssueId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Assessment?: BidAssessmentCreateNestedManyWithoutOpportunityInput
+    Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
+    Lead?: LeadCreateNestedOneWithoutOpportunityInput
+    Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
+    Package?: PackageCreateNestedManyWithoutOpportunityInput
+    ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
+    ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
+    CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+  }
+
+  export type OpportunityUncheckedCreateWithoutProgrammeInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    buyerOrganisationId?: string | null
+    origin: string
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    leadId?: string | null
+    paperclipIssueId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Assessment?: BidAssessmentUncheckedCreateNestedManyWithoutOpportunityInput
+    Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
+    Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
+    ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
+    ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
+    CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+  }
+
+  export type OpportunityCreateOrConnectWithoutProgrammeInput = {
+    where: OpportunityWhereUniqueInput
+    create: XOR<OpportunityCreateWithoutProgrammeInput, OpportunityUncheckedCreateWithoutProgrammeInput>
+  }
+
+  export type OpportunityCreateManyProgrammeInputEnvelope = {
+    data: OpportunityCreateManyProgrammeInput | OpportunityCreateManyProgrammeInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrganisationUpsertWithoutProgrammeInput = {
+    update: XOR<OrganisationUpdateWithoutProgrammeInput, OrganisationUncheckedUpdateWithoutProgrammeInput>
+    create: XOR<OrganisationCreateWithoutProgrammeInput, OrganisationUncheckedCreateWithoutProgrammeInput>
+    where?: OrganisationWhereInput
+  }
+
+  export type OrganisationUpdateToOneWithWhereWithoutProgrammeInput = {
+    where?: OrganisationWhereInput
+    data: XOR<OrganisationUpdateWithoutProgrammeInput, OrganisationUncheckedUpdateWithoutProgrammeInput>
+  }
+
+  export type OrganisationUpdateWithoutProgrammeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    categories?: OrganisationUpdatecategoriesInput | string[]
+    priority?: IntFieldUpdateOperationsInput | number
+    isResearchTarget?: BoolFieldUpdateOperationsInput | boolean
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ClientCompany?: ClientCompanyUpdateOneWithoutOrganisationNestedInput
+    Contact?: ContactUpdateManyWithoutOrganisationNestedInput
+    Opportunity?: OpportunityUpdateManyWithoutBuyerNestedInput
+    SupplierPortal?: SupplierPortalUpdateManyWithoutOrganisationNestedInput
+  }
+
+  export type OrganisationUncheckedUpdateWithoutProgrammeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    website?: NullableStringFieldUpdateOperationsInput | string | null
+    categories?: OrganisationUpdatecategoriesInput | string[]
+    priority?: IntFieldUpdateOperationsInput | number
+    isResearchTarget?: BoolFieldUpdateOperationsInput | boolean
+    clientCompanyId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Contact?: ContactUncheckedUpdateManyWithoutOrganisationNestedInput
+    Opportunity?: OpportunityUncheckedUpdateManyWithoutBuyerNestedInput
+    SupplierPortal?: SupplierPortalUncheckedUpdateManyWithoutOrganisationNestedInput
+  }
+
+  export type SupplierPortalUpsertWithoutProgrammeInput = {
+    update: XOR<SupplierPortalUpdateWithoutProgrammeInput, SupplierPortalUncheckedUpdateWithoutProgrammeInput>
+    create: XOR<SupplierPortalCreateWithoutProgrammeInput, SupplierPortalUncheckedCreateWithoutProgrammeInput>
+    where?: SupplierPortalWhereInput
+  }
+
+  export type SupplierPortalUpdateToOneWithWhereWithoutProgrammeInput = {
+    where?: SupplierPortalWhereInput
+    data: XOR<SupplierPortalUpdateWithoutProgrammeInput, SupplierPortalUncheckedUpdateWithoutProgrammeInput>
+  }
+
+  export type SupplierPortalUpdateWithoutProgrammeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Organisation?: OrganisationUpdateOneWithoutSupplierPortalNestedInput
+    Account?: SupplierAccountUpdateManyWithoutPortalNestedInput
+  }
+
+  export type SupplierPortalUncheckedUpdateWithoutProgrammeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    organisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Account?: SupplierAccountUncheckedUpdateManyWithoutPortalNestedInput
+  }
+
+  export type OpportunityUpsertWithWhereUniqueWithoutProgrammeInput = {
+    where: OpportunityWhereUniqueInput
+    update: XOR<OpportunityUpdateWithoutProgrammeInput, OpportunityUncheckedUpdateWithoutProgrammeInput>
+    create: XOR<OpportunityCreateWithoutProgrammeInput, OpportunityUncheckedCreateWithoutProgrammeInput>
+  }
+
+  export type OpportunityUpdateWithWhereUniqueWithoutProgrammeInput = {
+    where: OpportunityWhereUniqueInput
+    data: XOR<OpportunityUpdateWithoutProgrammeInput, OpportunityUncheckedUpdateWithoutProgrammeInput>
+  }
+
+  export type OpportunityUpdateManyWithWhereWithoutProgrammeInput = {
+    where: OpportunityScalarWhereInput
+    data: XOR<OpportunityUpdateManyMutationInput, OpportunityUncheckedUpdateManyWithoutProgrammeInput>
+  }
+
+  export type OpportunityCreateWithoutAssessmentInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    paperclipIssueId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Buyer?: OrganisationCreateNestedOneWithoutOpportunityInput
+    Programme?: PartnershipProgrammeCreateNestedOneWithoutOpportunityInput
+    Source: OpportunitySourceCreateNestedOneWithoutOpportunityInput
+    Lead?: LeadCreateNestedOneWithoutOpportunityInput
+    Evidence?: OpportunityEvidenceCreateNestedManyWithoutOpportunityInput
+    Package?: PackageCreateNestedManyWithoutOpportunityInput
+    ApprovalRequest?: ApprovalRequestCreateNestedManyWithoutOpportunityInput
+    ExecutionRecord?: ExecutionRecordCreateNestedManyWithoutOpportunityInput
+    CostEntry?: CostEntryCreateNestedManyWithoutOpportunityInput
+  }
+
+  export type OpportunityUncheckedCreateWithoutAssessmentInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    buyerOrganisationId?: string | null
+    origin: string
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    leadId?: string | null
+    paperclipIssueId?: string | null
+    programmeId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    Evidence?: OpportunityEvidenceUncheckedCreateNestedManyWithoutOpportunityInput
+    Package?: PackageUncheckedCreateNestedManyWithoutOpportunityInput
+    ApprovalRequest?: ApprovalRequestUncheckedCreateNestedManyWithoutOpportunityInput
+    ExecutionRecord?: ExecutionRecordUncheckedCreateNestedManyWithoutOpportunityInput
+    CostEntry?: CostEntryUncheckedCreateNestedManyWithoutOpportunityInput
+  }
+
+  export type OpportunityCreateOrConnectWithoutAssessmentInput = {
+    where: OpportunityWhereUniqueInput
+    create: XOR<OpportunityCreateWithoutAssessmentInput, OpportunityUncheckedCreateWithoutAssessmentInput>
+  }
+
+  export type OpportunityUpsertWithoutAssessmentInput = {
+    update: XOR<OpportunityUpdateWithoutAssessmentInput, OpportunityUncheckedUpdateWithoutAssessmentInput>
+    create: XOR<OpportunityCreateWithoutAssessmentInput, OpportunityUncheckedCreateWithoutAssessmentInput>
+    where?: OpportunityWhereInput
+  }
+
+  export type OpportunityUpdateToOneWithWhereWithoutAssessmentInput = {
+    where?: OpportunityWhereInput
+    data: XOR<OpportunityUpdateWithoutAssessmentInput, OpportunityUncheckedUpdateWithoutAssessmentInput>
+  }
+
+  export type OpportunityUpdateWithoutAssessmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
+    Lead?: LeadUpdateOneWithoutOpportunityNestedInput
+    Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
+    Package?: PackageUpdateManyWithoutOpportunityNestedInput
+    ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
+    ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
+    CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type OpportunityUncheckedUpdateWithoutAssessmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    leadId?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -196005,6 +204754,7 @@ export namespace Prisma {
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
     ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
+    CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
   }
 
   export type saml_relay_statesCreateManyFlow_stateInput = {
@@ -197737,6 +206487,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Contact?: ContactUpdateManyWithoutOrganisationNestedInput
     Opportunity?: OpportunityUpdateManyWithoutBuyerNestedInput
+    SupplierPortal?: SupplierPortalUpdateManyWithoutOrganisationNestedInput
+    Programme?: PartnershipProgrammeUpdateManyWithoutOrganisationNestedInput
   }
 
   export type OrganisationUncheckedUpdateWithoutClientCompanyInput = {
@@ -197753,6 +206505,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Contact?: ContactUncheckedUpdateManyWithoutOrganisationNestedInput
     Opportunity?: OpportunityUncheckedUpdateManyWithoutBuyerNestedInput
+    SupplierPortal?: SupplierPortalUncheckedUpdateManyWithoutOrganisationNestedInput
+    Programme?: PartnershipProgrammeUncheckedUpdateManyWithoutOrganisationNestedInput
   }
 
   export type OrganisationUncheckedUpdateManyWithoutClientCompanyInput = {
@@ -198170,6 +206924,7 @@ export namespace Prisma {
     cpv?: OpportunityCreatecpvInput | string[]
     confirmedBuying?: boolean
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -198214,6 +206969,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUpdateManyWithoutOpportunityNestedInput
@@ -198241,9 +206998,11 @@ export namespace Prisma {
     cpv?: OpportunityUpdatecpvInput | string[]
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
@@ -198270,6 +207029,7 @@ export namespace Prisma {
     cpv?: OpportunityUpdatecpvInput | string[]
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -199209,7 +207969,45 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SupplierPortalCreateManyOrganisationInput = {
+    id: string
+    name: string
+    kind: string
+    url: string
+    registrationUrl?: string | null
+    termsUrl?: string | null
+    cost?: string
+    automationPermitted?: boolean
+    standingPolicy?: boolean
+    standingPolicyById?: string | null
+    standingPolicyAt?: Date | string | null
+    requiredFacts?: SupplierPortalCreaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalCreaterequiredDocumentsInput | string[]
+    notes?: string | null
+    sourceUrl?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PartnershipProgrammeCreateManyOrganisationInput = {
+    id: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    portalId?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -199264,6 +208062,8 @@ export namespace Prisma {
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
     Lead?: LeadUpdateOneWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
@@ -199292,9 +208092,11 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
@@ -199321,7 +208123,125 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierPortalUpdateWithoutOrganisationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Account?: SupplierAccountUpdateManyWithoutPortalNestedInput
+    Programme?: PartnershipProgrammeUpdateManyWithoutPortalNestedInput
+  }
+
+  export type SupplierPortalUncheckedUpdateWithoutOrganisationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Account?: SupplierAccountUncheckedUpdateManyWithoutPortalNestedInput
+    Programme?: PartnershipProgrammeUncheckedUpdateManyWithoutPortalNestedInput
+  }
+
+  export type SupplierPortalUncheckedUpdateManyWithoutOrganisationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    url?: StringFieldUpdateOperationsInput | string
+    registrationUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    termsUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    cost?: StringFieldUpdateOperationsInput | string
+    automationPermitted?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicy?: BoolFieldUpdateOperationsInput | boolean
+    standingPolicyById?: NullableStringFieldUpdateOperationsInput | string | null
+    standingPolicyAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    requiredFacts?: SupplierPortalUpdaterequiredFactsInput | string[]
+    requiredDocuments?: SupplierPortalUpdaterequiredDocumentsInput | string[]
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PartnershipProgrammeUpdateWithoutOrganisationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Portal?: SupplierPortalUpdateOneWithoutProgrammeNestedInput
+    Opportunity?: OpportunityUpdateManyWithoutProgrammeNestedInput
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateWithoutOrganisationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    portalId?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUncheckedUpdateManyWithoutProgrammeNestedInput
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateManyWithoutOrganisationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    portalId?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -199370,6 +208290,7 @@ export namespace Prisma {
     confirmedBuying?: boolean
     leadId?: string | null
     paperclipIssueId?: string | null
+    programmeId?: string | null
     createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -199473,6 +208394,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Programme?: PartnershipProgrammeUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
     Lead?: LeadUpdateOneWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUpdateManyWithoutOpportunityNestedInput
@@ -199500,9 +208423,11 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
     Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
     Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
     ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
@@ -199529,6 +208454,7 @@ export namespace Prisma {
     confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    programmeId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -199580,6 +208506,19 @@ export namespace Prisma {
     sha256?: StringFieldUpdateOperationsInput | string
     raw?: JsonNullValueInput | InputJsonValue
     fetchedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BidAssessmentCreateManyOpportunityInput = {
+    id: string
+    model: string
+    weights: JsonNullValueInput | InputJsonValue
+    scores: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentCreatedisqualifiersInput | string[]
+    assumptions?: string | null
+    total: Decimal | DecimalJsLike | number | string
+    recommendation: string
+    authorId?: string | null
+    createdAt?: Date | string
   }
 
   export type OpportunityEvidenceCreateManyOpportunityInput = {
@@ -199643,6 +208582,45 @@ export namespace Prisma {
     note?: string | null
     createdById?: string | null
     createdAt?: Date | string
+  }
+
+  export type BidAssessmentUpdateWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    weights?: JsonNullValueInput | InputJsonValue
+    scores?: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentUpdatedisqualifiersInput | string[]
+    assumptions?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFieldUpdateOperationsInput | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BidAssessmentUncheckedUpdateWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    weights?: JsonNullValueInput | InputJsonValue
+    scores?: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentUpdatedisqualifiersInput | string[]
+    assumptions?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFieldUpdateOperationsInput | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BidAssessmentUncheckedUpdateManyWithoutOpportunityInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    model?: StringFieldUpdateOperationsInput | string
+    weights?: JsonNullValueInput | InputJsonValue
+    scores?: JsonNullValueInput | InputJsonValue
+    disqualifiers?: BidAssessmentUpdatedisqualifiersInput | string[]
+    assumptions?: NullableStringFieldUpdateOperationsInput | string | null
+    total?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    recommendation?: StringFieldUpdateOperationsInput | string
+    authorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OpportunityEvidenceUpdateWithoutOpportunityInput = {
@@ -200110,6 +209088,86 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type SupplierAccountCreateManyDecisionInput = {
+    id: string
+    portalId: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SupplierAccountUpdateWithoutDecisionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Portal?: SupplierPortalUpdateOneRequiredWithoutAccountNestedInput
+  }
+
+  export type SupplierAccountUncheckedUpdateWithoutDecisionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    portalId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierAccountUncheckedUpdateManyWithoutDecisionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    portalId?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ReceiptCreateManyExecutionInput = {
     id: string
     documentVersionId: string
@@ -200144,6 +209202,268 @@ export namespace Prisma {
     receivedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierAccountCreateManyPortalInput = {
+    id: string
+    status?: string
+    accountRef?: string | null
+    registeredAt?: Date | string | null
+    verificationStatus?: string | null
+    contactAlias?: string | null
+    credentialLabel?: string | null
+    mfaRequired?: boolean | null
+    termsVersion?: string | null
+    renewalAt?: Date | string | null
+    restrictions?: string | null
+    lastAccessAt?: Date | string | null
+    approvalDecisionId?: string | null
+    ownerUserId?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PartnershipProgrammeCreateManyPortalInput = {
+    id: string
+    organisationId: string
+    name: string
+    categories?: PartnershipProgrammeCreatecategoriesInput | string[]
+    url?: string | null
+    verified?: boolean
+    verifiedAt?: Date | string | null
+    sourceUrl?: string | null
+    availability?: string
+    fees?: string | null
+    requirements?: string | null
+    notes?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SupplierAccountUpdateWithoutPortalInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Decision?: ApprovalDecisionUpdateOneWithoutSupplierAccountNestedInput
+  }
+
+  export type SupplierAccountUncheckedUpdateWithoutPortalInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvalDecisionId?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SupplierAccountUncheckedUpdateManyWithoutPortalInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    accountRef?: NullableStringFieldUpdateOperationsInput | string | null
+    registeredAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    verificationStatus?: NullableStringFieldUpdateOperationsInput | string | null
+    contactAlias?: NullableStringFieldUpdateOperationsInput | string | null
+    credentialLabel?: NullableStringFieldUpdateOperationsInput | string | null
+    mfaRequired?: NullableBoolFieldUpdateOperationsInput | boolean | null
+    termsVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    renewalAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    restrictions?: NullableStringFieldUpdateOperationsInput | string | null
+    lastAccessAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    approvalDecisionId?: NullableStringFieldUpdateOperationsInput | string | null
+    ownerUserId?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PartnershipProgrammeUpdateWithoutPortalInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Organisation?: OrganisationUpdateOneRequiredWithoutProgrammeNestedInput
+    Opportunity?: OpportunityUpdateManyWithoutProgrammeNestedInput
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateWithoutPortalInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organisationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Opportunity?: OpportunityUncheckedUpdateManyWithoutProgrammeNestedInput
+  }
+
+  export type PartnershipProgrammeUncheckedUpdateManyWithoutPortalInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    organisationId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    categories?: PartnershipProgrammeUpdatecategoriesInput | string[]
+    url?: NullableStringFieldUpdateOperationsInput | string | null
+    verified?: BoolFieldUpdateOperationsInput | boolean
+    verifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    sourceUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    availability?: StringFieldUpdateOperationsInput | string
+    fees?: NullableStringFieldUpdateOperationsInput | string | null
+    requirements?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OpportunityCreateManyProgrammeInput = {
+    id: string
+    kind: string
+    status: string
+    statusChangedAt?: Date | string
+    title: string
+    summary?: string | null
+    buyerOrganisationId?: string | null
+    origin: string
+    ocid?: string | null
+    deadlineAt?: Date | string | null
+    clarificationDeadlineAt?: Date | string | null
+    valueMin?: Decimal | DecimalJsLike | number | string | null
+    valueMax?: Decimal | DecimalJsLike | number | string | null
+    currency?: string
+    region?: string | null
+    cpv?: OpportunityCreatecpvInput | string[]
+    confirmedBuying?: boolean
+    leadId?: string | null
+    paperclipIssueId?: string | null
+    createdById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OpportunityUpdateWithoutProgrammeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Buyer?: OrganisationUpdateOneWithoutOpportunityNestedInput
+    Assessment?: BidAssessmentUpdateManyWithoutOpportunityNestedInput
+    Source?: OpportunitySourceUpdateOneRequiredWithoutOpportunityNestedInput
+    Lead?: LeadUpdateOneWithoutOpportunityNestedInput
+    Evidence?: OpportunityEvidenceUpdateManyWithoutOpportunityNestedInput
+    Package?: PackageUpdateManyWithoutOpportunityNestedInput
+    ApprovalRequest?: ApprovalRequestUpdateManyWithoutOpportunityNestedInput
+    ExecutionRecord?: ExecutionRecordUpdateManyWithoutOpportunityNestedInput
+    CostEntry?: CostEntryUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type OpportunityUncheckedUpdateWithoutProgrammeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    leadId?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    Assessment?: BidAssessmentUncheckedUpdateManyWithoutOpportunityNestedInput
+    Evidence?: OpportunityEvidenceUncheckedUpdateManyWithoutOpportunityNestedInput
+    Package?: PackageUncheckedUpdateManyWithoutOpportunityNestedInput
+    ApprovalRequest?: ApprovalRequestUncheckedUpdateManyWithoutOpportunityNestedInput
+    ExecutionRecord?: ExecutionRecordUncheckedUpdateManyWithoutOpportunityNestedInput
+    CostEntry?: CostEntryUncheckedUpdateManyWithoutOpportunityNestedInput
+  }
+
+  export type OpportunityUncheckedUpdateManyWithoutProgrammeInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    kind?: StringFieldUpdateOperationsInput | string
+    status?: StringFieldUpdateOperationsInput | string
+    statusChangedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    title?: StringFieldUpdateOperationsInput | string
+    summary?: NullableStringFieldUpdateOperationsInput | string | null
+    buyerOrganisationId?: NullableStringFieldUpdateOperationsInput | string | null
+    origin?: StringFieldUpdateOperationsInput | string
+    ocid?: NullableStringFieldUpdateOperationsInput | string | null
+    deadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    clarificationDeadlineAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    valueMin?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    valueMax?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    currency?: StringFieldUpdateOperationsInput | string
+    region?: NullableStringFieldUpdateOperationsInput | string | null
+    cpv?: OpportunityUpdatecpvInput | string[]
+    confirmedBuying?: BoolFieldUpdateOperationsInput | boolean
+    leadId?: NullableStringFieldUpdateOperationsInput | string | null
+    paperclipIssueId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

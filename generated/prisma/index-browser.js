@@ -1524,6 +1524,7 @@ exports.Prisma.OpportunityScalarFieldEnum = {
   confirmedBuying: 'confirmedBuying',
   leadId: 'leadId',
   paperclipIssueId: 'paperclipIssueId',
+  programmeId: 'programmeId',
   createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1663,6 +1664,80 @@ exports.Prisma.CostEntryScalarFieldEnum = {
   basis: 'basis',
   note: 'note',
   createdById: 'createdById',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.SupplierPortalScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  kind: 'kind',
+  url: 'url',
+  registrationUrl: 'registrationUrl',
+  termsUrl: 'termsUrl',
+  organisationId: 'organisationId',
+  cost: 'cost',
+  automationPermitted: 'automationPermitted',
+  standingPolicy: 'standingPolicy',
+  standingPolicyById: 'standingPolicyById',
+  standingPolicyAt: 'standingPolicyAt',
+  requiredFacts: 'requiredFacts',
+  requiredDocuments: 'requiredDocuments',
+  notes: 'notes',
+  sourceUrl: 'sourceUrl',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SupplierAccountScalarFieldEnum = {
+  id: 'id',
+  portalId: 'portalId',
+  status: 'status',
+  accountRef: 'accountRef',
+  registeredAt: 'registeredAt',
+  verificationStatus: 'verificationStatus',
+  contactAlias: 'contactAlias',
+  credentialLabel: 'credentialLabel',
+  mfaRequired: 'mfaRequired',
+  termsVersion: 'termsVersion',
+  renewalAt: 'renewalAt',
+  restrictions: 'restrictions',
+  lastAccessAt: 'lastAccessAt',
+  approvalDecisionId: 'approvalDecisionId',
+  ownerUserId: 'ownerUserId',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PartnershipProgrammeScalarFieldEnum = {
+  id: 'id',
+  organisationId: 'organisationId',
+  name: 'name',
+  categories: 'categories',
+  url: 'url',
+  portalId: 'portalId',
+  verified: 'verified',
+  verifiedAt: 'verifiedAt',
+  sourceUrl: 'sourceUrl',
+  availability: 'availability',
+  fees: 'fees',
+  requirements: 'requirements',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.BidAssessmentScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  model: 'model',
+  weights: 'weights',
+  scores: 'scores',
+  disqualifiers: 'disqualifiers',
+  assumptions: 'assumptions',
+  total: 'total',
+  recommendation: 'recommendation',
+  authorId: 'authorId',
   createdAt: 'createdAt'
 };
 
@@ -1927,7 +2002,11 @@ exports.Prisma.ModelName = {
   ApprovalDecision: 'ApprovalDecision',
   ExecutionRecord: 'ExecutionRecord',
   Receipt: 'Receipt',
-  CostEntry: 'CostEntry'
+  CostEntry: 'CostEntry',
+  SupplierPortal: 'SupplierPortal',
+  SupplierAccount: 'SupplierAccount',
+  PartnershipProgramme: 'PartnershipProgramme',
+  BidAssessment: 'BidAssessment'
 };
 
 /**
