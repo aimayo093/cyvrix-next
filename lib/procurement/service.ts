@@ -243,7 +243,8 @@ export async function requestApproval(input: {
     // Its authority is the founder who switched the policy on, with the
     // authenticator check made then. The founder still registers by hand (D8).
     if (input.actionType === "register_account") {
-      const portal = await portalForDestination(tx, pkg.destination);
+      // Two portals at one address name no portal, so no policy applies.
+      const { portal } = await portalForDestination(tx, pkg.destination);
       const policy = standingPolicyApplies({ portal, actionType: input.actionType, declarations: pkg.declarations, priceSnapshot: pkg.priceSnapshot });
       if (policy.applies && portal?.standingPolicyById && portal.standingPolicyAt) {
         await tx.approvalRequest.update({ where: { id }, data: { status: "approved" } });
@@ -450,9 +451,9 @@ export async function recordExecutionOutcome(input: {
         // Never over an account already active: that one is kept and the
         // duplicate registration is recorded for a person to look at. A
         // destination that matches no portal is recorded too, not passed over.
-        const portal = await portalForDestination(tx, decision?.Request.destination ?? "");
+        const { portal, ambiguous } = await portalForDestination(tx, decision?.Request.destination ?? "");
         if (!portal) {
-          await audit(tx, input.userId, "registration.no_portal_matched", "ExecutionRecord", exec.id, {
+          await audit(tx, input.userId, ambiguous ? "registration.portal_ambiguous" : "registration.no_portal_matched", "ExecutionRecord", exec.id, {
             opportunityId: exec.opportunityId,
             destination: decision?.Request.destination ?? null,
           });
@@ -469,15 +470,18 @@ export async function recordExecutionOutcome(input: {
             approvalDecisionId: exec.approvalDecisionId,
             ownerUserId: input.userId,
           };
-          if (live && !(REREGISTERABLE_STATUSES as readonly string[]).includes(live.status)) {
+          // Conditional on the status at the moment of writing, so an account
+          // marked active by someone else since it was read is never overwritten.
+          const replaced = live
+            ? await tx.supplierAccount.updateMany({ where: { id: live.id, status: { in: [...REREGISTERABLE_STATUSES] } }, data })
+            : null;
+          if (live && replaced?.count !== 1) {
             await audit(tx, input.userId, "registration.account_already_active", "SupplierAccount", live.id, {
               portalId: portal.id,
               executionId: exec.id,
               portalReference: input.portalReference ?? null,
             });
-          } else if (live) {
-            await tx.supplierAccount.update({ where: { id: live.id }, data });
-          } else {
+          } else if (!live) {
             await tx.supplierAccount.create({ data: { id: crypto.randomUUID(), portalId: portal.id, ...data } });
           }
         }

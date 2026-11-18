@@ -12,6 +12,7 @@ import {
   type AccountStatus,
   type ScoringModel,
 } from "./partnerships";
+import { portalSharingAddress } from "./portal-lookup";
 import { audit } from "./service";
 
 /**
@@ -60,6 +61,10 @@ export async function savePortalRecord(input: PortalInput, userId: string): Prom
         requiredFacts: input.requiredFacts,
         requiredDocuments: input.requiredDocuments,
       };
+      // A destination must name one portal (portal-lookup.ts), so two portals
+      // may not share an address or registration page.
+      const clash = await portalSharingAddress(tx, [input.url, input.registrationUrl], input.id ?? null);
+      if (clash) return fail(`${clash.name} already uses that address or registration page. Each portal needs its own.`);
       let policyReset = false;
       if (input.id) {
         const before = await tx.supplierPortal.findUnique({ where: { id }, select: { url: true, registrationUrl: true, cost: true, standingPolicy: true } });

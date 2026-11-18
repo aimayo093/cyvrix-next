@@ -695,6 +695,21 @@ try {
   await service.recordExecutionOutcome({ executionId: strayExec.ok ? strayExec.value : "", outcome: "confirmed", portalReference: "X-1", receiptVersionId: await newDoc("stray confirmation"), userId: founder });
   check("a registration on an unknown portal is recorded in the audit log", await prisma.auditLog.count({ where: { action: "registration.no_portal_matched", entityId: strayExec.ok ? strayExec.value : "" } }), 1);
 
+  // A destination must name one portal (PR 18 review).
+  const clash = await partnerships.savePortalRecord(
+    { name: "Copy of the MOD portal", kind: "procurement_portal", url: "https://contracts.mod.uk/", registrationUrl: null, termsUrl: null, cost: "free", organisationId: null, notes: null, requiredFacts: [], requiredDocuments: [] },
+    founder
+  );
+  check("a second portal at an address already in use is refused", clash.ok ? "saved" : clash.reason.includes("already uses that address"), true);
+  // Two portals sharing an address (as could exist from before this rule) name no portal: no policy applies.
+  const sharedUrl = "https://shared-portal.example/";
+  for (const name of ["Shared portal A", "Shared portal B"]) {
+    await prisma.supplierPortal.create({ data: { id: uuid(), name, kind: "procurement_portal", url: sharedUrl, cost: "free", standingPolicy: true, standingPolicyById: founder, standingPolicyAt: new Date() } });
+  }
+  const sharedPkg = await registrationPackage(sharedUrl, []);
+  const sharedReq = await service.requestApproval({ packageId: sharedPkg, actionType: "register_account", userId: founder });
+  check("a destination shared by two portals is never pre-approved", sharedReq.ok ? (await prisma.approvalRequest.findUniqueOrThrow({ where: { id: sharedReq.value } })).status : "failed", "pending");
+
   // Programmes: verified only from the organisation's own site; one opportunity each.
   await prisma.organisation.update({ where: { id: vendor.id }, data: { website: "https://www.example-vendor.com" } });
   const offSite = await partnerships.saveProgrammeRecord(
