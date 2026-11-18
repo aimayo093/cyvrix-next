@@ -2,7 +2,7 @@
  * The dependency audit gate's rules (scripts/audit-gate.mts), on fixed reports.
  * Run with: npm run test:audit-gate
  */
-import { evaluate, type AuditReport, type Exception } from "./audit-gate.mjs";
+import { blockingCount, evaluate, type AuditReport, type Exception } from "./audit-gate.mjs";
 
 let passed = 0;
 let failed = 0;
@@ -38,6 +38,9 @@ check("any other advisory fails", evaluate(another, [exception], today).failures
 const low: AuditReport = { vulnerabilities: { next: { severity: "low", via: [{ url: "https://github.com/advisories/GHSA-aaaa-bbbb-cccc", severity: "low" }] } } };
 check("a low advisory does not block (as before)", evaluate(low, [], today).failures, []);
 check("a fixed advisory leaves a note to remove the exception", evaluate({ vulnerabilities: {} }, [exception], today), { failures: [], notes: ["Exception GHSA-fc5q-39xc-vjpf is no longer needed. Remove it from scripts/audit-exceptions.json."] });
+check("an impossible review date is refused, not treated as live", evaluate(current, [{ ...exception, reviewBy: "2027-99-99" }], today).failures.some((f) => f.includes("no valid reviewBy")), true);
+check("and does not excuse the advisory", evaluate(current, [{ ...exception, reviewBy: "2027-02-30" }], today).failures.filter((f) => f.includes("not excepted")).length, 5);
+check("only blocking packages are counted as excused", blockingCount({ vulnerabilities: { ...current.vulnerabilities, x: { severity: "low", via: [] } } }), 5);
 const cycle: AuditReport = { vulnerabilities: { a: { severity: "high", via: ["b"] }, b: { severity: "high", via: ["a"] } } };
 check("a dependency cycle does not hang", evaluate(cycle, [], today).failures, []);
 

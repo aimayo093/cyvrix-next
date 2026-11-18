@@ -9,7 +9,7 @@ import { parseReport, parseReportWithCount } from "../lib/procurement/report-imp
 import { privacyNoticeCoversTenderContacts } from "../lib/procurement/privacy-gate";
 import { isScheduledRun } from "../lib/procurement/schedule";
 import { agentOpportunity, containsPersonalData, isPublicLink, scrub, WITHHELD_TITLE } from "../lib/procurement/agent-view";
-import { valuesAgree } from "../lib/procurement/ingest-rules";
+import { rangesAgree, valuesAgree } from "../lib/procurement/ingest-rules";
 import { authorise } from "../lib/paperclip-auth";
 import {
   awardOnly,
@@ -185,6 +185,10 @@ check(
   WITHHELD_TITLE
 );
 check("values within 25% agree", [valuesAgree(100000, 120000), valuesAgree(100000, 200000), valuesAgree(null, 5)], [true, false, true]);
+check("a published zero is a value, not a missing one", [valuesAgree(0, 1000000), valuesAgree(0, 0)], [false, true]);
+check("equal maxima do not excuse conflicting minima", rangesAgree({ valueMin: 10000, valueMax: 500000 }, { valueMin: 400000, valueMax: 500000 }), false);
+check("both bounds agreeing merges", rangesAgree({ valueMin: null, valueMax: 500000 }, { valueMin: 400000, valueMax: 450000 }), true);
+check("privacy gate: a passing mention of public tenders is not the section", privacyNoticeCoversTenderContacts({ status: "PUBLISHED", body: "We do not sell data from public tenders." }), false);
 check("privacy gate: unpublished policy blocks", privacyNoticeCoversTenderContacts({ status: "DRAFT", body: "Business contacts from public tenders" }), false);
 check("privacy gate: published without the section blocks", privacyNoticeCoversTenderContacts({ status: "PUBLISHED", body: "We collect your email." }), false);
 check("privacy gate: published with the section passes", privacyNoticeCoversTenderContacts({ status: "PUBLISHED", body: "## Business contacts from public tenders\n…" }), true);
