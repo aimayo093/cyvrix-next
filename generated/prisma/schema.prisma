@@ -2139,6 +2139,7 @@ model Opportunity {
   leadId                  String?
   paperclipIssueId        String?
   /// The partnership programme this opportunity pursues (migration 20261118120000).
+  /// One opportunity per programme: partial unique index in migration 20261119130000.
   programmeId             String?
   createdById             String?
   createdAt               DateTime              @default(now())

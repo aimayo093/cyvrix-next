@@ -633,13 +633,87 @@ try {
   const bidScores = { technical_capability: 2, mandatory_eligibility: 4, profitability: 4, delivery_capacity: 4, cash_flow_impact: 3, security_and_compliance: 4, strategic_value: 4 };
   const assessed = await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "bid", scores: bidScores, disqualifiers: [], authorId: founder });
   check("a bid assessment is recorded with its total", assessed.ok ? [assessed.value.total, assessed.value.recommendation] : assessed.reason, [70, "pursue"]);
-  check("partnership scoring is refused on a tender", (await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "partnership", scores: {}, disqualifiers: [], authorId: founder })).ok, false);
+  // Valid partnership scores, so the refusal can only come from the kind check.
+  const partnershipScores = { revenue_potential: 3, existing_technical_capability: 3, accessibility_and_eligibility: 3, recurring_assignment_potential: 3, profitability: 3, strategic_importance: 3, onboarding_cost: 3 };
+  const wrongModel = await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "partnership", scores: partnershipScores, disqualifiers: [], authorId: founder });
+  check("partnership scoring is refused on a tender, for that reason", wrongModel.ok ? "recorded" : wrongModel.reason, "Partnership scoring is for partnership opportunities.");
   const dq = await partnerships.recordAssessment({ opportunityId: tenderOpp, model: "bid", scores: bidScores, disqualifiers: ["Needs ISO 27001 certificate", " "], authorId: founder });
   check("a disqualifier overrides the score", dq.ok ? dq.value.recommendation : dq.reason, "disqualified");
   check("blank disqualifier lines are dropped", dq.ok ? (await prisma.bidAssessment.findUniqueOrThrow({ where: { id: dq.value.id } })).disqualifiers : null, ["Needs ISO 27001 certificate"]);
   const firstAssessment = assessed.ok ? assessed.value.id : "";
   await rejects("an assessment cannot be edited", () => prisma.bidAssessment.update({ where: { id: firstAssessment }, data: { assumptions: "changed" } }), "cannot be changed");
   await rejects("an assessment cannot be deleted", () => prisma.bidAssessment.delete({ where: { id: firstAssessment } }), "cannot be changed");
+  const rawAssessment = (over: Record<string, unknown>) =>
+    prisma.bidAssessment.create({
+      data: { id: uuid(), opportunityId: tenderOpp, model: "bid", weights: {}, scores: bidScores, disqualifiers: [], total: 70, recommendation: "pursue", ...over },
+    });
+  await rejects("the database refuses a disqualifier without a 'disqualified' recommendation", () => rawAssessment({ disqualifiers: ["Needs SC"] }), "BidAssessment_disqualified_matches");
+  await rejects("and 'disqualified' without a disqualifier", () => rawAssessment({ recommendation: "disqualified" }), "BidAssessment_disqualified_matches");
+  await rejects("the database refuses a score of 6", () => rawAssessment({ scores: { ...bidScores, profitability: 6 } }), "BidAssessment_scores_check");
+  await rejects("and a score of 2.5", () => rawAssessment({ scores: { ...bidScores, profitability: 2.5 } }), "BidAssessment_scores_check");
+
+  console.log("\n  Review fixes (PR 16)");
+  // A portal's address change ends its standing policy.
+  await partnerships.setStandingPolicy(dsp.id, true, founder, new Date());
+  const dspNow = await prisma.supplierPortal.findUniqueOrThrow({ where: { id: dsp.id } });
+  const portalFields = {
+    id: dsp.id, name: dspNow.name, kind: dspNow.kind, url: dspNow.url, registrationUrl: dspNow.registrationUrl, termsUrl: dspNow.termsUrl,
+    cost: "free" as const, organisationId: dspNow.organisationId, notes: dspNow.notes, requiredFacts: dspNow.requiredFacts, requiredDocuments: dspNow.requiredDocuments,
+  };
+  const sameAgain = await partnerships.savePortalRecord(portalFields, founder);
+  check("saving a portal unchanged keeps its policy", [sameAgain.ok && sameAgain.value.policyReset, (await prisma.supplierPortal.findUniqueOrThrow({ where: { id: dsp.id } })).standingPolicy], [false, true]);
+  const moved = await partnerships.savePortalRecord({ ...portalFields, registrationUrl: "https://contracts.mod.uk/new-register" }, founder);
+  const afterMove = await prisma.supplierPortal.findUniqueOrThrow({ where: { id: dsp.id } });
+  check("a new registration page ends the policy and its authority", [moved.ok && moved.value.policyReset, afterMove.standingPolicy, afterMove.standingPolicyById], [true, false, null]);
+  check("a portal that no longer exists gives a readable refusal", (await partnerships.savePortalRecord({ ...portalFields, id: uuid() }, founder)).ok, false);
+  check("an account that no longer exists gives a readable refusal", (await partnerships.saveAccount({ id: uuid(), portalId: dsp.id, status: "active", userId: founder })).ok, false);
+
+  // A confirmed registration never overwrites an account that is already active.
+  await prisma.supplierAccount.updateMany({ where: { portalId: dsp.id, status: "pending" }, data: { status: "active", accountRef: "DSP-LIVE-1" } });
+  await partnerships.setStandingPolicy(dsp.id, true, founder, new Date());
+  const secondReg = await registrationPackage("https://contracts.mod.uk/", []);
+  const secondReq = await service.requestApproval({ packageId: secondReg, actionType: "register_account", userId: founder });
+  const secondDecision = secondReq.ok ? await prisma.approvalDecision.findUnique({ where: { requestId: secondReq.value } }) : null;
+  const secondExec = await service.startExecution({ decisionId: secondDecision?.id ?? "", mode: "manual", userId: founder });
+  await service.recordExecutionOutcome({ executionId: secondExec.ok ? secondExec.value : "", outcome: "confirmed", portalReference: "DSP-DUP-9", receiptVersionId: await newDoc("dsp second confirmation"), userId: founder });
+  const liveAccount = await prisma.supplierAccount.findFirstOrThrow({ where: { portalId: dsp.id, status: "active" } });
+  check("the active account keeps its reference", liveAccount.accountRef, "DSP-LIVE-1");
+  check("the duplicate registration is recorded for a person", await prisma.auditLog.count({ where: { action: "registration.account_already_active", entityId: liveAccount.id } }), 1);
+
+  // A confirmed registration whose destination matches no portal is recorded, not passed over.
+  const strayOpp = await newOpportunity("Discovered");
+  const strayPkg = uuid();
+  await prisma.package.create({ data: { id: strayPkg, opportunityId: strayOpp, version: 1, destination: "https://unknown-portal.example/register", declarations: [] } });
+  const strayDoc = await newDoc("stray registration");
+  const strayV = await prisma.companyDocumentVersion.findUniqueOrThrow({ where: { id: strayDoc } });
+  await prisma.packageItem.create({ data: { id: uuid(), packageId: strayPkg, documentVersionId: strayDoc, label: strayV.filename, sha256: strayV.sha256 } });
+  await service.lockPackage(strayPkg, founder);
+  const strayReq = await service.requestApproval({ packageId: strayPkg, actionType: "register_account", userId: founder });
+  const strayDec = await service.decideApproval({ requestId: strayReq.ok ? strayReq.value : "", decision: "approved", userId: founder, stepUpAt: new Date() });
+  const strayDecision = strayDec.ok ? await prisma.approvalDecision.findUnique({ where: { requestId: strayReq.ok ? strayReq.value : "" } }) : null;
+  const strayExec = await service.startExecution({ decisionId: strayDecision?.id ?? "", mode: "manual", userId: founder });
+  await service.recordExecutionOutcome({ executionId: strayExec.ok ? strayExec.value : "", outcome: "confirmed", portalReference: "X-1", receiptVersionId: await newDoc("stray confirmation"), userId: founder });
+  check("a registration on an unknown portal is recorded in the audit log", await prisma.auditLog.count({ where: { action: "registration.no_portal_matched", entityId: strayExec.ok ? strayExec.value : "" } }), 1);
+
+  // Programmes: verified only from the organisation's own site; one opportunity each.
+  await prisma.organisation.update({ where: { id: vendor.id }, data: { website: "https://www.example-vendor.com" } });
+  const offSite = await partnerships.saveProgrammeRecord(
+    { organisationId: vendor.id, name: "Service partner", categories: ["managed_service_delivery"], url: null, sourceUrl: "https://blog.elsewhere.example/post", verified: true, availability: "open", fees: null, requirements: null, portalId: null },
+    founder
+  );
+  check("a verified programme sourced off the organisation's site is refused", offSite.ok, false);
+  const programme = await partnerships.saveProgrammeRecord(
+    { organisationId: vendor.id, name: "Service partner", categories: ["managed_service_delivery"], url: null, sourceUrl: null, verified: false, availability: "unconfirmed", fees: null, requirements: null, portalId: null },
+    founder
+  );
+  const programmeId = programme.ok ? programme.value : "";
+  const verifiedLater = await partnerships.saveProgrammeRecord(
+    { id: programmeId, organisationId: vendor.id, name: "Service partner", categories: ["managed_service_delivery"], url: null, sourceUrl: "https://partners.example-vendor.com/service", verified: true, availability: "open", fees: null, requirements: null, portalId: null },
+    founder
+  );
+  check("a programme can be verified later from its own site", [verifiedLater.ok, (await prisma.partnershipProgramme.findUniqueOrThrow({ where: { id: programmeId } })).verifiedAt !== null], [true, true]);
+  const [p1, p2] = await Promise.all([partnerships.pursueProgrammeRecord(programmeId, founder), partnerships.pursueProgrammeRecord(programmeId, founder)]);
+  check("pursuing twice at once gives one opportunity", [p1.ok && p2.ok && p1.value.id === p2.value.id, await prisma.opportunity.count({ where: { programmeId } })], [true, 1]);
 
 } finally {
   await prisma.$disconnect();

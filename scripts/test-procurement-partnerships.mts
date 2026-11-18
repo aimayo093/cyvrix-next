@@ -6,8 +6,11 @@
  */
 import {
   credentialLabelProblem,
+  parseList,
+  policyMustReset,
   registrationReadiness,
   scoreAssessment,
+  sourceMatchesOrganisation,
   standingPolicyApplies,
   WEIGHTS,
 } from "../lib/procurement/partnerships";
@@ -29,6 +32,25 @@ check("a password-like string is refused", credentialLabelProblem("Tr0ub4dor&3xy
 check("an API-key-like string is refused", credentialLabelProblem("sk_live_51HabcDEF123456789")?.includes("password") ?? false, true);
 check("a secret after a name is refused", credentialLabelProblem("Sell2Wales: hunter2hunter2!!")?.includes("password") ?? false, true);
 check("too short is refused", credentialLabelProblem("ab") !== null, true);
+check("a key with slashes is still a secret", credentialLabelProblem("wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY")?.includes("password") ?? false, true);
+check("a key with colons is still a secret", credentialLabelProblem("token:abc123:XYZ789:def456")?.includes("password") ?? false, true);
+check("a hyphenated name is not a secret", credentialLabelProblem("Bitwarden: tender-portal-accounts"), null);
+
+console.log("\n  Portal changes and the standing policy (D13)");
+const portal = { url: "https://contracts.mod.uk/", registrationUrl: null, cost: "free" };
+check("an unchanged free portal keeps its policy", policyMustReset(portal, { ...portal }), false);
+check("a new address ends it", policyMustReset(portal, { ...portal, url: "https://other.example/" }), true);
+check("a new registration page ends it", policyMustReset(portal, { ...portal, registrationUrl: "https://contracts.mod.uk/register" }), true);
+check("no longer free ends it", policyMustReset(portal, { ...portal, cost: "unknown" }), true);
+
+console.log("\n  Form lists and programme sources");
+check("a valid list is read", parseList("company_name, company_number\nvat_number", /^[a-z][a-z0-9_]{1,63}$/), { ok: true, values: ["company_name", "company_number", "vat_number"] });
+check("a mistyped entry is an error, not dropped", parseList("company_name, Company Number!", /^[a-z][a-z0-9_]{1,63}$/).ok, false);
+check("too many entries is an error", parseList(Array.from({ length: 31 }, (_, i) => `k${i}x`).join(","), /^[a-z][a-z0-9_]{1,63}$/).ok, false);
+check("a source on the organisation's site matches", sourceMatchesOrganisation("https://partners.dell.com/uk/programme", "https://www.dell.com"), true);
+check("a source elsewhere does not", sourceMatchesOrganisation("https://blog.example.com/dell-programme", "https://www.dell.com"), false);
+check("a look-alike host does not", sourceMatchesOrganisation("https://dell.com.evil.example/x", "https://www.dell.com"), false);
+check("with no known website, any source is accepted", sourceMatchesOrganisation("https://example.com/x", null), true);
 
 console.log("\n  Standing registration policy (D13)");
 const freeOn = { standingPolicy: true, cost: "free" };

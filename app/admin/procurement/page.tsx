@@ -675,6 +675,13 @@ async function Accounts({ isFounder }: { isFounder: boolean }) {
                   <div className="md:col-span-3"><button className={secondaryButton}>Save account</button></div>
                 </form>
               </details>
+              <details>
+                <summary className="cursor-pointer text-sm font-semibold text-[#0f5aab]">Edit the portal (cost, address, requirements)</summary>
+                <form action={savePortal} className="mt-3 grid gap-3 md:grid-cols-2">
+                  <PortalFields orgs={orgs} p={p} />
+                  <div className="md:col-span-2"><button className={secondaryButton}>Save portal</button></div>
+                </form>
+              </details>
               {isFounder && p.cost === "free" && (
                 <form action={setPortalPolicy} className="flex flex-wrap items-end gap-2 border-t border-slate-100 pt-3">
                   <input type="hidden" name="portalId" value={p.id} />
@@ -691,25 +698,54 @@ async function Accounts({ isFounder }: { isFounder: boolean }) {
       </ul>
       <form action={savePortal} className={`${card} grid gap-3 md:grid-cols-2`}>
         <h2 className="font-outfit text-lg font-black text-[#041635] md:col-span-2">Add a portal or partner programme site</h2>
-        <label className="space-y-1"><span className={label}>Name</span><input name="name" required maxLength={200} className={field} /></label>
-        <label className="space-y-1"><span className={label}>Kind</span>
-          <select name="kind" defaultValue="supplier_portal" className={field}><option value="procurement_portal">Public procurement portal</option><option value="supplier_portal">Company supplier portal</option><option value="partner_programme">Partner programme site</option></select>
-        </label>
-        <label className="space-y-1"><span className={label}>Address (https)</span><input name="url" type="url" required className={field} /></label>
-        <label className="space-y-1"><span className={label}>Registration page</span><input name="registrationUrl" type="url" className={field} /></label>
-        <label className="space-y-1"><span className={label}>Terms page</span><input name="termsUrl" type="url" className={field} /></label>
-        <label className="space-y-1"><span className={label}>Cost to register</span>
-          <select name="cost" defaultValue="unknown" className={field}><option value="unknown">Not checked</option><option value="free">Free (checked)</option><option value="paid">Paid</option></select>
-        </label>
-        <label className="space-y-1"><span className={label}>Organisation</span>
-          <select name="organisationId" defaultValue="" className={field}><option value="">None</option>{orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
-        </label>
-        <label className="space-y-1"><span className={label}>Facts it asks for (keys, comma separated)</span><input name="requiredFacts" placeholder="company_name, company_number, vat_number" className={field} /></label>
-        <label className="space-y-1"><span className={label}>Documents it asks for (types)</span><input name="requiredDocuments" placeholder="insurance, policy" className={field} /></label>
-        <label className="space-y-1 md:col-span-2"><span className={label}>Notes</span><input name="notes" maxLength={4000} className={field} /></label>
+        <PortalFields orgs={orgs} />
         <div className="md:col-span-2"><button className={primaryButton}>Add portal</button></div>
       </form>
     </div>
+  );
+}
+
+type PortalRecord = {
+  id: string;
+  name: string;
+  kind: string;
+  url: string;
+  registrationUrl: string | null;
+  termsUrl: string | null;
+  cost: string;
+  organisationId: string | null;
+  requiredFacts: string[];
+  requiredDocuments: string[];
+  notes: string | null;
+};
+
+/** The portal form, empty to add one or filled to edit one. */
+function PortalFields({ orgs, p }: { orgs: { id: string; name: string }[]; p?: PortalRecord }) {
+  return (
+    <>
+      {p && <input type="hidden" name="id" value={p.id} />}
+      <label className="space-y-1"><span className={label}>Name</span><input name="name" required maxLength={200} defaultValue={p?.name ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Kind</span>
+        <select name="kind" defaultValue={p?.kind ?? "supplier_portal"} className={field}><option value="procurement_portal">Public procurement portal</option><option value="supplier_portal">Company supplier portal</option><option value="partner_programme">Partner programme site</option></select>
+      </label>
+      <label className="space-y-1"><span className={label}>Address (https)</span><input name="url" type="url" required defaultValue={p?.url ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Registration page</span><input name="registrationUrl" type="url" defaultValue={p?.registrationUrl ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Terms page</span><input name="termsUrl" type="url" defaultValue={p?.termsUrl ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Cost to register</span>
+        <select name="cost" defaultValue={p?.cost ?? "unknown"} className={field}><option value="unknown">Not checked</option><option value="free">Free (checked)</option><option value="paid">Paid</option></select>
+      </label>
+      <label className="space-y-1"><span className={label}>Organisation</span>
+        <select name="organisationId" defaultValue={p?.organisationId ?? ""} className={field}><option value="">None</option>{orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
+      </label>
+      <label className="space-y-1"><span className={label}>Facts it asks for (keys, comma separated)</span><input name="requiredFacts" defaultValue={p?.requiredFacts.join(", ") ?? ""} placeholder="company_name, company_number, vat_number" className={field} /></label>
+      <label className="space-y-1"><span className={label}>Documents it asks for (types)</span><input name="requiredDocuments" defaultValue={p?.requiredDocuments.join(", ") ?? ""} placeholder="insurance, policy" className={field} /></label>
+      <label className="space-y-1 md:col-span-2"><span className={label}>Notes</span><input name="notes" maxLength={4000} defaultValue={p?.notes ?? ""} className={field} /></label>
+      {p && (
+        <p className="text-xs text-slate-500 md:col-span-2">
+          Changing the address, registration page or cost switches off this portal&apos;s standing policy; you switch it on again with a fresh code.
+        </p>
+      )}
+    </>
   );
 }
 
@@ -753,6 +789,13 @@ async function Partnerships() {
                     ) : (
                       <form action={pursueProgramme}><input type="hidden" name="programmeId" value={p.id} /><button className={primaryButton}>Pursue</button></form>
                     )}
+                    <details className="w-full">
+                      <summary className="cursor-pointer text-xs font-semibold text-[#0f5aab]">Edit (verify, availability, fees)</summary>
+                      <form action={saveProgramme} className="mt-2 grid gap-3 md:grid-cols-2">
+                        <ProgrammeFields orgs={orgs} portals={portals} p={p} />
+                        <div className="md:col-span-2"><button className={secondaryButton}>Save programme</button></div>
+                      </form>
+                    </details>
                   </li>
                 ))}
               </ul>
@@ -762,30 +805,54 @@ async function Partnerships() {
       )}
       <form action={saveProgramme} className={`${card} grid gap-3 md:grid-cols-2`}>
         <h2 className="font-outfit text-lg font-black text-[#041635] md:col-span-2">Add a programme</h2>
-        <label className="space-y-1"><span className={label}>Organisation</span>
-          <select name="organisationId" required defaultValue="" className={field}><option value="" disabled>Choose…</option>{orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
-        </label>
-        <label className="space-y-1"><span className={label}>Programme name</span><input name="name" required maxLength={200} className={field} /></label>
-        <fieldset className="space-y-1 md:col-span-2">
-          <legend className={label}>What kind of partnership (spec section 36)</legend>
-          <div className="grid gap-1 text-sm md:grid-cols-3">
-            {PARTNERSHIP_CATEGORIES.map((c) => <label key={c} className="flex items-center gap-1"><input type="checkbox" name="categories" value={c} /> {PARTNERSHIP_CATEGORY_LABEL[c]}</label>)}
-          </div>
-        </fieldset>
-        <label className="space-y-1"><span className={label}>Programme page</span><input name="url" type="url" className={field} /></label>
-        <label className="space-y-1"><span className={label}>Source (the organisation&apos;s own page)</span><input name="sourceUrl" type="url" className={field} /></label>
-        <label className="space-y-1"><span className={label}>Availability</span>
-          <select name="availability" defaultValue="unconfirmed" className={field}><option value="unconfirmed">Unconfirmed</option><option value="open">Open</option><option value="invitation_only">Invitation only</option><option value="closed">Closed</option></select>
-        </label>
-        <label className="space-y-1"><span className={label}>Registration portal</span>
-          <select name="portalId" defaultValue="" className={field}><option value="">None</option>{portals.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}</select>
-        </label>
-        <label className="space-y-1"><span className={label}>Fees (as published)</span><input name="fees" maxLength={500} className={field} /></label>
-        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="verified" /> Verified from the organisation&apos;s own page</label>
-        <label className="space-y-1 md:col-span-2"><span className={label}>Requirements (insurance, certifications, coverage…)</span><textarea name="requirements" rows={3} maxLength={4000} className={field} /></label>
+        <ProgrammeFields orgs={orgs} portals={portals} />
         <div className="md:col-span-2"><button className={primaryButton}>Add programme</button></div>
       </form>
     </div>
+  );
+}
+
+type ProgrammeRecord = {
+  id: string;
+  organisationId: string;
+  name: string;
+  categories: string[];
+  url: string | null;
+  sourceUrl: string | null;
+  verified: boolean;
+  availability: string;
+  fees: string | null;
+  requirements: string | null;
+  portalId: string | null;
+};
+
+/** The programme form, empty to add one or filled to edit one. */
+function ProgrammeFields({ orgs, portals, p }: { orgs: { id: string; name: string }[]; portals: { id: string; name: string }[]; p?: ProgrammeRecord }) {
+  return (
+    <>
+      {p && <input type="hidden" name="id" value={p.id} />}
+      <label className="space-y-1"><span className={label}>Organisation</span>
+        <select name="organisationId" required defaultValue={p?.organisationId ?? ""} className={field}><option value="" disabled>Choose…</option>{orgs.map((o) => <option key={o.id} value={o.id}>{o.name}</option>)}</select>
+      </label>
+      <label className="space-y-1"><span className={label}>Programme name</span><input name="name" required maxLength={200} defaultValue={p?.name ?? ""} className={field} /></label>
+      <fieldset className="space-y-1 md:col-span-2">
+        <legend className={label}>What kind of partnership (spec section 36)</legend>
+        <div className="grid gap-1 text-sm md:grid-cols-3">
+          {PARTNERSHIP_CATEGORIES.map((c) => <label key={c} className="flex items-center gap-1"><input type="checkbox" name="categories" value={c} defaultChecked={p?.categories.includes(c) ?? false} /> {PARTNERSHIP_CATEGORY_LABEL[c]}</label>)}
+        </div>
+      </fieldset>
+      <label className="space-y-1"><span className={label}>Programme page</span><input name="url" type="url" defaultValue={p?.url ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Source (a page on the organisation&apos;s own site)</span><input name="sourceUrl" type="url" defaultValue={p?.sourceUrl ?? ""} className={field} /></label>
+      <label className="space-y-1"><span className={label}>Availability</span>
+        <select name="availability" defaultValue={p?.availability ?? "unconfirmed"} className={field}><option value="unconfirmed">Unconfirmed</option><option value="open">Open</option><option value="invitation_only">Invitation only</option><option value="closed">Closed</option></select>
+      </label>
+      <label className="space-y-1"><span className={label}>Registration portal</span>
+        <select name="portalId" defaultValue={p?.portalId ?? ""} className={field}><option value="">None</option>{portals.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}</select>
+      </label>
+      <label className="space-y-1"><span className={label}>Fees (as published)</span><input name="fees" maxLength={500} defaultValue={p?.fees ?? ""} className={field} /></label>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="verified" defaultChecked={p?.verified ?? false} /> Verified on the organisation&apos;s own site</label>
+      <label className="space-y-1 md:col-span-2"><span className={label}>Requirements (insurance, certifications, coverage…)</span><textarea name="requirements" rows={3} maxLength={4000} defaultValue={p?.requirements ?? ""} className={field} /></label>
+    </>
   );
 }
 

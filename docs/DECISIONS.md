@@ -823,7 +823,7 @@ approvals. Design and reasoning: `docs/procurement/`. Phase 1 (15 November
   manifest and refuses on any difference, expiry, reuse, or a second confirmed
   action of the same type. Decisions and receipts cannot be edited or
   deleted (triggers).
-- **Nothing is sent from here (D8 recommendation, not yet decided).** The
+- **Nothing is sent from here (D8, decided 18 November 2026: by hand).** The
   founder submits on the portal or by email and records the outcome.
   "Confirmed" needs the portal's reference and receipt; "not sure" stops
   everything until someone checks.
@@ -916,9 +916,15 @@ non-local URL).
   declarations and no price; a portal user agreement is entered as a declaration, so it still comes to the
   founder. The approval it creates names the founder and the moment the policy
   was set, not the moment of the request, so the audit shows where the
-  authority came from. Switching the policy off clears that authority.
+  authority came from. Switching the policy off clears that authority, and so
+  does changing the portal's address, registration page or cost: the
+  founder approved that portal at that address, not wherever it is later
+  pointed.
 - A confirmed registration (with the portal's reference and an uploaded
   confirmation) becomes the portal's account, pending the portal's checks.
+  It never overwrites an account that is already active (that one is kept and
+  the duplicate is audited), and a destination matching no portal is audited
+  rather than silently passed over.
 - A programme is "verified" only with the page it was checked against.
 - Assessments (spec 12 and 40) are recommendations, not chances of winning.
   Scores are whole numbers 0 to 5; a disqualifier overrides the total. Rows

@@ -17,7 +17,8 @@ import {
   type ApprovalAction,
   type OpportunityKind,
 } from "./lifecycle";
-import { standingPolicyApplies } from "./partnerships";
+import { LIVE_ACCOUNT_STATUSES, REREGISTERABLE_STATUSES, standingPolicyApplies } from "./partnerships";
+import { portalForDestination } from "./portal-lookup";
 
 /**
  * Database side of the procurement rules. Every write here records an audit
@@ -242,8 +243,7 @@ export async function requestApproval(input: {
     // Its authority is the founder who switched the policy on, with the
     // authenticator check made then. The founder still registers by hand (D8).
     if (input.actionType === "register_account") {
-      const d = pkg.destination.trim();
-      const portal = await tx.supplierPortal.findFirst({ where: { OR: [{ url: d }, { registrationUrl: d }] } });
+      const portal = await portalForDestination(tx, pkg.destination);
       const policy = standingPolicyApplies({ portal, actionType: input.actionType, declarations: pkg.declarations, priceSnapshot: pkg.priceSnapshot });
       if (policy.applies && portal?.standingPolicyById && portal.standingPolicyAt) {
         await tx.approvalRequest.update({ where: { id }, data: { status: "approved" } });
@@ -447,10 +447,20 @@ export async function recordExecutionOutcome(input: {
       // the portal's own verification. Never a second live account (section 38).
       if (exec.actionType === "register_account") {
         const decision = await tx.approvalDecision.findUnique({ where: { id: exec.approvalDecisionId }, select: { Request: { select: { destination: true } } } });
-        const d = decision?.Request.destination.trim() ?? "";
-        const portal = d ? await tx.supplierPortal.findFirst({ where: { OR: [{ url: d }, { registrationUrl: d }] }, select: { id: true } }) : null;
-        if (portal) {
-          const live = await tx.supplierAccount.findFirst({ where: { portalId: portal.id, status: { notIn: ["not_registered", "rejected"] } }, select: { id: true } });
+        // Never over an account already active: that one is kept and the
+        // duplicate registration is recorded for a person to look at. A
+        // destination that matches no portal is recorded too, not passed over.
+        const portal = await portalForDestination(tx, decision?.Request.destination ?? "");
+        if (!portal) {
+          await audit(tx, input.userId, "registration.no_portal_matched", "ExecutionRecord", exec.id, {
+            opportunityId: exec.opportunityId,
+            destination: decision?.Request.destination ?? null,
+          });
+        } else {
+          const live = await tx.supplierAccount.findFirst({
+            where: { portalId: portal.id, status: { in: [...LIVE_ACCOUNT_STATUSES] } },
+            select: { id: true, status: true },
+          });
           const data = {
             status: "pending",
             accountRef: input.portalReference?.trim().slice(0, 200) || null,
@@ -459,8 +469,17 @@ export async function recordExecutionOutcome(input: {
             approvalDecisionId: exec.approvalDecisionId,
             ownerUserId: input.userId,
           };
-          if (live) await tx.supplierAccount.update({ where: { id: live.id }, data });
-          else await tx.supplierAccount.create({ data: { id: crypto.randomUUID(), portalId: portal.id, ...data } });
+          if (live && !(REREGISTERABLE_STATUSES as readonly string[]).includes(live.status)) {
+            await audit(tx, input.userId, "registration.account_already_active", "SupplierAccount", live.id, {
+              portalId: portal.id,
+              executionId: exec.id,
+              portalReference: input.portalReference ?? null,
+            });
+          } else if (live) {
+            await tx.supplierAccount.update({ where: { id: live.id }, data });
+          } else {
+            await tx.supplierAccount.create({ data: { id: crypto.randomUUID(), portalId: portal.id, ...data } });
+          }
         }
       }
     }

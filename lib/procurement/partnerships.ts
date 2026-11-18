@@ -4,6 +4,7 @@
  * sections 12 and 40). Pure, so they are tested without a database
  * (npm run test:procurement-partnerships).
  */
+import { EVIDENCE_STATUSES } from "./approval-core";
 
 /** Spec section 36. A programme can be several of these. */
 export const PARTNERSHIP_CATEGORIES = [
@@ -62,20 +63,69 @@ export const ACCOUNT_STATUSES = ["active", "pending", "incomplete", "expired", "
 export type AccountStatus = (typeof ACCOUNT_STATUSES)[number];
 /** Statuses that count as "an account exists" for the one-per-portal rule. */
 export const LIVE_ACCOUNT_STATUSES: readonly AccountStatus[] = ["active", "pending", "incomplete", "expired", "suspended", "unknown"];
+/** Live statuses a newly confirmed registration may replace. An active account is never overwritten. */
+export const REREGISTERABLE_STATUSES: readonly AccountStatus[] = ["pending", "incomplete", "expired", "suspended", "unknown"];
 
 /**
  * D7: the credential label names a password-manager entry ("1Password: Cyvrix /
- * Sell2Wales"). It must never be the password itself. A long run of characters
- * with no spaces, mixing letters with digits or symbols, looks like a secret and
- * is refused. Names are short and readable.
+ * Sell2Wales"). It must never be the password itself. A run of 12 or more
+ * characters with no spaces, mixing letters with digits or symbols (hyphens
+ * aside, so "procurement-portals" is a name), looks like a secret and is
+ * refused. Runs are split on spaces only, so a key with slashes or colons in it
+ * (wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY) is still one run.
  */
 export function credentialLabelProblem(label: string): string | null {
   const t = label.trim();
   if (t.length < 3 || t.length > 120) return "Give the password-manager entry's name (3 to 120 characters).";
-  const runs = t.split(/[\s:/|,>-]+/).filter(Boolean);
-  const secretLike = runs.some((r) => r.length >= 12 && /[A-Za-z]/.test(r) && /[\d\W_]/.test(r) && !/^https?/.test(r));
+  const runs = t.split(/\s+/).filter(Boolean);
+  const secretLike = runs.some((r) => {
+    if (/^https?:\/\//i.test(r)) return false;
+    const core = r.replace(/[:,]+$/, "");
+    return core.length >= 12 && /[A-Za-z]/.test(core) && /[\d_]|[^\w-]/.test(core);
+  });
   if (secretLike) return "That looks like a password or key. Enter only the name of the entry in your password manager, never the secret.";
   return null;
+}
+
+/**
+ * D13: the founder's standing policy covers one portal at one address. A
+ * change to where registrations go, or to the portal no longer being free,
+ * ends it; the founder switches it on again, with a fresh code, if it still applies.
+ */
+export function policyMustReset(
+  before: { url: string; registrationUrl: string | null; cost: string },
+  after: { url: string; registrationUrl: string | null; cost: string }
+): boolean {
+  return after.cost !== "free" || before.url !== after.url || (before.registrationUrl ?? null) !== (after.registrationUrl ?? null) || before.cost !== after.cost;
+}
+
+/**
+ * A form's comma- or line-separated list. Any entry that does not match is an
+ * error, never silently dropped: a mistyped requirement must not make a
+ * registration look ready.
+ */
+export function parseList(raw: string | undefined, re: RegExp, max = 30): { ok: true; values: string[] } | { ok: false; reason: string } {
+  const values = (raw ?? "").split(/[,\n]/).map((x) => x.trim().toLowerCase()).filter(Boolean);
+  const bad = values.find((v) => !re.test(v));
+  if (bad) return { ok: false, reason: `"${bad.slice(0, 60)}" is not a valid entry.` };
+  if (values.length > max) return { ok: false, reason: `At most ${max} entries.` };
+  return { ok: true, values: [...new Set(values)] };
+}
+
+/**
+ * Spec section 35: a programme is verified against the organisation's own
+ * page. When the organisation's website is known, the source must be on that
+ * site (or a subdomain of it).
+ */
+export function sourceMatchesOrganisation(sourceUrl: string, website: string | null): boolean {
+  if (!website) return true;
+  try {
+    const host = new URL(sourceUrl).hostname.toLowerCase().replace(/^www\./, "");
+    const site = new URL(website).hostname.toLowerCase().replace(/^www\./, "");
+    return host === site || host.endsWith(`.${site}`);
+  } catch {
+    return false;
+  }
 }
 
 export type PolicyInput = {
@@ -108,7 +158,7 @@ export type ReadinessInput = {
   now: Date;
 };
 
-const EVIDENCE = ["verified", "founder_approved", "certified_evidence"];
+const EVIDENCE: readonly string[] = EVIDENCE_STATUSES;
 
 /** Which verified facts and current documents a registration still lacks. */
 export function registrationReadiness(input: ReadinessInput): { ready: boolean; missingFacts: string[]; missingDocuments: string[] } {

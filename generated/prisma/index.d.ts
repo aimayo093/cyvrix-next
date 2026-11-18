@@ -130522,6 +130522,7 @@ export namespace Prisma {
       paperclipIssueId: string | null
       /**
        * The partnership programme this opportunity pursues (migration 20261118120000).
+       * One opportunity per programme: partial unique index in migration 20261119130000.
        */
       programmeId: string | null
       createdById: string | null
