@@ -869,9 +869,17 @@ is configured.
 - The ChatGPT report is pasted in (D1). Its items keep their section, link and
   text as evidence, and are marked as from the task. Nothing is labelled as
   from the ChatGPT task unless it was pasted from it.
-- No agent API in Phase 2: D4's "full access" would send personal data to
-  DeepSeek without a transfer basis (§15). See
-  `docs/procurement/privacy-notice-draft.md`.
+- Agents get procurement access only through `PAPERCLIP_PROCUREMENT_TOKEN`
+  (D4: organisations and roles only). This came after "full access" was
+  declined, because it would send personal data to DeepSeek without a
+  transfer basis (§15).
+  - `lib/procurement/agent-view.ts` is an allow-list. It never includes
+    contacts, notice descriptions, report quotes or personal profile links.
+  - Research from agents is refused if it holds an email address, a phone
+    number or such a link.
+  - Agents can only validate, qualify or research.
+  - The token must differ from the read and draft tokens, or the scope stays
+    off.
 
 **Tests:** `npm run test:procurement` (rules, no database), `npm run test:procurement-ingest` (feeds and import parsing, no network) and
 `npm run test:procurement-db` (a throwaway local Postgres only; it refuses any

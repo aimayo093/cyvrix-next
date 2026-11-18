@@ -44,7 +44,14 @@ opportunities we research or are told about.
 
 ---
 
-## Open point before this is final: AI agents (D4)
+## AI agents (D4): resolved, no extra wording needed
+
+On 18 November 2026 the founder chose **organisations and roles only** for
+agents. Buyer contacts never reach Paperclip or DeepSeek, so there is no
+international transfer of this personal data and nothing to add to the
+notice for it. The section below is kept only as the record of why.
+
+### Previous open point (superseded)
 
 The founder chose **"allow agent full access"** for D4. Paperclip's agents
 run on **DeepSeek, which processes data in China**. If agents are given these

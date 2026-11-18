@@ -7,6 +7,8 @@
 import { buyerContacts, crossSourceKey, isRelevant, normalise, noticeUrl, withoutContactPoints } from "../lib/procurement/ocds";
 import { parseReport } from "../lib/procurement/report-import";
 import { isScheduledRun } from "../lib/procurement/schedule";
+import { agentOpportunity, containsPersonalData, isPublicLink, scrub } from "../lib/procurement/agent-view";
+import { authorise } from "../lib/paperclip-auth";
 import {
   awardOnly,
   ftsItSupport,
@@ -87,6 +89,73 @@ check("06:00 UTC in winter (06:00 London) runs", isScheduledRun(new Date("2026-1
 check("06:00 UTC in summer (07:00 London) runs", isScheduledRun(new Date("2026-07-01T06:00:00Z")), true);
 check("midday does not", isScheduledRun(new Date("2026-12-01T12:00:00Z")), false);
 check("09:00 London does not (that is the ChatGPT report's slot)", isScheduledRun(new Date("2026-12-01T09:00:00Z")), false);
+
+console.log("\n  Agent view: organisations and roles only (D4)");
+check("an email address is personal data", containsPersonalData("Contact pat.example@council.example for details"), true);
+check("a UK phone number is personal data", containsPersonalData("Call 01792 000000"), true);
+check("an international number is personal data", containsPersonalData("Call +44 20 0000 0000"), true);
+check("a LinkedIn profile link is personal data", containsPersonalData("See https://www.linkedin.com/in/someone"), true);
+check("a mailto link is personal data", containsPersonalData("mailto:x"), true);
+check("dates and values are not mistaken for phones", containsPersonalData("Deadline 2026-12-15 12:00, value 250000, ref 100001-2026"), false);
+check(
+  "an organisation and a role are fine",
+  containsPersonalData("Head of IT at Example Council, notice https://www.find-tender.service.gov.uk/Notice/100001-2026"),
+  false
+);
+check("scrub removes emails and phones", scrub("Ask a@b.example or 01792 000000"), "Ask [email removed] or [phone removed]");
+check("public https link allowed", isPublicLink("https://www.find-tender.service.gov.uk/Notice/1"), true);
+check("plain http refused", isPublicLink("http://example.com"), false);
+check("social profile refused", isPublicLink("https://facebook.com/someone"), false);
+const view = agentOpportunity({
+  id: "o1",
+  kind: "tender",
+  status: "Discovered",
+  title: "IT support - contact a@b.example",
+  origin: "fts",
+  confirmedBuying: true,
+  deadlineAt: new Date("2026-12-15T12:00:00Z"),
+  clarificationDeadlineAt: null,
+  valueMin: null,
+  valueMax: { toString: () => "250000" },
+  currency: "GBP",
+  region: "UKL",
+  cpv: ["72253000"],
+  updatedAt: new Date("2026-11-18T08:00:00Z"),
+  Buyer: { name: "Example County Council" },
+  Evidence: [{ url: "https://www.find-tender.service.gov.uk/Notice/100001-2026" }, { url: "https://www.linkedin.com/in/someone" }, { url: null }],
+});
+check("the agent view has exactly the allowed fields", Object.keys(view).sort(), [
+  "buyer",
+  "clarificationDeadlineAt",
+  "confirmedBuying",
+  "cpv",
+  "currency",
+  "deadlineAt",
+  "id",
+  "kind",
+  "links",
+  "origin",
+  "region",
+  "status",
+  "title",
+  "updatedAt",
+  "valueMax",
+  "valueMin",
+]);
+check("an email in a title is removed", view.title, "IT support - contact [email removed]");
+check("only public links are passed on", view.links, ["https://www.find-tender.service.gov.uk/Notice/100001-2026"]);
+
+console.log("\n  Procurement token scope");
+const R = "r".repeat(40);
+const D = "d".repeat(40);
+const P = "p".repeat(40);
+check("off with no procurement token", authorise("procurement", `Bearer ${P}`, { PAPERCLIP_READ_TOKEN: R }), "off");
+check("its own token works", authorise("procurement", `Bearer ${P}`, { PAPERCLIP_READ_TOKEN: R, PAPERCLIP_PROCUREMENT_TOKEN: P }), "ok");
+check("the read token does not open it", authorise("procurement", `Bearer ${R}`, { PAPERCLIP_READ_TOKEN: R, PAPERCLIP_PROCUREMENT_TOKEN: P }), "unauthorised");
+check("the procurement token does not open client data", authorise("read", `Bearer ${P}`, { PAPERCLIP_READ_TOKEN: R, PAPERCLIP_PROCUREMENT_TOKEN: P }), "unauthorised");
+check("reusing the read token switches it off", authorise("procurement", `Bearer ${R}`, { PAPERCLIP_READ_TOKEN: R, PAPERCLIP_PROCUREMENT_TOKEN: R }), "off");
+check("reusing the draft token switches it off", authorise("procurement", `Bearer ${D}`, { PAPERCLIP_DRAFT_TOKEN: D, PAPERCLIP_PROCUREMENT_TOKEN: D }), "off");
+check("a short token is off", authorise("procurement", "Bearer short", { PAPERCLIP_PROCUREMENT_TOKEN: "short" }), "off");
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

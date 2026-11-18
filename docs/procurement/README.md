@@ -124,7 +124,7 @@ Still open: D1, D3, D4, D8, D10, D12, D13, D14, and merging and deploying the Ph
 - **D1:** paste-in import of the ChatGPT report. Built (Admin → Procurement → Import report). Email forwarding was not chosen.
 - **D10:** not yet. No Paperclip agent is created; agent 13 is to be decided once real data flows.
 - **D12:** store buyer contacts from published notices, and update the privacy notice. Contacts are stored on the buyer organisation and stay in the admin. Draft wording: [privacy-notice-draft.md](privacy-notice-draft.md). It must be published before a feed is switched on.
-- **D4:** the founder chose "allow agent full access". **Not built.** Agents run on DeepSeek (China), and there is no UK GDPR transfer mechanism for personal data (`DECISIONS.md` §15). Giving agents buyer contacts would be an unlawful transfer until one is in place. Phase 2 therefore gives agents no procurement access at all, pending the founder's choice in the draft: (a) organisations and roles only, (b) a transfer mechanism first, or (c) a UK/EU provider.
+- **D4:** first "allow agent full access"; on 18 November, after the transfer issue was explained (agents run on DeepSeek in China, no UK GDPR transfer basis: `DECISIONS.md` §15), the founder chose **organisations and roles only**. Built: a separate `PAPERCLIP_PROCUREMENT_TOKEN` scope; agents read opportunities and organisations through an allow-list with no contacts, notice text or personal links, may record research (refused if it holds personal data) and may only validate, qualify or research. Off until the founder sets the token.
 
 ### Decisions requested
 

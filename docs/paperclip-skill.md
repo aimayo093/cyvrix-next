@@ -147,3 +147,48 @@ then. `GET /drafts/<id>` returns one. `status` is:
 
 Check on each heartbeat and write what you learned from any rejection into your
 Paperclip issue, so the next draft is better.
+
+## Procurement (procurement token)
+
+For agents that work on tenders, commercial leads and partnerships. The token is
+separate from the read and draft tokens, and gives no access to clients,
+enquiries or tickets.
+
+**You never see personal data, and you must never send any.** Opportunities come
+to you with organisations, deadlines, values, CPV codes and public notice links
+only. They carry no contact names, email addresses, phone numbers or notice text.
+If you need a notice's detail, read the public notice at its link. When you
+record research, name organisations and roles ("Head of IT, Example Council"),
+never people. A submission containing an email address, a phone number or a
+personal profile link (LinkedIn and similar) is refused with 422.
+
+| Call | What it does |
+| --- | --- |
+| `GET /procurement/opportunities?since=<ISO>&kind=&status=&limit=` | Opportunities changed since `since`, oldest first. Pass the returned `next` back as `since`. |
+| `GET /procurement/organisations?category=` | Research targets and buyers (`field_engineering`, `government_defence`, `manufacturer`, `enterprise_distribution`, `buyer`). |
+| `POST /procurement/research` | Record an opportunity you found. It lands as `Discovered` (or `TargetIdentified` for a partnership) for a person to review. |
+| `POST /procurement/opportunities/<id>/move` | Ask to move a record: `{ "to": "Validated", "agent": "<your name>" }`. Only validate, qualify and research moves can succeed; anything else returns 409 with the reason. |
+
+Research body:
+
+```json
+{
+  "idempotencyKey": "cco-2026-11-18-0001",
+  "kind": "commercial",
+  "title": "Example Retail Ltd opening three Cardiff stores",
+  "organisation": "Example Retail Ltd",
+  "evidenceUrl": "https://example.com/news/new-stores",
+  "deadlineAt": "2026-12-15T12:00:00Z",
+  "valueMax": 50000,
+  "confirmedBuying": false,
+  "source": { "agent": "CCO", "issueId": "<Paperclip issue id>" }
+}
+```
+
+- `kind`: `commercial`, `tender` or `partnership`.
+- `evidenceUrl` is required and must be an `https` link to a public page.
+- `confirmedBuying` is `true` only for a published tender or request for quotes, never for an inferred prospect.
+- Retrying with the same `idempotencyKey` returns the original; the same evidence link within 30 days does too.
+
+You cannot submit, approve, award or contact anyone through this API. Those steps
+are the founder's, in the admin.

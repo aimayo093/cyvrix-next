@@ -72,6 +72,16 @@ agents that need each one. Load `docs/paperclip-skill.md` into every agent
 that talks to the website: it explains the API, the content rules and how to
 read your feedback.
 
+## 4a. Procurement access (optional)
+
+A third token, `PAPERCLIP_PROCUREMENT_TOKEN`, lets an agent read procurement
+opportunities and organisations with no personal data, record research, and
+validate or qualify records (DECISIONS section 20, founder decision D4: organisations and roles only).
+Make it the same way as the others (step 1). It must differ from both: if it
+equals either, procurement access stays off. Add it in Vercel (step 2) and give
+it only to the agent that does procurement work. Until it is set, the
+`/api/integrations/paperclip/procurement/` routes answer 404.
+
 ## 5. A suggested team
 
 | Agent | Reports to | Token | Heartbeat | Job |

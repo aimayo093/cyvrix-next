@@ -33,6 +33,7 @@ const { prisma } = await import("../lib/prisma");
 const service = await import("../lib/procurement/service");
 const ingest = await import("../lib/procurement/ingest");
 const fx = await import("./fixtures/procurement/ocds");
+const agentApi = await import("../lib/procurement/agent-api");
 
 let passed = 0;
 let failed = 0;
@@ -456,6 +457,44 @@ try {
   ]);
   check("two runs of one source at once: one is turned away", [a1.status, a2.status].sort(), ["skipped", "succeeded"]);
   check("every completed run is audited (5)", await prisma.auditLog.count({ where: { action: "procurement.sync" } }), 5);
+
+  console.log("\n  Agent access: organisations and roles only (D4)");
+  const listed = await agentApi.listOpportunitiesForAgents({ since: null, kind: null, status: null, limit: 200 });
+  const wire = JSON.stringify(listed);
+  check("agents see the feed opportunities", listed.opportunities.some((o) => o.title === "Managed IT Support Services"), true);
+  check("no email address reaches an agent", /@/.test(wire), false);
+  check("no contact name reaches an agent", wire.includes("Pat Example"), false);
+  check("no notice description reaches an agent", wire.includes("Synthetic notice"), false);
+  check("contacts exist in the admin all the same", (await prisma.contact.count({ where: { organisationId: { not: null } } })) >= 2, true);
+  const orgs = await agentApi.listOrganisationsForAgents("buyer");
+  check("agents see buyer organisations by name", orgs.organisations.some((o) => o.name === "Example Health Board"), true);
+  check("and no organisation notes or contacts", JSON.stringify(orgs).includes("Created from an official tender notice") || /@/.test(JSON.stringify(orgs)), false);
+
+  const research = agentApi.researchSchema.parse({
+    idempotencyKey: "agent-test-0001",
+    kind: "commercial",
+    title: "Example Retail Ltd opening three Cardiff stores",
+    organisation: "Example Retail Ltd",
+    evidenceUrl: "https://example.com/retail-news",
+    source: { agent: "CCO", issueId: "CYV-99" },
+  });
+  const first = await agentApi.recordAgentResearch(research);
+  check("agent research lands as a new opportunity", first.created, true);
+  const landed = await prisma.opportunity.findUniqueOrThrow({ where: { id: first.id }, include: { Buyer: true } });
+  check("in Discovered, marked as from Paperclip", [landed.status, landed.origin, landed.paperclipIssueId], ["Discovered", "paperclip", "CYV-99"]);
+  check("retrying with the same key returns the original", await agentApi.recordAgentResearch(research), { id: first.id, created: false });
+  check(
+    "research with an email address is refused before it reaches the database",
+    agentApi.researchSchema.safeParse({ ...research, idempotencyKey: "agent-test-0002", title: "Call jo@example.com about IT" }).success,
+    false
+  );
+  check(
+    "research citing a LinkedIn profile is refused",
+    agentApi.researchSchema.safeParse({ ...research, idempotencyKey: "agent-test-0003", evidenceUrl: "https://www.linkedin.com/in/someone" }).success,
+    false
+  );
+  check("an agent may validate", (await agentApi.agentMove(first.id, "Validated", "CCO")).ok, true);
+  check("an agent may not archive or skip ahead", [(await agentApi.agentMove(first.id, "Archived", "CCO")).ok, (await agentApi.agentMove(first.id, "Submitted", "CCO")).ok], [false, false]);
 
 } finally {
   await prisma.$disconnect();

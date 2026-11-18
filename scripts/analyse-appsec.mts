@@ -21,7 +21,7 @@ import path from "node:path";
 
 /** The route passes every request through the Paperclip gate: bearer token and rate limit. */
 const usesBearerGate = (source: string) =>
-  /from\s+["']@\/lib\/paperclip-route["']/.test(source) && /\bawait\s+guard\(req,\s*["'](read|draft)["']\)/.test(source);
+  /from\s+["']@\/lib\/paperclip-route["']/.test(source) && /\bawait\s+guard\(req,\s*["'](read|draft|procurement)["']\)/.test(source);
 
 /**
  * "not_applicable": the scan looked and the feature does not exist (no
