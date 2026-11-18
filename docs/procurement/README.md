@@ -1,11 +1,13 @@
 # Procurement, tenders and partnerships: Phase 0 proposal
 
-**Status (15 November 2026):** Phase 0 approved. Phase 1 is built on PR 14,
+**Status (18 November 2026):** Phase 1 is merged (PR 14, `0162546`), deployed and checked on the live site,
+including a test upload to private storage. Phase 2 (official feeds and the ChatGPT import) is built on
+branch `feat/procurement-phase2`; it needs no migration. Phase 1 was built on PR 14,
 with review fixes. Production has the two Phase 1 migrations
 (`procurement_foundation`, `procurement_target_organisations`) and the
 hardening migration (`procurement_hardening`, from `20261115130000`). Each was
 dry-run on production in a rolled-back transaction, then applied after the
-founder's go-ahead. The Phase 1 code is not merged or deployed. No external
+founder's go-ahead. The Phase 1 code was merged and deployed on 15 November (PR 14). No external
 account, message or spend has been made.
 
 **Source of truth for requirements:** the founder's specification (master
@@ -104,7 +106,7 @@ yours to take. Each has a recommendation.
 | B8 | Paperclip runs on the founder's computer and agents run only when it is on | Scheduled agent work stops when the PC is off | Time-critical pulls (official APIs, deadline alerts) run on Vercel Cron, not in Paperclip |
 | B9 | Supabase session pooler allows 15 clients in total (`DECISIONS.md` §7) | Background jobs can starve admin pages | Jobs use one connection each and run one at a time; the pooler fix in §7 is still recommended |
 | B10 | Portal terms for automated access (Defence Sourcing Portal on Jaggaer, eTendersNI, local authority portals) were not found | Browser automation (§17) cannot be assumed permitted | No portal automation until each portal's terms are read and you approve it (D8) |
-| B11 | Sell2Wales API returned HTTP 500 on 14 Nov 2026 | The Welsh source is less reliable than the others | Use its OCDS monthly download; health-check the API |
+| B11 | Sell2Wales API returned HTTP 500 on 14 Nov 2026 | The Welsh source is less reliable than the others | Phase 2 reads the API and marks the source degraded when it fails (no download fallback built yet: the monthly file is a manual download today) |
 
 ### Decisions recorded (15 November 2026)
 
@@ -113,9 +115,16 @@ The founder answered in the Phase 0 follow-up:
 - **D5 private document store, D6 Organisation table, D7 no portal passwords, D11 no new spending**: approved as recommended.
 - **D2 "Company experience."** The past field work may be described as company experience **once the evidence (contract or purchase orders) is uploaded and recorded as a company fact**. Until then every document keeps the `PRODUCT.md` wording.
 
-- **"Dry-run, then apply"** (Phase 1 migrations). Dry-run on production in a rolled-back transaction succeeded, then `procurement_foundation` and `procurement_target_organisations` were applied on 15 November 2026. Verified: 52 organisations (6 at priority 1), 10 sources all off, private bucket `company-documents` with no storage policies, RLS on all 16 new tables with no API-role grants, 4 guard triggers. The Supabase security advisor reports only the expected "RLS enabled, no policy" notes (server-only tables, as `AgentDraft`). The Phase 1 **code is not merged or deployed**.
+- **"Dry-run, then apply"** (Phase 1 migrations). Dry-run on production in a rolled-back transaction succeeded, then `procurement_foundation` and `procurement_target_organisations` were applied on 15 November 2026. Verified: 52 organisations (6 at priority 1), 10 sources all off, private bucket `company-documents` with no storage policies, RLS on all 16 new tables with no API-role grants, 4 guard triggers. The Supabase security advisor reports only the expected "RLS enabled, no policy" notes (server-only tables, as `AgentDraft`). (The code followed in PR 14, merged 15 November.)
 
-Still open: D1, D3, D4, D8, D10, D12, D13, D14, and merging and deploying the Phase 1 code.
+Still open after Phase 1: D3, D8, D13, D14 (D1, D4, D10 and D12 were decided for Phase 2, below).
+
+### Phase 2 decisions (15–18 November 2026)
+
+- **D1:** paste-in import of the ChatGPT report. Built (Admin → Procurement → Import report). Email forwarding was not chosen.
+- **D10:** not yet. No Paperclip agent is created; agent 13 is to be decided once real data flows.
+- **D12:** store buyer contacts from published notices, and update the privacy notice. Contacts are stored on the buyer organisation and stay in the admin. Draft wording: [privacy-notice-draft.md](privacy-notice-draft.md). It must be published before a feed is switched on.
+- **D4:** first "allow agent full access"; on 18 November, after the transfer issue was explained (agents run on DeepSeek in China, no UK GDPR transfer basis: `DECISIONS.md` §15), the founder chose **organisations and roles only**. Built: a separate `PAPERCLIP_PROCUREMENT_TOKEN` scope; agents read opportunities and organisations through an allow-list with no contacts, notice text or personal links, may record research (refused if it holds personal data) and may only validate, qualify or research. Off until the founder sets the token.
 
 ### Decisions requested
 

@@ -1,20 +1,23 @@
 /**
  * Which token unlocks which part of the Paperclip integration.
  *
- * Two scopes, two secrets (DECISIONS section 15):
- *   read   leads, tickets, privacy requests and the company snapshot
- *   draft  submit marketing drafts and proposals, and read their review result
+ * Three scopes, three secrets (DECISIONS sections 15 and 20):
+ *   read         leads, tickets, privacy requests and the company snapshot
+ *   draft        submit marketing drafts and proposals, and read their review result
+ *   procurement  read opportunities and organisations with no personal data,
+ *                record research, and make the few moves agents may make
  *
  * An agent that only writes copy is given the draft token and never holds
- * client data. The two must differ: if they are the same value, drafting is
- * switched off, because one leaked secret would otherwise grant both.
+ * client data. Each must differ from the others: a draft or procurement token
+ * equal to another token switches that scope off, because one leaked secret
+ * would otherwise grant both.
  *
  * Kept free of Prisma and `server-only` so `npm run test:paperclip` can run it.
  */
 import { feedAuthorised } from "@/lib/executive-os-feed-core";
 import type { SecurityScanCheck } from "@/lib/security-scan";
 
-export type IntegrationScope = "read" | "draft";
+export type IntegrationScope = "read" | "draft" | "procurement";
 
 export const MIN_TOKEN_LENGTH = 32;
 
@@ -32,8 +35,10 @@ export function integrationToken(scope: IntegrationScope, env: Record<string, st
   const read = usable(env.PAPERCLIP_READ_TOKEN) ?? usable(env.EXECUTIVE_OS_FEED_TOKEN);
   if (scope === "read") return read;
   const draft = usable(env.PAPERCLIP_DRAFT_TOKEN);
-  if (!draft || draft === read) return null;
-  return draft;
+  if (scope === "draft") return !draft || draft === read ? null : draft;
+  const procurement = usable(env.PAPERCLIP_PROCUREMENT_TOKEN);
+  if (!procurement || procurement === read || procurement === draft) return null;
+  return procurement;
 }
 
 export type AuthResult = "off" | "unauthorised" | "ok";
@@ -50,12 +55,16 @@ export function integrationTokenState(env: Record<string, string | undefined> = 
   const raw = (v: string | undefined) => v?.trim() ?? "";
   const read = raw(env.PAPERCLIP_READ_TOKEN) || raw(env.EXECUTIVE_OS_FEED_TOKEN);
   const draft = raw(env.PAPERCLIP_DRAFT_TOKEN);
+  const procurement = raw(env.PAPERCLIP_PROCUREMENT_TOKEN);
   return {
     readSet: read.length > 0,
     readStrong: read.length >= MIN_TOKEN_LENGTH,
     draftSet: draft.length > 0,
     draftStrong: draft.length >= MIN_TOKEN_LENGTH,
     sameValue: read.length > 0 && read === draft,
+    procurementSet: procurement.length > 0,
+    procurementStrong: procurement.length >= MIN_TOKEN_LENGTH,
+    procurementReused: procurement.length > 0 && (procurement === read || procurement === draft),
   };
 }
 
@@ -66,16 +75,18 @@ export function integrationTokenState(env: Record<string, string | undefined> = 
 export function paperclipTokenCheck(env: Record<string, string | undefined> = process.env): SecurityScanCheck {
   const t = integrationTokenState(env);
   const base = { id: "paperclip_tokens", label: "Paperclip Integration Tokens", category: "security" as const };
-  if (!t.readSet && !t.draftSet) {
+  if (!t.readSet && !t.draftSet && !t.procurementSet) {
     return { ...base, status: "pass", assessed: false, notApplicable: true, detail: "The Paperclip integration is switched off: no tokens are set, so its routes answer 404." };
   }
   const problems: string[] = [];
   if (t.readSet && !t.readStrong) problems.push(`the read token is shorter than ${MIN_TOKEN_LENGTH} characters, so reading is switched off`);
   if (t.draftSet && !t.draftStrong) problems.push(`the draft token is shorter than ${MIN_TOKEN_LENGTH} characters, so drafting is switched off`);
   if (t.sameValue) problems.push("the read and draft tokens are the same value, so drafting is switched off; give them different values");
+  if (t.procurementSet && !t.procurementStrong) problems.push(`the procurement token is shorter than ${MIN_TOKEN_LENGTH} characters, so procurement access is switched off`);
+  if (t.procurementReused) problems.push("the procurement token is the same as another token, so procurement access is switched off; give it its own value");
   if (problems.length > 0) {
     return { ...base, status: "warn", detail: `Paperclip: ${problems.join("; ")}.` };
   }
-  const on = [t.readSet && "read", t.draftSet && "draft"].filter(Boolean).join(" and ");
+  const on = [t.readSet && "read", t.draftSet && "draft", t.procurementSet && "procurement"].filter(Boolean).join(", ");
   return { ...base, status: "pass", detail: `Paperclip ${on} access is on, each with its own token of at least ${MIN_TOKEN_LENGTH} characters.` };
 }

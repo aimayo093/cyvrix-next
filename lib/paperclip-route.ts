@@ -18,6 +18,7 @@ export const NO_STORE = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex,
 const LIMITS: Record<IntegrationScope, { limit: number; windowMs: number }> = {
   read: { limit: 120, windowMs: 60 * 60 * 1000 },
   draft: { limit: 60, windowMs: 60 * 60 * 1000 },
+  procurement: { limit: 120, windowMs: 60 * 60 * 1000 },
 };
 
 export function json(body: unknown, status = 200, extra: Record<string, string> = {}) {

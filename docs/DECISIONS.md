@@ -164,11 +164,26 @@ latest major falls outside one of those ranges — ESLint 10 while
 eslint-config-next's plugins stop at 9, TypeScript 7 while typescript-eslint
 stops below 6.1 — the scan names the package and what holds it instead of
 raising a warning nobody can act on. It is not a blind spot: Dependabot
-proposes the upgrade once the ceiling lifts, and CI's
-`npm audit --omit=dev --audit-level=moderate` still blocks a production
-dependency with a moderate or worse advisory. That audit does not cover
+proposes the upgrade once the ceiling lifts, and CI's audit gate
+(`npm run audit:gate`, below) still blocks a production dependency with a
+moderate or worse advisory. That audit does not cover
 development-only packages, which is where both of today's held-back packages
 sit.
+
+**An advisory with no fix** (19 November 2026). The picomatch ReDoS advisory
+(GHSA-fc5q-39xc-vjpf) covers every release up to the latest, 4.0.7, so no
+upgrade clears it, and npm's only suggestion is Sentry 8.38.0 (three majors
+back). picomatch reaches this project only through `@rollup/plugin-commonjs`,
+which `@sentry/nextjs` loads in its webpack loader at build time; the patterns
+it matches come from our own configuration, never a request. The founder
+approved a dated exception. CI now runs `npm run audit:gate` instead of the
+bare audit: it fails exactly as before, except for an advisory listed in
+`scripts/audit-exceptions.json` *for the packages listed there*, until its
+`reviewBy` date. The same advisory reaching any other package, any other
+advisory, or an expired entry fails the build; a fixed advisory leaves a note
+to remove its entry. Each entry records its reason and who approved it. Do
+not add an entry to make a build pass: an entry needs a reason a reviewer can
+check, as this one does.
 
 **A firewall challenge is not the site's answer** (13 November 2026). The live
 checks request the site's own public URL, so Vercel's bot protection
@@ -853,7 +868,38 @@ resubmit. Tenders stay once-only in the service.
 Uploads are checked structurally, not for malware, unless a scanning service
 is configured.
 
-**Tests:** `npm run test:procurement` (rules, no database) and
+**Phase 2: official feeds and the ChatGPT import (18 November 2026).**
+- Find a Tender, Public Contracts Scotland and Sell2Wales are read from their
+  public OCDS APIs (Sell2Wales has no download fallback; a failing API shows
+  as degraded). Each feed is off until the founder switches it on, which is
+  refused until the published privacy policy covers buyer contacts from public
+  tenders (`lib/procurement/privacy-gate.ts`, D12). It is then
+  read once a day at 06:00 UTC. The schedule is daily because every other job
+  on this site is, and the plan's cron limits were not confirmed. "Run now" is
+  available to the founder.
+- Only IT-relevant notices are kept, matched by CPV code or wording
+  (`lib/procurement/ocds.ts`). The filter was checked on a real day's notices.
+- One opportunity per OCID. The same tender on two portals (Scottish notices
+  appear on both Find a Tender and PCS) is matched by buyer, title and
+  deadline day, and added as evidence rather than stored twice.
+- Raw notices are stored without contact points. Buyer contacts (D12) are
+  stored as `Contact` rows on the buyer organisation.
+- The ChatGPT report is pasted in (D1). Its items keep their section, link and
+  text as evidence, and are marked as from the task. Nothing is labelled as
+  from the ChatGPT task unless it was pasted from it.
+- Agents get procurement access only through `PAPERCLIP_PROCUREMENT_TOKEN`
+  (D4: organisations and roles only). This came after "full access" was
+  declined, because it would send personal data to DeepSeek without a
+  transfer basis (§15).
+  - `lib/procurement/agent-view.ts` is an allow-list. It never includes
+    contacts, notice descriptions, report quotes or personal profile links.
+  - Research from agents is refused if it holds an email address, a phone
+    number or such a link.
+  - Agents can only validate, qualify or research.
+  - The token must differ from the read and draft tokens, or the scope stays
+    off.
+
+**Tests:** `npm run test:procurement` (rules, no database), `npm run test:procurement-ingest` (feeds and import parsing, no network) and
 `npm run test:procurement-db` (a throwaway local Postgres only; it refuses any
 non-local URL).
 

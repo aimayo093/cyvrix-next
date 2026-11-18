@@ -31,6 +31,9 @@ process.env.DATABASE_URL = url;
 
 const { prisma } = await import("../lib/prisma");
 const service = await import("../lib/procurement/service");
+const ingest = await import("../lib/procurement/ingest");
+const fx = await import("./fixtures/procurement/ocds");
+const agentApi = await import("../lib/procurement/agent-api");
 
 let passed = 0;
 let failed = 0;
@@ -386,6 +389,163 @@ try {
   );
   check("three identical racing moves: exactly one wins", raced.filter((r) => r.ok).length, 1);
   check("and only one is recorded", await prisma.auditLog.count({ where: { entityId: oppE, action: "opportunity.transition" } }), 1);
+  console.log("\n  Official feed ingestion (fake feeds, Phase 2)");
+  const FTS = "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages";
+  const calls: string[] = [];
+  const s2wStatus: number = 503;
+  const fakeFetch = async (url: string) => {
+    calls.push(url);
+    await new Promise((r) => setTimeout(r, 150));
+    if (url.startsWith(FTS)) {
+      if (url.includes("cursor=")) return { status: 200, retryAfter: null, body: { releases: [fx.ftsKeywordOnly] } };
+      return {
+        status: 200,
+        retryAfter: null,
+        body: {
+          releases: [fx.ftsItSupport, fx.ftsTraining, fx.awardOnly],
+          links: { next: `${FTS}?stages=tender&limit=100&updatedFrom=2026-11-16T00:00:00&updatedTo=2026-11-18T10:00:00&cursor=abc` },
+        },
+      };
+    }
+    if (url.startsWith("https://api.publiccontractsscotland.gov.uk/")) {
+      return { status: 200, retryAfter: null, body: { releases: [fx.pcsCopyOfItSupport, fx.pcsCyber] } };
+    }
+    if (url.startsWith("https://api.sell2wales.gov.wales/")) return { status: s2wStatus, retryAfter: "120", body: s2wStatus === 200 ? { releases: [] } : null };
+    throw new Error(`unexpected url ${url}`);
+  };
+  const morning = new Date("2026-11-18T06:00:00Z");
+
+  const off = await ingest.runSource("fts", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("a switched-off source is skipped by the cron", [off.status, calls.length], ["skipped", 0]);
+
+  await prisma.opportunitySource.updateMany({ where: { key: { in: ["fts", "pcs", "s2w"] } }, data: { enabled: true } });
+  const fts1 = await ingest.runSource("fts", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("both pages read through the cursor", [fts1.status, fts1.fetched, calls.length], ["succeeded", 4, 2]);
+  check("only IT tenders kept (support + Wi-Fi/cabling), award and training skipped", [fts1.relevant, fts1.created], [2, 2]);
+  check("buyer contact stored once", fts1.contacts, 1);
+  const ftsSource = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "fts" } });
+  check("next window starts at the chain's updatedTo", ftsSource.lastSuccessAt?.toISOString(), "2026-11-18T10:00:00.000Z");
+  check("no cursor left over", ftsSource.cursor, null);
+  check("health ok", ftsSource.health, "ok");
+  const itSupport = await prisma.opportunity.findFirstOrThrow({ where: { ocid: "ocds-h6vhtk-0aaaa1" }, include: { Buyer: true, Evidence: true } });
+  check("opportunity is a confirmed tender in Discovered", [itSupport.kind, itSupport.status, itSupport.confirmedBuying, itSupport.origin], ["tender", "Discovered", true, "fts"]);
+  check("buyer organisation created and marked as a buyer", [itSupport.Buyer?.name, itSupport.Buyer?.categories], ["Example County Council", ["buyer"]]);
+  check("evidence links to the notice", itSupport.Evidence[0]?.url, "https://www.find-tender.service.gov.uk/Notice/100001-2026");
+  const storedRaw = await prisma.procurementNotice.findFirstOrThrow({ where: { ocid: "ocds-h6vhtk-0aaaa1" } });
+  const rawText = JSON.stringify(storedRaw.raw);
+  check("stored raw notice has no contact name, email or phone", [rawText.includes("Pat Example"), rawText.includes("@"), rawText.includes("0000 000000")], [false, false, false]);
+
+  calls.length = 0;
+  const fts2 = await ingest.runSource("fts", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("re-reading the same notices creates nothing", [fts2.created, fts2.updated, fts2.contacts], [0, 0, 0]);
+  check("and it did read them again", calls.length > 0, true);
+
+  const pcs = await ingest.runSource("pcs", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("PCS copy of the same tender is merged, the cyber tender is new", [pcs.merged, pcs.created], [1, 1]);
+  check("the merged tender now has evidence from both portals", await prisma.opportunityEvidence.count({ where: { opportunityId: itSupport.id } }), 2);
+  check("opportunities from the feeds so far", await prisma.opportunity.count({ where: { origin: { in: ["fts", "pcs"] } } }), 3);
+  check("health board created as a buyer with its contact", await prisma.contact.count({ where: { Organisation: { name: "Example Health Board" } } }), 1);
+
+  const s2w = await ingest.runSource("s2w", { trigger: "cron", fetchJson: fakeFetch, now: morning });
+  check("an unavailable feed is recorded as retry, not a crash", [s2w.status, s2w.detail?.includes("503")], ["retry", true]);
+  const s2wSource = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "s2w" } });
+  check("and its health shows degraded", s2wSource.health, "degraded");
+  const s2wRun = await prisma.ingestionRun.findFirstOrThrow({ where: { sourceKey: "s2w" }, orderBy: { startedAt: "desc" } });
+  check("the run is kept with its error", [s2wRun.status, s2wRun.errorClass], ["retry", "unavailable"]);
+
+  const [a1, a2] = await Promise.all([
+    ingest.runSource("pcs", { trigger: "manual", fetchJson: fakeFetch, now: morning }),
+    ingest.runSource("pcs", { trigger: "manual", fetchJson: fakeFetch, now: morning }),
+  ]);
+  check("two runs of one source at once: one is turned away", [a1.status, a2.status].sort(), ["skipped", "succeeded"]);
+  check("every completed run is audited (5)", await prisma.auditLog.count({ where: { action: "procurement.sync" } }), 5);
+
+  console.log("\n  Agent access: organisations and roles only (D4)");
+  const listed = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: 200 });
+  const wire = JSON.stringify(listed);
+  check("agents see the feed opportunities", listed.opportunities.some((o) => o.title === "Managed IT Support Services"), true);
+  check("no email address reaches an agent", /@/.test(wire), false);
+  check("no contact name reaches an agent", wire.includes("Pat Example"), false);
+  check("no notice description reaches an agent", wire.includes("Synthetic notice"), false);
+  check("contacts exist in the admin all the same", (await prisma.contact.count({ where: { organisationId: { not: null } } })) >= 2, true);
+  const orgs = await agentApi.listOrganisationsForAgents("buyer");
+  check("agents see buyer organisations by name", orgs.organisations.some((o) => o.name === "Example Health Board"), true);
+  check("and no organisation notes or contacts", JSON.stringify(orgs).includes("Created from an official tender notice") || /@/.test(JSON.stringify(orgs)), false);
+
+  const research = agentApi.researchSchema.parse({
+    idempotencyKey: "agent-test-0001",
+    kind: "commercial",
+    title: "Example Retail Ltd opening three Cardiff stores",
+    organisation: "Example Retail Ltd",
+    evidenceUrl: "https://example.com/retail-news",
+    source: { agent: "CCO", issueId: "CYV-99" },
+  });
+  const first = await agentApi.recordAgentResearch(research);
+  check("agent research lands as a new opportunity", first.created, true);
+  const landed = await prisma.opportunity.findUniqueOrThrow({ where: { id: first.id }, include: { Buyer: true } });
+  check("in Discovered, marked as from Paperclip", [landed.status, landed.origin, landed.paperclipIssueId], ["Discovered", "paperclip", "CYV-99"]);
+  check("retrying with the same key returns the original", await agentApi.recordAgentResearch(research), { id: first.id, created: false });
+  check(
+    "research with an email address is refused before it reaches the database",
+    agentApi.researchSchema.safeParse({ ...research, idempotencyKey: "agent-test-0002", title: "Call jo@example.com about IT" }).success,
+    false
+  );
+  check(
+    "research citing a LinkedIn profile is refused",
+    agentApi.researchSchema.safeParse({ ...research, idempotencyKey: "agent-test-0003", evidenceUrl: "https://www.linkedin.com/in/someone" }).success,
+    false
+  );
+  check("an agent may validate", (await agentApi.agentMove(first.id, "Validated", "CCO")).ok, true);
+  check("an agent may not archive or skip ahead", [(await agentApi.agentMove(first.id, "Archived", "CCO")).ok, (await agentApi.agentMove(first.id, "Submitted", "CCO")).ok], [false, false]);
+  check("an agent name holding an email is refused", (await agentApi.agentMove(first.id, "Qualified", "cco@example.com")).ok, false);
+
+  console.log("\n  Review fixes (PR 15)");
+  // Two different notices from the same portal with the same buyer, title and deadline stay separate.
+  const sameTitleOther = fx.release({ ocid: "ocds-h6vhtk-0bbbb1", id: "100010-2026", title: "Managed IT Support Services", cpv: "72253000", amount: 250000 });
+  const unreadable = fx.release({ ocid: "ocds-h6vhtk-0bbbb2", id: "100011-2026", title: "", cpv: "72253000" });
+  const ftsBefore = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "fts" } });
+  const fetch2 = async (url: string) => ({ status: 200, retryAfter: null, body: { releases: url.startsWith(FTS) ? [sameTitleOther, unreadable] : [] } });
+  const fts3 = await ingest.runSource("fts", { trigger: "manual", fetchJson: fetch2, now: morning });
+  check("a same-portal notice with the same title is a new opportunity, not merged", [fts3.created, fts3.merged], [1, 0]);
+  check("an unreadable relevant notice is recorded on the run", fts3.detail?.includes("unreadable notice"), true);
+  const ftsAfter = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "fts" } });
+  check("and the checkpoint is not advanced, so it is read again", [ftsAfter.lastSuccessAt?.toISOString(), ftsAfter.health], [ftsBefore.lastSuccessAt?.toISOString(), "degraded"]);
+
+  // A switched-off feed cannot be run by hand either.
+  await prisma.opportunitySource.update({ where: { key: "s2w" }, data: { enabled: false } });
+  calls.length = 0;
+  const offManual = await ingest.runSource("s2w", { trigger: "manual", fetchJson: fakeFetch, now: morning });
+  check("Run now on a switched-off feed reads nothing", [offManual.status, calls.length], ["skipped", 0]);
+
+  // Paging never skips rows that share a timestamp.
+  const tied = await prisma.opportunity.findMany({ where: { origin: { in: ["fts", "pcs"] } }, select: { id: true }, take: 3 });
+  const stamp = new Date("2026-11-18T09:00:00.000Z");
+  await prisma.$executeRaw`UPDATE "public"."Opportunity" SET "updatedAt" = ${stamp} WHERE "id" = ANY(${tied.map((t) => t.id)})`;
+  const seen = new Set<string>();
+  let cursor: string | null = `${new Date(stamp.getTime() - 1).toISOString()}`;
+  for (let page = 0; page < 6 && cursor; page++) {
+    const r = await agentApi.listOpportunitiesForAgents({ after: agentApi.parseCursor(cursor, null), kind: null, status: null, limit: 1 });
+    r.opportunities.forEach((o) => seen.add(o.id));
+    cursor = r.more ? r.next : null;
+  }
+  check("three rows with one timestamp, paged one at a time: none skipped", tied.every((t) => seen.has(t.id)), true);
+  // Within the 200-row page cap, a page exactly as long as what is left is the last.
+  const everything = await prisma.opportunity.count();
+  const lastPage = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: Math.min(everything, 200) });
+  check("a full last page says there is no more", lastPage.more, everything > 200);
+  check("an empty page keeps the caller's position", (await agentApi.listOpportunitiesForAgents({ after: { at: new Date("2099-01-01T00:00:00Z"), id: null }, kind: null, status: null, limit: 5 })).next, "2099-01-01T00:00:00.000Z");
+
+  // CYVRIX clients are not listed to agents.
+  await prisma.$executeRaw`INSERT INTO "public"."ClientCompany" (id, name) VALUES ('client-1', 'Example Client Ltd')`;
+  await prisma.organisation.create({ data: { id: uuid(), name: "Example Client Ltd", categories: ["buyer"], clientCompanyId: "client-1" } });
+  check("a client organisation is not listed to agents", (await agentApi.listOrganisationsForAgents(null)).organisations.some((o) => o.name === "Example Client Ltd"), false);
+
+  // Titles from the pasted ChatGPT report are withheld.
+  const reportLead = uuid();
+  await prisma.opportunity.create({ data: { id: reportLead, kind: "commercial", status: "Discovered", title: "Jo Bloggs at Example Ltd is hiring", origin: "chatgpt_task" } });
+  const listedAgain = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: 200 });
+  check("a ChatGPT report title never reaches an agent", JSON.stringify(listedAgain).includes("Jo Bloggs"), false);
+
 } finally {
   await prisma.$disconnect();
 }
