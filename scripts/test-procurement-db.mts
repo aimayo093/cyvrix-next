@@ -871,9 +871,12 @@ try {
   // An older release arriving late must not undo the extension.
   const olderRelease = fx.release({ ocid: "ocds-h6vhtk-0ddd01", id: "199999-2026", title: "Network refresh and IT support", cpv: "72253000", deadline: "2026-12-10T12:00:00Z" }) as Record<string, unknown>;
   olderRelease.date = "2026-11-01T08:00:00Z";
+  const beforeLate = (await prisma.opportunity.findUniqueOrThrow({ where: { id: docsOpp.id } })).updatedAt;
+  await new Promise((r) => setTimeout(r, 5));
   await once([olderRelease]);
   check("an older release arriving late leaves the newer deadline in place", (await prisma.opportunity.findUniqueOrThrow({ where: { id: docsOpp.id } })).deadlineAt?.toISOString(), "2026-12-17T12:00:00.000Z");
   check("and is recorded as out of order", await prisma.auditLog.count({ where: { entityId: docsOpp.id, action: "opportunity.notice_out_of_order" } }), 1);
+  check("and still moves the record for agents paging on updatedAt", (await prisma.opportunity.findUniqueOrThrow({ where: { id: docsOpp.id } })).updatedAt > beforeLate, true);
 
   console.log("\n  Tender documents");
   const listedDocs = await tender.refreshNoticeDocuments(docsOpp.id, founder);

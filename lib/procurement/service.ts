@@ -136,11 +136,13 @@ export async function transitionOpportunity(input: {
   evidenceVersionId?: string | null;
   note?: string;
 }): Promise<Outcome> {
-  const now = new Date();
   return prisma.$transaction(async (tx) => {
     // Locked first, so a requirement saved at this moment (saveRequirement
     // takes the same lock) is either counted below or waits for the move.
     await lockOpportunity(tx, input.opportunityId);
+    // Read the clock after the lock: a wait for it must not leave a stale
+    // time for the deadline and evidence checks.
+    const now = new Date();
     const opp = await tx.opportunity.findUnique({ where: { id: input.opportunityId } });
     if (!opp) return fail("That opportunity could not be found.");
 
@@ -307,11 +309,13 @@ export async function decideApproval(input: {
   stepUpAt: Date;
   note?: string;
 }): Promise<Outcome> {
-  const now = new Date();
   return prisma.$transaction(async (tx) => {
     const request = await tx.approvalRequest.findUnique({ where: { id: input.requestId }, include: { Package: true } });
     if (!request) return fail("That request could not be found.");
     await lockOpportunity(tx, request.opportunityId);
+    // Read the clock after the lock: a wait for it must not leave a stale
+    // time for the deadline and evidence checks.
+    const now = new Date();
     const opp = await tx.opportunity.findUnique({ where: { id: request.opportunityId }, select: { kind: true, deadlineAt: true } });
     if (!opp) return fail("That opportunity could not be found.");
     const decidable = canDecide(request, now, opp.deadlineAt);
@@ -365,7 +369,6 @@ export async function startExecution(input: {
   mode: "manual" | "human_assisted";
   userId: string;
 }): Promise<Outcome<string>> {
-  const now = new Date();
   return refusingConflicts(() => prisma.$transaction(async (tx): Promise<Outcome<string>> => {
     const decision = await tx.approvalDecision.findUnique({
       where: { id: input.decisionId },
@@ -376,6 +379,9 @@ export async function startExecution(input: {
     // Starting an attempt and recording an outcome both lock the opportunity
     // first, so neither can slip between the other's checks and its write.
     await lockOpportunity(tx, request.opportunityId);
+    // Read the clock after the lock: a wait for it must not leave a stale
+    // time for the deadline and evidence checks.
+    const now = new Date();
     const opp = await tx.opportunity.findUnique({ where: { id: request.opportunityId }, select: { status: true, statusChangedAt: true, kind: true, deadlineAt: true } });
     if (!opp) return fail("That opportunity could not be found.");
     // A submission's approval first opens ApprovedForSubmission, so it must not

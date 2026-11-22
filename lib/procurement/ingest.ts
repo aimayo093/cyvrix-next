@@ -136,8 +136,10 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
       existing = linked?.Opportunity ?? null;
     }
     if (existing && outOfOrder) {
-      // An older release arriving late: evidence only, nothing on the record changes.
+      // An older release arriving late: evidence only, nothing on the record
+      // changes. Agents page on updatedAt, so the new link still moves it.
       await tx.opportunityEvidence.create({ data: { ...evidence, opportunityId: existing.id } });
+      await tx.opportunity.update({ where: { id: existing.id }, data: { updatedAt: new Date() } });
       await audit(tx, null, "opportunity.notice_out_of_order", "Opportunity", existing.id, {
         source: sourceKey,
         releaseId: notice.releaseId,
