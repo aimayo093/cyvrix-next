@@ -1741,6 +1741,43 @@ exports.Prisma.BidAssessmentScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.TenderDocumentScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  title: 'title',
+  documentType: 'documentType',
+  sourceUrl: 'sourceUrl',
+  origin: 'origin',
+  status: 'status',
+  refusal: 'refusal',
+  storagePath: 'storagePath',
+  filename: 'filename',
+  sha256: 'sha256',
+  sizeBytes: 'sizeBytes',
+  scan: 'scan',
+  storedAt: 'storedAt',
+  createdById: 'createdById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TenderRequirementScalarFieldEnum = {
+  id: 'id',
+  opportunityId: 'opportunityId',
+  ref: 'ref',
+  text: 'text',
+  kind: 'kind',
+  status: 'status',
+  sourceDocumentId: 'sourceDocumentId',
+  location: 'location',
+  evidenceVersionId: 'evidenceVersionId',
+  notes: 'notes',
+  createdById: 'createdById',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -2006,7 +2043,9 @@ exports.Prisma.ModelName = {
   SupplierPortal: 'SupplierPortal',
   SupplierAccount: 'SupplierAccount',
   PartnershipProgramme: 'PartnershipProgramme',
-  BidAssessment: 'BidAssessment'
+  BidAssessment: 'BidAssessment',
+  TenderDocument: 'TenderDocument',
+  TenderRequirement: 'TenderRequirement'
 };
 
 /**

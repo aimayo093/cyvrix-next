@@ -8,8 +8,11 @@ import {
   canExecute,
   evidenceVerdict,
   manifestSha256,
+  pastBuyerDeadline,
+  SUBMISSION_ACTIONS,
   type Verdict,
 } from "./approval-core";
+import { requirementsGate } from "./requirements";
 import {
   APPROVAL_ACTIONS,
   checkTransition,
@@ -62,8 +65,28 @@ export async function audit(
  * an attempt and recording an outcome for that opportunity, so a confirmation
  * cannot land between a duplicate check and the next attempt's insert.
  */
-async function lockOpportunity(tx: Tx, opportunityId: string) {
+export async function lockOpportunity(tx: Tx, opportunityId: string) {
   await tx.$queryRaw`SELECT 1 FROM "public"."Opportunity" WHERE "id" = ${opportunityId} FOR UPDATE`;
+}
+
+/**
+ * The requirements checklist as the gates see it. A mandatory requirement
+ * marked met counts only while its evidence is still current: a document that
+ * has since expired or been superseded reopens it.
+ */
+export async function requirementFacts(tx: Tx, opportunityId: string, now: Date) {
+  const reqs = await tx.tenderRequirement.groupBy({ by: ["kind", "status"], where: { opportunityId }, _count: { _all: true } });
+  const count = (match: (r: { kind: string; status: string }) => boolean) => reqs.filter(match).reduce((n, r) => n + r._count._all, 0);
+  const metMandatory = await tx.tenderRequirement.findMany({
+    where: { opportunityId, kind: "mandatory", status: "met" },
+    select: { Evidence: { select: { status: true, expiresAt: true } } },
+  });
+  const staleEvidence = metMandatory.filter((r) => !evidenceVerdict(r.Evidence, now).ok).length;
+  return {
+    recorded: count(() => true),
+    mandatoryOpen: count((r) => r.kind === "mandatory" && (r.status === "unknown" || r.status === "partly_met")) + staleEvidence,
+    mandatoryNotMet: count((r) => r.kind === "mandatory" && r.status === "not_met"),
+  };
 }
 
 /** The package's manifest as it stands now, from its items. */
@@ -78,7 +101,7 @@ async function currentManifest(tx: Tx, packageId: string): Promise<string | null
   });
 }
 
-async function gatherFacts(tx: Tx, opportunityId: string, now: Date, roundStart: Date) {
+async function gatherFacts(tx: Tx, opportunityId: string, now: Date, roundStart: Date, deadlineAt: Date | null) {
   const decisions = await tx.approvalDecision.findMany({
     where: { decision: "approved", expiresAt: { gt: now }, Request: { opportunityId }, ExecutionRecord: null },
     include: { Request: { include: { Package: true } } },
@@ -86,6 +109,8 @@ async function gatherFacts(tx: Tx, opportunityId: string, now: Date, roundStart:
   const currentApprovals: ApprovalAction[] = [];
   for (const d of decisions) {
     const pkg = d.Request.Package;
+    // A submission approval lapses at the buyer's current deadline.
+    if (!pastBuyerDeadline(d.Request.actionType, deadlineAt, now).ok) continue;
     if (pkg.status !== "locked" || pkg.manifestSha256 !== d.manifestSha256) continue;
     if ((await currentManifest(tx, pkg.id)) !== d.manifestSha256) continue;
     currentApprovals.push(d.Request.actionType as ApprovalAction);
@@ -98,7 +123,9 @@ async function gatherFacts(tx: Tx, opportunityId: string, now: Date, roundStart:
     where: { opportunityId, outcome: "confirmed", Receipt: { some: {} }, startedAt: { gte: roundStart } },
     select: { actionType: true },
   });
-  return { currentApprovals, confirmedExecutions: executions.map((e) => e.actionType as ApprovalAction) };
+  // The requirements checklist (Phase 4), counted under the same transaction.
+  const requirements = await requirementFacts(tx, opportunityId, now);
+  return { currentApprovals, confirmedExecutions: executions.map((e) => e.actionType as ApprovalAction), requirements };
 }
 
 export async function transitionOpportunity(input: {
@@ -109,8 +136,13 @@ export async function transitionOpportunity(input: {
   evidenceVersionId?: string | null;
   note?: string;
 }): Promise<Outcome> {
-  const now = new Date();
   return prisma.$transaction(async (tx) => {
+    // Locked first, so a requirement saved at this moment (saveRequirement
+    // takes the same lock) is either counted below or waits for the move.
+    await lockOpportunity(tx, input.opportunityId);
+    // Read the clock after the lock: a wait for it must not leave a stale
+    // time for the deadline and evidence checks.
+    const now = new Date();
     const opp = await tx.opportunity.findUnique({ where: { id: input.opportunityId } });
     if (!opp) return fail("That opportunity could not be found.");
 
@@ -120,7 +152,7 @@ export async function transitionOpportunity(input: {
       if (!usable.ok) return usable;
     }
 
-    const facts = await gatherFacts(tx, opp.id, now, opp.statusChangedAt);
+    const facts = await gatherFacts(tx, opp.id, now, opp.statusChangedAt, opp.deadlineAt);
     const verdict = checkTransition(opp.kind as OpportunityKind, opp.status, input.to, {
       actor: input.actor,
       ...facts,
@@ -277,12 +309,22 @@ export async function decideApproval(input: {
   stepUpAt: Date;
   note?: string;
 }): Promise<Outcome> {
-  const now = new Date();
   return prisma.$transaction(async (tx) => {
     const request = await tx.approvalRequest.findUnique({ where: { id: input.requestId }, include: { Package: true } });
     if (!request) return fail("That request could not be found.");
-    const decidable = canDecide(request, now);
+    await lockOpportunity(tx, request.opportunityId);
+    // Read the clock after the lock: a wait for it must not leave a stale
+    // time for the deadline and evidence checks.
+    const now = new Date();
+    const opp = await tx.opportunity.findUnique({ where: { id: request.opportunityId }, select: { kind: true, deadlineAt: true } });
+    if (!opp) return fail("That opportunity could not be found.");
+    const decidable = canDecide(request, now, opp.deadlineAt);
     if (!decidable.ok) return decidable;
+    if (input.decision === "approved" && (SUBMISSION_ACTIONS as readonly string[]).includes(request.actionType)) {
+      // A submission is approved only on a clear checklist, as it stands now.
+      const clear = requirementsGate(opp.kind, await requirementFacts(tx, request.opportunityId, now));
+      if (!clear.ok) return clear;
+    }
     if (input.decision === "approved") {
       if (request.Package.status !== "locked" || request.Package.manifestSha256 !== request.manifestSha256) {
         return fail("The package has changed since approval was requested.");
@@ -327,7 +369,6 @@ export async function startExecution(input: {
   mode: "manual" | "human_assisted";
   userId: string;
 }): Promise<Outcome<string>> {
-  const now = new Date();
   return refusingConflicts(() => prisma.$transaction(async (tx): Promise<Outcome<string>> => {
     const decision = await tx.approvalDecision.findUnique({
       where: { id: input.decisionId },
@@ -338,12 +379,21 @@ export async function startExecution(input: {
     // Starting an attempt and recording an outcome both lock the opportunity
     // first, so neither can slip between the other's checks and its write.
     await lockOpportunity(tx, request.opportunityId);
-    const opp = await tx.opportunity.findUnique({ where: { id: request.opportunityId }, select: { status: true, statusChangedAt: true } });
+    // Read the clock after the lock: a wait for it must not leave a stale
+    // time for the deadline and evidence checks.
+    const now = new Date();
+    const opp = await tx.opportunity.findUnique({ where: { id: request.opportunityId }, select: { status: true, statusChangedAt: true, kind: true, deadlineAt: true } });
     if (!opp) return fail("That opportunity could not be found.");
     // A submission's approval first opens ApprovedForSubmission, so it must not
     // be used up before the record reaches Submitting.
     if ((request.actionType === "submit_tender" || request.actionType === "send_quote") && opp.status !== "Submitting") {
       return fail("Move the opportunity to Submitting before you start.");
+    }
+    // The checklist is checked again at the moment of submitting: a
+    // requirement marked not met, or evidence lapsing, after approval stops it.
+    if ((SUBMISSION_ACTIONS as readonly string[]).includes(request.actionType)) {
+      const clear = requirementsGate(opp.kind, await requirementFacts(tx, request.opportunityId, now));
+      if (!clear.ok) return clear;
     }
     // Already done? A tender or quotation is submitted once per opportunity: its
     // lifecycle has no resubmission loop. Partnership steps can legitimately
@@ -371,6 +421,7 @@ export async function startExecution(input: {
       alreadyUsed: decision.ExecutionRecord !== null,
       hasConfirmedSameAction: confirmed !== null,
       hasUnresolvedSameAction: unresolved !== null,
+      deadlineAt: opp.deadlineAt,
     });
     if (!verdict.ok) return verdict;
 

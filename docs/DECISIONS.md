@@ -903,7 +903,8 @@ is configured.
     off.
 
 **Tests:** `npm run test:procurement` (rules, no database), `npm run test:procurement-ingest` (feeds and import parsing, no network),
-`npm run test:procurement-partnerships` (accounts, policy and scoring rules) and
+`npm run test:procurement-partnerships` (accounts, policy and scoring rules),
+`npm run test:procurement-tender` (deadlines, document links and requirements) and
 `npm run test:procurement-db` (a throwaway local Postgres only; it refuses any
 non-local URL).
 
@@ -940,6 +941,47 @@ that relies on them is deployed.
 - Assessments (spec 12 and 40) are recommendations, not chances of winning.
   Scores are whole numbers 0 to 5; a disqualifier overrides the total. Rows
   are immutable: a new assessment is added, never an old one edited.
+
+**Phase 4: tender intelligence (19 November 2026).**
+- Deadlines are shown in the admin only (no email or message: outbound
+  communication needs the founder). A newer notice now updates the submission
+  and question deadlines even after work has started, because a missed
+  extension or an earlier deadline costs a bid; every change is audited.
+  Other facts still freeze once work starts (Phase 2).
+- The site fetches tender documents only from the official notice services
+  (`ALLOWED_DOCUMENT_HOSTS` in `lib/procurement/tender-documents.ts`), over
+  HTTPS, checking every redirect against the same list, capped at the
+  scanner's 5 MB limit. Buyers' e-tendering portals need a sign-in, and the
+  site never holds portal passwords (D7), so the founder downloads and
+  uploads those. Adding a host is a reviewed code change.
+- Tender documents are a separate table from company documents, so a buyer's
+  file can never be chosen as CYVRIX evidence. A stored copy never changes.
+- The requirements checklist is entered by a person. Agent extraction is not
+  built: tender documents often name buyer staff, and agents run on DeepSeek
+  (D4, section 15). A mandatory requirement is marked met only with an
+  evidence document: the database requires one to be attached; the code
+  checks it is current (not an AI draft, not superseded, not expired) when the
+  requirement is saved, and again at every move to final approval, so a
+  document that lapses later reopens the requirement. Final approval
+  (QualityReview or SubmissionFailed to AwaitingFinalApproval) is refused
+  while any mandatory requirement is open, unmet or resting on lapsed
+  evidence, and for a tender before any are recorded.
+- The checklist is checked again when the founder approves a submission, at
+  ApprovedForSubmission and when the submission starts: a requirement marked
+  unmet, or evidence lapsing, after approval stops it. Checklist writes and
+  status moves take the same opportunity lock, so neither slips between the
+  other's read and write.
+- A submission approval lapses at the buyer's deadline as it stands now, not
+  as it stood when approval was requested: a notice that brings the deadline
+  forward shortens every approval already given.
+- Feeds deliver releases out of order. A release published before one
+  already applied for the same tender is kept as evidence only and audited
+  (`opportunity.notice_out_of_order`); it never undoes newer dates.
+- `20261119150000_procurement_tender_hardening` puts the tender-document
+  rules in the database: a stored copy has a real SHA-256, a size within 5 MB,
+  a filename and a stored time; nothing about a stored file or its capture can
+  change (only its title and type label); and a requirement's source document
+  belongs to the same opportunity.
 
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).

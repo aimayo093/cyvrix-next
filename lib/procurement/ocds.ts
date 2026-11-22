@@ -48,6 +48,8 @@ export type BuyerContact = { organisation: string; name: string | null; email: s
 export type NormalisedNotice = {
   ocid: string;
   releaseId: string;
+  /** When the buyer published this release (OCDS release.date), to order releases that arrive out of order. */
+  releasedAt: Date | null;
   noticeUrl: string | null;
   title: string;
   summary: string | null;
@@ -131,6 +133,10 @@ const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null
  * as the server's time zone; a date alone is London midnight. Only the
  * repeated hour when the clocks go back cannot be placed, and is read as GMT.
  */
+export function noticeDate(v: unknown): Date | null {
+  return date(v);
+}
+
 function date(v: unknown): Date | null {
   const s = str(v);
   if (!s) return null;
@@ -237,6 +243,7 @@ export function normalise(sourceKey: string, release: OcdsRelease): NormalisedNo
   return {
     ocid,
     releaseId,
+    releasedAt: date(release.date),
     noticeUrl: noticeUrl(sourceKey, release),
     title: title.slice(0, 300),
     summary: str(t.description)?.slice(0, 8000) ?? null,

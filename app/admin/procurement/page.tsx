@@ -36,6 +36,8 @@ import {
   updateOrganisation,
 } from "@/lib/procurement/actions";
 import { OFFICIAL_SOURCES } from "@/lib/procurement/ingest";
+import { DEADLINE_STATUSES, deadlineAlerts, URGENCY_LABEL } from "@/lib/procurement/deadlines";
+import { URGENCY_STYLE } from "@/components/admin/procurement/TenderSections";
 
 export const metadata = { title: "Procurement" };
 // "Run now" fetches a feed inside the request; give it room.
@@ -43,6 +45,7 @@ export const maxDuration = 60;
 
 const TABS = [
   { key: "opportunities", label: "Opportunities" },
+  { key: "deadlines", label: "Deadlines" },
   { key: "approvals", label: "Approval Centre" },
   { key: "organisations", label: "Organisations" },
   { key: "documents", label: "Documents" },
@@ -115,6 +118,7 @@ async function ProcurementContent({ searchParams }: { searchParams: Promise<Sear
       </nav>
 
       {tab === "opportunities" && <Opportunities kind={sp.kind} />}
+      {tab === "deadlines" && <Deadlines />}
       {tab === "approvals" && <Approvals isFounder={isFounder} />}
       {tab === "organisations" && <Organisations category={sp.category} />}
       {tab === "documents" && <Documents isFounder={isFounder} />}
@@ -703,6 +707,47 @@ async function Accounts({ isFounder }: { isFounder: boolean }) {
         <div className="md:col-span-2"><button className={primaryButton}>Add portal</button></div>
       </form>
     </div>
+  );
+}
+
+/** Phase 4: deadlines that need attention in the next 14 days, and any passed in the last 7. */
+async function Deadlines() {
+  const now = new Date();
+  const from = new Date(now.getTime() - 7 * 86_400_000);
+  const to = new Date(now.getTime() + 14 * 86_400_000);
+  const opps = await prisma.opportunity.findMany({
+    where: {
+      status: { in: [...DEADLINE_STATUSES] },
+      OR: [{ deadlineAt: { gte: from, lte: to } }, { clarificationDeadlineAt: { gte: from, lte: to } }],
+    },
+    // No cap: the 21-day window bounds the list, and every deadline in it must show.
+    select: { id: true, title: true, status: true, deadlineAt: true, clarificationDeadlineAt: true },
+  });
+  const alerts = deadlineAlerts(opps, now);
+  return (
+    <section className={`${card} space-y-3`}>
+      <h2 className="font-outfit text-lg font-black text-[#041635]">Deadlines</h2>
+      <p className="text-sm text-slate-500">
+        Submission deadlines and last days for questions on records not yet submitted, from 7 days ago to 14 days
+        ahead, in London time. Shown here only: nothing is sent.
+      </p>
+      {alerts.length === 0 ? (
+        <p className="text-sm text-slate-500">Nothing due in the next 14 days.</p>
+      ) : (
+        <ul className="divide-y divide-slate-100 text-sm">
+          {alerts.map((a) => (
+            <li key={`${a.opportunityId}-${a.kind}`} className="flex flex-wrap items-center justify-between gap-2 py-2">
+              <span>
+                <span className={`${pill} ${URGENCY_STYLE[a.urgency]} mr-2`}>{URGENCY_LABEL[a.urgency]}</span>
+                <Link href={`/admin/procurement/opportunities/${a.opportunityId}`} className="font-semibold text-[#0f5aab] hover:underline">{a.title}</Link>
+                <span className="text-slate-500"> · {a.status}</span>
+              </span>
+              <span className="tabular-nums">{a.kind === "submission" ? "Submission" : "Questions close"} {when(a.at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }
 

@@ -58,6 +58,10 @@ jobs:
           npm run test:feed
           npm run test:paperclip
           npm run test:audit-gate
+          npm run test:procurement
+          npm run test:procurement-ingest
+          npm run test:procurement-partnerships
+          npm run test:procurement-tender
       - name: Production build
         # No database in CI; the build falls back as it does locally.
         env:
