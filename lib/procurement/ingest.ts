@@ -100,14 +100,65 @@ async function findOrCreateBuyer(tx: Prisma.TransactionClient, name: string): Pr
   return id;
 }
 
+const DATES = { id: true, status: true, deadlineAt: true, clarificationDeadlineAt: true } as const;
+
+/**
+ * The opportunity this notice belongs to: by OCID, or (for a copy already
+ * matched to another portal's record) by the copy's stable notice link.
+ */
+async function findExisting(tx: Prisma.TransactionClient, notice: NormalisedNotice) {
+  const byOcid = await tx.opportunity.findFirst({ where: { ocid: notice.ocid }, select: DATES });
+  if (byOcid || !notice.noticeUrl || !notice.noticeUrl.includes(notice.ocid)) return byOcid;
+  const linked = await tx.opportunityEvidence.findFirst({ where: { url: notice.noticeUrl }, select: { Opportunity: { select: DATES } } });
+  return linked?.Opportunity ?? null;
+}
+
+/**
+ * The same tender already recorded from another portal: same buyer, title and
+ * deadline day, a different source, and no conflicting value. Two notices
+ * from the same portal are never merged, whatever their titles.
+ */
+async function findTwin(tx: Prisma.TransactionClient, sourceKey: OfficialSource, notice: NormalisedNotice, buyerId: string | null): Promise<string | null> {
+  const key = crossSourceKey(notice);
+  if (!key || !buyerId || !notice.deadlineAt) return null;
+  const day = notice.deadlineAt.toISOString().slice(0, 10);
+  const candidates = await tx.opportunity.findMany({
+    where: {
+      buyerOrganisationId: buyerId,
+      origin: { not: sourceKey },
+      deadlineAt: { gte: new Date(`${day}T00:00:00Z`), lt: new Date(new Date(`${day}T00:00:00Z`).getTime() + 86_400_000) },
+    },
+    select: { id: true, title: true, deadlineAt: true, valueMin: true, valueMax: true },
+  });
+  return (
+    candidates.find((c) => {
+      if (crossSourceKey({ buyerName: notice.buyerName, title: c.title, deadlineAt: c.deadlineAt }) !== key) return false;
+      const num = (v: { toString(): string } | null) => (v === null ? null : Number(v.toString()));
+      return rangesAgree({ valueMin: num(c.valueMin), valueMax: num(c.valueMax) }, notice);
+    })?.id ?? null
+  );
+}
+
 /** Stores one relevant release. Returns what changed. */
-async function ingestOne(sourceKey: OfficialSource, runId: string, release: OcdsRelease, notice: NormalisedNotice, why: string) {
+async function ingestOne(sourceKey: OfficialSource, runId: string, release: OcdsRelease, notice: NormalisedNotice, why: string, now: Date) {
   return prisma.$transaction(async (tx) => {
     const seen = await tx.procurementNotice.findUnique({
       where: { sourceKey_ocid_releaseId: { sourceKey, ocid: notice.ocid, releaseId: notice.releaseId } },
       select: { id: true },
     });
     if (seen) return { created: 0, updated: 0, merged: 0, contacts: 0, stored: false };
+
+    // A tender whose submission deadline has passed is not a new lead: nothing
+    // is stored for it (not the notice, the buyer or its contacts) unless
+    // CYVRIX already tracks it, under this OCID, its notice link or as another
+    // portal's copy. A tracked tender is still updated, so a deadline brought
+    // forward into the past still reaches the bid and its approvals.
+    if (notice.deadlineAt && notice.deadlineAt.getTime() <= now.getTime() && !(await findExisting(tx, notice))) {
+      const buyer = notice.buyerName
+        ? await tx.organisation.findFirst({ where: { name: { equals: notice.buyerName, mode: "insensitive" } }, select: { id: true } })
+        : null;
+      if (!(await findTwin(tx, sourceKey, notice, buyer?.id ?? null))) return { created: 0, updated: 0, merged: 0, contacts: 0, stored: false, closed: true };
+    }
 
     // Feeds do not always deliver releases in order. A release published before
     // one already applied for this tender must not undo its dates or facts: it
@@ -151,14 +202,7 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
     let updated = 0;
     let merged = 0;
 
-    // The opportunity this notice belongs to: by OCID, or (for a copy already
-    // matched to another portal's record) by the copy's stable notice link.
-    const DATES = { id: true, status: true, deadlineAt: true, clarificationDeadlineAt: true } as const;
-    let existing = await tx.opportunity.findFirst({ where: { ocid: notice.ocid }, select: DATES });
-    if (!existing && notice.noticeUrl && notice.noticeUrl.includes(notice.ocid)) {
-      const linked = await tx.opportunityEvidence.findFirst({ where: { url: notice.noticeUrl }, select: { Opportunity: { select: DATES } } });
-      existing = linked?.Opportunity ?? null;
-    }
+    const existing = await findExisting(tx, notice);
     if (existing && outOfOrder) {
       // An older release arriving late: evidence only, nothing on the record
       // changes. Agents page on updatedAt, so the new link still moves it.
@@ -210,25 +254,7 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
       // The same tender published on another portal: same buyer, title and
       // deadline day, a different source, and no conflicting value. Two notices
       // from the same portal are never merged, whatever their titles.
-      const key = crossSourceKey(notice);
-      let twin: string | null = null;
-      if (key && buyerId && notice.deadlineAt) {
-        const day = notice.deadlineAt.toISOString().slice(0, 10);
-        const candidates = await tx.opportunity.findMany({
-          where: {
-            buyerOrganisationId: buyerId,
-            origin: { not: sourceKey },
-            deadlineAt: { gte: new Date(`${day}T00:00:00Z`), lt: new Date(new Date(`${day}T00:00:00Z`).getTime() + 86_400_000) },
-          },
-          select: { id: true, title: true, deadlineAt: true, valueMin: true, valueMax: true },
-        });
-        twin =
-          candidates.find((c) => {
-            if (crossSourceKey({ buyerName: notice.buyerName, title: c.title, deadlineAt: c.deadlineAt }) !== key) return false;
-            const num = (v: { toString(): string } | null) => (v === null ? null : Number(v.toString()));
-            return rangesAgree({ valueMin: num(c.valueMin), valueMax: num(c.valueMax) }, notice);
-          })?.id ?? null;
-      }
+      const twin = await findTwin(tx, sourceKey, notice, buyerId);
       if (twin) {
         await tx.opportunityEvidence.create({ data: { ...evidence, opportunityId: twin } });
         // Agents page on updatedAt, so the new link must move the record.
@@ -287,26 +313,29 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
   });
 }
 
-async function ingestPage(sourceKey: OfficialSource, runId: string, releases: OcdsRelease[], counts: Counts, errors: string[]) {
+async function ingestPage(sourceKey: OfficialSource, runId: string, releases: OcdsRelease[], counts: Counts, errors: string[], now: Date) {
   counts.fetched += releases.length;
   for (const release of releases) {
     if (!release.tag?.includes("tender")) continue;
     const { relevant, why } = isRelevant(release);
     if (!relevant) continue;
     const notice = normalise(sourceKey, release);
-    counts.relevant += 1;
     if (!notice) {
+      counts.relevant += 1;
       // IT-relevant but missing an OCID, a release id or a title: recorded, not dropped silently.
       errors.push(`${release.ocid ?? "no ocid"}: unreadable notice`);
       continue;
     }
     try {
-      const r = await ingestOne(sourceKey, runId, release, notice, why ?? "");
+      const r = await ingestOne(sourceKey, runId, release, notice, why ?? "", now);
+      // A closed tender nobody tracks is not counted as an IT lead.
+      if (!("closed" in r)) counts.relevant += 1;
       counts.created += r.created;
       counts.updated += r.updated;
       counts.merged += r.merged;
       counts.contacts += r.contacts;
     } catch (error) {
+      counts.relevant += 1;
       // One bad notice must not stop the rest; it is recorded on the run.
       const message = error instanceof Prisma.PrismaClientKnownRequestError ? error.code : error instanceof Error ? error.name : "error";
       errors.push(`${notice.ocid}: ${message}`);
@@ -365,7 +394,7 @@ export async function runSource(
       while (url && pages < FTS_MAX_PAGES && Date.now() < deadline) {
         chainUpto = updatedToOf(url) ?? chainUpto;
         const page: FeedPage = await feed.fetchPage(url, fetchJson);
-        await ingestPage(sourceKey, runId, page.releases, counts, errors);
+        await ingestPage(sourceKey, runId, page.releases, counts, errors, now);
         url = page.next;
         if (url) chainUpto = updatedToOf(url) ?? chainUpto;
         pages += 1;
@@ -379,7 +408,7 @@ export async function runSource(
         for (const type of PROACTIS_NOTICE_TYPES) {
           if (Date.now() >= deadline) break;
           const page = await fetchProactisMonth(sourceKey, month, type, fetchJson);
-          await ingestPage(sourceKey, runId, page.releases, counts, errors);
+          await ingestPage(sourceKey, runId, page.releases, counts, errors, now);
         }
       }
     }

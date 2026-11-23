@@ -479,20 +479,50 @@ try {
       parties: [{ roles: ["buyer"], name: "Example Borough Council" }],
       tender: { title: "Smart hands and IMAC support for 12 libraries", classification: { scheme: "CPV", id: "50324200" }, tenderPeriod: { endDate: "2026-12-05T12:00:00Z" } },
     };
+    const closedRelease = { ...cfRelease, ocid: "ocds-b5fd17-cf000002", id: "11111111-2222-4333-8444-555555555555-1", tender: { ...cfRelease.tender, title: "Laptop refresh for 30 staff", tenderPeriod: { endDate: "2026-11-10T12:00:00Z" } } };
     const cfCalls: string[] = [];
     const cfFetch = async (url: string) => {
       cfCalls.push(url);
       if (!url.startsWith(`${CF}?`)) throw new Error(`unexpected url ${url}`);
       if (url.includes("cursor=")) return { status: 200, retryAfter: null, body: { releases: [cfRelease] } };
-      return { status: 200, retryAfter: null, body: { releases: [fx.ftsTraining], links: { next: `${CF}?stages=tender&limit=100&publishedFrom=2026-11-16T04:00:00&publishedTo=2026-11-18T05:59:00Z&cursor=abc` } } };
+      return { status: 200, retryAfter: null, body: { releases: [fx.ftsTraining, closedRelease], links: { next: `${CF}?stages=tender&limit=100&publishedFrom=2026-11-16T04:00:00&publishedTo=2026-11-18T05:59:00Z&cursor=abc` } } };
     };
     await prisma.opportunitySource.update({ where: { key: "cf" }, data: { enabled: true } });
     const cf = await ingest.runSource("cf", { trigger: "cron", fetchJson: cfFetch, now: morning });
-    check("Contracts Finder reads both pages and keeps the IT notice", [cf.status, cf.fetched, cf.created, cfCalls.length], ["succeeded", 2, 1, 2]);
+    check("Contracts Finder reads both pages and keeps the IT notice", [cf.status, cf.fetched, cf.created, cfCalls.length], ["succeeded", 3, 1, 2]);
+    check("a tender whose deadline has passed is not made a lead", await prisma.opportunity.count({ where: { ocid: "ocds-b5fd17-cf000002" } }), 0);
     const cfOpp = await prisma.opportunity.findFirstOrThrow({ where: { ocid: "ocds-b5fd17-cf000001" }, include: { Evidence: true } });
     check("its evidence links to the Contracts Finder notice", cfOpp.Evidence[0]?.url, "https://www.contractsfinder.service.gov.uk/Notice/3f0945d1-6cf6-4244-ad3b-da605b45809d");
     const cfSource = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "cf" } });
     check("its next window starts at the chain's publishedTo", cfSource.lastSuccessAt?.toISOString(), "2026-11-18T05:59:00.000Z");
+
+    // A tracked tender whose deadline is brought forward into the past is still updated.
+    const forward = { ...cfRelease, id: "3f0945d1-6cf6-4244-ad3b-da605b45809d-922227", date: "2026-11-17T20:00:00Z", tender: { ...cfRelease.tender, tenderPeriod: { endDate: "2026-11-17T12:00:00Z" } } };
+    const again = await ingest.runSource("cf", {
+      trigger: "manual",
+      fetchJson: async () => ({ status: 200, retryAfter: null, body: { releases: [forward] } }),
+      now: morning,
+    });
+    check("a closed notice for a tracked tender still updates it", [again.updated, again.created], [1, 0]);
+    check(
+      "and its deadline moves to the buyer's new date",
+      (await prisma.opportunity.findFirstOrThrow({ where: { ocid: "ocds-b5fd17-cf000001" } })).deadlineAt?.toISOString(),
+      "2026-11-17T12:00:00.000Z"
+    );
+
+    // A closed copy, from another portal, of a tender already tracked is merged, not dropped.
+    const tracked = await prisma.opportunity.findFirstOrThrow({ where: { ocid: "ocds-h6vhtk-0aaaa1" }, select: { id: true, title: true, deadlineAt: true } });
+    await prisma.opportunity.update({ where: { id: tracked.id }, data: { deadlineAt: new Date("2026-11-17T12:00:00Z") } });
+    const copy = {
+      ...cfRelease,
+      ocid: "ocds-b5fd17-cf000003",
+      id: "22222222-3333-4444-8555-666666666666-1",
+      buyer: { name: "Example County Council" },
+      parties: [{ roles: ["buyer"], name: "Example County Council" }],
+      tender: { title: tracked.title, classification: { scheme: "CPV", id: "72253000" }, tenderPeriod: { endDate: "2026-11-17T12:00:00Z" } },
+    };
+    const merged = await ingest.runSource("cf", { trigger: "manual", fetchJson: async () => ({ status: 200, retryAfter: null, body: { releases: [copy] } }), now: morning });
+    check("a closed copy of a tracked tender is merged into it", [merged.merged, merged.created], [1, 0]);
   }
 
   const s2w = await ingest.runSource("s2w", { trigger: "cron", fetchJson: fakeFetch, now: morning });
@@ -507,7 +537,7 @@ try {
     ingest.runSource("pcs", { trigger: "manual", fetchJson: fakeFetch, now: morning }),
   ]);
   check("two runs of one source at once: one is turned away", [a1.status, a2.status].sort(), ["skipped", "succeeded"]);
-  check("every completed run is audited (6, with Contracts Finder)", await prisma.auditLog.count({ where: { action: "procurement.sync" } }), 6);
+  check("every completed run is audited (8, with the Contracts Finder runs)", await prisma.auditLog.count({ where: { action: "procurement.sync" } }), 8);
 
   console.log("\n  Agent access: organisations and roles only (D4)");
   const listed = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: 200 });

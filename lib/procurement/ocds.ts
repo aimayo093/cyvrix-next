@@ -133,6 +133,7 @@ export const RELEVANT_KEYWORDS = [
   "m365",
   "google workspace",
   "azure",
+  "cloud", // title only (TITLE_ONLY_KEYWORDS)
   "cloud migration",
   "cloud services",
   "email migration",
@@ -305,12 +306,56 @@ function keywordPattern(keyword: string): RegExp {
   return re;
 }
 
+/**
+ * Broad single words that count only in a notice's title. In a description
+ * they are too often a passing mention: "cyber" in a recruitment or building
+ * services notice, "managed service" in a car salary-sacrifice scheme,
+ * "telephony" in a revenues contract (seen on real notices, November 2026).
+ */
+export const TITLE_ONLY_KEYWORDS: ReadonlySet<string> = new Set([
+  "cyber",
+  "cloud",
+  "managed service",
+  "telephony",
+  "lan",
+  "wan",
+  "laptop",
+  "desktop",
+  "endpoint",
+  "firewall",
+  "cabling",
+  "azure",
+  // In a description these are usually what a supplier must hold, not the work.
+  "cyber essentials",
+  "information security",
+]);
+
+/**
+ * A title that buys business software for a function (a finance, HR,
+ * timetabling or laboratory system), which is a software vendor's sale, not
+ * CYVRIX's work, even when it carries an IT-services code. Kept only if the
+ * title also names infrastructure, devices or support.
+ */
+const BUSINESS_FUNCTION =
+  "finance|financial|payroll|hr|human resources?|timetabling|timetable|laboratory information|case management|housing management|revenues?|benefits|crm|erp|booking|library management|student records?|document management|electronic patient|patient records?|epr|ehr";
+const SOFTWARE_PRODUCT = "systems?|software|solutions?|platforms?";
+/** Either order: "finance system" or "system for case management". */
+const BUSINESS_SOFTWARE = new RegExp(
+  `\\b(?:${BUSINESS_FUNCTION})\\b[^.;]{0,30}?\\b(?:${SOFTWARE_PRODUCT})\\b|\\b(?:${SOFTWARE_PRODUCT})\\b[^.;]{0,20}?\\b(?:for|of|to support)\\b[^.;]{0,15}?\\b(?:${BUSINESS_FUNCTION})\\b|\\blims\\b`,
+  "i"
+);
+/** What CYVRIX does around such a system: infrastructure, devices, support, managed service or security work. */
+const INFRASTRUCTURE_IN_TITLE =
+  /\b(?:network|infrastructure|hardware|devices?|laptops?|desktops?|support|helpdesk|service desk|hosting|servers?|cabling|wi-?fi|managed services?|cyber\w*|security|penetration|backup|disaster recovery)\b/i;
+
 export function isRelevant(release: OcdsRelease): { relevant: boolean; why: string | null } {
+  const title = (release.tender?.title ?? "").toLowerCase();
+  if (BUSINESS_SOFTWARE.test(title) && !INFRASTRUCTURE_IN_TITLE.test(title)) return { relevant: false, why: null };
   const codes = cpvCodes(release);
   const hit = codes.find((c) => RELEVANT_CPV_PREFIXES.some((p) => c.startsWith(p)));
   if (hit) return { relevant: true, why: `CPV ${hit}` };
-  const text = `${release.tender?.title ?? ""} ${release.tender?.description ?? ""}`.toLowerCase();
-  const word = RELEVANT_KEYWORDS.find((k) => keywordPattern(k).test(text));
+  const text = `${title} ${release.tender?.description ?? ""}`.toLowerCase();
+  const word = RELEVANT_KEYWORDS.find((k) => keywordPattern(k).test(TITLE_ONLY_KEYWORDS.has(k) ? title : text));
   if (word) return { relevant: true, why: `keyword "${word}"` };
   return { relevant: false, why: null };
 }
