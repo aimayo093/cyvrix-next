@@ -49,6 +49,12 @@ check("not configured is not applicable", paperclipTokenCheck({}).notApplicable,
 check("two strong distinct tokens pass", paperclipTokenCheck(env).status, "pass");
 check("a shared value warns", paperclipTokenCheck({ PAPERCLIP_READ_TOKEN: READ, PAPERCLIP_DRAFT_TOKEN: READ }).status, "warn");
 check("a short token warns", paperclipTokenCheck({ PAPERCLIP_DRAFT_TOKEN: "short" }).status, "warn");
+{
+  const P = "q".repeat(40);
+  check("procurement access is reported on with its token", paperclipTokenCheck({ ...env, PAPERCLIP_PROCUREMENT_TOKEN: P }).detail.includes("procurement access is on") || paperclipTokenCheck({ ...env, PAPERCLIP_PROCUREMENT_TOKEN: P }).detail.includes(", procurement"), true);
+  const off = paperclipTokenCheck({ ...env, PAPERCLIP_PROCUREMENT_TOKEN: P, PROCUREMENT_ENABLED: "false" }).detail;
+  check("and reported off when procurement is switched off", [off.includes("procurement access is on") || /read, draft, procurement/.test(off), off.includes("Procurement access is off")], [false, true]);
+}
 check("the check never contains a token", JSON.stringify(paperclipTokenCheck(env)).includes(READ), false);
 
 console.log("\n  Draft content");

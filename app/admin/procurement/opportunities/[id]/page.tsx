@@ -32,7 +32,7 @@ import {
   revisePackageAction,
   startExecutionAction,
 } from "@/lib/procurement/actions";
-import { EVIDENCE_STATUSES, evidenceVerdict } from "@/lib/procurement/approval-core";
+import { EVIDENCE_STATUSES, evidenceVerdict, SUBMISSION_ACTIONS } from "@/lib/procurement/approval-core";
 import { APPROVAL_ACTIONS, nextStates, type OpportunityKind } from "@/lib/procurement/lifecycle";
 import { CATEGORY_LABEL, WEIGHTS } from "@/lib/procurement/partnerships";
 import { MAX_DISQUALIFIERS, summarise } from "@/lib/procurement/requirements";
@@ -315,7 +315,7 @@ async function OpportunityContent({ params, searchParams }: Props) {
                       {d ? ` ${when(d.createdAt)}` : ` · valid until ${when(r.expiresAt)}`}
                       {d?.note ? ` · “${d.note}”` : ""}
                     </p>
-                    {d?.decision === "approved" && !exec && isFounder && (
+                    {d?.decision === "approved" && !exec && isFounder && (SUBMISSION_ACTIONS as readonly string[]).includes(r.actionType) && (
                       <div className="mt-2 space-y-1 text-xs text-slate-600">
                         <p className="font-semibold text-slate-700">Before you start (the system checks the approval, the package, the deadline and the checklist itself):</p>
                         <ul className="list-disc space-y-0.5 pl-5">

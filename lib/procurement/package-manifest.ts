@@ -18,7 +18,7 @@ export type ManifestInput = {
 };
 
 /** One line, so a crafted title or filename cannot add lines that look like part of the record. */
-const line = (v: string) => v.replace(/[\r\n\t]+/g, " ").trim();
+const line = (v: string) => v.replace(/[\r\n\t\v\f\u0085\u2028\u2029]+/g, " ").trim();
 
 export function packageManifestText(p: ManifestInput): string {
   const out: string[] = [

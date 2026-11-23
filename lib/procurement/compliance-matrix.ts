@@ -27,7 +27,8 @@ const HEADER = ["Reference", "Kind", "Requirement", "Status", "Source document",
  */
 export function csvCell(value: string | null | undefined): string {
   let v = (value ?? "").replace(/\r\n?/g, "\n");
-  if (/^[=+\-@\t\r]/.test(v)) v = `'${v}`;
+  // \r was turned into \n above, so a cell starting with a line break is caught too.
+  if (/^[=+\-@\t\r\n]/.test(v)) v = `'${v}`;
   return `"${v.replace(/"/g, '""')}"`;
 }
 

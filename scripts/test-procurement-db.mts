@@ -457,6 +457,16 @@ try {
   check("opportunities from the feeds so far", await prisma.opportunity.count({ where: { origin: { in: ["fts", "pcs"] } } }), 3);
   check("health board created as a buyer with its contact", await prisma.contact.count({ where: { Organisation: { name: "Example Health Board" } } }), 1);
 
+  // A request that gets no response records the system error code, never the message.
+  {
+    const { networkDetail } = await import("../lib/procurement/feeds");
+    const withCode = new TypeError("fetch failed", { cause: Object.assign(new Error("getaddrinfo ENOTFOUND api.example"), { code: "ENOTFOUND" }) });
+    check("a failed connection records its code", networkDetail(withCode), "TypeError (ENOTFOUND)");
+    check("an error with no code records its name only", networkDetail(new TypeError("fetch failed")), "TypeError");
+    check("a code that is not a plain code is left out", networkDetail(new TypeError("x", { cause: { code: "see https://x.example/a b" } })), "TypeError");
+    check("something that is not an Error", networkDetail("boom"), "request failed");
+  }
+
   // Contracts Finder: England below the thresholds, paged like Find a Tender.
   {
     const CF = "https://www.contractsfinder.service.gov.uk/Published/Notices/OCDS/Search";

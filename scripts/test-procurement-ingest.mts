@@ -216,7 +216,19 @@ check(
   ["Smart hands support across 40 sites", "IMAC services", "Structured cabling for new office", "VoIP telephony replacement", "Microsoft 365 migration", "Cyber Essentials readiness", "Hardware refresh programme"].map(kw),
   [true, true, true, true, true, true, true]
 );
-check("IR35 contractor roles are kept", [kw("Network engineer, outside IR35, 6 months"), kw("Contract engineer for desktop rollout")], [true, true]);
+check("IR35 contractor roles in IT are kept", [kw("Network engineer, outside IR35, 6 months"), kw("Contract engineer for desktop rollout")], [true, true]);
+check("an IR35 role that is not IT is not", kw("Interim finance director (outside IR35)"), false);
+check(
+  "the other Contracts Finder id form links to its notice",
+  noticeUrl("cf", { ocid: "ocds-b5fd17-x", id: "ocds-b5fd17-3f0945d1-6cf6-4244-ad3b-da605b45809d-ra155102", tag: ["tender"] }),
+  "https://www.contractsfinder.service.gov.uk/Notice/3f0945d1-6cf6-4244-ad3b-da605b45809d"
+);
+const eng0 = (title: string) => engagementType({ ocid: "o", id: "1", tag: ["tender"], tender: { title } });
+check(
+  "forbidding subcontracting is not subcontracted work",
+  [eng0("Laptop refresh. Subcontracting is not permitted."), eng0("Network support; the supplier must not subcontract any part"), eng0("IMAC work subcontracted from the prime contractor")],
+  [null, null, "subcontract"]
+);
 check("IT subcontracted work is kept", [kw("Subcontract engineers for field service calls"), kw("Field service partner wanted for hardware support")], [true, true]);
 check("a building subcontract alone is not", kw("Groundworks subcontract package"), false);
 const eng = (title: string) => engagementType({ ocid: "o", id: "1", tag: ["tender"], tender: { title } });

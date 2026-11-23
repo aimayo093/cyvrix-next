@@ -368,43 +368,68 @@ export function partnershipSummary(
  * certificate itself, so a lapsed or mistaken record cannot be repeated on a
  * registration form (spec §39: never invent or overstate evidence).
  */
-const CERTIFICATION_LIKE = /certif|accredit|clearance|vetting|iso[_\s]?\d|cyber_?essentials|bpss|(^|_)(ce|ce_plus|sc|dv|npp?v\d?)(_|$)/i;
+const CERTIFICATION_LIKE =
+  /certif|accredit|clearance|vetting|iso[_\s]?\d|cyber_?essentials|bpss|cmmc|soc_?2|pci|fedramp|crest|chas|safecontractor|constructionline|(^|_)(ce|ce_plus|sc|dv|npp?v\d?)(_|$)/i;
 
+/**
+ * Whether a fact key looks like a certification, accreditation or clearance
+ * question. A key-name check: name such facts so they match (for example
+ * `iso_27001_certified`, `cmmc_level`, `sc_clearance`).
+ */
 export function isCertificationQuestion(key: string): boolean {
   return CERTIFICATION_LIKE.test(key);
 }
 
-export type PackFact = { key: string; label: string; value: string | null; state: "ready" | "unverified" | "missing" | "answer_yourself" };
+export type PackFact = {
+  key: string;
+  label: string;
+  value: string | null;
+  state: "ready" | "unverified" | "missing" | "answer_yourself";
+  /** A verified record exists (for certification questions too, which are never filled in). */
+  verified: boolean;
+};
 export type PackDocument = { kind: string; title: string | null; versionId: string | null; filename: string | null; expiresAt: Date | null; state: "ready" | "missing" };
 
 /**
  * What a registration form needs, from the portal's list of required facts and
  * documents: each verified fact's value, each document's current evidence
  * version, and what is missing. Only verified facts and current evidence are
- * offered (a draft or an expired certificate is "missing").
+ * offered. A document counts by its latest version only, as on the Accounts
+ * tab: a newer draft or an expired latest version makes it "missing", even if
+ * an older version was approved.
+ *
+ * `complete` matches the Accounts tab's "ready to register": every required
+ * fact verified (certification questions included, though they are answered
+ * from the certificate) and every required document current.
  */
 export function registrationPack(input: {
   requiredFacts: string[];
   requiredDocuments: string[];
   facts: { key: string; label: string; value: string; verifiedAt: Date | null }[];
-  documents: { kind: string; title: string; versionId: string; filename: string; status: string; expiresAt: Date | null; version: number }[];
+  documents: { documentId: string; kind: string; title: string; versionId: string; filename: string; status: string; expiresAt: Date | null; version: number }[];
   now: Date;
 }): { facts: PackFact[]; documents: PackDocument[]; complete: boolean } {
   const facts: PackFact[] = input.requiredFacts.map((key) => {
     const f = input.facts.find((x) => x.key === key);
-    if (isCertificationQuestion(key)) return { key, label: f?.label ?? key, value: null, state: "answer_yourself" };
-    if (!f) return { key, label: key, value: null, state: "missing" };
-    if (!f.verifiedAt) return { key, label: f.label, value: null, state: "unverified" };
-    return { key, label: f.label, value: f.value, state: "ready" };
+    const verified = Boolean(f?.verifiedAt);
+    if (isCertificationQuestion(key)) return { key, label: f?.label ?? key, value: null, state: "answer_yourself", verified };
+    if (!f) return { key, label: key, value: null, state: "missing", verified };
+    if (!verified) return { key, label: f.label, value: null, state: "unverified", verified };
+    return { key, label: f.label, value: f.value, state: "ready", verified };
   });
+  // Latest version of each document first, then whether it can stand as evidence now.
+  const latest = new Map<string, (typeof input.documents)[number]>();
+  for (const d of input.documents) {
+    const seen = latest.get(d.documentId);
+    if (!seen || d.version > seen.version) latest.set(d.documentId, d);
+  }
+  const usable = [...latest.values()].filter((d) => EVIDENCE.includes(d.status) && (!d.expiresAt || d.expiresAt.getTime() > input.now.getTime()));
   const documents: PackDocument[] = input.requiredDocuments.map((kind) => {
-    const current = input.documents
-      .filter((d) => d.kind.toLowerCase() === kind.toLowerCase() && EVIDENCE.includes(d.status) && (!d.expiresAt || d.expiresAt.getTime() > input.now.getTime()))
-      .sort((a, b) => b.version - a.version)[0];
+    const current = usable.filter((d) => d.kind.toLowerCase() === kind.toLowerCase()).sort((a, b) => b.version - a.version)[0];
     return current
       ? { kind, title: current.title, versionId: current.versionId, filename: current.filename, expiresAt: current.expiresAt, state: "ready" }
       : { kind, title: null, versionId: null, filename: null, expiresAt: null, state: "missing" };
   });
-  const complete = facts.every((f) => f.state === "ready" || f.state === "answer_yourself") && documents.every((d) => d.state === "ready");
+  const complete = facts.every((f) => f.verified) && documents.every((d) => d.state === "ready");
   return { facts, documents, complete };
 }

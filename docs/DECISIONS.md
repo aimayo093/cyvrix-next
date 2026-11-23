@@ -984,11 +984,14 @@ that relies on them is deployed.
   belongs to the same opportunity.
 
 **Phases 3, 5, 7 and 8–9: what was added on 23 November 2026.**
-- The registration pack offers only verified facts and current evidence.
-  Certification, accreditation and clearance questions are never filled in
-  from a stored fact, even when one is recorded: the founder answers them from
-  the certificate, so a lapsed or mistaken record is never repeated on a form
-  (`isCertificationQuestion` in `lib/procurement/partnerships.ts`).
+- The registration pack offers only verified facts and current evidence, a
+  document by its latest version only (as on the Accounts tab). A fact whose
+  key looks like a certification, accreditation or clearance (ISO, Cyber
+  Essentials, CMMC, SOC 2, PCI, SC/DV/NPPV, "certif", "accredit", "clearance"
+  and similar: `isCertificationQuestion` in `lib/procurement/partnerships.ts`)
+  is never filled in, even when recorded: the founder answers it from the
+  certificate. This is a check on the key's name, so name such facts to match
+  (for example `cmmc_level`, `iso_27001_certified`).
 - The Partnerships summary does not show partnership revenue: nothing records
   it, and a number would be invented.
 - Phase 5 is the compliance matrix only (a CSV of the checklist). Agent
@@ -1013,15 +1016,17 @@ that relies on them is deployed.
   "business continuity" alone are not keywords: on real notices they matched
   community events and non-IT work. Change the lists when the services page
   changes.
-- Coverage is all of the UK: Find a Tender (whole UK, above the thresholds),
-  Contracts Finder (England, below them; its open OCDS search, no key), Public
-  Contracts Scotland and Sell2Wales. Notices are not filtered by region, so a
-  tender anywhere in the UK is kept if it matches.
+- Coverage: Find a Tender for the whole UK above the procurement thresholds;
+  below them, Contracts Finder (England; its open OCDS search, no key), Public
+  Contracts Scotland and Sell2Wales. Northern Ireland's below-threshold notices
+  (eTendersNI) are not read yet. Notices are not filtered by region.
 - IR35 contractor roles and subcontracted IT work are searched for too, by
   wording. "Subcontract" alone is not a keyword (building work uses it most),
-  only phrases that name IT or engineering work. A kept notice that names IR35
-  status or subcontracting says so on its evidence line ("IR35 contractor
-  role", "Subcontracted work"). Most IR35 roles are advertised on job boards,
+  only phrases that name IT or engineering work, and "IR35" alone is not one
+  either (it appears on non-IT roles too). When a kept notice's title or
+  description names IR35 status or subcontracted work, its evidence line says
+  so ("IR35 contractor role", "Subcontracted work"); a notice that forbids
+  subcontracting is not labelled. Most IR35 roles are advertised on job boards,
   not in these feeds; those boards are not read, because their terms forbid
   automated collection and need an account.
 

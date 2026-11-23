@@ -48,11 +48,11 @@ async function PackContent({ params }: Props) {
   const [facts, docs] = await Promise.all([
     prisma.companyFact.findMany({ where: { key: { in: portal.requiredFacts } }, select: { key: true, label: true, value: true, verifiedAt: true } }),
     prisma.companyDocument.findMany({
-      select: { kind: true, title: true, Version: { select: { id: true, filename: true, status: true, expiresAt: true, version: true } } },
+      select: { id: true, kind: true, title: true, Version: { select: { id: true, filename: true, status: true, expiresAt: true, version: true } } },
     }),
   ]);
   const documents = docs.flatMap((d) =>
-    d.Version.map((v) => ({ kind: d.kind, title: d.title, versionId: v.id, filename: v.filename, status: v.status, expiresAt: v.expiresAt, version: v.version }))
+    d.Version.map((v) => ({ documentId: d.id, kind: d.kind, title: d.title, versionId: v.id, filename: v.filename, status: v.status, expiresAt: v.expiresAt, version: v.version }))
   );
   const pack = registrationPack({ requiredFacts: portal.requiredFacts, requiredDocuments: portal.requiredDocuments, facts, documents, now });
 
@@ -71,7 +71,7 @@ async function PackContent({ params }: Props) {
           the portal asks you to make, or any fee, needs your approval first; record the account afterwards on the Accounts tab.
         </p>
         <span className={`${pill} ${pack.complete ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-800"}`}>
-          {pack.complete ? "Everything required is ready" : "Something required is missing"}
+          {pack.complete ? "Everything required is recorded and current" : "Not ready yet: something is missing, not verified or out of date"}
         </span>
       </header>
 

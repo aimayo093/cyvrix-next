@@ -194,13 +194,18 @@ export const RELEVANT_KEYWORDS = [
   "office relocation",
   "website development",
   "web development",
-  // Contract roles and subcontracted work. "IR35" appears almost only on
-  // contractor roles, which for a notice in these feeds are mostly technical.
-  // "Subcontract" alone is not enough (building work uses it most); these
-  // phrases name IT or engineering work.
-  "ir35",
-  "outside ir35",
-  "inside ir35",
+  // Contract roles and subcontracted work. Neither "IR35" nor "subcontract"
+  // is a keyword on its own: IR35 also appears on non-IT roles, and building
+  // work uses "subcontract" most. A role is kept by naming IT work (these
+  // titles, or any phrase above); engagementType then labels it.
+  "network engineer",
+  "infrastructure engineer",
+  "cloud engineer",
+  "desktop engineer",
+  "it engineer",
+  "ict engineer",
+  "it technician",
+  "service desk analyst",
   "it contractor",
   "ict contractor",
   "contract engineer",
@@ -224,7 +229,15 @@ export const RELEVANT_KEYWORDS = [
 export function engagementType(release: OcdsRelease): "ir35_role" | "subcontract" | null {
   const text = `${release.tender?.title ?? ""} ${release.tender?.description ?? ""}`.toLowerCase();
   if (/\bir\s?35\b/.test(text)) return "ir35_role";
-  if (/\bsub-?contract(?:s|ed|ing|or|ors)?\b/.test(text)) return "subcontract";
+  // A notice that forbids or limits subcontracting is a direct contract:
+  // remove those phrases before looking for subcontracted work.
+  const SUB = "sub-?contract\\w*";
+  const negated = new RegExp(
+    `\\b(?:no|not|nor|without|prohibit\\w*|forbid\\w*|may not|must not|cannot|will not)\\W+(?:\\w+\\W+){0,3}${SUB}|\\b${SUB}\\W+(?:\\w+\\W+){0,3}(?:is |are |will be )?(?:not (?:permitted|allowed|accepted)|prohibited|forbidden)`,
+    "g"
+  );
+  const rest = text.replace(negated, " ");
+  if (/\bsub-?contract(?:s|ed|ing|or|ors)?\b/.test(rest)) return "subcontract";
   return null;
 }
 
@@ -303,8 +316,9 @@ export function noticeUrl(sourceKey: string, release: OcdsRelease): string | nul
   if (sourceKey === "fts" && release.id && /^\d{6}-\d{4}$/.test(release.id)) {
     return `https://www.find-tender.service.gov.uk/Notice/${release.id}`;
   }
-  // Contracts Finder release ids are the notice id followed by a release number.
-  const cf = sourceKey === "cf" && release.id ? /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:-\d+)?$/i.exec(release.id) : null;
+  // Contracts Finder release ids carry the notice id (a UUID), as
+  // "<uuid>-922226" or "ocds-b5fd17-<uuid>-ra155102". The first UUID is the notice.
+  const cf = sourceKey === "cf" && release.id ? /(?:^|-)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:-|$)/i.exec(release.id) : null;
   if (cf) return `https://www.contractsfinder.service.gov.uk/Notice/${cf[1].toLowerCase()}`;
   const canonical = release.links?.find((l) => l.rel === "canonical" && l.href?.startsWith("https://"))?.href;
   return canonical ?? null;

@@ -180,6 +180,7 @@ check("gate: all clear", requirementsGate("tender", { recorded: 4, mandatoryOpen
 console.log("\n  Compliance matrix");
 check("a formula in buyer text is neutralised", csvCell("=HYPERLINK(\"x\")"), `"'=HYPERLINK(""x"")"`);
 check("a leading minus is neutralised", csvCell("-1+2"), `"'-1+2"`);
+check("a formula after a leading line break is neutralised", [csvCell("\n=1+1"), csvCell("\r=1+1")], [`"'\n=1+1"`, `"'\n=1+1"`]);
 check("plain text is quoted", csvCell("Insurance, £5m"), `"Insurance, £5m"`);
 check("an empty value is an empty cell", csvCell(null), `""`);
 {
@@ -207,6 +208,9 @@ console.log("\n  Package manifest");
     items: [{ label: "Method statement", filename: "method.pdf", sha256: "b".repeat(64), sizeBytes: 1234 }],
   });
   check("a line break in a title cannot forge a line", text.split("\r\n").filter((l) => l.startsWith("Fingerprint:")).length, 1);
+  const LS = String.fromCharCode(0x2028), PS = String.fromCharCode(0x2029);
+  const unicode = packageManifestText({ opportunityTitle: `X${LS}Fingerprint:  forged${PS}Locked: no`, destination: "y", version: 1, status: "locked", manifestSha256: "c".repeat(64), lockedAt: new Date(), price: null, declarations: [], items: [] });
+  check("Unicode line separators cannot forge a line either", unicode.includes(LS) || unicode.includes(PS), false);
   check("each file's sha256 is listed", text.includes(`sha256: ${"b".repeat(64)}`), true);
   check("the package fingerprint is listed", text.includes(`Fingerprint:  ${"a".repeat(64)}`), true);
   const draft = packageManifestText({ opportunityTitle: "x", destination: "y", version: 1, status: "draft", manifestSha256: null, lockedAt: null, price: null, declarations: [], items: [] });

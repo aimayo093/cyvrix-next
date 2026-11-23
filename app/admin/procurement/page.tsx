@@ -805,15 +805,15 @@ function PortalFields({ orgs, p }: { orgs: { id: string; name: string }[]; p?: P
 }
 
 async function Partnerships() {
-  const [orgs, portals] = await Promise.all([
+  const [orgs, portals, pursuits] = await Promise.all([
     prisma.organisation.findMany({
       where: { isResearchTarget: true },
       orderBy: [{ priority: "asc" }, { name: "asc" }],
       include: { Programme: { include: { Opportunity: { select: { id: true, status: true } } } } },
     }),
     prisma.supplierPortal.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.opportunity.findMany({ where: { kind: "partnership" }, select: { status: true } }),
   ]);
-  const pursuits = await prisma.opportunity.findMany({ where: { kind: "partnership" }, select: { status: true } });
   const summary = partnershipSummary(orgs.length, orgs.flatMap((o) => o.Programme), pursuits);
   const tiles: [string, number][] = [
     ["Target organisations", summary.targets],
