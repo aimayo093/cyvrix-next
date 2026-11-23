@@ -249,7 +249,14 @@ export function RequirementsSection({
   const s = summarise(rows);
   return (
     <section id="requirements" className={`${card} space-y-3`}>
-      <h2 className="font-outfit text-lg font-black text-[#041635]">Requirements checklist</h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="font-outfit text-lg font-black text-[#041635]">Requirements checklist</h2>
+        {rows.length > 0 && (
+          <a href={`/api/admin/procurement/opportunities/${opp.id}/compliance-matrix`} className="text-sm font-semibold text-[#0f5aab] hover:underline">
+            Download compliance matrix (CSV)
+          </a>
+        )}
+      </div>
       <p className="text-sm text-slate-500">
         Enter each requirement from the tender documents, word for word, with where it came from. A mandatory
         requirement is met only with the evidence document that shows it. Final approval is refused while any

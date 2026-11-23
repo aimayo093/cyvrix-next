@@ -4,7 +4,8 @@
  * a fake fetch), and the requirements checklist.
  * Run with: npm run test:procurement-tender
  */
-import { dateChange, deadlineAlerts, recordDateChanges, urgency } from "../lib/procurement/deadlines";
+import { complianceMatrixCsv, csvCell } from "../lib/procurement/compliance-matrix";
+import { dateChange,deadlineAlerts, recordDateChanges, urgency } from "../lib/procurement/deadlines";
 import { requirementProblem, requirementsGate, summarise } from "../lib/procurement/requirements";
 import { fetchPublicDocument, fetchRefusal, MAX_FETCH_BYTES, noticeDocuments, safeFilename, withTypeExtension } from "../lib/procurement/tender-documents";
 
@@ -174,6 +175,22 @@ check("gate: a quotation with nothing recorded", requirementsGate("commercial", 
 check("gate: an unmet mandatory requirement", requirementsGate("tender", { recorded: 4, mandatoryOpen: 0, mandatoryNotMet: 1 }).ok, false);
 check("gate: an open mandatory requirement", requirementsGate("tender", { recorded: 4, mandatoryOpen: 1, mandatoryNotMet: 0 }).ok, false);
 check("gate: all clear", requirementsGate("tender", { recorded: 4, mandatoryOpen: 0, mandatoryNotMet: 0 }).ok, true);
+
+console.log("\n  Compliance matrix");
+check("a formula in buyer text is neutralised", csvCell("=HYPERLINK(\"x\")"), `"'=HYPERLINK(""x"")"`);
+check("a leading minus is neutralised", csvCell("-1+2"), `"'-1+2"`);
+check("plain text is quoted", csvCell("Insurance, £5m"), `"Insurance, £5m"`);
+check("an empty value is an empty cell", csvCell(null), `""`);
+{
+  const csv = complianceMatrixCsv([
+    { ref: "SQ 1", kind: "mandatory", text: "Hold PI insurance", status: "not_met", source: "ITT", location: "p4", evidence: null, evidenceCurrent: null, notes: null },
+    { ref: null, kind: "scored", text: "Approach", status: "met", source: null, location: null, evidence: "Method v2 (m.pdf)", evidenceCurrent: false, notes: "line1\nline2" },
+  ]);
+  const lines = csv.replace(/^﻿/, "").split("\r\n");
+  check("a header and one line per requirement", lines.filter(Boolean).length, 3);
+  check("status is readable and lapsed evidence is flagged", lines[2].includes('"met"') && lines[2].includes("no (lapsed or superseded)"), true);
+  check("starts with a byte-order mark for spreadsheets", csv.charCodeAt(0), 0xfeff);
+}
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);
