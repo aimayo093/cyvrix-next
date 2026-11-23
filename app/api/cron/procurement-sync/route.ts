@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { OFFICIAL_SOURCES, runSource, type RunResult } from "@/lib/procurement/ingest";
 import { isScheduledRun } from "@/lib/procurement/schedule";
+import { procurementEnabled } from "@/lib/procurement/switch";
 
 /**
  * Pulls the enabled official tender feeds (Find a Tender, Public Contracts
@@ -37,6 +38,7 @@ const empty = { fetched: 0, relevant: 0, created: 0, updated: 0, merged: 0, cont
 
 export async function GET(req: Request) {
   if (!isAuthorised(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!procurementEnabled()) return NextResponse.json({ ok: true, skipped: true, reason: "Procurement is switched off (PROCUREMENT_ENABLED)." });
 
   const now = new Date();
   if (!isScheduledRun(now)) return NextResponse.json({ ok: true, skipped: true, reason: "Outside the morning run window (London time)." });

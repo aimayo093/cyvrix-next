@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
+import { procurementEnabled } from "@/lib/procurement/switch";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { scanDocument } from "@/lib/document-scan";
@@ -59,6 +60,7 @@ const back = (req: Request, to: string, status: "success" | "error", message: st
 const blank = (v: FormDataEntryValue | null) => (typeof v === "string" && v.trim() === "" ? undefined : v ?? undefined);
 
 export async function POST(req: Request) {
+  if (!procurementEnabled()) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
 

@@ -2,6 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { procurementEnabled } from "@/lib/procurement/switch";
 import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import {
   ACTION_LABEL,
@@ -59,6 +60,7 @@ export default function OpportunityPage(props: Props) {
 
 async function OpportunityContent({ params, searchParams }: Props) {
   await connection();
+  if (!procurementEnabled()) notFound();
   const user = await requireAdmin();
   const { id } = await params;
   const sp = await searchParams;

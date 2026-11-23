@@ -1,6 +1,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { connection } from "next/server";
+import { notFound } from "next/navigation";
+import { procurementEnabled } from "@/lib/procurement/switch";
 import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import {
   ACTION_LABEL,
@@ -69,6 +71,7 @@ export default function ProcurementPage(props: { searchParams: Promise<SearchPar
 
 async function ProcurementContent({ searchParams }: { searchParams: Promise<SearchParams> }) {
   await connection();
+  if (!procurementEnabled()) notFound();
   const user = await requireAdmin();
   const sp = await searchParams;
   const tab: Tab = (TABS.some((t) => t.key === sp.tab) ? sp.tab : "opportunities") as Tab;

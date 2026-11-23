@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { procurementEnabled } from "@/lib/procurement/switch";
 import { z } from "zod";
 import { getSession } from "@/lib/auth";
 import { uploadTenderDocument } from "@/lib/procurement/tender-service";
@@ -31,6 +32,7 @@ const form = z.object({
 const blank = (v: FormDataEntryValue | null) => (typeof v === "string" && v.trim() === "" ? undefined : v ?? undefined);
 
 export async function POST(req: Request) {
+  if (!procurementEnabled()) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const crossOrigin = rejectCrossOrigin(req);
   if (crossOrigin) return crossOrigin;
 

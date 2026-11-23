@@ -3,6 +3,8 @@
  * approval expiry and the execution checks (docs/procurement/02-design.md §4–5).
  * Run with: npm run test:procurement
  */
+import { authorise } from "../lib/paperclip-auth";
+import { procurementEnabled } from "../lib/procurement/switch";
 import {
   approvalExpiry,
   canDecide,
@@ -224,6 +226,19 @@ check("a repeated hour (clocks back, 25 Oct 2026) is refused", london("2026-10-2
 check("the hour after that change is fine", london("2026-10-25T02:00"), "2026-10-25T02:00:00.000Z");
 check("a malformed value is refused", london("2026-07-01 12:00"), "refused");
 check("a two-digit-era year is refused, not misread", london("0099-06-01T12:00"), "refused");
+
+console.log("\n  Off switch");
+check("unset means on", procurementEnabled({}), true);
+check("false switches it off", procurementEnabled({ PROCUREMENT_ENABLED: "false" }), false);
+check("OFF in any case, padded, switches it off", procurementEnabled({ PROCUREMENT_ENABLED: " OFF " }), false);
+check("0 switches it off", procurementEnabled({ PROCUREMENT_ENABLED: "0" }), false);
+check("true leaves it on", procurementEnabled({ PROCUREMENT_ENABLED: "true" }), true);
+{
+  const token = "p".repeat(40);
+  const env = { PAPERCLIP_PROCUREMENT_TOKEN: token };
+  check("the agent API answers with the token", authorise("procurement", `Bearer ${token}`, env), "ok");
+  check("and is off when procurement is switched off", authorise("procurement", `Bearer ${token}`, { ...env, PROCUREMENT_ENABLED: "false" }), "off");
+}
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

@@ -16,6 +16,7 @@
  */
 import { feedAuthorised } from "@/lib/executive-os-feed-core";
 import type { SecurityScanCheck } from "@/lib/security-scan";
+import { procurementEnabled } from "@/lib/procurement/switch";
 
 export type IntegrationScope = "read" | "draft" | "procurement";
 
@@ -45,6 +46,7 @@ export type AuthResult = "off" | "unauthorised" | "ok";
 
 /** Off (answer 404), unauthorised (401), or ok. Constant-time comparison. */
 export function authorise(scope: IntegrationScope, header: string | null, env: Record<string, string | undefined> = process.env): AuthResult {
+  if (scope === "procurement" && !procurementEnabled(env)) return "off";
   const token = integrationToken(scope, env);
   if (!token) return "off";
   return feedAuthorised(header, token) ? "ok" : "unauthorised";
