@@ -7,6 +7,7 @@
 import {
   addressVariants,
   partnershipSummary,
+  registrationPack,
   credentialLabelProblem,
   normaliseAddress,
   parseList,
@@ -138,6 +139,37 @@ console.log("\n  Partnerships dashboard");
     [sum.pursuing, sum.eligible, sum.registrationRequired, sum.registered, sum.underReview, sum.approved, sum.rejected, sum.activeAssignments],
     [5, 3, 1, 2, 1, 1, 1, 1]
   );
+}
+
+console.log("\n  Registration pack");
+{
+  const now = new Date("2026-11-23T12:00:00Z");
+  const pack = registrationPack({
+    requiredFacts: ["company_number", "vat_number", "duns", "iso_27001_certified", "security_clearance"],
+    requiredDocuments: ["insurance", "cyber_essentials"],
+    facts: [
+      { key: "company_number", label: "Company number", value: "12345678", verifiedAt: now },
+      { key: "vat_number", label: "VAT number", value: "GB0", verifiedAt: null },
+      { key: "iso_27001_certified", label: "ISO 27001", value: "yes", verifiedAt: now },
+    ],
+    documents: [
+      { kind: "insurance", title: "PI 2025", versionId: "v1", filename: "a.pdf", status: "verified", expiresAt: new Date("2026-01-01T00:00:00Z"), version: 1 },
+      { kind: "Insurance", title: "PI 2026", versionId: "v2", filename: "b.pdf", status: "verified", expiresAt: new Date("2027-01-01T00:00:00Z"), version: 2 },
+      { kind: "cyber_essentials", title: "CE draft", versionId: "v3", filename: "c.pdf", status: "ai_draft", expiresAt: null, version: 1 },
+    ],
+    now,
+  });
+  check("fact states", pack.facts.map((f) => `${f.key}:${f.state}`), [
+    "company_number:ready",
+    "vat_number:unverified",
+    "duns:missing",
+    "iso_27001_certified:answer_yourself",
+    "security_clearance:answer_yourself",
+  ]);
+  check("a certification answer is never filled in, even when recorded", pack.facts.find((f) => f.key === "iso_27001_certified")?.value, null);
+  check("an unverified fact's value is not offered", pack.facts.find((f) => f.key === "vat_number")?.value, null);
+  check("the current, unexpired evidence is chosen", pack.documents.map((d) => `${d.kind}:${d.state}:${d.versionId}`), ["insurance:ready:v2", "cyber_essentials:missing:null"]);
+  check("incomplete while anything is missing", pack.complete, false);
 }
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);

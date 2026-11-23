@@ -663,6 +663,12 @@ async function Accounts({ isFounder }: { isFounder: boolean }) {
                   </span>
                 )}
                 {" · "}Standing policy: {p.standingPolicy ? <span className="font-semibold">on since {when(p.standingPolicyAt)}</span> : "off"}
+                {isFounder && (
+                  <>
+                    {" · "}
+                    <Link href={`/admin/procurement/portals/${p.id}/pack`} className="font-semibold text-[#0f5aab] hover:underline">Registration pack</Link>
+                  </>
+                )}
               </p>
               <details>
                 <summary className="cursor-pointer text-sm font-semibold text-[#0f5aab]">{live ? "Update the account" : "Record an account"}</summary>

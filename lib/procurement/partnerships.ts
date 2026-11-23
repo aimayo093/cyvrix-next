@@ -359,3 +359,52 @@ export function partnershipSummary(
     activeAssignments: count(STAGES.activeAssignments),
   };
 }
+
+// ------------------------------------------------------- registration pack (§8, §39)
+
+/**
+ * Answers about certifications, accreditations and security clearance are
+ * never filled in from a stored fact: the founder answers them from the
+ * certificate itself, so a lapsed or mistaken record cannot be repeated on a
+ * registration form (spec §39: never invent or overstate evidence).
+ */
+const CERTIFICATION_LIKE = /certif|accredit|clearance|vetting|iso[_\s]?\d|cyber_?essentials|bpss|(^|_)(ce|ce_plus|sc|dv|npp?v\d?)(_|$)/i;
+
+export function isCertificationQuestion(key: string): boolean {
+  return CERTIFICATION_LIKE.test(key);
+}
+
+export type PackFact = { key: string; label: string; value: string | null; state: "ready" | "unverified" | "missing" | "answer_yourself" };
+export type PackDocument = { kind: string; title: string | null; versionId: string | null; filename: string | null; expiresAt: Date | null; state: "ready" | "missing" };
+
+/**
+ * What a registration form needs, from the portal's list of required facts and
+ * documents: each verified fact's value, each document's current evidence
+ * version, and what is missing. Only verified facts and current evidence are
+ * offered (a draft or an expired certificate is "missing").
+ */
+export function registrationPack(input: {
+  requiredFacts: string[];
+  requiredDocuments: string[];
+  facts: { key: string; label: string; value: string; verifiedAt: Date | null }[];
+  documents: { kind: string; title: string; versionId: string; filename: string; status: string; expiresAt: Date | null; version: number }[];
+  now: Date;
+}): { facts: PackFact[]; documents: PackDocument[]; complete: boolean } {
+  const facts: PackFact[] = input.requiredFacts.map((key) => {
+    const f = input.facts.find((x) => x.key === key);
+    if (isCertificationQuestion(key)) return { key, label: f?.label ?? key, value: null, state: "answer_yourself" };
+    if (!f) return { key, label: key, value: null, state: "missing" };
+    if (!f.verifiedAt) return { key, label: f.label, value: null, state: "unverified" };
+    return { key, label: f.label, value: f.value, state: "ready" };
+  });
+  const documents: PackDocument[] = input.requiredDocuments.map((kind) => {
+    const current = input.documents
+      .filter((d) => d.kind.toLowerCase() === kind.toLowerCase() && EVIDENCE.includes(d.status) && (!d.expiresAt || d.expiresAt.getTime() > input.now.getTime()))
+      .sort((a, b) => b.version - a.version)[0];
+    return current
+      ? { kind, title: current.title, versionId: current.versionId, filename: current.filename, expiresAt: current.expiresAt, state: "ready" }
+      : { kind, title: null, versionId: null, filename: null, expiresAt: null, state: "missing" };
+  });
+  const complete = facts.every((f) => f.state === "ready" || f.state === "answer_yourself") && documents.every((d) => d.state === "ready");
+  return { facts, documents, complete };
+}
