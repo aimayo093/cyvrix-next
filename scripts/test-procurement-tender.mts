@@ -5,6 +5,7 @@
  * Run with: npm run test:procurement-tender
  */
 import { complianceMatrixCsv, csvCell } from "../lib/procurement/compliance-matrix";
+import { packageManifestText } from "../lib/procurement/package-manifest";
 import { dateChange,deadlineAlerts, recordDateChanges, urgency } from "../lib/procurement/deadlines";
 import { requirementProblem, requirementsGate, summarise } from "../lib/procurement/requirements";
 import { fetchPublicDocument, fetchRefusal, MAX_FETCH_BYTES, noticeDocuments, safeFilename, withTypeExtension } from "../lib/procurement/tender-documents";
@@ -190,6 +191,26 @@ check("an empty value is an empty cell", csvCell(null), `""`);
   check("a header and one line per requirement", lines.filter(Boolean).length, 3);
   check("status is readable and lapsed evidence is flagged", lines[2].includes('"met"') && lines[2].includes("no (lapsed or superseded)"), true);
   check("starts with a byte-order mark for spreadsheets", csv.charCodeAt(0), 0xfeff);
+}
+
+console.log("\n  Package manifest");
+{
+  const text = packageManifestText({
+    opportunityTitle: "Network refresh\r\nFingerprint:  forged",
+    destination: "https://portal.example/tender/1",
+    version: 2,
+    status: "locked",
+    manifestSha256: "a".repeat(64),
+    lockedAt: new Date("2026-11-23T01:00:00Z"),
+    price: { amount: 12500, basis: "fixed" },
+    declarations: ["No conflicts of interest"],
+    items: [{ label: "Method statement", filename: "method.pdf", sha256: "b".repeat(64), sizeBytes: 1234 }],
+  });
+  check("a line break in a title cannot forge a line", text.split("\r\n").filter((l) => l.startsWith("Fingerprint:")).length, 1);
+  check("each file's sha256 is listed", text.includes(`sha256: ${"b".repeat(64)}`), true);
+  check("the package fingerprint is listed", text.includes(`Fingerprint:  ${"a".repeat(64)}`), true);
+  const draft = packageManifestText({ opportunityTitle: "x", destination: "y", version: 1, status: "draft", manifestSha256: null, lockedAt: null, price: null, declarations: [], items: [] });
+  check("an unlocked package says it is not approved", draft.includes("not an approved package"), true);
 }
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
