@@ -74,7 +74,7 @@ function releasesOf(body: unknown, source: string): OcdsRelease[] {
   return releases as OcdsRelease[];
 }
 
-const FTS_BASE = "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages";
+export const FTS_BASE = "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages";
 
 /** Find a Tender: tender-stage releases updated since `since`, following `links.next`. */
 export function ftsFirstUrl(since: Date): string {
@@ -83,16 +83,37 @@ export function ftsFirstUrl(since: Date): string {
 }
 
 export async function fetchFtsPage(url: string, fetchJson: FetchJson): Promise<FeedPage> {
-  if (!url.startsWith(`${FTS_BASE}?`)) throw new FeedError({ kind: "bad_response", detail: "Refusing a Find a Tender link to another address." });
+  return fetchPackagePage(url, FTS_BASE, "Find a Tender", fetchJson);
+}
+
+/**
+ * Contracts Finder (England, including contracts below the Find a Tender
+ * thresholds): its open OCDS search, tender-stage releases published since
+ * `since`, following `links.next`. No key needed.
+ */
+export const CF_BASE = "https://www.contractsfinder.service.gov.uk/Published/Notices/OCDS/Search";
+
+export function cfFirstUrl(since: Date): string {
+  const from = since.toISOString().slice(0, 19);
+  return `${CF_BASE}?stages=tender&limit=100&publishedFrom=${encodeURIComponent(from)}`;
+}
+
+export async function fetchCfPage(url: string, fetchJson: FetchJson): Promise<FeedPage> {
+  return fetchPackagePage(url, CF_BASE, "Contracts Finder", fetchJson);
+}
+
+/** One page of an OCDS release package that pages through `links.next`. */
+async function fetchPackagePage(url: string, base: string, source: string, fetchJson: FetchJson): Promise<FeedPage> {
+  if (!url.startsWith(`${base}?`)) throw new FeedError({ kind: "bad_response", detail: `Refusing a ${source} link to another address.` });
   const { status, retryAfter, body } = await fetchJson(url);
-  check(status, retryAfter, "Find a Tender");
+  check(status, retryAfter, source);
   const next = (body as { links?: { next?: unknown } })?.links?.next;
   // Only ever follow a next link on the same endpoint. A next link elsewhere is
   // an error, not the end of the list: stopping quietly would skip releases.
-  if (next !== undefined && next !== null && !(typeof next === "string" && next.startsWith(`${FTS_BASE}?`))) {
-    throw new FeedError({ kind: "bad_response", detail: "Find a Tender returned a next-page link to another address." });
+  if (next !== undefined && next !== null && !(typeof next === "string" && next.startsWith(`${base}?`))) {
+    throw new FeedError({ kind: "bad_response", detail: `${source} returned a next-page link to another address.` });
   }
-  return { releases: releasesOf(body, "Find a Tender"), next: typeof next === "string" ? next : null };
+  return { releases: releasesOf(body, source), next: typeof next === "string" ? next : null };
 }
 
 /**

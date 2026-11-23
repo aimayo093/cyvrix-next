@@ -4,12 +4,17 @@ import { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 import { canonicalJson } from "./approval-core";
 import {
+  CF_BASE,
+  cfFirstUrl,
   defaultFetchJson,
   FeedError,
+  fetchCfPage,
   fetchFtsPage,
   fetchProactisMonth,
+  FTS_BASE,
   ftsFirstUrl,
   PROACTIS_NOTICE_TYPES,
+  type FeedPage,
   type FetchJson,
 } from "./feeds";
 import { crossSourceKey, isRelevant, normalise, noticeDate, withoutContactPoints, type NormalisedNotice, type OcdsRelease } from "./ocds";
@@ -33,7 +38,12 @@ import { audit } from "./service";
  *   every run is recorded as an IngestionRun with counts and any error.
  */
 
-export const OFFICIAL_SOURCES = ["fts", "pcs", "s2w"] as const;
+/**
+ * Find a Tender covers the whole UK above the procurement thresholds;
+ * Contracts Finder adds England below them; Public Contracts Scotland and
+ * Sell2Wales add Scottish and Welsh notices below them.
+ */
+export const OFFICIAL_SOURCES = ["fts", "cf", "pcs", "s2w"] as const;
 export type OfficialSource = (typeof OFFICIAL_SOURCES)[number];
 
 export type RunResult = {
@@ -54,16 +64,26 @@ const STALE_RUN_MS = 15 * 60_000;
 const FTS_MAX_PAGES = 20;
 const EARLY_STATUSES = ["Discovered", "Validated", "TargetIdentified", "Researching"];
 
-/** The `updatedTo` a Find a Tender page link carries (UTC), if any. */
+/**
+ * The end of the time window a page link covers (UTC), if it says: Find a
+ * Tender's `updatedTo`, or Contracts Finder's `publishedTo`.
+ */
 function updatedToOf(url: string): Date | null {
   try {
-    const v = new URL(url).searchParams.get("updatedTo");
-    if (!v || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(v)) return null;
-    return new Date(`${v}Z`);
+    const q = new URL(url).searchParams;
+    const v = q.get("updatedTo") ?? q.get("publishedTo");
+    if (!v || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z?$/.test(v)) return null;
+    return new Date(v.endsWith("Z") ? v : `${v}Z`);
   } catch {
     return null;
   }
 }
+
+/** The feeds that page through one OCDS release package with `links.next`. */
+const PACKAGE_FEEDS = {
+  fts: { firstUrl: ftsFirstUrl, fetchPage: fetchFtsPage, base: FTS_BASE },
+  cf: { firstUrl: cfFirstUrl, fetchPage: fetchCfPage, base: CF_BASE },
+} as const;
 
 const sha256 = (value: unknown) => crypto.createHash("sha256").update(canonicalJson(value)).digest("hex");
 
@@ -328,18 +348,19 @@ export async function runSource(
   let chainUpto: Date | null = null;
 
   try {
-    if (sourceKey === "fts") {
+    if (sourceKey === "fts" || sourceKey === "cf") {
+      const feed = PACKAGE_FEEDS[sourceKey];
       // Resume an unfinished page chain, or start from the last success (or two days back).
       const since = source.lastSuccessAt ?? new Date(now.getTime() - 2 * 86_400_000);
       // The API's timestamps carry no zone (UK time in summer is UTC+1), so each
       // window overlaps the last by two hours. Re-reading is harmless: a stored
       // notice is skipped. Missing one would not be.
       const from = new Date(since.getTime() - 2 * 3_600_000);
-      let url: string | null = source.cursor?.startsWith("https://www.find-tender.service.gov.uk/") ? source.cursor : ftsFirstUrl(from);
+      let url: string | null = source.cursor?.startsWith(`${feed.base}?`) ? source.cursor : feed.firstUrl(from);
       let pages = 0;
       while (url && pages < FTS_MAX_PAGES && Date.now() < deadline) {
         chainUpto = updatedToOf(url) ?? chainUpto;
-        const page = await fetchFtsPage(url, fetchJson);
+        const page: FeedPage = await feed.fetchPage(url, fetchJson);
         await ingestPage(sourceKey, runId, page.releases, counts, errors);
         url = page.next;
         if (url) chainUpto = updatedToOf(url) ?? chainUpto;

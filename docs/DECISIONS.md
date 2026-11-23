@@ -1005,6 +1005,18 @@ that relies on them is deployed.
 - `PROCUREMENT_ENABLED` is an off switch, not an on switch: unset means on, so
   adding it changed nothing for the live site. "false", "0" or "off" turn
   procurement off.
+- The feed filter (`RELEVANT_CPV_PREFIXES` and `RELEVANT_KEYWORDS` in
+  `lib/procurement/ocds.ts`) follows the services on cyvrix.co.uk/services.
+  Software products (CPV 48) are no longer kept as a whole, because CYVRIX does
+  not sell packages such as laboratory or timetabling systems; security,
+  backup and server software still are. "networking", "helpdesk" and
+  "business continuity" alone are not keywords: on real notices they matched
+  community events and non-IT work. Change the lists when the services page
+  changes.
+- Coverage is all of the UK: Find a Tender (whole UK, above the thresholds),
+  Contracts Finder (England, below them; its open OCDS search, no key), Public
+  Contracts Scotland and Sell2Wales. Notices are not filtered by region, so a
+  tender anywhere in the UK is kept if it matches.
 
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).
