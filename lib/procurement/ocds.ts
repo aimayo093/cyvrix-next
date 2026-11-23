@@ -198,8 +198,12 @@ export const RELEVANT_KEYWORDS = [
   // is a keyword on its own: IR35 also appears on non-IT roles, and building
   // work uses "subcontract" most. A role is kept by naming IT work (these
   // titles, or any phrase above); engagementType then labels it.
-  "network engineer",
-  "infrastructure engineer",
+  // Qualified: "network engineer" and "infrastructure engineer" alone are also
+  // civil, rail and utilities job titles.
+  "it network engineer",
+  "ict network engineer",
+  "it infrastructure engineer",
+  "ict infrastructure engineer",
   "cloud engineer",
   "desktop engineer",
   "it engineer",

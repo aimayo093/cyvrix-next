@@ -51,7 +51,8 @@ check("a shared value warns", paperclipTokenCheck({ PAPERCLIP_READ_TOKEN: READ, 
 check("a short token warns", paperclipTokenCheck({ PAPERCLIP_DRAFT_TOKEN: "short" }).status, "warn");
 {
   const P = "q".repeat(40);
-  check("procurement access is reported on with its token", paperclipTokenCheck({ ...env, PAPERCLIP_PROCUREMENT_TOKEN: P }).detail.includes("procurement access is on") || paperclipTokenCheck({ ...env, PAPERCLIP_PROCUREMENT_TOKEN: P }).detail.includes(", procurement"), true);
+  const on = paperclipTokenCheck({ ...env, PAPERCLIP_PROCUREMENT_TOKEN: P }).detail;
+  check("procurement access is reported on with its token", [/read, draft, procurement access is on/.test(on), on.includes("Procurement access is off")], [true, false]);
   const off = paperclipTokenCheck({ ...env, PAPERCLIP_PROCUREMENT_TOKEN: P, PROCUREMENT_ENABLED: "false" }).detail;
   check("and reported off when procurement is switched off", [off.includes("procurement access is on") || /read, draft, procurement/.test(off), off.includes("Procurement access is off")], [false, true]);
 }

@@ -216,7 +216,8 @@ check(
   ["Smart hands support across 40 sites", "IMAC services", "Structured cabling for new office", "VoIP telephony replacement", "Microsoft 365 migration", "Cyber Essentials readiness", "Hardware refresh programme"].map(kw),
   [true, true, true, true, true, true, true]
 );
-check("IR35 contractor roles in IT are kept", [kw("Network engineer, outside IR35, 6 months"), kw("Contract engineer for desktop rollout")], [true, true]);
+check("IR35 contractor roles in IT are kept", [kw("IT network engineer, outside IR35, 6 months"), kw("Contract engineer for desktop rollout")], [true, true]);
+check("civil and rail engineering titles are not", [kw("Highways infrastructure engineer"), kw("Rail network engineer, signalling")], [false, false]);
 check("an IR35 role that is not IT is not", kw("Interim finance director (outside IR35)"), false);
 check(
   "the other Contracts Finder id form links to its notice",
