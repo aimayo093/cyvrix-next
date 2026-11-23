@@ -194,7 +194,39 @@ export const RELEVANT_KEYWORDS = [
   "office relocation",
   "website development",
   "web development",
+  // Contract roles and subcontracted work. "IR35" appears almost only on
+  // contractor roles, which for a notice in these feeds are mostly technical.
+  // "Subcontract" alone is not enough (building work uses it most); these
+  // phrases name IT or engineering work.
+  "ir35",
+  "outside ir35",
+  "inside ir35",
+  "it contractor",
+  "ict contractor",
+  "contract engineer",
+  "subcontract engineer",
+  "subcontracted engineer",
+  "engineer subcontract",
+  "it subcontract",
+  "ict subcontract",
+  "field service subcontract",
+  "field service partner",
+  "managed service partner",
+  "supply chain partner for it",
 ] as const;
+
+/**
+ * How a kept notice is offered, for the founder to see at a glance: a
+ * contractor role (IR35 status named) or subcontracted work from a prime
+ * contractor, rather than a direct contract. Read from the title and
+ * description only; null when the notice says neither.
+ */
+export function engagementType(release: OcdsRelease): "ir35_role" | "subcontract" | null {
+  const text = `${release.tender?.title ?? ""} ${release.tender?.description ?? ""}`.toLowerCase();
+  if (/\bir\s?35\b/.test(text)) return "ir35_role";
+  if (/\bsub-?contract(?:s|ed|ing|or|ors)?\b/.test(text)) return "subcontract";
+  return null;
+}
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 

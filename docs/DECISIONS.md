@@ -1017,6 +1017,13 @@ that relies on them is deployed.
   Contracts Finder (England, below them; its open OCDS search, no key), Public
   Contracts Scotland and Sell2Wales. Notices are not filtered by region, so a
   tender anywhere in the UK is kept if it matches.
+- IR35 contractor roles and subcontracted IT work are searched for too, by
+  wording. "Subcontract" alone is not a keyword (building work uses it most),
+  only phrases that name IT or engineering work. A kept notice that names IR35
+  status or subcontracting says so on its evidence line ("IR35 contractor
+  role", "Subcontracted work"). Most IR35 roles are advertised on job boards,
+  not in these feeds; those boards are not read, because their terms forbid
+  automated collection and need an account.
 
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).

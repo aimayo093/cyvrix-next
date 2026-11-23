@@ -17,7 +17,7 @@ import {
   type FeedPage,
   type FetchJson,
 } from "./feeds";
-import { crossSourceKey, isRelevant, normalise, noticeDate, withoutContactPoints, type NormalisedNotice, type OcdsRelease } from "./ocds";
+import { crossSourceKey, engagementType, isRelevant, normalise, noticeDate, withoutContactPoints, type NormalisedNotice, type OcdsRelease } from "./ocds";
 import { rangesAgree } from "./ingest-rules";
 import { initialStatus } from "./lifecycle";
 import { recordDateChanges } from "./deadlines";
@@ -136,11 +136,15 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
     });
 
     const buyerId = notice.buyerName ? await findOrCreateBuyer(tx, notice.buyerName) : null;
+    // How the work is offered, shown with the notice on the opportunity page.
+    const engagement = engagementType(release);
+    const engagementNote = engagement === "ir35_role" ? "IR35 contractor role" : engagement === "subcontract" ? "Subcontracted work" : null;
+    const reference = notice.noticeUrl ? null : `${sourceKey} notice ${notice.releaseId}`;
     const evidence = {
       id: crypto.randomUUID(),
       kind: "notice",
       url: notice.noticeUrl,
-      quote: notice.noticeUrl ? null : `${sourceKey} notice ${notice.releaseId}`,
+      quote: [engagementNote, reference].filter(Boolean).join(" · ") || null,
       retrievedAt: new Date(),
     };
     let created = 0;
