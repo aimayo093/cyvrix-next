@@ -253,6 +253,13 @@ check("engagement type", [eng("Cloud architect (Outside IR35)"), eng("Sub-contra
     [false, false, false]
   );
   check("unless the title names infrastructure or support", rel("Finance system hosting and support", "", "72263000"), true);
+  check("the product named first is caught too", rel("System for case management", "", "72263000"), false);
+  check(
+    "managed service or security work on a business system is kept",
+    [rel("Managed service for the finance system", "", "72263000"), rel("Penetration testing of the HR system", "", "72263000"), rel("Cyber security review of the payroll platform", "", "72263000")],
+    [true, true, true]
+  );
+  check("'cloud' counts in a title, not a description", [rel("Cloud hosting for council services", ""), rel("Training services", "Delivered in the cloud.")], [true, false]);
 }
 check("a non-IT helpdesk or continuity plan is not",[kw("HR helpdesk outsourcing"), kw("Business continuity planning for flood response")], [false, false]);
 check("a Contracts Finder notice links to its page", noticeUrl("cf", { ocid: "ocds-b5fd17-x", id: "3f0945d1-6cf6-4244-ad3b-da605b45809d-922226", tag: ["tender"] }), "https://www.contractsfinder.service.gov.uk/Notice/3f0945d1-6cf6-4244-ad3b-da605b45809d");

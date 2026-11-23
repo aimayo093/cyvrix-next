@@ -133,6 +133,7 @@ export const RELEVANT_KEYWORDS = [
   "m365",
   "google workspace",
   "azure",
+  "cloud", // title only (TITLE_ONLY_KEYWORDS)
   "cloud migration",
   "cloud services",
   "email migration",
@@ -335,9 +336,17 @@ export const TITLE_ONLY_KEYWORDS: ReadonlySet<string> = new Set([
  * CYVRIX's work, even when it carries an IT-services code. Kept only if the
  * title also names infrastructure, devices or support.
  */
-const BUSINESS_SOFTWARE =
-  /\b(?:finance|financial|payroll|hr|human resources?|timetabling|timetable|laboratory information|lims|case management|housing management|revenues?|benefits|crm|erp|booking|library management|student records?|document management|electronic patient|patient records?|epr|ehr)\b[^.;]{0,30}?\b(?:systems?|software|solutions?|platforms?|management systems?)\b|\blims\b/i;
-const INFRASTRUCTURE_IN_TITLE = /\b(?:network|infrastructure|hardware|devices?|laptops?|desktops?|support|helpdesk|service desk|hosting|servers?|cabling|wi-?fi)\b/i;
+const BUSINESS_FUNCTION =
+  "finance|financial|payroll|hr|human resources?|timetabling|timetable|laboratory information|case management|housing management|revenues?|benefits|crm|erp|booking|library management|student records?|document management|electronic patient|patient records?|epr|ehr";
+const SOFTWARE_PRODUCT = "systems?|software|solutions?|platforms?";
+/** Either order: "finance system" or "system for case management". */
+const BUSINESS_SOFTWARE = new RegExp(
+  `\\b(?:${BUSINESS_FUNCTION})\\b[^.;]{0,30}?\\b(?:${SOFTWARE_PRODUCT})\\b|\\b(?:${SOFTWARE_PRODUCT})\\b[^.;]{0,20}?\\b(?:for|of|to support)\\b[^.;]{0,15}?\\b(?:${BUSINESS_FUNCTION})\\b|\\blims\\b`,
+  "i"
+);
+/** What CYVRIX does around such a system: infrastructure, devices, support, managed service or security work. */
+const INFRASTRUCTURE_IN_TITLE =
+  /\b(?:network|infrastructure|hardware|devices?|laptops?|desktops?|support|helpdesk|service desk|hosting|servers?|cabling|wi-?fi|managed services?|cyber\w*|security|penetration|backup|disaster recovery)\b/i;
 
 export function isRelevant(release: OcdsRelease): { relevant: boolean; why: string | null } {
   const title = (release.tender?.title ?? "").toLowerCase();
