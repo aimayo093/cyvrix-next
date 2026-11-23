@@ -287,13 +287,19 @@ async function ingestOne(sourceKey: OfficialSource, runId: string, release: Ocds
   });
 }
 
-async function ingestPage(sourceKey: OfficialSource, runId: string, releases: OcdsRelease[], counts: Counts, errors: string[]) {
+async function ingestPage(sourceKey: OfficialSource, runId: string, releases: OcdsRelease[], counts: Counts, errors: string[], now: Date) {
   counts.fetched += releases.length;
   for (const release of releases) {
     if (!release.tag?.includes("tender")) continue;
     const { relevant, why } = isRelevant(release);
     if (!relevant) continue;
     const notice = normalise(sourceKey, release);
+    // A tender whose submission deadline has passed is not a new lead. It is
+    // still read when CYVRIX already tracks it (a late notice can matter there).
+    if (notice?.deadlineAt && notice.deadlineAt.getTime() <= now.getTime()) {
+      const tracked = await prisma.opportunity.findFirst({ where: { ocid: notice.ocid }, select: { id: true } });
+      if (!tracked) continue;
+    }
     counts.relevant += 1;
     if (!notice) {
       // IT-relevant but missing an OCID, a release id or a title: recorded, not dropped silently.
@@ -365,7 +371,7 @@ export async function runSource(
       while (url && pages < FTS_MAX_PAGES && Date.now() < deadline) {
         chainUpto = updatedToOf(url) ?? chainUpto;
         const page: FeedPage = await feed.fetchPage(url, fetchJson);
-        await ingestPage(sourceKey, runId, page.releases, counts, errors);
+        await ingestPage(sourceKey, runId, page.releases, counts, errors, now);
         url = page.next;
         if (url) chainUpto = updatedToOf(url) ?? chainUpto;
         pages += 1;
@@ -379,7 +385,7 @@ export async function runSource(
         for (const type of PROACTIS_NOTICE_TYPES) {
           if (Date.now() >= deadline) break;
           const page = await fetchProactisMonth(sourceKey, month, type, fetchJson);
-          await ingestPage(sourceKey, runId, page.releases, counts, errors);
+          await ingestPage(sourceKey, runId, page.releases, counts, errors, now);
         }
       }
     }

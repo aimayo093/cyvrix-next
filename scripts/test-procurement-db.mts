@@ -479,16 +479,18 @@ try {
       parties: [{ roles: ["buyer"], name: "Example Borough Council" }],
       tender: { title: "Smart hands and IMAC support for 12 libraries", classification: { scheme: "CPV", id: "50324200" }, tenderPeriod: { endDate: "2026-12-05T12:00:00Z" } },
     };
+    const closedRelease = { ...cfRelease, ocid: "ocds-b5fd17-cf000002", id: "11111111-2222-4333-8444-555555555555-1", tender: { ...cfRelease.tender, title: "Laptop refresh for 30 staff", tenderPeriod: { endDate: "2026-11-10T12:00:00Z" } } };
     const cfCalls: string[] = [];
     const cfFetch = async (url: string) => {
       cfCalls.push(url);
       if (!url.startsWith(`${CF}?`)) throw new Error(`unexpected url ${url}`);
       if (url.includes("cursor=")) return { status: 200, retryAfter: null, body: { releases: [cfRelease] } };
-      return { status: 200, retryAfter: null, body: { releases: [fx.ftsTraining], links: { next: `${CF}?stages=tender&limit=100&publishedFrom=2026-11-16T04:00:00&publishedTo=2026-11-18T05:59:00Z&cursor=abc` } } };
+      return { status: 200, retryAfter: null, body: { releases: [fx.ftsTraining, closedRelease], links: { next: `${CF}?stages=tender&limit=100&publishedFrom=2026-11-16T04:00:00&publishedTo=2026-11-18T05:59:00Z&cursor=abc` } } };
     };
     await prisma.opportunitySource.update({ where: { key: "cf" }, data: { enabled: true } });
     const cf = await ingest.runSource("cf", { trigger: "cron", fetchJson: cfFetch, now: morning });
-    check("Contracts Finder reads both pages and keeps the IT notice", [cf.status, cf.fetched, cf.created, cfCalls.length], ["succeeded", 2, 1, 2]);
+    check("Contracts Finder reads both pages and keeps the IT notice", [cf.status, cf.fetched, cf.created, cfCalls.length], ["succeeded", 3, 1, 2]);
+    check("a tender whose deadline has passed is not made a lead", await prisma.opportunity.count({ where: { ocid: "ocds-b5fd17-cf000002" } }), 0);
     const cfOpp = await prisma.opportunity.findFirstOrThrow({ where: { ocid: "ocds-b5fd17-cf000001" }, include: { Evidence: true } });
     check("its evidence links to the Contracts Finder notice", cfOpp.Evidence[0]?.url, "https://www.contractsfinder.service.gov.uk/Notice/3f0945d1-6cf6-4244-ad3b-da605b45809d");
     const cfSource = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "cf" } });

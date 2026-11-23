@@ -234,6 +234,26 @@ check("IT subcontracted work is kept", [kw("Subcontract engineers for field serv
 check("a building subcontract alone is not", kw("Groundworks subcontract package"), false);
 const eng = (title: string) => engagementType({ ocid: "o", id: "1", tag: ["tender"], tender: { title } });
 check("engagement type", [eng("Cloud architect (Outside IR35)"), eng("Sub-contracted IMAC support"), eng("Laptop refresh")], ["ir35_role", "subcontract", null]);
+{
+  const rel = (title: string, description: string, cpvId = "79300000") =>
+    isRelevant({ ocid: "o", id: "1", tag: ["tender"], tender: { title, description, classification: { scheme: "CPV", id: cpvId } } }).relevant;
+  check(
+    "a passing mention of a broad word in the description is not enough",
+    [
+      rel("Candidate Assessment Services", "Roles include cyber security analysts. Suppliers must hold Cyber Essentials."),
+      rel("EV Cars Salary Sacrifice Scheme", "A managed service for staff cars."),
+      rel("Revenues processing and recovery", "Includes telephony for callers."),
+    ],
+    [false, false, false]
+  );
+  check("the same word in the title still counts", [rel("Cyber security assessment", ""), rel("Managed services for schools", "")], [true, true]);
+  check(
+    "business software for a function is not CYVRIX work, whatever its code",
+    [rel("Provision of a Finance System", "", "72263000"), rel("TIMETABLING SYSTEM", "", "72000000"), rel("CeTPD Laboratory Information Management System", "", "72322000")],
+    [false, false, false]
+  );
+  check("unless the title names infrastructure or support", rel("Finance system hosting and support", "", "72263000"), true);
+}
 check("a non-IT helpdesk or continuity plan is not",[kw("HR helpdesk outsourcing"), kw("Business continuity planning for flood response")], [false, false]);
 check("a Contracts Finder notice links to its page", noticeUrl("cf", { ocid: "ocds-b5fd17-x", id: "3f0945d1-6cf6-4244-ad3b-da605b45809d-922226", tag: ["tender"] }), "https://www.contractsfinder.service.gov.uk/Notice/3f0945d1-6cf6-4244-ad3b-da605b45809d");
 check("a profile link in a title is removed", scrub("Lead via https://www.linkedin.com/in/someone today"), "Lead via [link removed] today");
