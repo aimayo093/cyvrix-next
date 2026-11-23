@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { Prisma } from "@/generated/prisma";
-import { requireAdmin } from "@/lib/auth";
+import { requireAdmin as requireAdminUser } from "@/lib/auth";
+import { procurementEnabled } from "./switch";
 import { claimFindings } from "@/lib/claim-rules";
 import { prisma } from "@/lib/prisma";
 import { APPROVAL_ACTIONS, initialStatus, OPPORTUNITY_KINDS, type ApprovalAction } from "./lifecycle";
@@ -49,6 +50,12 @@ const text = (fd: FormData, key: string) => {
   const v = fd.get(key);
   return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
 };
+
+/** Every action starts here (or in requireFounder): nothing runs while procurement is switched off. */
+async function requireAdmin() {
+  if (!procurementEnabled()) go("/admin", "error", "Procurement is switched off (PROCUREMENT_ENABLED).");
+  return requireAdminUser();
+}
 
 async function requireFounder() {
   const user = await requireAdmin();

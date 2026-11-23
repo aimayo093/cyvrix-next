@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import * as React from "react";
 import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import {
@@ -18,7 +19,7 @@ export const metadata: Metadata = {
   description: "What is waiting on the CYVRIX team today.",
 };
 
-type TodaySearch = { range?: string };
+type TodaySearch = { range?: string; status?: string; message?: string };
 
 /**
  * The admin home: what is waiting on staff, then the trends behind it.
@@ -36,10 +37,12 @@ export default function TodayPage({ searchParams }: { searchParams: Promise<Toda
 }
 
 async function TodayContent({ searchParams }: { searchParams: Promise<TodaySearch> }) {
-  const range = parseRange((await searchParams).range);
+  const sp = await searchParams;
+  const range = parseRange(sp.range);
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-16">
+      <AdminStatusNotice status={sp.status} message={sp.message} />
       <React.Suspense fallback={<div className="h-16 animate-pulse rounded-2xl bg-slate-100" aria-hidden="true" />}>
         <TodayHeader range={range} />
       </React.Suspense>

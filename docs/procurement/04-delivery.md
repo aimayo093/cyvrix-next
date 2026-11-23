@@ -40,7 +40,7 @@ Carried over from the PR 14 review (not blocking Phase 1):
 
 ### Phase 3: Supplier registration and partnerships (built 18 November 2026, except where noted)
 
-Built: the portal and account registry, one live account per portal, the D13 standing policy, confirmed registrations becoming account records, partnership programmes, and the bid and partnership scoring (both scoring models, since the opportunity page needs one either way). The admin Partnerships tab is the §46 dashboard for now: programmes by organisation, verification, availability and what is being pursued. Not yet: the registration pack builder, and the dashboard's charts and summary counts. `PartnershipApplication` is covered by a partnership opportunity and its lifecycle. Migration `20261118120000_procurement_partnerships` is applied to production (18 November 2026); its review follow-up `20261119130000_procurement_partnerships_hardening` was applied on 19 November 2026; `20261119140000_procurement_assessment_keys` was applied on 19 November 2026.
+Built: the portal and account registry, one live account per portal, the D13 standing policy, confirmed registrations becoming account records, partnership programmes, and the bid and partnership scoring (both scoring models, since the opportunity page needs one either way). The admin Partnerships tab is the §46 dashboard for now: programmes by organisation, verification, availability and what is being pursued. The registration pack and the dashboard's summary counts were added on 23 November 2026 (no charts; no revenue figure, because nothing records it). `PartnershipApplication` is covered by a partnership opportunity and its lifecycle. Migration `20261118120000_procurement_partnerships` is applied to production (18 November 2026); its review follow-up `20261119130000_procurement_partnerships_hardening` was applied on 19 November 2026; `20261119140000_procurement_assessment_keys` was applied on 19 November 2026.
 
 
 Includes:
@@ -64,6 +64,8 @@ Includes:
 
 ### Phase 5: Document generation
 
+Built 23 November 2026: the compliance matrix (CSV of the requirements checklist). Company documents already keep every version. Not built: agent drafting (needs the D4 decision on buyer staff names) and pricing (needs approved rate inputs).
+
 Includes:
 - `AgentDraft` kinds for tender answers and documents;
 - versioned working copies (never overwrite originals);
@@ -81,6 +83,8 @@ Includes:
 
 ### Phase 7: Submission gateway
 
+Built 23 November 2026: the manual mode (package manifest with SHA-256 per file, a pre-start checklist; receipts and outcomes were built in Phase 1). Portal automation stays out (D8).
+
 Includes:
 - manual and human-assisted modes: package download, a checklist, and receipt
   upload with reference;
@@ -93,7 +97,7 @@ Includes:
 - end-to-end runs on fixtures and a mock portal;
 - security review (`npm run scan:code`, `test:appsec`);
 - cost review;
-- staged rollout behind a `PROCUREMENT_ENABLED` flag.
+- staged rollout behind a `PROCUREMENT_ENABLED` flag (built 23 November 2026 as an off switch: unset means on).
 
 ## 2. Costs against the proposed £30/month
 
@@ -164,9 +168,9 @@ No test creates a real external account or submits anything (spec §25).
   step: the new tables can stay, unused, after a code rollback. Removing them
   would be a separately reviewed change, because the audit log refers to their
   rows.
-- **Feature flag (planned, Phase 8–9).** `PROCUREMENT_ENABLED` would hide the
-  admin pages, make the procurement API answer 404 and stop the cron route. No
-  code reads it yet. Until then, the off switch is a code rollback.
+- **Off switch.** `PROCUREMENT_ENABLED=false` (and a redeploy) hides the
+  admin pages, refuses procurement actions and uploads, makes the procurement
+  API answer 404 and stops the cron route. Unset means on.
 - **Token kill switch (planned, Phase 2).** Once the procurement agent API
   exists, unsetting `PAPERCLIP_PROCUREMENT_TOKEN` (and redeploying) turns off
   agent access, as the existing tokens do.

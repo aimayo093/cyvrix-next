@@ -457,6 +457,44 @@ try {
   check("opportunities from the feeds so far", await prisma.opportunity.count({ where: { origin: { in: ["fts", "pcs"] } } }), 3);
   check("health board created as a buyer with its contact", await prisma.contact.count({ where: { Organisation: { name: "Example Health Board" } } }), 1);
 
+  // A request that gets no response records the system error code, never the message.
+  {
+    const { networkDetail } = await import("../lib/procurement/feeds");
+    const withCode = new TypeError("fetch failed", { cause: Object.assign(new Error("getaddrinfo ENOTFOUND api.example"), { code: "ENOTFOUND" }) });
+    check("a failed connection records its code", networkDetail(withCode), "TypeError (ENOTFOUND)");
+    check("an error with no code records its name only", networkDetail(new TypeError("fetch failed")), "TypeError");
+    check("a code that is not a plain code is left out", networkDetail(new TypeError("x", { cause: { code: "see https://x.example/a b" } })), "TypeError");
+    check("something that is not an Error", networkDetail("boom"), "request failed");
+  }
+
+  // Contracts Finder: England below the thresholds, paged like Find a Tender.
+  {
+    const CF = "https://www.contractsfinder.service.gov.uk/Published/Notices/OCDS/Search";
+    const cfRelease = {
+      ocid: "ocds-b5fd17-cf000001",
+      id: "3f0945d1-6cf6-4244-ad3b-da605b45809d-922226",
+      date: "2026-11-17T09:00:00Z",
+      tag: ["tender"],
+      buyer: { name: "Example Borough Council" },
+      parties: [{ roles: ["buyer"], name: "Example Borough Council" }],
+      tender: { title: "Smart hands and IMAC support for 12 libraries", classification: { scheme: "CPV", id: "50324200" }, tenderPeriod: { endDate: "2026-12-05T12:00:00Z" } },
+    };
+    const cfCalls: string[] = [];
+    const cfFetch = async (url: string) => {
+      cfCalls.push(url);
+      if (!url.startsWith(`${CF}?`)) throw new Error(`unexpected url ${url}`);
+      if (url.includes("cursor=")) return { status: 200, retryAfter: null, body: { releases: [cfRelease] } };
+      return { status: 200, retryAfter: null, body: { releases: [fx.ftsTraining], links: { next: `${CF}?stages=tender&limit=100&publishedFrom=2026-11-16T04:00:00&publishedTo=2026-11-18T05:59:00Z&cursor=abc` } } };
+    };
+    await prisma.opportunitySource.update({ where: { key: "cf" }, data: { enabled: true } });
+    const cf = await ingest.runSource("cf", { trigger: "cron", fetchJson: cfFetch, now: morning });
+    check("Contracts Finder reads both pages and keeps the IT notice", [cf.status, cf.fetched, cf.created, cfCalls.length], ["succeeded", 2, 1, 2]);
+    const cfOpp = await prisma.opportunity.findFirstOrThrow({ where: { ocid: "ocds-b5fd17-cf000001" }, include: { Evidence: true } });
+    check("its evidence links to the Contracts Finder notice", cfOpp.Evidence[0]?.url, "https://www.contractsfinder.service.gov.uk/Notice/3f0945d1-6cf6-4244-ad3b-da605b45809d");
+    const cfSource = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "cf" } });
+    check("its next window starts at the chain's publishedTo", cfSource.lastSuccessAt?.toISOString(), "2026-11-18T05:59:00.000Z");
+  }
+
   const s2w = await ingest.runSource("s2w", { trigger: "cron", fetchJson: fakeFetch, now: morning });
   check("an unavailable feed is recorded as retry, not a crash", [s2w.status, s2w.detail?.includes("503")], ["retry", true]);
   const s2wSource = await prisma.opportunitySource.findUniqueOrThrow({ where: { key: "s2w" } });
@@ -469,7 +507,7 @@ try {
     ingest.runSource("pcs", { trigger: "manual", fetchJson: fakeFetch, now: morning }),
   ]);
   check("two runs of one source at once: one is turned away", [a1.status, a2.status].sort(), ["skipped", "succeeded"]);
-  check("every completed run is audited (5)", await prisma.auditLog.count({ where: { action: "procurement.sync" } }), 5);
+  check("every completed run is audited (6, with Contracts Finder)", await prisma.auditLog.count({ where: { action: "procurement.sync" } }), 6);
 
   console.log("\n  Agent access: organisations and roles only (D4)");
   const listed = await agentApi.listOpportunitiesForAgents({ after: null, kind: null, status: null, limit: 200 });

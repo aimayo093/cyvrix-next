@@ -16,6 +16,7 @@
  */
 import { feedAuthorised } from "@/lib/executive-os-feed-core";
 import type { SecurityScanCheck } from "@/lib/security-scan";
+import { procurementEnabled } from "@/lib/procurement/switch";
 
 export type IntegrationScope = "read" | "draft" | "procurement";
 
@@ -45,6 +46,7 @@ export type AuthResult = "off" | "unauthorised" | "ok";
 
 /** Off (answer 404), unauthorised (401), or ok. Constant-time comparison. */
 export function authorise(scope: IntegrationScope, header: string | null, env: Record<string, string | undefined> = process.env): AuthResult {
+  if (scope === "procurement" && !procurementEnabled(env)) return "off";
   const token = integrationToken(scope, env);
   if (!token) return "off";
   return feedAuthorised(header, token) ? "ok" : "unauthorised";
@@ -87,6 +89,9 @@ export function paperclipTokenCheck(env: Record<string, string | undefined> = pr
   if (problems.length > 0) {
     return { ...base, status: "warn", detail: `Paperclip: ${problems.join("; ")}.` };
   }
-  const on = [t.readSet && "read", t.draftSet && "draft", t.procurementSet && "procurement"].filter(Boolean).join(", ");
-  return { ...base, status: "pass", detail: `Paperclip ${on} access is on, each with its own token of at least ${MIN_TOKEN_LENGTH} characters.` };
+  const procurementOn = t.procurementSet && procurementEnabled(env);
+  const on = [t.readSet && "read", t.draftSet && "draft", procurementOn && "procurement"].filter(Boolean).join(", ");
+  const off = t.procurementSet && !procurementOn ? " Procurement access is off (PROCUREMENT_ENABLED)." : "";
+  if (!on) return { ...base, status: "pass", detail: `Paperclip access is off.${off}` };
+  return { ...base, status: "pass", detail: `Paperclip ${on} access is on, each with its own token of at least ${MIN_TOKEN_LENGTH} characters.${off}` };
 }

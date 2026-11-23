@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
+import { procurementEnabled } from "@/lib/procurement/switch";
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { signedDocumentUrl } from "@/lib/procurement/storage";
@@ -7,6 +8,7 @@ import { isAdminRole } from "@/lib/roles";
 
 /** Opens a stored document through a five-minute signed link, after the admin check. Each open is audited. */
 export async function GET(req: Request, ctx: { params: Promise<{ versionId: string }> }) {
+  if (!procurementEnabled()) return NextResponse.json({ error: "Not found" }, { status: 404 });
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Unauthenticated" }, { status: 401 });
   if (!isAdminRole(session.user.role)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

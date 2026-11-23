@@ -1,6 +1,8 @@
 import * as React from "react";
 import Link from "next/link";
 import { connection } from "next/server";
+import { notFound } from "next/navigation";
+import { procurementEnabled } from "@/lib/procurement/switch";
 import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import {
   ACTION_LABEL,
@@ -19,7 +21,7 @@ import { PrivateRouteFallback } from "@/components/shared/PrivateRouteFallback";
 import { requireAdmin } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { EVIDENCE_STATUSES } from "@/lib/procurement/approval-core";
-import { ACCOUNT_STATUSES, PARTNERSHIP_CATEGORIES, PARTNERSHIP_CATEGORY_LABEL, registrationReadiness, SERVICE_DELIVERY_CATEGORIES } from "@/lib/procurement/partnerships";
+import { ACCOUNT_STATUSES, PARTNERSHIP_CATEGORIES, PARTNERSHIP_CATEGORY_LABEL, partnershipSummary, registrationReadiness, SERVICE_DELIVERY_CATEGORIES } from "@/lib/procurement/partnerships";
 import {
   createOpportunity,
   createOrganisation,
@@ -69,6 +71,7 @@ export default function ProcurementPage(props: { searchParams: Promise<SearchPar
 
 async function ProcurementContent({ searchParams }: { searchParams: Promise<SearchParams> }) {
   await connection();
+  if (!procurementEnabled()) notFound();
   const user = await requireAdmin();
   const sp = await searchParams;
   const tab: Tab = (TABS.some((t) => t.key === sp.tab) ? sp.tab : "opportunities") as Tab;
@@ -660,6 +663,12 @@ async function Accounts({ isFounder }: { isFounder: boolean }) {
                   </span>
                 )}
                 {" · "}Standing policy: {p.standingPolicy ? <span className="font-semibold">on since {when(p.standingPolicyAt)}</span> : "off"}
+                {isFounder && (
+                  <>
+                    {" · "}
+                    <Link href={`/admin/procurement/portals/${p.id}/pack`} className="font-semibold text-[#0f5aab] hover:underline">Registration pack</Link>
+                  </>
+                )}
               </p>
               <details>
                 <summary className="cursor-pointer text-sm font-semibold text-[#0f5aab]">{live ? "Update the account" : "Record an account"}</summary>
@@ -796,14 +805,33 @@ function PortalFields({ orgs, p }: { orgs: { id: string; name: string }[]; p?: P
 }
 
 async function Partnerships() {
-  const [orgs, portals] = await Promise.all([
+  const [orgs, portals, pursuits] = await Promise.all([
     prisma.organisation.findMany({
       where: { isResearchTarget: true },
       orderBy: [{ priority: "asc" }, { name: "asc" }],
       include: { Programme: { include: { Opportunity: { select: { id: true, status: true } } } } },
     }),
     prisma.supplierPortal.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.opportunity.findMany({ where: { kind: "partnership" }, select: { status: true } }),
   ]);
+  const summary = partnershipSummary(orgs.length, orgs.flatMap((o) => o.Programme), pursuits);
+  const tiles: [string, number][] = [
+    ["Target organisations", summary.targets],
+    ["Programmes recorded", summary.programmes],
+    ["Verified programmes", summary.verifiedProgrammes],
+    ["Verified and open", summary.openProgrammes],
+    ["Being pursued", summary.pursuing],
+    ["Eligible", summary.eligible],
+    ["Registration required", summary.registrationRequired],
+    ["Registered", summary.registered],
+    ["Applications in preparation", summary.preparing],
+    ["Awaiting your approval", summary.awaitingApproval],
+    ["Submitted", summary.submitted],
+    ["Under review", summary.underReview],
+    ["Approved partnerships", summary.approved],
+    ["Rejected", summary.rejected],
+    ["Active assignments", summary.activeAssignments],
+  ];
   const withProgrammes = orgs.filter((o) => o.Programme.length);
   const delivery = (cats: string[]) => cats.some((c) => SERVICE_DELIVERY_CATEGORIES.has(c));
   return (
@@ -813,6 +841,15 @@ async function Partnerships() {
         organisation&apos;s own page as its source; an organisation listed here is a research target, not a partner.
         Programmes that bring engineering or service work come before reseller and distribution ones.
       </p>
+      <section aria-label="Summary" className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {tiles.map(([label, value]) => (
+          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <p className="text-xs font-semibold text-slate-500">{label}</p>
+            <p className="mt-1 font-outfit text-2xl font-black text-[#041635]">{value}</p>
+          </div>
+        ))}
+      </section>
+      <p className="text-xs text-slate-500">Partnership revenue is not shown: nothing records it yet.</p>
       {withProgrammes.length === 0 ? (
         <p className={`${card} text-sm text-slate-600`}>No programmes recorded yet. Add the first one below.</p>
       ) : (

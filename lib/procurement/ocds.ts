@@ -66,64 +66,184 @@ export type NormalisedNotice = {
 };
 
 /**
- * CPV prefixes for the work CYVRIX does (PRODUCT.md "Delivered today"): IT
- * services, software, computer and network equipment, repair and
- * installation of IT, and telecoms. A notice matches on any of its codes.
+ * CPV prefixes for the services on cyvrix.co.uk/services (23 November 2026):
+ * managed IT, endpoint management, backup and recovery, cloud and Microsoft
+ * 365, cybersecurity and compliance, field engineering and hardware repair,
+ * VoIP, IT consultancy, network infrastructure, web and digital work, and
+ * structured cabling. A notice matches on any of its codes.
+ *
+ * Software products (CPV 48) are not matched as a whole: CYVRIX does not sell
+ * software packages such as a laboratory or timetabling system. Only the
+ * security, backup and server software it deploys and supports is kept.
  */
 export const RELEVANT_CPV_PREFIXES = [
-  "72", // IT services: consulting, development, internet and support
-  "48", // software packages and information systems
+  "72", // IT services: consulting, development, internet, support, data and web
+  "4871", // backup and recovery software
+  "4873", // security software
+  "4876", // virus protection software
+  "4882", // servers
   "302", // computer equipment and supplies
-  "3223", // radio transmission and network equipment
-  "3242", // network equipment
-  "3241", // local area network
+  "3223", // radio transmission equipment (wireless networks)
+  "324", // networks: network equipment, LAN, data networks
   "3250", // telecommunications equipment
+  "3252", // telecommunications cable and equipment
+  "32552", // telephone and VoIP equipment
+  "4531432", // installation of computer cabling
+  "453143", // installation of cable infrastructure
+  "4523222", // telecommunications lines and cabling works
   "50312", // maintenance and repair of computer equipment
   "50320", // repair and maintenance of personal computers
   "50323", // maintenance and repair of computer peripherals
+  "50324", // support services of personal computers
+  "5033", // maintenance of telecommunications equipment
   "51610", // installation of computers and office equipment
   "51611", // installation of computer equipment
+  "6421", // telephone and data transmission services (including VoIP)
   "64216", // electronic message and information services
   "79417", // safety consultancy (cyber assurance is sometimes coded here)
 ] as const;
 
-/** Phrases that mark an IT opportunity even when its CPV codes are generic. */
+/**
+ * Phrases that mark a CYVRIX-type opportunity even when its CPV codes are
+ * generic. Whole words only (see keywordPattern), so short ones like "lan"
+ * cannot match inside other words.
+ */
 export const RELEVANT_KEYWORDS = [
+  // Managed IT
   "it support",
+  "ict support",
+  "desktop support",
   "managed service",
   "managed it",
   "service desk",
-  "cyber",
-  "network services",
-  "network infrastructure",
-  "network installation",
-  "networking",
-  "lan",
-  "wan",
+  "it helpdesk",
+  "ict helpdesk",
+  "end user computing",
+  "endpoint",
+  "patch management",
+  "device management",
+  "it asset",
+  // Backup and recovery
+  "data backup",
+  "backup service",
+  "disaster recovery",
+  // Cloud and Microsoft 365
   "microsoft 365",
   "office 365",
+  "m365",
+  "google workspace",
   "azure",
-  "cloud",
-  "cabling",
-  "wifi",
-  "wi-fi",
-  "laptop",
-  "desktop",
-  "end user device",
+  "cloud migration",
+  "cloud services",
+  "email migration",
+  // Cybersecurity and compliance
+  "cyber",
+  "cyber essentials",
+  "information security",
+  "penetration test",
+  "vulnerability scanning",
+  "vulnerability management",
+  "firewall",
+  "security operations",
+  // Field engineering and hardware
   "field engineer",
+  "smart hands",
+  "imac",
   "break/fix",
   "break fix",
   "hardware maintenance",
-  "data backup",
-  "disaster recovery",
-  "penetration test",
-  "firewall",
+  "hardware refresh",
+  "device refresh",
+  "pc refresh",
+  "laptop",
+  "desktop",
+  "end user device",
+  "it equipment",
+  "it hardware",
+  // Communications
+  "voip",
+  "telephony",
+  "unified communication",
+  "teams phone",
+  // Networks and cabling
+  "network services",
+  "network infrastructure",
+  "network installation",
+  "network refresh",
+  // Not "networking" alone: it also means people meeting people.
+  "computer networking",
+  "it networking",
+  "lan",
+  "wan",
+  "wifi",
+  "wi-fi",
+  "wireless network",
+  "cabling",
+  "structured cabling",
+  "data cabling",
+  "fibre optic",
+  "comms room",
+  "server room",
+  // Consultancy and projects
+  "it consultancy",
+  "ict consultancy",
   "it infrastructure",
   "ict infrastructure",
   "ict services",
   "it services",
-  "it equipment",
+  "office relocation",
+  "website development",
+  "web development",
+  // Contract roles and subcontracted work. Neither "IR35" nor "subcontract"
+  // is a keyword on its own: IR35 also appears on non-IT roles, and building
+  // work uses "subcontract" most. A role is kept by naming IT work (these
+  // titles, or any phrase above); engagementType then labels it.
+  // Qualified: "network engineer" and "infrastructure engineer" alone are also
+  // civil, rail and utilities job titles.
+  "it network engineer",
+  "ict network engineer",
+  "it infrastructure engineer",
+  "ict infrastructure engineer",
+  "cloud engineer",
+  "desktop engineer",
+  "it engineer",
+  "ict engineer",
+  "it technician",
+  "service desk analyst",
+  "it contractor",
+  "ict contractor",
+  "contract engineer",
+  "subcontract engineer",
+  "subcontracted engineer",
+  "engineer subcontract",
+  "it subcontract",
+  "ict subcontract",
+  "field service subcontract",
+  "field service partner",
+  "managed service partner",
+  "supply chain partner for it",
 ] as const;
+
+/**
+ * How a kept notice is offered, for the founder to see at a glance: a
+ * contractor role (IR35 status named) or subcontracted work from a prime
+ * contractor, rather than a direct contract. Read from the title and
+ * description only; null when the notice says neither.
+ */
+export function engagementType(release: OcdsRelease): "ir35_role" | "subcontract" | null {
+  const text = `${release.tender?.title ?? ""} ${release.tender?.description ?? ""}`.toLowerCase();
+  if (/\bir\s?35\b/.test(text)) return "ir35_role";
+  // A notice that forbids or limits subcontracting is a direct contract:
+  // remove those phrases before looking for subcontracted work.
+  const SUB = "sub-?contract\\w*";
+  const negated = new RegExp(
+    `\\b(?:no|not|nor|without|prohibit\\w*|forbid\\w*|may not|must not|cannot|will not)\\W+(?:\\w+\\W+){0,3}${SUB}|\\b${SUB}\\W+(?:\\w+\\W+){0,3}(?:is |are |will be )?(?:not (?:permitted|allowed|accepted)|prohibited|forbidden)`,
+    "g"
+  );
+  const rest = text.replace(negated, " ");
+  if (/\bsub-?contract(?:s|ed|ing|or|ors)?\b/.test(rest)) return "subcontract";
+  return null;
+}
 
 const str = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
 
@@ -200,6 +320,10 @@ export function noticeUrl(sourceKey: string, release: OcdsRelease): string | nul
   if (sourceKey === "fts" && release.id && /^\d{6}-\d{4}$/.test(release.id)) {
     return `https://www.find-tender.service.gov.uk/Notice/${release.id}`;
   }
+  // Contracts Finder release ids carry the notice id (a UUID), as
+  // "<uuid>-922226" or "ocds-b5fd17-<uuid>-ra155102". The first UUID is the notice.
+  const cf = sourceKey === "cf" && release.id ? /(?:^|-)([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:-|$)/i.exec(release.id) : null;
+  if (cf) return `https://www.contractsfinder.service.gov.uk/Notice/${cf[1].toLowerCase()}`;
   const canonical = release.links?.find((l) => l.rel === "canonical" && l.href?.startsWith("https://"))?.href;
   return canonical ?? null;
 }

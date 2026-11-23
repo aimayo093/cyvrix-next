@@ -2,6 +2,7 @@ import * as React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
+import { procurementEnabled } from "@/lib/procurement/switch";
 import { AdminStatusNotice } from "@/components/admin/AdminStatusNotice";
 import {
   ACTION_LABEL,
@@ -31,7 +32,7 @@ import {
   revisePackageAction,
   startExecutionAction,
 } from "@/lib/procurement/actions";
-import { EVIDENCE_STATUSES, evidenceVerdict } from "@/lib/procurement/approval-core";
+import { EVIDENCE_STATUSES, evidenceVerdict, SUBMISSION_ACTIONS } from "@/lib/procurement/approval-core";
 import { APPROVAL_ACTIONS, nextStates, type OpportunityKind } from "@/lib/procurement/lifecycle";
 import { CATEGORY_LABEL, WEIGHTS } from "@/lib/procurement/partnerships";
 import { MAX_DISQUALIFIERS, summarise } from "@/lib/procurement/requirements";
@@ -59,6 +60,7 @@ export default function OpportunityPage(props: Props) {
 
 async function OpportunityContent({ params, searchParams }: Props) {
   await connection();
+  if (!procurementEnabled()) notFound();
   const user = await requireAdmin();
   const { id } = await params;
   const sp = await searchParams;
@@ -284,6 +286,11 @@ async function OpportunityContent({ params, searchParams }: Props) {
                 </div>
               )}
               {p.status === "locked" && (
+                <a href={`/api/admin/procurement/packages/${p.id}/manifest`} className="inline-block text-sm font-semibold text-[#0f5aab] hover:underline">
+                  Download the manifest (files and fingerprints)
+                </a>
+              )}
+              {p.status === "locked" && (
                 <div className="flex flex-wrap gap-3">
                   <form action={requestApprovalAction} className="flex flex-wrap gap-2">
                     <input type="hidden" name="packageId" value={p.id} />
@@ -308,6 +315,17 @@ async function OpportunityContent({ params, searchParams }: Props) {
                       {d ? ` ${when(d.createdAt)}` : ` · valid until ${when(r.expiresAt)}`}
                       {d?.note ? ` · “${d.note}”` : ""}
                     </p>
+                    {d?.decision === "approved" && !exec && isFounder && (SUBMISSION_ACTIONS as readonly string[]).includes(r.actionType) && (
+                      <div className="mt-2 space-y-1 text-xs text-slate-600">
+                        <p className="font-semibold text-slate-700">Before you start (the system checks the approval, the package, the deadline and the checklist itself):</p>
+                        <ul className="list-disc space-y-0.5 pl-5">
+                          <li>You are signed in to CYVRIX&apos;s own account on the portal, the one recorded on the Accounts tab.</li>
+                          <li>The portal allows this way of submitting, and every mandatory field on its form is complete.</li>
+                          <li>Each file you upload matches its fingerprint in the manifest.</li>
+                          <li>The price and declarations on the form are exactly those approved.</li>
+                        </ul>
+                      </div>
+                    )}
                     {d?.decision === "approved" && !exec && isFounder && (
                       <form action={startExecutionAction} className="mt-2 flex flex-wrap items-center gap-2">
                         <input type="hidden" name="decisionId" value={d.id} />

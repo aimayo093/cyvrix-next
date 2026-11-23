@@ -4,7 +4,9 @@
  * a fake fetch), and the requirements checklist.
  * Run with: npm run test:procurement-tender
  */
-import { dateChange, deadlineAlerts, recordDateChanges, urgency } from "../lib/procurement/deadlines";
+import { complianceMatrixCsv, csvCell } from "../lib/procurement/compliance-matrix";
+import { packageManifestText } from "../lib/procurement/package-manifest";
+import { dateChange,deadlineAlerts, recordDateChanges, urgency } from "../lib/procurement/deadlines";
 import { requirementProblem, requirementsGate, summarise } from "../lib/procurement/requirements";
 import { fetchPublicDocument, fetchRefusal, MAX_FETCH_BYTES, noticeDocuments, safeFilename, withTypeExtension } from "../lib/procurement/tender-documents";
 
@@ -174,6 +176,46 @@ check("gate: a quotation with nothing recorded", requirementsGate("commercial", 
 check("gate: an unmet mandatory requirement", requirementsGate("tender", { recorded: 4, mandatoryOpen: 0, mandatoryNotMet: 1 }).ok, false);
 check("gate: an open mandatory requirement", requirementsGate("tender", { recorded: 4, mandatoryOpen: 1, mandatoryNotMet: 0 }).ok, false);
 check("gate: all clear", requirementsGate("tender", { recorded: 4, mandatoryOpen: 0, mandatoryNotMet: 0 }).ok, true);
+
+console.log("\n  Compliance matrix");
+check("a formula in buyer text is neutralised", csvCell("=HYPERLINK(\"x\")"), `"'=HYPERLINK(""x"")"`);
+check("a leading minus is neutralised", csvCell("-1+2"), `"'-1+2"`);
+check("a formula after a leading line break is neutralised", [csvCell("\n=1+1"), csvCell("\r=1+1")], [`"'\n=1+1"`, `"'\n=1+1"`]);
+check("plain text is quoted", csvCell("Insurance, £5m"), `"Insurance, £5m"`);
+check("an empty value is an empty cell", csvCell(null), `""`);
+{
+  const csv = complianceMatrixCsv([
+    { ref: "SQ 1", kind: "mandatory", text: "Hold PI insurance", status: "not_met", source: "ITT", location: "p4", evidence: null, evidenceCurrent: null, notes: null },
+    { ref: null, kind: "scored", text: "Approach", status: "met", source: null, location: null, evidence: "Method v2 (m.pdf)", evidenceCurrent: false, notes: "line1\nline2" },
+  ]);
+  const lines = csv.replace(/^﻿/, "").split("\r\n");
+  check("a header and one line per requirement", lines.filter(Boolean).length, 3);
+  check("status is readable and lapsed evidence is flagged", lines[2].includes('"met"') && lines[2].includes("no (lapsed or superseded)"), true);
+  check("starts with a byte-order mark for spreadsheets", csv.charCodeAt(0), 0xfeff);
+}
+
+console.log("\n  Package manifest");
+{
+  const text = packageManifestText({
+    opportunityTitle: "Network refresh\r\nFingerprint:  forged",
+    destination: "https://portal.example/tender/1",
+    version: 2,
+    status: "locked",
+    manifestSha256: "a".repeat(64),
+    lockedAt: new Date("2026-11-23T01:00:00Z"),
+    price: { amount: 12500, basis: "fixed" },
+    declarations: ["No conflicts of interest"],
+    items: [{ label: "Method statement", filename: "method.pdf", sha256: "b".repeat(64), sizeBytes: 1234 }],
+  });
+  check("a line break in a title cannot forge a line", text.split("\r\n").filter((l) => l.startsWith("Fingerprint:")).length, 1);
+  const LS = String.fromCharCode(0x2028), PS = String.fromCharCode(0x2029);
+  const unicode = packageManifestText({ opportunityTitle: `X${LS}Fingerprint:  forged${PS}Locked: no`, destination: "y", version: 1, status: "locked", manifestSha256: "c".repeat(64), lockedAt: new Date(), price: null, declarations: [], items: [] });
+  check("Unicode line separators cannot forge a line either", unicode.includes(LS) || unicode.includes(PS), false);
+  check("each file's sha256 is listed", text.includes(`sha256: ${"b".repeat(64)}`), true);
+  check("the package fingerprint is listed", text.includes(`Fingerprint:  ${"a".repeat(64)}`), true);
+  const draft = packageManifestText({ opportunityTitle: "x", destination: "y", version: 1, status: "draft", manifestSha256: null, lockedAt: null, price: null, declarations: [], items: [] });
+  check("an unlocked package says it is not approved", draft.includes("not an approved package"), true);
+}
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

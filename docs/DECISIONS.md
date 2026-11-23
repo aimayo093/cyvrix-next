@@ -983,5 +983,52 @@ that relies on them is deployed.
   change (only its title and type label); and a requirement's source document
   belongs to the same opportunity.
 
+**Phases 3, 5, 7 and 8–9: what was added on 23 November 2026.**
+- The registration pack offers only verified facts and current evidence, a
+  document by its latest version only (as on the Accounts tab). A fact whose
+  key looks like a certification, accreditation or clearance (ISO, Cyber
+  Essentials, CMMC, SOC 2, PCI, SC/DV/NPPV, "certif", "accredit", "clearance"
+  and similar: `isCertificationQuestion` in `lib/procurement/partnerships.ts`)
+  is never filled in, even when recorded: the founder answers it from the
+  certificate. This is a check on the key's name, so name such facts to match
+  (for example `cmmc_level`, `iso_27001_certified`).
+- The Partnerships summary does not show partnership revenue: nothing records
+  it, and a number would be invented.
+- Phase 5 is the compliance matrix only (a CSV of the checklist). Agent
+  drafting of tender answers and pricing are not built: agent drafting needs
+  the D4 decision on buyer staff names, and pricing needs approved rate
+  inputs. Company documents already keep every version, so working copies need
+  nothing new. CSV cells starting with = + - @ are prefixed with ' because
+  requirement text is copied from buyers' documents.
+- Phase 7 is manual: the manifest lists each approved file's SHA-256 so the
+  founder can check what they upload. The safeguards in spec §16 were already
+  enforced when an attempt starts (`canExecute`); the checklist by the Start
+  button covers only what the system cannot see (the portal account in use,
+  the portal's form). Portal automation stays out (D8).
+- `PROCUREMENT_ENABLED` is an off switch, not an on switch: unset means on, so
+  adding it changed nothing for the live site. "false", "0" or "off" turn
+  procurement off.
+- The feed filter (`RELEVANT_CPV_PREFIXES` and `RELEVANT_KEYWORDS` in
+  `lib/procurement/ocds.ts`) follows the services on cyvrix.co.uk/services.
+  Software products (CPV 48) are no longer kept as a whole, because CYVRIX does
+  not sell packages such as laboratory or timetabling systems; security,
+  backup and server software still are. "networking", "helpdesk" and
+  "business continuity" alone are not keywords: on real notices they matched
+  community events and non-IT work. Change the lists when the services page
+  changes.
+- Coverage: Find a Tender for the whole UK above the procurement thresholds;
+  below them, Contracts Finder (England; its open OCDS search, no key), Public
+  Contracts Scotland and Sell2Wales. Northern Ireland's below-threshold notices
+  (eTendersNI) are not read yet. Notices are not filtered by region.
+- IR35 contractor roles and subcontracted IT work are searched for too, by
+  wording. "Subcontract" alone is not a keyword (building work uses it most),
+  only phrases that name IT or engineering work, and "IR35" alone is not one
+  either (it appears on non-IT roles too). When a kept notice's title or
+  description names IR35 status or subcontracted work, its evidence line says
+  so ("IR35 contractor role", "Subcontracted work"); a notice that forbids
+  subcontracting is not labelled. Most IR35 roles are advertised on job boards,
+  not in these feeds; those boards are not read, because their terms forbid
+  automated collection and need an account.
+
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).

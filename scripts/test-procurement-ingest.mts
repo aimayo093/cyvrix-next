@@ -5,7 +5,7 @@
  * Run with: npm run test:procurement-ingest
  */
 import { isDeepStrictEqual } from "node:util";
-import { buyerContacts, crossSourceKey, isRelevant, normalise, noticeUrl, withoutContactPoints } from "../lib/procurement/ocds";
+import { buyerContacts, crossSourceKey, engagementType, isRelevant, normalise, noticeUrl, withoutContactPoints } from "../lib/procurement/ocds";
 import { parseReport, parseReportWithCount } from "../lib/procurement/report-import";
 import { privacyNoticeCoversTenderContacts } from "../lib/procurement/privacy-gate";
 import { isScheduledRun } from "../lib/procurement/schedule";
@@ -202,6 +202,40 @@ check(
 );
 check("plural keywords are relevant", ["Managed services for schools", "Supply of laptops", "Firewalls and switches", "Cybersecurity assurance"].map((t) => isRelevant({ ...ftsTraining, tender: { ...ftsTraining.tender, title: t, description: "" } }).relevant), [true, true, true, true]);
 check("a word merely containing a keyword is not", isRelevant({ ...ftsTraining, tender: { ...ftsTraining.tender, title: "Planning consultancy", description: "" } }).relevant, false);
+
+console.log("\n  Matched to CYVRIX's services (23 November 2026)");
+const cpv = (id: string) => isRelevant({ ocid: "o", id: "1", tag: ["tender"], tender: { title: "Contract", classification: { scheme: "CPV", id } } }).relevant;
+check("a software product (laboratory system, CPV 48) is no longer kept", cpv("48460000"), false);
+check("security and backup software still are", [cpv("48730000"), cpv("48710000")], [true, true]);
+check("computer cabling installation is kept", cpv("45314320"), true);
+check("VoIP equipment and services are kept", [cpv("32552000"), cpv("64210000")], [true, true]);
+check("PC support services are kept", cpv("50324200"), true);
+check("general building works are not", cpv("45210000"), false);
+check(
+  "service wording is kept",
+  ["Smart hands support across 40 sites", "IMAC services", "Structured cabling for new office", "VoIP telephony replacement", "Microsoft 365 migration", "Cyber Essentials readiness", "Hardware refresh programme"].map(kw),
+  [true, true, true, true, true, true, true]
+);
+check("IR35 contractor roles in IT are kept", [kw("IT network engineer, outside IR35, 6 months"), kw("Contract engineer for desktop rollout")], [true, true]);
+check("civil and rail engineering titles are not", [kw("Highways infrastructure engineer"), kw("Rail network engineer, signalling")], [false, false]);
+check("an IR35 role that is not IT is not", kw("Interim finance director (outside IR35)"), false);
+check(
+  "the other Contracts Finder id form links to its notice",
+  noticeUrl("cf", { ocid: "ocds-b5fd17-x", id: "ocds-b5fd17-3f0945d1-6cf6-4244-ad3b-da605b45809d-ra155102", tag: ["tender"] }),
+  "https://www.contractsfinder.service.gov.uk/Notice/3f0945d1-6cf6-4244-ad3b-da605b45809d"
+);
+const eng0 = (title: string) => engagementType({ ocid: "o", id: "1", tag: ["tender"], tender: { title } });
+check(
+  "forbidding subcontracting is not subcontracted work",
+  [eng0("Laptop refresh. Subcontracting is not permitted."), eng0("Network support; the supplier must not subcontract any part"), eng0("IMAC work subcontracted from the prime contractor")],
+  [null, null, "subcontract"]
+);
+check("IT subcontracted work is kept", [kw("Subcontract engineers for field service calls"), kw("Field service partner wanted for hardware support")], [true, true]);
+check("a building subcontract alone is not", kw("Groundworks subcontract package"), false);
+const eng = (title: string) => engagementType({ ocid: "o", id: "1", tag: ["tender"], tender: { title } });
+check("engagement type", [eng("Cloud architect (Outside IR35)"), eng("Sub-contracted IMAC support"), eng("Laptop refresh")], ["ir35_role", "subcontract", null]);
+check("a non-IT helpdesk or continuity plan is not",[kw("HR helpdesk outsourcing"), kw("Business continuity planning for flood response")], [false, false]);
+check("a Contracts Finder notice links to its page", noticeUrl("cf", { ocid: "ocds-b5fd17-x", id: "3f0945d1-6cf6-4244-ad3b-da605b45809d-922226", tag: ["tender"] }), "https://www.contractsfinder.service.gov.uk/Notice/3f0945d1-6cf6-4244-ad3b-da605b45809d");
 check("a profile link in a title is removed", scrub("Lead via https://www.linkedin.com/in/someone today"), "Lead via [link removed] today");
 check(
   "ChatGPT report titles are withheld from agents",

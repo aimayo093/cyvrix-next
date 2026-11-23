@@ -6,6 +6,8 @@
  */
 import {
   addressVariants,
+  partnershipSummary,
+  registrationPack,
   credentialLabelProblem,
   normaliseAddress,
   parseList,
@@ -118,6 +120,64 @@ check("2.5 is not whole", scoreAssessment("bid", { ...all("bid", 3), profitabili
 check("an unknown category is a problem", scoreAssessment("bid", { ...all("bid", 3), luck: 5 }, []).problems, ["Unknown category: luck."]);
 check("a built-in property name is not a category", scoreAssessment("bid", { ...all("bid", 3), constructor: 5 }, []).problems, ["Unknown category: constructor."]);
 check("the pursue threshold is inclusive", scoreAssessment("bid", { ...all("bid", 4), technical_capability: 2, cash_flow_impact: 3 }, []), { total: 70, recommendation: "pursue", problems: [] });
+
+console.log("\n  Partnerships dashboard");
+{
+  const sum = partnershipSummary(
+    52,
+    [
+      { verified: true, availability: "open" },
+      { verified: true, availability: "invitation_only" },
+      { verified: false, availability: "open" },
+    ],
+    [{ status: "RegistrationPrepared" }, { status: "UnderReview" }, { status: "Rejected" }, { status: "ServiceDelivery" }, { status: "Researching" }]
+  );
+  check("targets and programmes counted", [sum.targets, sum.programmes, sum.verifiedProgrammes], [52, 3, 2]);
+  check("an unverified open programme is not counted as open", sum.openProgrammes, 1);
+  check(
+    "stages counted",
+    [sum.pursuing, sum.eligible, sum.registrationRequired, sum.registered, sum.underReview, sum.approved, sum.rejected, sum.activeAssignments],
+    [5, 3, 1, 2, 1, 1, 1, 1]
+  );
+}
+
+console.log("\n  Registration pack");
+{
+  const now = new Date("2026-11-23T12:00:00Z");
+  const pack = registrationPack({
+    requiredFacts: ["company_number", "vat_number", "duns", "iso_27001_certified", "security_clearance"],
+    requiredDocuments: ["insurance", "cyber_essentials"],
+    facts: [
+      { key: "company_number", label: "Company number", value: "12345678", verifiedAt: now },
+      { key: "vat_number", label: "VAT number", value: "GB0", verifiedAt: null },
+      { key: "iso_27001_certified", label: "ISO 27001", value: "yes", verifiedAt: now },
+    ],
+    documents: [
+      { documentId: "d1", kind: "insurance", title: "PI 2025", versionId: "v1", filename: "a.pdf", status: "verified", expiresAt: new Date("2026-01-01T00:00:00Z"), version: 1 },
+      { documentId: "d1", kind: "Insurance", title: "PI 2026", versionId: "v2", filename: "b.pdf", status: "verified", expiresAt: new Date("2027-01-01T00:00:00Z"), version: 2 },
+      { documentId: "d2", kind: "cyber_essentials", title: "CE", versionId: "v3", filename: "c.pdf", status: "verified", expiresAt: null, version: 1 },
+      { documentId: "d2", kind: "cyber_essentials", title: "CE", versionId: "v4", filename: "d.pdf", status: "ai_draft", expiresAt: null, version: 2 },
+    ],
+    now,
+  });
+  check("fact states", pack.facts.map((f) => `${f.key}:${f.state}`), [
+    "company_number:ready",
+    "vat_number:unverified",
+    "duns:missing",
+    "iso_27001_certified:answer_yourself",
+    "security_clearance:answer_yourself",
+  ]);
+  check("a certification answer is never filled in, even when recorded", pack.facts.find((f) => f.key === "iso_27001_certified")?.value, null);
+  check("an unverified fact's value is not offered", pack.facts.find((f) => f.key === "vat_number")?.value, null);
+  check("the current, unexpired evidence is chosen", pack.documents.map((d) => `${d.kind}:${d.state}:${d.versionId}`), ["insurance:ready:v2", "cyber_essentials:missing:null"]);
+  check("a newer draft hides an older approved version, as on the Accounts tab", pack.documents[1].state, "missing");
+  check("incomplete while anything is missing", pack.complete, false);
+  const certOnly = registrationPack({ requiredFacts: ["cmmc_level"], requiredDocuments: [], facts: [], documents: [], now });
+  check("a CMMC answer is left to the founder", certOnly.facts[0].state, "answer_yourself");
+  check("and with no verified record the pack is not ready, as on the Accounts tab", certOnly.complete, false);
+  const certDone = registrationPack({ requiredFacts: ["cmmc_level"], requiredDocuments: [], facts: [{ key: "cmmc_level", label: "CMMC", value: "2", verifiedAt: now }], documents: [], now });
+  check("with a verified record it is ready, its value still not offered", [certDone.complete, certDone.facts[0].value], [true, null]);
+}
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

@@ -293,3 +293,143 @@ export function scoreAssessment(model: ScoringModel, scores: Record<string, numb
         : "decline";
   return { total, recommendation, problems };
 }
+
+// ------------------------------------------------------------ dashboard (§46)
+
+const STAGES = {
+  registrationRequired: ["RegistrationRequired", "RegistrationPrepared", "AwaitingRegistrationApproval"],
+  registered: [
+    "AccountCreated", "ApplicationPreparation", "QualityReview", "AwaitingFinalApproval", "ApplicationSubmitted",
+    "UnderReview", "AdditionalInformationRequired", "ApprovedPartner", "ActiveOpportunityMonitoring",
+    "AssignmentReceived", "CommercialAssessment", "AssignmentApproval", "ServiceDelivery",
+  ],
+  preparing: ["ApplicationPreparation", "QualityReview"],
+  awaitingApproval: ["AwaitingFinalApproval"],
+  submitted: ["ApplicationSubmitted"],
+  underReview: ["UnderReview", "AdditionalInformationRequired"],
+  approved: ["ApprovedPartner", "ActiveOpportunityMonitoring", "AssignmentReceived", "CommercialAssessment", "AssignmentApproval", "ServiceDelivery"],
+  rejected: ["Rejected", "RemediationReview"],
+  activeAssignments: ["AssignmentReceived", "CommercialAssessment", "AssignmentApproval", "ServiceDelivery"],
+} as const;
+
+export type PartnershipSummary = {
+  targets: number;
+  programmes: number;
+  verifiedProgrammes: number;
+  openProgrammes: number;
+  pursuing: number;
+  eligible: number;
+  registrationRequired: number;
+  registered: number;
+  preparing: number;
+  awaitingApproval: number;
+  submitted: number;
+  underReview: number;
+  approved: number;
+  rejected: number;
+  activeAssignments: number;
+};
+
+/**
+ * The §46 executive summary, counted from what is recorded. "Eligible" is a
+ * programme whose pursuit got past the eligibility review. Partnership revenue
+ * is not counted: nothing records it yet, and a number would be invented.
+ */
+export function partnershipSummary(
+  targets: number,
+  programmes: { verified: boolean; availability: string }[],
+  pursuits: { status: string }[]
+): PartnershipSummary {
+  const count = (states: readonly string[]) => pursuits.filter((p) => states.includes(p.status)).length;
+  return {
+    targets,
+    programmes: programmes.length,
+    verifiedProgrammes: programmes.filter((p) => p.verified).length,
+    openProgrammes: programmes.filter((p) => p.verified && p.availability === "open").length,
+    pursuing: pursuits.length,
+    eligible: count([...STAGES.registrationRequired, ...STAGES.registered]),
+    registrationRequired: count(STAGES.registrationRequired),
+    registered: count(STAGES.registered),
+    preparing: count(STAGES.preparing),
+    awaitingApproval: count(STAGES.awaitingApproval),
+    submitted: count(STAGES.submitted),
+    underReview: count(STAGES.underReview),
+    approved: count(STAGES.approved),
+    rejected: count(STAGES.rejected),
+    activeAssignments: count(STAGES.activeAssignments),
+  };
+}
+
+// ------------------------------------------------------- registration pack (§8, §39)
+
+/**
+ * Answers about certifications, accreditations and security clearance are
+ * never filled in from a stored fact: the founder answers them from the
+ * certificate itself, so a lapsed or mistaken record cannot be repeated on a
+ * registration form (spec §39: never invent or overstate evidence).
+ */
+const CERTIFICATION_LIKE =
+  /certif|accredit|clearance|vetting|iso[_\s]?\d|cyber_?essentials|bpss|cmmc|soc_?2|pci|fedramp|crest|chas|safecontractor|constructionline|(^|_)(ce|ce_plus|sc|dv|npp?v\d?)(_|$)/i;
+
+/**
+ * Whether a fact key looks like a certification, accreditation or clearance
+ * question. A key-name check: name such facts so they match (for example
+ * `iso_27001_certified`, `cmmc_level`, `sc_clearance`).
+ */
+export function isCertificationQuestion(key: string): boolean {
+  return CERTIFICATION_LIKE.test(key);
+}
+
+export type PackFact = {
+  key: string;
+  label: string;
+  value: string | null;
+  state: "ready" | "unverified" | "missing" | "answer_yourself";
+  /** A verified record exists (for certification questions too, which are never filled in). */
+  verified: boolean;
+};
+export type PackDocument = { kind: string; title: string | null; versionId: string | null; filename: string | null; expiresAt: Date | null; state: "ready" | "missing" };
+
+/**
+ * What a registration form needs, from the portal's list of required facts and
+ * documents: each verified fact's value, each document's current evidence
+ * version, and what is missing. Only verified facts and current evidence are
+ * offered. A document counts by its latest version only, as on the Accounts
+ * tab: a newer draft or an expired latest version makes it "missing", even if
+ * an older version was approved.
+ *
+ * `complete` matches the Accounts tab's "ready to register": every required
+ * fact verified (certification questions included, though they are answered
+ * from the certificate) and every required document current.
+ */
+export function registrationPack(input: {
+  requiredFacts: string[];
+  requiredDocuments: string[];
+  facts: { key: string; label: string; value: string; verifiedAt: Date | null }[];
+  documents: { documentId: string; kind: string; title: string; versionId: string; filename: string; status: string; expiresAt: Date | null; version: number }[];
+  now: Date;
+}): { facts: PackFact[]; documents: PackDocument[]; complete: boolean } {
+  const facts: PackFact[] = input.requiredFacts.map((key) => {
+    const f = input.facts.find((x) => x.key === key);
+    const verified = Boolean(f?.verifiedAt);
+    if (isCertificationQuestion(key)) return { key, label: f?.label ?? key, value: null, state: "answer_yourself", verified };
+    if (!f) return { key, label: key, value: null, state: "missing", verified };
+    if (!verified) return { key, label: f.label, value: null, state: "unverified", verified };
+    return { key, label: f.label, value: f.value, state: "ready", verified };
+  });
+  // Latest version of each document first, then whether it can stand as evidence now.
+  const latest = new Map<string, (typeof input.documents)[number]>();
+  for (const d of input.documents) {
+    const seen = latest.get(d.documentId);
+    if (!seen || d.version > seen.version) latest.set(d.documentId, d);
+  }
+  const usable = [...latest.values()].filter((d) => EVIDENCE.includes(d.status) && (!d.expiresAt || d.expiresAt.getTime() > input.now.getTime()));
+  const documents: PackDocument[] = input.requiredDocuments.map((kind) => {
+    const current = usable.filter((d) => d.kind.toLowerCase() === kind.toLowerCase()).sort((a, b) => b.version - a.version)[0];
+    return current
+      ? { kind, title: current.title, versionId: current.versionId, filename: current.filename, expiresAt: current.expiresAt, state: "ready" }
+      : { kind, title: null, versionId: null, filename: null, expiresAt: null, state: "missing" };
+  });
+  const complete = facts.every((f) => f.verified) && documents.every((d) => d.state === "ready");
+  return { facts, documents, complete };
+}
