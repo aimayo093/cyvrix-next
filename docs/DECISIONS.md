@@ -983,5 +983,28 @@ that relies on them is deployed.
   change (only its title and type label); and a requirement's source document
   belongs to the same opportunity.
 
+**Phases 3, 5, 7 and 8–9: what was added on 23 November 2026.**
+- The registration pack offers only verified facts and current evidence.
+  Certification, accreditation and clearance questions are never filled in
+  from a stored fact, even when one is recorded: the founder answers them from
+  the certificate, so a lapsed or mistaken record is never repeated on a form
+  (`isCertificationQuestion` in `lib/procurement/partnerships.ts`).
+- The Partnerships summary does not show partnership revenue: nothing records
+  it, and a number would be invented.
+- Phase 5 is the compliance matrix only (a CSV of the checklist). Agent
+  drafting of tender answers and pricing are not built: agent drafting needs
+  the D4 decision on buyer staff names, and pricing needs approved rate
+  inputs. Company documents already keep every version, so working copies need
+  nothing new. CSV cells starting with = + - @ are prefixed with ' because
+  requirement text is copied from buyers' documents.
+- Phase 7 is manual: the manifest lists each approved file's SHA-256 so the
+  founder can check what they upload. The safeguards in spec §16 were already
+  enforced when an attempt starts (`canExecute`); the checklist by the Start
+  button covers only what the system cannot see (the portal account in use,
+  the portal's form). Portal automation stays out (D8).
+- `PROCUREMENT_ENABLED` is an off switch, not an on switch: unset means on, so
+  adding it changed nothing for the live site. "false", "0" or "off" turn
+  procurement off.
+
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).
