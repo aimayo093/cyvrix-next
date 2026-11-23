@@ -21,6 +21,17 @@ export type FetchJson = (url: string) => Promise<{ status: number; retryAfter: s
 
 const USER_AGENT = "CYVRIX procurement sync (+https://cyvrix.co.uk)";
 
+/**
+ * Why a request never got a response, without the message (which can carry
+ * the address): the error's name and, for a failed connection, the system
+ * code that says which kind (ECONNRESET, ENOTFOUND, UND_ERR_CONNECT_TIMEOUT…).
+ */
+export function networkDetail(error: unknown): string {
+  if (!(error instanceof Error)) return "request failed";
+  const code = (error as { cause?: { code?: unknown } }).cause?.code;
+  return typeof code === "string" && /^[A-Z0-9_]{2,40}$/.test(code) ? `${error.name} (${code})` : error.name;
+}
+
 export const defaultFetchJson: FetchJson = async (url) => {
   let res: Response;
   try {
@@ -30,7 +41,7 @@ export const defaultFetchJson: FetchJson = async (url) => {
       cache: "no-store",
     });
   } catch (error) {
-    throw new FeedError({ kind: "network", detail: error instanceof Error ? error.name : "request failed" });
+    throw new FeedError({ kind: "network", detail: networkDetail(error) });
   }
   let body: unknown = null;
   if (res.ok) {
