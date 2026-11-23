@@ -6,6 +6,7 @@
  */
 import {
   addressVariants,
+  partnershipSummary,
   credentialLabelProblem,
   normaliseAddress,
   parseList,
@@ -118,6 +119,26 @@ check("2.5 is not whole", scoreAssessment("bid", { ...all("bid", 3), profitabili
 check("an unknown category is a problem", scoreAssessment("bid", { ...all("bid", 3), luck: 5 }, []).problems, ["Unknown category: luck."]);
 check("a built-in property name is not a category", scoreAssessment("bid", { ...all("bid", 3), constructor: 5 }, []).problems, ["Unknown category: constructor."]);
 check("the pursue threshold is inclusive", scoreAssessment("bid", { ...all("bid", 4), technical_capability: 2, cash_flow_impact: 3 }, []), { total: 70, recommendation: "pursue", problems: [] });
+
+console.log("\n  Partnerships dashboard");
+{
+  const sum = partnershipSummary(
+    52,
+    [
+      { verified: true, availability: "open" },
+      { verified: true, availability: "invitation_only" },
+      { verified: false, availability: "open" },
+    ],
+    [{ status: "RegistrationPrepared" }, { status: "UnderReview" }, { status: "Rejected" }, { status: "ServiceDelivery" }, { status: "Researching" }]
+  );
+  check("targets and programmes counted", [sum.targets, sum.programmes, sum.verifiedProgrammes], [52, 3, 2]);
+  check("an unverified open programme is not counted as open", sum.openProgrammes, 1);
+  check(
+    "stages counted",
+    [sum.pursuing, sum.eligible, sum.registrationRequired, sum.registered, sum.underReview, sum.approved, sum.rejected, sum.activeAssignments],
+    [5, 3, 1, 2, 1, 1, 1, 1]
+  );
+}
 
 console.log(`\n  ${passed} passed, ${failed} failed\n`);
 if (failed) process.exit(1);

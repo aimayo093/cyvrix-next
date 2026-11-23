@@ -293,3 +293,69 @@ export function scoreAssessment(model: ScoringModel, scores: Record<string, numb
         : "decline";
   return { total, recommendation, problems };
 }
+
+// ------------------------------------------------------------ dashboard (§46)
+
+const STAGES = {
+  registrationRequired: ["RegistrationRequired", "RegistrationPrepared", "AwaitingRegistrationApproval"],
+  registered: [
+    "AccountCreated", "ApplicationPreparation", "QualityReview", "AwaitingFinalApproval", "ApplicationSubmitted",
+    "UnderReview", "AdditionalInformationRequired", "ApprovedPartner", "ActiveOpportunityMonitoring",
+    "AssignmentReceived", "CommercialAssessment", "AssignmentApproval", "ServiceDelivery",
+  ],
+  preparing: ["ApplicationPreparation", "QualityReview"],
+  awaitingApproval: ["AwaitingFinalApproval"],
+  submitted: ["ApplicationSubmitted"],
+  underReview: ["UnderReview", "AdditionalInformationRequired"],
+  approved: ["ApprovedPartner", "ActiveOpportunityMonitoring", "AssignmentReceived", "CommercialAssessment", "AssignmentApproval", "ServiceDelivery"],
+  rejected: ["Rejected", "RemediationReview"],
+  activeAssignments: ["AssignmentReceived", "CommercialAssessment", "AssignmentApproval", "ServiceDelivery"],
+} as const;
+
+export type PartnershipSummary = {
+  targets: number;
+  programmes: number;
+  verifiedProgrammes: number;
+  openProgrammes: number;
+  pursuing: number;
+  eligible: number;
+  registrationRequired: number;
+  registered: number;
+  preparing: number;
+  awaitingApproval: number;
+  submitted: number;
+  underReview: number;
+  approved: number;
+  rejected: number;
+  activeAssignments: number;
+};
+
+/**
+ * The §46 executive summary, counted from what is recorded. "Eligible" is a
+ * programme whose pursuit got past the eligibility review. Partnership revenue
+ * is not counted: nothing records it yet, and a number would be invented.
+ */
+export function partnershipSummary(
+  targets: number,
+  programmes: { verified: boolean; availability: string }[],
+  pursuits: { status: string }[]
+): PartnershipSummary {
+  const count = (states: readonly string[]) => pursuits.filter((p) => states.includes(p.status)).length;
+  return {
+    targets,
+    programmes: programmes.length,
+    verifiedProgrammes: programmes.filter((p) => p.verified).length,
+    openProgrammes: programmes.filter((p) => p.verified && p.availability === "open").length,
+    pursuing: pursuits.length,
+    eligible: count([...STAGES.registrationRequired, ...STAGES.registered]),
+    registrationRequired: count(STAGES.registrationRequired),
+    registered: count(STAGES.registered),
+    preparing: count(STAGES.preparing),
+    awaitingApproval: count(STAGES.awaitingApproval),
+    submitted: count(STAGES.submitted),
+    underReview: count(STAGES.underReview),
+    approved: count(STAGES.approved),
+    rejected: count(STAGES.rejected),
+    activeAssignments: count(STAGES.activeAssignments),
+  };
+}
