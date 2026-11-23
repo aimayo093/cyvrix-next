@@ -1029,6 +1029,19 @@ that relies on them is deployed.
   subcontracting is not labelled. Most IR35 roles are advertised on job boards,
   not in these feeds; those boards are not read, because their terms forbid
   automated collection and need an account.
+- After the first all-UK backfill (23 November 2026), three more rules, from
+  what it let through:
+  - a tender whose submission deadline has already passed is not made a new
+    lead (it is still read when CYVRIX already tracks it);
+  - broad single words ("cyber", "cloud", "managed service", "telephony",
+    "Cyber Essentials" and similar: `TITLE_ONLY_KEYWORDS`) count only in the
+    title. In descriptions they were passing mentions or supplier
+    requirements: a recruitment service, a car salary-sacrifice scheme, a
+    building management system;
+  - a title buying business software for a function (finance, HR,
+    timetabling, laboratory, case management systems) is not kept, whatever
+    its CPV code, unless the title also names infrastructure, devices or
+    support.
 
 **Would change it:** portal automation (D8-B), which needs a per-portal terms
 review; agents on a provider with a UK or EU data-processing agreement (D4-B).
